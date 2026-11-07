@@ -19,15 +19,19 @@ const curlLog = () => join(root, "curl.log");
 
 // Keeps the developer's global git settings (signing, hooks) and a calling hook's GIT_* variables out of the
 // throwaway repositories.
-const isolated = () => ({
-  ...Object.fromEntries(Object.entries(process.env).filter(([name]) => !name.startsWith("GIT_"))),
-  HOME: root,
-  GIT_CONFIG_NOSYSTEM: "1",
-  GIT_AUTHOR_NAME: "Deploy Test",
-  GIT_AUTHOR_EMAIL: "deploy@example.test",
-  GIT_COMMITTER_NAME: "Deploy Test",
-  GIT_COMMITTER_EMAIL: "deploy@example.test",
-});
+const isolated = () => {
+  const env = { ...process.env };
+  for (const name of Object.keys(env)) if (name.startsWith("GIT_")) delete env[name];
+  return {
+    ...env,
+    HOME: root,
+    GIT_CONFIG_NOSYSTEM: "1",
+    GIT_AUTHOR_NAME: "Deploy Test",
+    GIT_AUTHOR_EMAIL: "deploy@example.test",
+    GIT_COMMITTER_NAME: "Deploy Test",
+    GIT_COMMITTER_EMAIL: "deploy@example.test",
+  };
+};
 const git = (dir: string, ...args: string[]) => execFileSync("git", ["-C", dir, ...args], { env: isolated(), encoding: "utf8", stdio: "pipe" }).trim();
 
 const commit = (files: Record<string, string>) => {
