@@ -12,7 +12,7 @@ Facts that change how to work in this repo. What the app is, setup and env vars:
 
 ## Working rules
 
-- Ask before deploying (`git push server main`); the push rebuilds and replaces the running app on next.teslasolar.report.
+- Ask before publishing a release (a `v*` tag, in GitHub's web UI); the tag deploys it to next.teslasolar.report. Merging to `main` deploys nothing. See README.md, Deploy.
 - Changes go through OpenSpec: `/opsx:explore`, `/opsx:propose`, `/opsx:apply`, then `/opsx:archive` with the delta specs synced into `openspec/specs/`.
 - The migration from anton-tesla-api-ws is a series of changes, one per page, each starting with its own mockups (except Distribution, whose house scene keeps its styling). The design system lives in `app/globals.css`; use its tokens (`text-solar`, `bg-card`, `text-muted-foreground`), not hex values.
 - A change that touches a version pin or an env var updates `README.md` in the same change.

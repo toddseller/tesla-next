@@ -3,7 +3,7 @@ services:
     restart: unless-stopped
     build:
       context: .
-      # A new value from deploy/post-receive reruns the dependency audit instead of reusing Docker's cache.
+      # A new value from bin/deploy reruns the dependency audit instead of reusing Docker's cache.
       args:
         AUDIT_RUN: ${AUDIT_RUN:-}
     env_file:

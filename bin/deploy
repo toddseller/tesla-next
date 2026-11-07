@@ -1,0 +1,82 @@
+#!/usr/bin/env bash
+# Deploys a version tag of tesla-next on the production server. The deploy key's authorized_keys entry
+# forces this script, so the only request it takes over SSH is "deploy <tag>". Ported from Myflix's.
+set -euo pipefail
+
+TAG_FORMAT='^v[0-9]+(\.[0-9]+)*$'
+# Compose names the image after the folder (tesla-next) and the service (next).
+IMAGE=tesla-next-next
+
+refuse() {
+  echo "deploy: $1" >&2
+  exit "${2:-1}"
+}
+
+main() {
+  local verb tag extra
+  # sshd puts the client's command here and ignores what the key's holder asked to run.
+  if [[ -n "${SSH_ORIGINAL_COMMAND:-}" ]]; then
+    read -r verb tag extra <<< "$SSH_ORIGINAL_COMMAND"
+  else
+    verb="${1:-}" tag="${2:-}" extra="${3:-}"
+  fi
+  [[ "$verb" == deploy && -z "$extra" ]] || refuse 'usage: deploy <tag>' 2
+  [[ "$tag" =~ $TAG_FORMAT ]] || refuse "not a version tag: $tag" 2
+
+  cd "$(dirname "${BASH_SOURCE[0]}")/.."
+  # .env is untracked, so only edits to tracked files stop a deploy.
+  [[ -z "$(git status --porcelain --untracked-files=no)" ]] || refuse 'the server checkout has uncommitted changes'
+  [[ "$(git rev-parse --abbrev-ref HEAD)" == main ]] || refuse 'the server checkout is not on main'
+
+  # No "+" on the tag refspec: a tag that was moved since the last fetch is rejected, not followed.
+  git fetch --quiet origin main "refs/tags/$tag:refs/tags/$tag" || refuse "could not fetch $tag"
+  local old new
+  old="$(git rev-parse HEAD)"
+  new="$(git rev-parse "$tag^{commit}")"
+  git merge-base --is-ancestor "$new" origin/main || refuse "$tag is not on main"
+  if [[ "$new" != "$old" ]]; then
+    git merge-base --is-ancestor "$old" "$new" || refuse "$tag is behind the server, which is at ${old:0:7}"
+    git merge --quiet --ff-only "$new"
+  fi
+
+  if [[ "$new" == "$old" ]]; then
+    # Not kept on a redeploy: the running image is this release's, and keeping it would drop the one before it.
+    echo "Redeploying $tag (${new:0:7}), already checked out"
+  else
+    echo "Deploying $tag: ${old:0:7} -> ${new:0:7}"
+    # The running image is kept, so the last release can be restored without a build; tagging replaces the one kept
+    # by the deploy before.
+    if docker image inspect "$IMAGE:latest" > /dev/null 2>&1; then
+      docker tag "$IMAGE:latest" "$IMAGE:previous"
+    fi
+  fi
+
+  # A new value each deploy makes the image rerun its dependency audit against today's advisories.
+  AUDIT_RUN="$(date +%s)" docker compose up -d --build --remove-orphans || refuse 'the image did not build; the app was not replaced'
+
+  local url="${DEPLOY_HEALTH_URL:-https://next.teslasolar.report/}" tries="${DEPLOY_HEALTH_TRIES:-10}" interval="${DEPLOY_HEALTH_INTERVAL:-3}"
+  local attempt code
+  for ((attempt = 1; attempt <= tries; attempt++)); do
+    code="$(curl -sS -o /dev/null -w '%{http_code}' --max-time 10 "$url" || true)"
+    if [[ "$code" == 200 ]]; then
+      echo "$url answered 200: deployed $tag"
+      trim
+      return 0
+    fi
+    if ((attempt < tries)); then sleep "$interval"; fi
+  done
+  refuse "$url answered ${code:-nothing} after $tries tries"
+}
+
+trim() {
+  # The site already serves the release, so a prune Docker refuses (one is already running) only warns.
+  docker image prune -f > /dev/null || echo "warning: image prune failed"
+  # Keep the most recently used 5 GB of build cache: routine builds stay fast, and the
+  # cache, which filled the 98 GB disk by October 2026, stays bounded. It is shared with
+  # the server's other projects. Docker 28+ renames --keep-storage to --reserved-space.
+  docker builder prune -f --keep-storage 5GB > /dev/null || echo "warning: build cache prune failed"
+  df -h . | awk 'NR==2 {print "Disk: " $4 " free of " $2 " (" $5 " used)"}'
+}
+
+# Called last so bash has read the whole file before the deploy rewrites it.
+main "$@"

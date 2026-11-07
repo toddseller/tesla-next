@@ -1,0 +1,30 @@
+name: Tests
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # The main ruleset requires a check named "test", and deploy.yml waits for it; renaming this job silently drops both.
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      # The image's build audits the shipped dependencies and runs every test before it builds, as a deploy does.
+      - name: Build the image
+        run: docker build .
+
+      # Steps, not jobs: the ruleset and the deploy's gate only look at this job's check.
+      # deploy.yml only runs on a tag, so this is where a broken workflow gets caught.
+      - name: Lint the workflows
+        run: docker run --rm -v "$PWD:/repo:ro" -w /repo rhysd/actionlint:1.7.7 -no-color

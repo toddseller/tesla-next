@@ -23,7 +23,7 @@ else
 fi
 cat "$WORK/out" >> "$LOG"
 
-# The same trim as deploy/post-receive, so weekly builds don't grow the cache between deploys.
+# The same trim as bin/deploy, so weekly builds don't grow the cache between deploys.
 docker image prune -f > /dev/null
 docker builder prune -f --keep-storage 5GB > /dev/null || echo "warning: build cache prune failed"
 exit $failed
