@@ -21,24 +21,24 @@ Code tasks are test-first: write the test, run it and see it fail for the right 
 
 ## 4. GitHub settings (after the pull request's first `test` run, before merging)
 
-- [ ] 4.1 **(owner)** Add the `main` ruleset requiring the `test` check
-- [ ] 4.2 **(owner)** Add the tag ruleset on `refs/tags/v*` (restrict creation, block update and deletion, owner bypass), and create the `production` environment limited to `v*` tags; I check the environment through the API
+- [x] 4.1 **(owner)** Add the `main` ruleset requiring the `test` check
+- [x] 4.2 **(owner)** Add the tag ruleset on `refs/tags/v*` (restrict creation, block update and deletion, owner bypass), and create the `production` environment limited to `v*` tags; I check the environment through the API
 
 ## 5. Server cutover (after merging)
 
-- [ ] 5.1 With your go-ahead, move `~/tesla-next` to `~/tesla-next-before-deploy-from-github`, clone the repo over HTTPS into `~/tesla-next`, copy `.env` (mode 600), tag the running image as `tesla-next-next:previous`, run `docker compose up -d --build`, and check next.teslasolar.report serves `main` and the tunnel still reaches it
+- [x] 5.1 With your go-ahead, move `~/tesla-next` to `~/tesla-next-before-deploy-from-github`, clone the repo over HTTPS into `~/tesla-next`, copy `.env` (mode 600), tag the running image as `tesla-next-next:previous`, run `docker compose up -d --build`, and check next.teslasolar.report serves `main` and the tunnel still reaches it
 
 ## 6. Access and secrets
 
-- [ ] 6.1 **(owner)** Cloudflare: add the route `ssh-deploy.teslasolar.report` to `ssh://192.168.40.63:22` on `tesla-next-tunnel`, and a self-hosted Access application for it with a Service Auth policy and a new service token `tesla-next-deploy`; I check the hostname answers only through Access
-- [ ] 6.2 **(owner)** Generate the deploy key on your Mac and add its forced-command line to onyx's `authorized_keys`; I check over the LAN that the key runs only `bin/deploy` and refuses a shell
-- [ ] 6.3 Build the `DEPLOY_KNOWN_HOSTS` value from `ssh-keyscan` for `ssh-deploy.teslasolar.report`
-- [ ] 6.4 **(owner)** Add the five secrets to the `production` environment
+- [x] 6.1 **(owner)** Cloudflare: add the route `ssh-deploy.teslasolar.report` to `ssh://192.168.40.63:22` on `tesla-next-tunnel`, and a self-hosted Access application for it with a Service Auth policy and a new service token `tesla-next-deploy`; I check the hostname answers only through Access
+- [x] 6.2 **(owner)** Generate the deploy key on your Mac and add its forced-command line to onyx's `authorized_keys`; I check over the LAN that the key runs only `bin/deploy` and refuses a shell
+- [x] 6.3 Build the `DEPLOY_KNOWN_HOSTS` value from `ssh-keyscan` for `ssh-deploy.teslasolar.report`
+- [x] 6.4 **(owner)** Add the five secrets to the `production` environment
 
 ## 7. First release and clean-up
 
-- [ ] 7.1 **(owner)** Publish a release tagged `v2026.11.<day>` on `main` in GitHub's web UI; together we watch the Deploy run, then I check next.teslasolar.report serves that commit and `tesla-next-next:previous` exists
-- [ ] 7.2 With your go-ahead, remove `~/repos/tesla-next.git`, the old folder on onyx, and the `server` remote on your Mac; update the project memory's deploy line
+- [x] 7.1 **(owner)** Publish a release tagged `v2026.11.<day>` on `main` in GitHub's web UI; together we watch the Deploy run, then I check next.teslasolar.report serves that commit and `tesla-next-next:previous` exists
+- [x] 7.2 With your go-ahead, remove `~/repos/tesla-next.git`, the old folder on onyx, and the `server` remote on your Mac; update the project memory's deploy line
 
 ## Workflow follow-up
 
