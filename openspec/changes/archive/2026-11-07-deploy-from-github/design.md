@@ -126,3 +126,18 @@ The fine-grained token I use can't read rulesets or change repository settings, 
 5. First release: you publish `v2026.11.<day>` in GitHub's web UI. We watch the run, then I check next.teslasolar.report serves that commit and `:previous` exists.
 6. Clean-up of the bare repo, the remote and the old folder.
 7. If anything fails: rerun or redeploy the same tag, or roll back with `:previous`. Before the cutover, the old push deploy still works; after it, the README's manual fallback replaces it (the push hook would write over the clone).
+
+## Rollout (2026-11-07)
+
+- **The pull request** (#1): its first `test` run failed at `next build`, which type-checks the test files. The review fix that drops inherited `GIT_*` variables had lost the `NODE_ENV` type Next declares on `ProcessEnv`; only the image's `test` stage had been rebuilt after it. Fixed on top in `f4c7a29`. The second run passed in about a minute.
+- **GitHub:**
+  - the ruleset "Main Requires Test" requires `test` from GitHub Actions, and blocks deleting and force-pushing `main`;
+  - the ruleset "Version tags" restricts creating, updating and deleting `refs/tags/v*`, with Repository admin as the only bypass;
+  - `production` admits only `v*` tags.
+  - The token can't list environment secrets, so the owner confirmed the five names.
+- **Merge method:** squash merging stays allowed. The no-squash rule in the first draft was an inference and was removed (`5497d1f`); the owner merges with merge commits.
+- **Cutover:** `~/tesla-next` became a clone at `7e9c5b7`, rebuilt with 44 tests passing; all five pages answered 200 through the tunnel.
+- **Deploy key:** over the LAN, every request other than `deploy <version tag>` got `bin/deploy`'s refusal; a terminal and port forwarding were refused.
+- **Access:** `ssh-deploy.teslasolar.report` answers 403 from Access without a valid service token, like Myflix's.
+- **First release:** `v2026.11.07.0` (a redeploy of `7e9c5b7`) passed the gate, reached onyx through Access, rebuilt with a fresh audit and answered 200, in 25 seconds. `tesla-next-next:previous` kept the image from before the cutover, as a redeploy should.
+- **Clean-up:** `~/repos/tesla-next.git`, `~/tesla-next-before-deploy-from-github` and the `server` remote are gone.
