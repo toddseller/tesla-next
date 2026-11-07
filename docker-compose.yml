@@ -1,0 +1,12 @@
+services:
+  next:
+    restart: unless-stopped
+    build: .
+    env_file:
+      - ./.env
+    # node-postgres reads the password from here when DATABASE_URL has none, like the API's container.
+    volumes:
+      - ${PGPASS_FILE:-/dev/null}:/run/secrets/pgpass:ro
+    environment:
+      - PGPASSFILE=/run/secrets/pgpass
+    # No published port: only the tunnel container (tesla-next-tunnel), joined to this network, reaches it.
