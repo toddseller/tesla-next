@@ -1,10 +1,14 @@
 services:
   next:
     restart: unless-stopped
-    build: .
+    build:
+      context: .
+      # A new value from deploy/post-receive reruns the dependency audit instead of reusing Docker's cache.
+      args:
+        AUDIT_RUN: ${AUDIT_RUN:-}
     env_file:
       - ./.env
-    # node-postgres reads the password from here when DATABASE_URL has none, like the API's container.
+    # The app reads the password from here when DATABASE_URL has none, like the API's container.
     volumes:
       - ${PGPASS_FILE:-/dev/null}:/run/secrets/pgpass:ro
     environment:

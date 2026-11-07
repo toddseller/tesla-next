@@ -1,0 +1,7 @@
+# Installed with deploy/tesla-next-weekly-audit.timer; see README.md, Weekly audit.
+[Unit]
+Description=Weekly dependency audit of the tesla-next dashboard, without deploying
+
+[Service]
+Type=oneshot
+ExecStart=%h/tesla-next/deploy/weekly-audit

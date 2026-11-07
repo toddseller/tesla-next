@@ -1,0 +1,29 @@
+#!/bin/sh
+# Rerun the dependency audit and tests a deploy's build runs, without deploying, and send a
+# Pushover alert when they fail, so an advisory published between deploys is still caught.
+# Run weekly by deploy/tesla-next-weekly-audit.timer on the server; see README.md, Weekly audit.
+set -u
+APP=$(cd "$(dirname "$0")/.." && pwd)
+LOG=$HOME/tesla-next-weekly-audit.log
+WORK=$(mktemp -d)
+trap 'rm -rf "$WORK"' EXIT
+
+echo "== dashboard ($(date))" > "$LOG"
+# A new AUDIT_RUN reruns the audit instead of reusing Docker's cached result, as deploys do.
+if docker build --progress=plain --target test --build-arg AUDIT_RUN="$(date +%s)" "$APP" > "$WORK/out" 2>&1; then
+  echo "dashboard: passed"
+  failed=0
+else
+  echo "dashboard: FAILED"
+  # Only the steps' own lines (BuildKit's "#<step> <seconds>"): the footer after them, a Dockerfile
+  # excerpt, would crowd the advisory or failing test out of the alert.
+  grep -E '^#[0-9]+ [0-9.]+ ' "$WORK/out" > "$WORK/steps"
+  "$APP/deploy/pushover" "Weekly audit failed: tesla-next dashboard" "$WORK/steps"
+  failed=1
+fi
+cat "$WORK/out" >> "$LOG"
+
+# The same trim as deploy/post-receive, so weekly builds don't grow the cache between deploys.
+docker image prune -f > /dev/null
+docker builder prune -f --keep-storage 5GB > /dev/null || echo "warning: build cache prune failed"
+exit $failed

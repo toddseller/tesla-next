@@ -1,0 +1,76 @@
+# Spec Delta
+
+## Purpose
+
+The frame and design system every dashboard page shares: navigation among the five pages, how the frame fits any screen, the colors and type, and the footer.
+
+## ADDED Requirements
+
+### Requirement: Navigation among the five pages
+Every page SHALL have a top bar with the site's icon and name, "Tesla Solar Report", linking to `/`, and the five pages as links in this order: Solar (`/`), Impact (`/impact`), Distribution (`/distribution`), True-Up (`/true-up`) and Top Ten (`/top`). The current page's link SHALL be marked for sight, with a red underline, and for assistive technology, as the current page.
+
+#### Scenario: Moving between pages
+- **WHEN** a viewer on `/` chooses "Impact" in the top bar
+- **THEN** `/impact` opens without a full page reload, and "Impact" is marked as the current page while "Solar" is not
+
+#### Scenario: Opening a page directly
+- **WHEN** a viewer opens `/true-up` from a bookmark
+- **THEN** the page loads with "True-Up" marked as the current page
+
+#### Scenario: A screen reader
+- **WHEN** a screen reader lists the page's navigation
+- **THEN** it finds a navigation landmark with the five links, and announces the current one as the current page
+
+### Requirement: The frame fits any screen
+At any window width from 320 pixels up, every page's frame SHALL fit the window with no sideways scrolling. The top bar's links SHALL wrap onto more lines rather than overflow, and each link SHALL be at least 44 pixels tall so it can be tapped.
+
+#### Scenario: A phone
+- **WHEN** a viewer opens the site on a 390 pixel wide screen
+- **THEN** all five links are visible without scrolling sideways, and each is at least 44 pixels tall
+
+#### Scenario: A wide window
+- **WHEN** a viewer opens the site in a 1512 pixel wide window
+- **THEN** the top bar holds the name and all five links on one line, and the page's content is centered at no more than 1200 pixels wide
+
+### Requirement: The dashboard's design system
+Every page SHALL use one dark design system: a near-black background (`#0E1116`), raised panels (`#151A21`) with a fine border (`#232831`), light text (`#E6E8EB`) and muted gray labels (`#9AA3AD`). Text SHALL be set in IBM Plex Sans and figures in IBM Plex Mono, both served by the site itself. Tesla red (`#E82127`) SHALL mark the current page and indicators, and SHALL NOT be used for text smaller than 24 pixels, because it falls short of 4.5:1 contrast on the background.
+
+#### Scenario: Fonts load from the site
+- **WHEN** any page loads
+- **THEN** its text is IBM Plex Sans, its figures IBM Plex Mono, and the browser makes no request to fonts.googleapis.com or fonts.gstatic.com
+
+#### Scenario: Text is readable
+- **WHEN** any text on a page is checked against its background
+- **THEN** it has at least 4.5:1 contrast, or at least 3:1 when it is 24 pixels or larger
+
+### Requirement: The site's icon
+The site's icon SHALL be the current site's: the Tesla "T" on an orange disc that stands for the sun, always in its own colors, never recolored to the accent or a theme. It SHALL be the browser tab's icon, the home-screen icon on phones, and the icon beside the site's name in the top bar.
+
+#### Scenario: Browser tab
+- **WHEN** any page is open in a browser tab
+- **THEN** the tab shows the orange disc with the white "T"
+
+#### Scenario: Added to a phone's home screen
+- **WHEN** a viewer adds the site to an iPhone's or Android phone's home screen
+- **THEN** the shortcut uses the same icon, at the size each phone asks for
+
+### Requirement: One color per energy flow
+Wherever a page shows energy by flow, each flow SHALL keep one color: solar amber (`#FBBF24`), home blue (`#60A5FA`), Powerwall green (`#34D399`) and grid gray (`#CBD5E1` for figures, `#475569` for filled areas). The colors also differ in lightness, so the flows stay distinguishable without telling hue apart.
+
+#### Scenario: The same flow on two pages
+- **WHEN** a viewer sees solar on one page and then on another
+- **THEN** it is amber on both
+
+### Requirement: Footer
+Every page SHALL end with a footer reading "© <current year> teslasolar.report".
+
+#### Scenario: The footer's year
+- **WHEN** a page is opened in 2027
+- **THEN** its footer reads "© 2027 teslasolar.report"
+
+### Requirement: Pages not yet moved link to the live site
+Until a page's own change brings it to this app, its address SHALL show the page's name and a link to the same page on teslasolar.report, inside the frame.
+
+#### Scenario: A page not yet moved
+- **WHEN** a viewer opens `/impact` before the Impact page has moved
+- **THEN** the page says Impact is still at teslasolar.report and links to https://teslasolar.report/impact, with the top bar and footer around it

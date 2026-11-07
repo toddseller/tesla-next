@@ -1,0 +1,25 @@
+#!/bin/sh
+# Send a Pushover alert to the owner's phone: deploy/pushover TITLE FILE, with the end of FILE as the message.
+# Used by deploy/weekly-audit; the keys come from this app's .env on the server.
+set -u
+ENV_FILE=$(cd "$(dirname "$0")/.." && pwd)/.env
+
+value() {
+  sed -n "s/^$1=//p" "$ENV_FILE" 2>/dev/null | tail -n 1 | tr -d "\"'"
+}
+
+user=$(value PUSHOVER_USER)
+token=$(value PUSHOVER_TOKEN)
+if [ -z "$user" ] || [ -z "$token" ]; then
+  echo "No Pushover keys in $ENV_FILE: \"$1\" is not sent"
+  exit 1
+fi
+message=$(mktemp)
+trap 'rm -f "$message"' EXIT
+# Pushover takes at most 1024 characters of message.
+tail -c 1000 "$2" > "$message"
+# The keys go to curl on stdin, never on its command line.
+printf 'form-string = "token=%s"\nform-string = "user=%s"\n' "$token" "$user" |
+  curl -sS -o /dev/null -w "Pushover answered %{http_code}\n" -K - \
+    --form-string "title=$1" --form-string "monospace=1" \
+    -F "message=<$message" https://api.pushover.net/1/messages.json

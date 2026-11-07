@@ -1,0 +1,12 @@
+# See README.md, Weekly audit.
+[Unit]
+Description=Run the tesla-next dependency audit every Monday morning
+
+[Timer]
+# Half an hour after anton-tesla-api-ws's audit, so the two builds don't compete.
+OnCalendar=Mon *-*-* 06:30:00 America/Los_Angeles
+# A run missed while the server was off happens at the next boot.
+Persistent=true
+
+[Install]
+WantedBy=timers.target
