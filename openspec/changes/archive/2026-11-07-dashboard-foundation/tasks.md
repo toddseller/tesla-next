@@ -39,25 +39,25 @@
 ## 7. Deploy (site-serving spec)
 
 - [x] 7.1 Add `deploy/post-receive` (anton's, with tesla-next's `APP` and `REPO`); verify `sh -n deploy/post-receive` passes
-- [ ] 7.2 Ask the user first, then on onyx confirm `~/tesla-next` holds only tracked files plus `.env`, create `~/repos/tesla-next.git` with the hook, add the `server` remote locally, and push `main`; verify the push output ends "Deploy finished." and https://next.teslasolar.report shows the new shell
-- [ ] 7.3 Verify the two other deploy scenarios without breaking the site: pushing a throwaway branch prints "only main is deployed" and changes nothing (then delete the branch on the server), and `ssh onyx` `curl -s -m 3 http://192.168.40.63:3000` gets no answer
+- [x] 7.2 Ask the user first, then on onyx confirm `~/tesla-next` holds only tracked files plus `.env`, create `~/repos/tesla-next.git` with the hook, add the `server` remote locally, and push `main`; verify the push output ends "Deploy finished." and https://next.teslasolar.report shows the new shell
+- [x] 7.3 Verify the two other deploy scenarios without breaking the site: pushing a throwaway branch prints "only main is deployed" and changes nothing (then delete the branch on the server), and `ssh onyx` `curl -s -m 3 http://192.168.40.63:3000` gets no answer
 - [x] 7.4 Document deploy, rollback (`git revert` and push) and the remotes in README.md; verify the documented commands match the hook
 
 ## 8. Weekly re-audit (dependency-audit spec)
 
 - [x] 8.1 Add `deploy/weekly-audit` (builds the `test` target with a new `AUDIT_RUN`, alerts on failure, prunes like a deploy), `deploy/pushover` (keys from `~/tesla-next/.env`), and `deploy/tesla-next-weekly-audit.service` and `.timer` (Monday 06:30 America/Los_Angeles, `Persistent=true`); verify `sh -n` on both scripts and `systemd-analyze verify` on onyx
-- [ ] 8.2 Ask the user to add `PUSHOVER_USER` and `PUSHOVER_TOKEN` to `~/tesla-next/.env` on onyx and to approve one test notification; send it with `deploy/pushover`; verify the user receives it
-- [ ] 8.3 Install and enable the timer on onyx (ask first) and start one run by hand; verify it passes, sends nothing, leaves the running container untouched (same container ID before and after), and `systemctl --user list-timers` shows the next Monday
-- [ ] 8.4 Document the weekly audit in README.md; verify the install commands there are the ones just run
+- [x] 8.2 Ask the user to add `PUSHOVER_USER` and `PUSHOVER_TOKEN` to `~/tesla-next/.env` on onyx and to approve one test notification; send it with `deploy/pushover`; verify the user receives it
+- [x] 8.3 Install and enable the timer on onyx (ask first) and start one run by hand; verify it passes, sends nothing, leaves the running container untouched (same container ID before and after), and `systemctl --user list-timers` shows the next Monday
+- [x] 8.4 Document the weekly audit in README.md; verify the install commands there are the ones just run
 
 ## 9. Pre-commit hook and project docs
 
 - [x] 9.1 Add `.githooks/pre-commit` that runs `yarn vitest run` when a staged file is outside `openspec/` and isn't Markdown, and stops with a message naming the fix when `node_modules` or the PostgreSQL binaries are missing; verify a staged code change runs the tests and a staged `.md` alone doesn't
-- [ ] 9.2 Write CLAUDE.md (production database is read-only here, ask before `git push server`, `next dev` and the CSP, `AGENTS.md` comes from `next dev`) and finish README.md (stack with versions, setup, `git config core.hooksPath .githooks`, test hostname); verify every command in README.md runs as written
+- [x] 9.2 Write CLAUDE.md (production database is read-only here, ask before `git push server`, `next dev` and the CSP, `AGENTS.md` comes from `next dev`) and finish README.md (stack with versions, setup, `git config core.hooksPath .githooks`, test hostname); verify every command in README.md runs as written
 
 ## 10. End-to-end on onyx
 
-- [ ] 10.1 On https://next.teslasolar.report, with Brave Shields down for the site, open each of the five pages: no CSP violations, the beacon reports to `/cdn-cgi/rum`, fonts come only from the site, the icon shows in the tab, and the current page is marked; verify by browser console and network log, recording the result in this change's design.md
+- [x] 10.1 On https://next.teslasolar.report, with Brave Shields down for the site, open each of the five pages: no CSP violations, the beacon reports to `/cdn-cgi/rum`, fonts come only from the site, the icon shows in the tab, and the current page is marked; verify by browser console and network log, recording the result in this change's design.md
 
 ## Workflow follow-up
 

@@ -89,6 +89,16 @@ The stages are `deps` (`yarn install --frozen-lockfile`), then `test` (with `ARG
 - [Two weekly audits on onyx] → they're staggered by 30 minutes. Each one prunes the same shared cache to 5 GB, as deploys do.
 - [The first deploy goes over the spike's rsynced folder] → `checkout -f` overwrites every tracked file, and the folder holds nothing else except `.env`. Before the first push, `ls ~/tesla-next` confirms that.
 
+## End-to-end result
+
+On 2026-11-07, after the first `git push server main`, all five pages on https://next.teslasolar.report were checked in Brave with Shields down for the site:
+- each page loaded with its own tab marked as current;
+- fonts came only from `/_next/static/media`, with no request to Google, and the favicon and manifest loaded;
+- the console reported no CSP violations;
+- Cloudflare's beacon loaded (200), ran, and reported to `/cdn-cgi/rum` (204).
+
+With Shields up, Brave blocks the beacon (503) on teslasolar.report too, so that isn't a policy failure. A throwaway branch pushed to the server printed "only main is deployed" and left the container unchanged, port 3000 on onyx answers neither the network nor onyx itself, and the weekly audit passed by hand in 28 s without touching the running container.
+
 ## Migration Plan
 
 1. Create `~/repos/tesla-next.git` (`git init --bare`), install `deploy/post-receive` as its hook, add the `server` remote, and push `main`. The hook builds and replaces the spike container. `next.teslasolar.report` then shows the new shell.
