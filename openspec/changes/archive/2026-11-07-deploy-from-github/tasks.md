@@ -21,7 +21,7 @@ Code tasks are test-first: write the test, run it and see it fail for the right 
 
 ## 4. GitHub settings (after the pull request's first `test` run, before merging)
 
-- [ ] 4.1 **(owner)** Add the `main` ruleset requiring the `test` check, and turn off squash merging (merge commits only)
+- [ ] 4.1 **(owner)** Add the `main` ruleset requiring the `test` check
 - [ ] 4.2 **(owner)** Add the tag ruleset on `refs/tags/v*` (restrict creation, block update and deletion, owner bypass), and create the `production` environment limited to `v*` tags; I check the environment through the API
 
 ## 5. Server cutover (after merging)

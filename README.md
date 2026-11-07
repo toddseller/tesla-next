@@ -42,7 +42,7 @@ Every session the app opens is read-only and in UTC, so nothing here can change 
 
 The app runs on onyx (`onyx@192.168.40.63`) in `~/tesla-next`, a clone of this repository, with no published port. Its own Cloudflare tunnel container, `~/tesla-next-tunnel`, joins the compose network and Cloudflare routes `next.teslasolar.report` to `http://next:3000`. The only remote is `origin` (`git@github.com:toddseller/tesla-next.git`).
 
-Every pull request to `main` runs the `Tests` workflow. Its one job, `test`, builds the image (which audits the shipped dependencies and runs every test) and lints the workflows. The `main` ruleset requires it, and pull requests merge with merge commits only, so a change's code and archive commits land as they were made.
+Every pull request to `main` runs the `Tests` workflow. Its one job, `test`, builds the image (which audits the shipped dependencies and runs every test) and lints the workflows. The `main` ruleset requires it before a merge.
 
 ### Releasing
 

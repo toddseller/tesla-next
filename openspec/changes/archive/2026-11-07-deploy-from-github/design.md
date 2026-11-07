@@ -91,7 +91,6 @@ Lessons learned there:
    - a `production` environment limited to `v*` tags, holding the five secrets;
    - a `main` ruleset requiring the `test` check;
    - a tag ruleset on `refs/tags/v*` that restricts creation and blocks update and deletion, with the owner as the only bypass;
-   - squash merging turned off (merge commits only), so a change's code and archive commits land as they were made.
 
 The fine-grained token I use can't read rulesets or change repository settings, so I check what I can (the environment, the workflow runs), and you confirm the rest in the web UI.
 
@@ -121,7 +120,7 @@ The fine-grained token I use can't read rulesets or change repository settings, 
 ## Migration Plan
 
 1. Merge the change once its tests pass locally and its `test` check passes on the pull request. This first pull request is also the first run of `test.yml`.
-2. GitHub settings: the `main` ruleset, merge commits only, the tag ruleset and the `production` environment.
+2. GitHub settings: the `main` ruleset, the tag ruleset and the `production` environment.
 3. Cutover on onyx (above), once you say yes.
 4. Cloudflare route, Access application and token, the key, known hosts, and the five secrets.
 5. First release: you publish `v2026.11.<day>` in GitHub's web UI. We watch the run, then I check next.teslasolar.report serves that commit and `:previous` exists.

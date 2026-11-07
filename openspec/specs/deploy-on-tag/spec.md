@@ -7,7 +7,7 @@ Defines how a tagged tesla-next release reaches production without a manual push
 ## Requirements
 
 ### Requirement: Pull requests are tested before they merge
-Every pull request to `main` and every push to `main` SHALL run one check named `test`, which audits the shipped dependencies, runs every test, builds the Docker image and lints the workflows. A pull request SHALL NOT merge into `main` unless that check passed, and merges SHALL keep each commit (no squashing).
+Every pull request to `main` and every push to `main` SHALL run one check named `test`, which audits the shipped dependencies, runs every test, builds the Docker image and lints the workflows. A pull request SHALL NOT merge into `main` unless that check passed.
 
 #### Scenario: A failing test
 - **WHEN** a pull request's commit has a failing test
@@ -16,10 +16,6 @@ Every pull request to `main` and every push to `main` SHALL run one check named 
 #### Scenario: An image that doesn't build
 - **WHEN** a pull request breaks the Docker build
 - **THEN** its `test` check fails, so it can't be merged and its commit can't be deployed
-
-#### Scenario: Merging a change
-- **WHEN** a pull request with a code commit and an archive commit is merged
-- **THEN** both commits are on `main`, unchanged
 
 ### Requirement: A version tag starts a deploy
 Creating a tag named `v` followed by digits and dots (for example `v2026.11.08` or `v2026.11.08.2`) SHALL start a production deploy of that tag's commit. Other tags, branch pushes and pull requests SHALL NOT start one. Only one deploy SHALL run at a time; a deploy started while another runs SHALL wait for it.
