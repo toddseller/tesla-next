@@ -40,28 +40,57 @@ Every session the app opens is read-only and in UTC, so nothing here can change 
 
 ## Deploy
 
-```sh
-git push server main
+The app runs on onyx (`onyx@192.168.40.63`) in `~/tesla-next`, a clone of this repository, with no published port. Its own Cloudflare tunnel container, `~/tesla-next-tunnel`, joins the compose network and Cloudflare routes `next.teslasolar.report` to `http://next:3000`. The only remote is `origin` (`git@github.com:toddseller/tesla-next.git`).
+
+Every pull request to `main` runs the `Tests` workflow. Its one job, `test`, builds the image (which audits the shipped dependencies and runs every test) and lints the workflows. The `main` ruleset requires it before a merge.
+
+### Releasing
+
+Publish a GitHub release with a new tag in the form `vYYYY.MM.DD`, or `vYYYY.MM.DD.N` for another release that day, on `main`. Use the web UI: the tag ruleset rejects a `v*` tag pushed with git.
+
+The `Deploy` workflow then:
+
+```mermaid
+flowchart LR
+  R[Release tag v*] --> G{On main, and its<br/>test check passed?}
+  G -- no --> F[Fail, server untouched]
+  G -- yes --> S[SSH through Cloudflare Access<br/>ssh-deploy.teslasolar.report]
+  S --> D[bin/deploy on onyx]
+  D --> M[Fast-forward ~/tesla-next to the tag]
+  M --> P[Keep the running image<br/>as tesla-next-next:previous]
+  P --> B[Rebuild: audit, tests, build,<br/>then replace the container]
+  B -- fails --> F2[Run fails, old site keeps running]
+  B --> H{next.teslasolar.report<br/>answers 200?}
+  H -- yes --> OK[Deployed, cache trimmed]
+  H -- no --> F3[Run fails]
 ```
 
-The app runs on onyx (`onyx@192.168.40.63`) in `~/tesla-next`, with no published port. Its own Cloudflare tunnel container, `~/tesla-next-tunnel`, joins the compose network and Cloudflare routes `next.teslasolar.report` to `http://next:3000`.
+- It waits for a `test` check still running, for about 15 minutes.
+- Only one deploy runs at a time; another waits for it.
+- Each deploy reruns the dependency audit against that day's advisories, so a release that passed its `test` check can still fail on an advisory published since.
+- The deploy key can only run `bin/deploy`, and `bin/deploy` only moves the server forward to a tag on `main`. It refuses a malformed request, a dirty checkout, a moved tag and a tag behind the server.
+- A failed run can be retried with "Re-run jobs": deploying the tag the server is already on rebuilds and checks it again.
+- A deploy runs the `bin/deploy` the server had before it, so a release that changes `bin/deploy` and depends on the change is deployed twice.
 
-Two remotes:
+### Rolling back
 
-| Remote | Where | For |
-|---|---|---|
-| `origin` | `git@github.com:toddseller/tesla-next.git` | the code and its history |
-| `server` | `onyx@192.168.40.63:repos/tesla-next.git` | deploys |
-
-A push of `main` to `server` runs the bare repository's `post-receive` hook (source: `deploy/post-receive`). It checks the commit out into `~/tesla-next` and rebuilds the image with a new `AUDIT_RUN`, so the dependency audit reruns against today's advisories. Then it replaces the container and trims Docker's image and build cache. The build audits and tests before it builds, so a failing audit or test stops the deploy, and the site keeps the previous version. Other branches are never deployed.
-
-Roll back with `git revert <commit>` and a push; never force-push.
-
-Install or update the hook after changing it:
+Each deploy of a new tag keeps the image it replaced as `tesla-next-next:previous`; retrying the same tag leaves it alone. To restore it without a build:
 
 ```sh
-scp deploy/post-receive onyx@192.168.40.63:repos/tesla-next.git/hooks/post-receive
-ssh onyx@192.168.40.63 chmod +x repos/tesla-next.git/hooks/post-receive
+ssh onyx@192.168.40.63
+cd ~/tesla-next
+docker tag tesla-next-next:previous tesla-next-next:latest
+docker compose up -d --no-build
+```
+
+The checkout stays at the newer tag, so the next release deploys normally. To undo a release for good, revert it on `main` and release again; never force-push.
+
+### Deploying by hand
+
+If the workflow or the tunnel is down, deploy from the checkout on onyx over the LAN. It fast-forwards to `main`, keeps the rollback image and rebuilds with a fresh audit:
+
+```sh
+ssh onyx@192.168.40.63 'cd ~/tesla-next && git pull --ff-only && docker tag tesla-next-next:latest tesla-next-next:previous && AUDIT_RUN=$(date +%s) docker compose up -d --build'
 ```
 
 ## Dependency audit

@@ -41,18 +41,3 @@ No page SHALL break under the security headers: opening each page SHALL produce 
 #### Scenario: Opening each page
 - **WHEN** each of the five page addresses is opened in a browser with no content blockers
 - **THEN** the browser reports no CSP violations, and the beacon's report to `/cdn-cgi/rum` succeeds
-
-### Requirement: A failing deploy keeps the running site
-A push to the server's `main` SHALL deploy that commit. The deploy SHALL audit the shipped dependencies and run every test before it replaces the running app; when either fails, the push SHALL report the failure and the site SHALL keep running the previous version.
-
-#### Scenario: A passing deploy
-- **WHEN** a commit whose audit and tests pass is pushed to the server's `main`
-- **THEN** the site serves that commit within a few minutes
-
-#### Scenario: A failing test
-- **WHEN** a commit with a failing test is pushed
-- **THEN** the push output names the failing test, and the site keeps serving the previous commit
-
-#### Scenario: Another branch
-- **WHEN** a branch other than `main` is pushed to the server
-- **THEN** nothing is deployed, and the push says only `main` is deployed

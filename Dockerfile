@@ -10,10 +10,11 @@ RUN yarn install --frozen-lockfile
 # The weekly audit builds this stage alone.
 FROM deps AS test
 USER root
-RUN apk add --no-cache postgresql18
+# bash and git for the bin/deploy test, which runs the real script against throwaway repositories.
+RUN apk add --no-cache postgresql18 bash git
 USER node
 COPY --chown=node:node . .
-# deploy/post-receive and deploy/weekly-audit pass a new value, so the audit reruns against
+# bin/deploy and deploy/weekly-audit pass a new value, so the audit reruns against
 # today's advisories even when nothing above it changed and Docker would reuse its result.
 ARG AUDIT_RUN
 # Build-tool advisories are listed but never fail the build; a high or critical one in a

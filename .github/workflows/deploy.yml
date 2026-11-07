@@ -1,0 +1,69 @@
+name: Deploy
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: read
+  checks: read
+
+# A second tag waits for the running deploy rather than cancelling it halfway through.
+concurrency:
+  group: production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    # The environment only admits v* tags, so runs from branches and pull requests never see its secrets.
+    environment: production
+
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Check the tag is a tested commit on main
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          [[ "$TAG" =~ ^v[0-9]+(\.[0-9]+)*$ ]] || { echo "::error::$TAG is not a version tag"; exit 1; }
+          sha="$(git rev-parse "$TAG^{commit}")"
+          git merge-base --is-ancestor "$sha" origin/main || { echo "::error::$TAG ($sha) is not on main"; exit 1; }
+          # A tag pushed right after a merge can arrive while that commit's tests are still running;
+          # the test check is the workflow's last job, so until the others finish it doesn't exist yet.
+          for _ in $(seq 45); do
+            state="$(gh api "repos/$GITHUB_REPOSITORY/commits/$sha/check-runs?check_name=test" \
+              --jq '.check_runs | sort_by(.started_at) | last | if . == null then "missing" elif .status != "completed" then "running" else .conclusion end')"
+            [[ "$state" == running || "$state" == missing ]] || break
+            sleep 20
+          done
+          [[ "$state" == success ]] || { echo "::error::the test check for $sha is $state"; exit 1; }
+          echo "$TAG is $sha on main, tests passed"
+
+      - name: Install cloudflared
+        run: |
+          curl -fsSL -o "$RUNNER_TEMP/cloudflared.deb" https://github.com/cloudflare/cloudflared/releases/download/2026.10.3/cloudflared-linux-amd64.deb
+          sudo dpkg -i "$RUNNER_TEMP/cloudflared.deb"
+
+      - name: Deploy through the tunnel
+        env:
+          TAG: ${{ github.ref_name }}
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+          # <user>@ssh-deploy.teslasolar.report, kept as a secret so the server's username isn't in this public repo.
+          DEPLOY_SSH_TARGET: ${{ secrets.DEPLOY_SSH_TARGET }}
+          # cloudflared reads the Access service token from these, which keeps it off the command line.
+          TUNNEL_SERVICE_TOKEN_ID: ${{ secrets.CF_ACCESS_CLIENT_ID }}
+          TUNNEL_SERVICE_TOKEN_SECRET: ${{ secrets.CF_ACCESS_CLIENT_SECRET }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          ssh -i ~/.ssh/deploy_key -o IdentitiesOnly=yes -o BatchMode=yes \
+            -o StrictHostKeyChecking=yes -o UserKnownHostsFile="$HOME/.ssh/known_hosts" \
+            -o ProxyCommand='cloudflared access ssh --hostname %h' \
+            "$DEPLOY_SSH_TARGET" "deploy $TAG"
