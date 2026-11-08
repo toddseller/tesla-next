@@ -60,3 +60,41 @@ test("the picker offers nothing before the first day of service or after two yea
   expect(dayButton(/November 7th, 2028/).disabled).toBe(false);
   expect(dayButton(/November 8th, 2028/).disabled).toBe(true);
 });
+
+// The True-Up Tracker's year picker: older years in an Earlier menu, before the last preset.
+const year = (end: number) => ({ label: `'${String(end - 1).slice(2)} - '${String(end).slice(2)}`, range: { start: `${end - 1}-10-01`, end: `${end}-09-30` } });
+const yearPresets = [{ label: "This year", range: year(2027).range }, year(2026), year(2025), { label: "All time", range: { start: "2021-10-01", end: "2027-09-30" } }];
+const earlier = [year(2024), year(2023), year(2022)];
+const earlierButton = () => screen.getByRole("button", { name: /earlier|'2\d - '2\d/i, expanded: false });
+
+test("the Earlier menu sits before the last preset and lists the older years in order", () => {
+  render(<RangeControls range={year(2027).range} presets={yearPresets} earlier={earlier} onRange={() => {}} />);
+  const group = screen.getByRole("group", { name: "Preset ranges" });
+  expect([...group.querySelectorAll("button")].map((b) => b.textContent)).toEqual(["This year", "'25 - '26", "'24 - '25", "Earlier", "All time"]);
+  expect(earlierButton().getAttribute("aria-pressed")).toBe("false");
+  act(() => fireEvent.click(earlierButton()));
+  expect(screen.getAllByRole("menuitemradio").map((item) => item.textContent)).toEqual(["'23 - '24", "'22 - '23", "'21 - '22"]);
+});
+
+test("picking an earlier year sets its range and closes the menu", () => {
+  const onRange = vi.fn();
+  render(<RangeControls range={year(2027).range} presets={yearPresets} earlier={earlier} onRange={onRange} />);
+  act(() => fireEvent.click(earlierButton()));
+  act(() => fireEvent.click(screen.getByRole("menuitemradio", { name: "'22 - '23" })));
+  expect(onRange).toHaveBeenCalledWith({ start: "2022-10-01", end: "2023-09-30" });
+  expect(screen.queryByRole("menu")).toBeNull();
+});
+
+test("an earlier year that holds the shown range names the button, which is marked", () => {
+  render(<RangeControls range={year(2023).range} presets={yearPresets} earlier={earlier} onRange={() => {}} />);
+  expect(earlierButton().textContent).toBe("'22 - '23");
+  expect(earlierButton().getAttribute("aria-pressed")).toBe("true");
+  act(() => fireEvent.click(earlierButton()));
+  expect(screen.getByRole("menuitemradio", { name: "'22 - '23" }).getAttribute("aria-checked")).toBe("true");
+  expect(screen.getByRole("menuitemradio", { name: "'21 - '22" }).getAttribute("aria-checked")).toBe("false");
+});
+
+test("without earlier years there is no menu", () => {
+  render(<RangeControls range={october} presets={presets("2026-11-07")} onRange={() => {}} />);
+  expect(screen.queryByRole("button", { name: /earlier/i })).toBeNull();
+});

@@ -24,7 +24,7 @@ const kwh = (value: number) => `${value.toLocaleString("en-US", { minimumFractio
 const RADIUS = 4;
 
 // A rectangle whose top and bottom corners round only where its section ends the bar.
-function roundedRect(x: number, top: number, width: number, height: number, roundTop: boolean, roundBottom: boolean) {
+export function roundedRect(x: number, top: number, width: number, height: number, roundTop: boolean, roundBottom: boolean) {
   const r = Math.min(RADIUS, width / 2, height / 2);
   const [t, b] = [roundTop ? r : 0, roundBottom ? r : 0];
   const bottom = top + height;

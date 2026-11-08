@@ -27,8 +27,8 @@ Code tasks are test-first: write or port the test, run it and see it fail for th
 
 ## 5. Release and checks (after merging)
 
-- [ ] 5.1 **(owner)** Publish a release; I watch the Deploy run
-- [ ] 5.2 On next.teslasolar.report: run `scripts/compare-impact.mjs` on onyx with zero mismatches; a `totals` event updates today's figures in place; side by side with teslasolar.report/impact for today, October 2026 and the 2025 to 2026 true-up year; record the results in the design
+- [x] 5.1 **(owner)** Publish a release; I watch the Deploy run
+- [x] 5.2 On next.teslasolar.report: run `scripts/compare-impact.mjs` on onyx with zero mismatches; a `totals` event updates today's figures in place; side by side with teslasolar.report/impact for today, October 2026 and the 2025 to 2026 true-up year; record the results in the design
 
 ## Workflow follow-up
 

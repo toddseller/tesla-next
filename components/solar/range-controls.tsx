@@ -1,7 +1,7 @@
 "use client";
 
-import { CalendarDays } from "lucide-react";
-import { useState } from "react";
+import { CalendarDays, ChevronDown } from "lucide-react";
+import { Fragment, useState } from "react";
 
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -15,7 +15,37 @@ const lastPickable = () => {
   return new Date(now.getFullYear() + 2, now.getMonth(), now.getDate());
 };
 
-export function RangeControls({ range, presets, onRange }: { range: Range; presets: Preset[]; onRange: (range: Range) => void }) {
+const holds = (preset: Preset, range: Range) => preset.range.start === range.start && preset.range.end === range.end;
+
+const presetStyle = (selected: boolean) =>
+  `min-h-10 whitespace-nowrap rounded-md px-3.5 text-sm font-medium ${selected ? "bg-secondary text-white shadow-[inset_0_-2px_0_var(--primary)]" : "text-muted-foreground hover:text-foreground"}`;
+
+// Older true-up years, so the row keeps its size as years pass; an earlier year picked names the button.
+function EarlierMenu({ range, years, onRange }: { range: Range; years: Preset[]; onRange: (range: Range) => void }) {
+  const [open, setOpen] = useState(false);
+  const picked = years.find((year) => holds(year, range));
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <button type="button" aria-haspopup="menu" aria-pressed={Boolean(picked)} className={`flex items-center justify-center gap-1.5 ${presetStyle(Boolean(picked))}`}>
+          {picked?.label ?? "Earlier"}
+          <ChevronDown size={14} aria-hidden />
+        </button>
+      </PopoverTrigger>
+      <PopoverContent role="menu" aria-label="Earlier true-up years" className="flex w-44 flex-col border-input p-1 shadow-xl shadow-black/45">
+        {years.map((year) => (
+          <button key={year.label} type="button" role="menuitemradio" aria-checked={year === picked}
+            onClick={() => { onRange(year.range); setOpen(false); }}
+            className={`min-h-9 rounded-md px-2.5 text-left font-mono text-sm whitespace-nowrap ${year === picked ? "bg-secondary text-white" : "hover:bg-secondary"}`}>
+            {year.label}
+          </button>
+        ))}
+      </PopoverContent>
+    </Popover>
+  );
+}
+
+export function RangeControls({ range, presets, earlier, onRange }: { range: Range; presets: Preset[]; earlier?: Preset[]; onRange: (range: Range) => void }) {
   const [open, setOpen] = useState(false);
   const [first, setFirst] = useState<string | null>(null);
   const onOpen = (value: boolean) => {
@@ -32,15 +62,15 @@ export function RangeControls({ range, presets, onRange }: { range: Range; prese
   return (
     <div className="flex flex-wrap items-center gap-2">
       <div role="group" aria-label="Preset ranges" className="grid grid-cols-3 gap-0.5 rounded-lg border border-input bg-card p-[3px] max-sm:w-full sm:flex">
-        {presets.map(({ label, range: preset }) => {
-          const selected = preset.start === range.start && preset.end === range.end;
-          return (
-            <button key={label} type="button" aria-pressed={selected} onClick={() => onRange(preset)}
-              className={`min-h-10 rounded-md px-3.5 text-sm font-medium ${selected ? "bg-secondary text-white shadow-[inset_0_-2px_0_var(--primary)]" : "text-muted-foreground hover:text-foreground"}`}>
-              {label}
+        {presets.map((preset, i) => (
+          <Fragment key={preset.label}>
+            {/* The menu goes before the last preset, which for the true-up years is All time. */}
+            {earlier && i === presets.length - 1 && <EarlierMenu range={range} years={earlier} onRange={onRange} />}
+            <button type="button" aria-pressed={holds(preset, range)} onClick={() => onRange(preset.range)} className={presetStyle(holds(preset, range))}>
+              {preset.label}
             </button>
-          );
-        })}
+          </Fragment>
+        ))}
       </div>
       <Popover open={open} onOpenChange={onOpen}>
         <PopoverTrigger asChild>

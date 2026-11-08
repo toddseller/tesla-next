@@ -39,3 +39,11 @@ See proposal.md for why. The Solar page (change 3) already provides almost every
 ## Migration Plan
 
 Merging deploys nothing. After the release (published by you), run `scripts/compare-impact.mjs` on onyx against both apps directly, the way README describes for `compare-range.mjs`, and compare the page side by side with teslasolar.report/impact. Rollback is the existing `tesla-next-next:previous` image; teslasolar.report keeps its Impact page until change 7.
+
+## Rollout (2026-11-08)
+
+- **Before merging:** `scripts/compare-impact.mjs` found no mismatch over its 156 ranges between Flask and a build of the branch, run on onyx in throwaway containers that were removed afterwards. Locally under `yarn build && yarn start`, on a throwaway database seeded with October 18 and November 8, the production CSP was in force (no `'unsafe-eval'`, framing denied) with no console messages. Chrome's window would not resize below 1680 pixels, so the layouts were checked with Playwright's headless Chromium: one column at 375 pixels with nothing past the edge, side by side at 1024 and 1440, matching mockup A. In Chrome, `/impact` opened on today with Today marked, This week pushed `?start=2026-11-08&end=2026-11-14`, and the picker pushed November 2 to 5. The review's two findings, the ring not closing when the shares round to 99 or 101 and the compare loop copied between the two scripts, were fixed test-first.
+- **Release `v2026.11.08.2`** passed the gate and rebuilt on onyx with its 912 tests passing; `/impact` and `/api/impact` answered 200 from 15:07 UTC.
+- **Parity:** against the deployed app, run on onyx against the apps directly, `scripts/compare-impact.mjs` found no mismatch over 156 ranges, and `scripts/compare-range.mjs` none over 94, so the shared compare loop left the Solar page's check as it was.
+- **Staying current:** with today open, `/api/impact` reloaded at 15:10:30 (200) and home use moved from 9.4 to 9.5 kWh, with no page reload.
+- **Side by side with Flask:** the ten figures were equal on both sites for today (0% self-powered, 100% grid, 9.4 kWh home at 7:08 AM, which Flask reported too), October 2026 (62% self-powered; 26% solar, 36% Powerwall, 38% grid; 77% offset; 1,086.5 kWh solar, 1,419.1 kWh home) and the 2025 to 2026 true-up year (60%; 36%, 24%, 40%; 89%; 14,363.0 kWh, 16,051.3 kWh).

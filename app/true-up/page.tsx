@@ -1,5 +1,17 @@
-import { NotMovedYet } from "@/components/not-moved-yet";
+import { TrueUpPage } from "@/components/true-up/true-up-page";
+import { siteToday } from "@/lib/scene/replay";
+import { parseRange } from "@/lib/solar/ranges";
+import { cycleRows, trueUpCost } from "@/lib/true-up/cost";
+import { trueUpYears } from "@/lib/true-up/reads";
 
-export default function Page() {
-  return <NotMovedYet name="True-Up Tracker" path="/true-up" />;
+// The range lives in the address, so a link or a reload shows the same page, rendered with its data. The current true-up
+// year turns over on the October read, as Flask's does.
+export default async function Page({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
+  const today = siteToday();
+  const years = await trueUpYears(today);
+  const current = years.at(-1)!;
+  const range = parseRange(await searchParams, { start: current.start_date, end: current.end_date });
+  const year = years.some((y) => y.start_date === range.start && y.end_date === range.end);
+  const [cycles, cost] = await Promise.all([cycleRows(range.start, range.end), year ? trueUpCost(range.start, range.end, today) : null]);
+  return <TrueUpPage range={range} years={years} cycles={cycles} cost={cost} today={today} />;
 }
