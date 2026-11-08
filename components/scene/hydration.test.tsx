@@ -2,7 +2,7 @@
 // The server renders the Distribution page and the browser hydrates that HTML: both renders must agree, or React
 // throws the page away and renders it again in the browser.
 import { act } from "@testing-library/react";
-import { hydrateRoot } from "react-dom/client";
+import { hydrateRoot, type Root } from "react-dom/client";
 import { renderToString } from "react-dom/server";
 import { afterEach, expect, test, vi } from "vitest";
 
@@ -20,6 +20,10 @@ vi.mock("@/components/scene/cloud-renderer", () => ({ createCloudRenderer: () =>
 const reduceMotion = (on: boolean) =>
   vi.stubGlobal("matchMedia", (query: string) => ({ matches: on && query === "(prefers-reduced-motion: reduce)", addEventListener: () => {}, removeEventListener: () => {} }));
 
+// Unmounted after each test: a mounted page keeps its clock and animation running, and a render they trigger after
+// the file's jsdom is gone throws "window is not defined".
+const roots: Root[] = [];
+
 // Renders as the server would, then hydrates in the browser after `between` runs, collecting React's complaints.
 function serveThenHydrate(renderedAt: number, between: () => void) {
   const page = <Distribution initialStatus={null} search={{}} renderedAt={renderedAt} />;
@@ -29,12 +33,13 @@ function serveThenHydrate(renderedAt: number, between: () => void) {
   between();
   const errors: unknown[] = [];
   act(() => {
-    hydrateRoot(container, page, { onRecoverableError: (error) => errors.push(error) });
+    roots.push(hydrateRoot(container, page, { onRecoverableError: (error) => errors.push(error) }));
   });
   return errors;
 }
 
 afterEach(() => {
+  act(() => roots.splice(0).forEach((root) => root.unmount()));
   vi.unstubAllGlobals();
   vi.useRealTimers();
   document.body.innerHTML = "";
