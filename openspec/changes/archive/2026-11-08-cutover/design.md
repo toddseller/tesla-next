@@ -9,7 +9,7 @@ tesla-next already serves every address anton's site has (`/`, `/impact`, `/dist
 ## Goals / Non-Goals
 
 **Goals:**
-- teslasolar.report moves to tesla-next with a one-step rollback for a week.
+- teslasolar.report moves to tesla-next with a one-step rollback through the soak.
 - Every address a visitor may have saved keeps working after the switch.
 
 **Non-Goals:**
@@ -23,9 +23,9 @@ tesla-next already serves every address anton's site has (`/`, `/impact`, `/dist
 ```mermaid
 flowchart TD
   A["7a released<br/>(/numbers redirect, README)"] --> B["Switch (you, in Cloudflare):<br/>teslasolar.report -> tesla-next-tunnel"]
-  B --> C["Soak, one week:<br/>anton untouched, next. still answers"]
+  B --> C["Soak, one night:<br/>anton untouched, next. still answers"]
   C -->|"a problem"| R["Rollback: route back to tsr-tunnel"]
-  C -->|"a quiet week"| D["anton companion change:<br/>retire REST, Socket.IO, nginx,<br/>React app and tsr-tunnel;<br/>keep the scheduler, pg_notify, vehicle"]
+  C -->|"a quiet night"| D["anton companion change:<br/>retire REST, Socket.IO, nginx,<br/>React app and tsr-tunnel;<br/>keep the scheduler, pg_notify, vehicle"]
   D --> E["7b here: delete compare scripts and parity notes,<br/>health check -> teslasolar.report,<br/>next. -> Cloudflare redirect (you)"]
 ```
 
@@ -48,8 +48,8 @@ During the soak I check, on the switched site, what only time shows: a `totals` 
 1. Merge and release this change (you); the deploy checks next.teslasolar.report as before.
 2. Switch (you): in Cloudflare, teslasolar.report's public hostname moves from `tsr-tunnel` to `tesla-next-tunnel`, service `http://next:3000`.
 3. I check teslasolar.report: every page answers 200 without a CSP violation, `/numbers` lands on `/true-up`, a replay link opens, and the live stream connects.
-4. Soak for a week. Rollback at any point: move the hostname back to `tsr-tunnel`, service `http://nginx:80`.
-5. After a quiet week: anton's companion change, then 7b.
+4. Soak for one night (shortened from a week on November 8, 2026; see Rollout). Rollback at any point: move the hostname back to `tsr-tunnel`, service `http://nginx:80`.
+5. After a quiet night: anton's companion change, then 7b.
 
 ## Rollout
 
@@ -57,3 +57,4 @@ During the soak I check, on the switched site, what only time shows: a `totals` 
 - **Release `v2026.11.08.6`** passed the gate and its Deploy run finished at 19:46 UTC; next.teslasolar.report answered `/numbers` with a 308 to `/true-up`.
 - **The switch (November 8, 2026):** `tsr-tunnel` had only `teslasolar.report` → `http://nginx:80`; the hostname moved to `tesla-next-tunnel` (`91e5b077-1af0-4e85-957c-d94bb6586fdc`), service `http://next:3000`, beside `next.teslasolar.report` and `ssh-deploy.teslasolar.report`. `www.teslasolar.report` has no record, so nothing else moved.
 - **On teslasolar.report after the switch:** `/`, `/impact`, `/distribution`, `/true-up` and `/top` answered 200 with tesla-next's per-request nonce CSP, and `/numbers` a 308 to `/true-up`, which opened the True-Up Tracker with "True-Up" marked. No page logged a console message; headless Chromium's software WebGL printed its own GL driver warnings on Distribution, and in Chrome with a GPU the page logged nothing. `/distribution?at=2026-11-07T12:30` opened paused (Play shown, `at` kept). With the Solar page open, a `totals` event for 2026-11-08 at 20:00 UTC refetched `/api/range?start_date=2026-11-01&end_date=2026-11-30` (200) without reloading the page. On onyx against Flask directly, every compare script found no mismatch: the top ten, 22 true-up ranges (twice), 156 impact ranges, 94 ranges and 1,866 interval dates.
+- **The soak, shortened to one night (decided November 8, 2026):** the checks after the switch had already covered every page, the live stream, a `totals` reload and all five compare scripts. What a week added was only a longer stretch of the seconds-long rollback; the month turning over (December 1) falls outside a week anyway. What one night still shows: the `totals` event after 00:15 Pacific's `finish_yesterday` reloading yesterday on teslasolar.report, and tesla-next's memory on onyx not growing overnight with its live-stream connections. If both are quiet the next morning, anton's companion change goes ahead, with deleting `tsr-tunnel`'s tunnel in Cloudflare left as its last step, so a rollback until then is redeploying anton's previous commit and moving the route back.
