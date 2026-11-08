@@ -20,17 +20,18 @@ const ten = <T>(rows: T[], shown: (row: T) => number, date: (row: T) => string) 
 
 const net = `coalesce(${gridIn}, 0::integer) - ${gridOut}`;
 
-export async function topTen(): Promise<TopTen> {
+export async function topTen(withVpp = true): Promise<TopTen> {
+  const kept = withVpp ? "true" : "NOT data.is_vpp";
   const [solar, days, months] = await Promise.all([
     db.query<{ date: string; solar_generated: number }>(
       `SELECT date, solar_generated FROM data WHERE solar_generated >=
          (SELECT min(v) FROM (SELECT solar_generated AS v FROM data WHERE solar_generated IS NOT NULL ORDER BY v DESC LIMIT 10) t) - 0.1`,
     ),
     db.query<DayRow>(
-      `SELECT ${dayColumns} FROM data WHERE ${net} <= (SELECT max(v) FROM (SELECT ${net} AS v FROM data ORDER BY v LIMIT 10) t) + 0.1`,
+      `SELECT ${dayColumns} FROM data WHERE ${kept} AND ${net} <= (SELECT max(v) FROM (SELECT ${net} AS v FROM data WHERE ${kept} ORDER BY v LIMIT 10) t) + 0.1`,
     ),
     db.query<{ month: string; net: number }>(
-      `WITH months AS (SELECT substr(data.date, 1, 7) AS month, sum(coalesce(${gridIn}, 0::integer)) - sum(${gridOut}) AS net FROM data GROUP BY month)
+      `WITH months AS (SELECT substr(data.date, 1, 7) AS month, sum(coalesce(${gridIn}, 0::integer)) - sum(${gridOut}) AS net FROM data WHERE ${kept} GROUP BY month)
        SELECT month, net FROM months WHERE net <= (SELECT max(net) FROM (SELECT net FROM months ORDER BY net LIMIT 10) t) + 0.1`,
     ),
   ]);

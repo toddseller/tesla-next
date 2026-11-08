@@ -1,12 +1,15 @@
 // @vitest-environment jsdom
 // The Top Ten page staying current, from the top-ten spec.
-import { act, cleanup, render, screen } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 
-import { EXPORT_DAYS, TOP_TEN } from "@/components/top-ten/fixtures";
+import { EXPORT_DAYS, TOP_TEN, WITHOUT_VPP } from "@/components/top-ten/fixtures";
 import { TopTenPage } from "@/components/top-ten/top-ten-page";
 import type { TopTen } from "@/lib/top-ten";
 import { FakeStream } from "@/test/fake-event-source";
+
+const router = vi.hoisted(() => ({ replace: vi.fn() }));
+vi.mock("next/navigation", () => ({ useRouter: () => router }));
 
 // Today's totals make November 8, 2026 the best export day.
 const NEW_RECORD: TopTen = [TOP_TEN[0], { net_grid: [{ date: "Nov 8, 2026", net_grid: -61.2, day: "2026-11-08" }, ...EXPORT_DAYS.slice(0, 9)] }, TOP_TEN[2]];
@@ -36,14 +39,14 @@ const settle = () => act(() => new Promise((resolve) => setTimeout(resolve, 0)))
 const exportRecord = () => screen.getByRole("region", { name: "Best export day" }).textContent;
 
 test("the served rankings show with no request of their own", async () => {
-  render(<TopTenPage topTen={TOP_TEN} today="2026-11-08" />);
+  render(<TopTenPage topTen={TOP_TEN} withVpp today="2026-11-08" />);
   await settle();
   expect(fetches).toEqual([]);
   expect(exportRecord()).toContain("Thursday, May 30, 2024");
 });
 
 test("a totals event reloads the rankings in place", async () => {
-  render(<TopTenPage topTen={TOP_TEN} today="2026-11-08" />);
+  render(<TopTenPage topTen={TOP_TEN} withVpp today="2026-11-08" />);
   FakeStream.opened[0].send({ date: "2026-11-08" }, "totals");
   await settle();
   expect(fetches).toEqual(["/api/top-ten"]);
@@ -51,7 +54,7 @@ test("a totals event reloads the rankings in place", async () => {
 });
 
 test("a stream that opens again after it was lost reloads them", async () => {
-  render(<TopTenPage topTen={TOP_TEN} today="2026-11-08" />);
+  render(<TopTenPage topTen={TOP_TEN} withVpp today="2026-11-08" />);
   const stream = FakeStream.opened[0];
   stream.connect();
   expect(fetches).toEqual([]);
@@ -64,9 +67,30 @@ test("a stream that opens again after it was lost reloads them", async () => {
 
 test("a failed reload keeps the rankings shown", async () => {
   failing = true;
-  render(<TopTenPage topTen={TOP_TEN} today="2026-11-08" />);
+  render(<TopTenPage topTen={TOP_TEN} withVpp today="2026-11-08" />);
   FakeStream.opened[0].send({ date: "2026-11-08" }, "totals");
   await settle();
   expect(fetches).toEqual(["/api/top-ten"]);
   expect(exportRecord()).toContain("Thursday, May 30, 2024");
+});
+
+const pressed = () => screen.getAllByRole("button").filter((b) => b.getAttribute("aria-pressed") === "true").map((b) => b.textContent);
+
+test("without VPP events, the switch, the footnote and a reload say so", async () => {
+  render(<TopTenPage topTen={WITHOUT_VPP} withVpp={false} today="2026-11-08" />);
+  expect(pressed()).toEqual(["Without VPP events"]);
+  screen.getByText(/The export rankings leave out VPP event days, when Tesla discharged the Powerwalls to the grid for PG&E\./);
+  fireEvent.click(screen.getByRole("button", { name: "With VPP events" }));
+  expect(router.replace).toHaveBeenLastCalledWith("/top?vpp=with");
+  FakeStream.opened[0].send({ date: "2026-11-08" }, "totals");
+  await settle();
+  expect(fetches).toEqual(["/api/top-ten?vpp=without"]);
+});
+
+test("with VPP events, the switch and the footnote say so, and Without goes back to /top", () => {
+  render(<TopTenPage topTen={TOP_TEN} withVpp today="2026-11-08" />);
+  expect(pressed()).toEqual(["With VPP events"]);
+  screen.getByText(/The export rankings include VPP event days, when Tesla discharged the Powerwalls to the grid for PG&E\./);
+  fireEvent.click(screen.getByRole("button", { name: "Without VPP events" }));
+  expect(router.replace).toHaveBeenLastCalledWith("/top");
 });
