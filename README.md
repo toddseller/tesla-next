@@ -9,7 +9,7 @@ What each part does, exactly, is in [`openspec/specs/`](openspec/specs/); the re
 | Layer | Tech | Pinned in |
 |---|---|---|
 | App | Node 24, Next.js 16 (app router, standalone output), React 19, TypeScript 6 | `.nvmrc`, `package.json`, `Dockerfile` |
-| UI | Tailwind 4, shadcn/ui, IBM Plex Sans and Mono through `next/font` | `package.json` |
+| UI | Tailwind 4, shadcn/ui (Radix, `react-day-picker`, `lucide-react` icons), IBM Plex Sans and Mono through `next/font` | `package.json` |
 | Database | PostgreSQL 18 at 192.168.40.5 through `pg`, read-only (a throwaway PostgreSQL 18 in tests) | `package.json` |
 | Tests | Vitest, Testing Library, jsdom | `package.json` |
 | Serving | onyx in Docker, behind its own Cloudflare tunnel | `docker-compose.yml`, `deploy/` |
@@ -37,6 +37,19 @@ Settings live in `.env` at the repository root, never committed; `.env.example` 
 | `PUSHOVER_TOKEN` | optional | Pushover application API token; without both, nothing is sent |
 
 Every session the app opens is read-only and in UTC, so nothing here can change the data the API writes. The database accepts `tsr_app` only from onyx, so a local `next dev` can't read production; pages that need the database work on onyx.
+
+## What the app reads
+
+anton-tesla-api-ws stays the writer: its scheduler reads Tesla and the weather and stores them. This app only reads.
+
+- **Live status** (`/api/live`, a server-sent event stream). Flask sends each live status as a `pg_notify` on `live_status` about every 10 seconds, and each day whose totals it stores on `totals_updated`. One `LISTEN` connection in the server (`lib/live.ts`, started from `instrumentation.ts`) keeps the latest status and forwards both to every open page: live status as plain messages, totals as `event: totals`. The Distribution page is rendered with the latest status, so its labels show values before any script runs.
+- **A day's history** (`/api/intervals?date=YYYY-MM-DD`), which the Distribution page replays: a TypeScript port of Flask's `/api/v2/intervals` (`lib/intervals/`), reading `energy_interval`, `battery_sample`, `vehicle_interval`, `charge_session`, `weather_sample` and the car names anton keeps in `vehicle`. Until Flask's endpoint is retired, both must return the same JSON for every date:
+
+  ```sh
+  node scripts/compare-intervals.mjs [first-date] [last-date]   # teslasolar.report vs next.teslasolar.report
+  ```
+
+  It prints each mismatch's date and first differing field, and exits non-zero on any.
 
 ## Deploy
 
@@ -128,6 +141,8 @@ yarn vitest run
 ```
 
 Every test runs everywhere: locally, in the pre-commit hook and in the Docker build. Tests that need a database get their own: a throwaway PostgreSQL 18 started for the run, on a Unix socket in a temporary directory, removed when the run ends. They never touch production.
+
+The throwaway database is loaded with `test/schema.sql`, the production schema of the tables `/api/intervals` reads; its header says how to regenerate it after anton-tesla-api-ws changes them.
 
 It needs PostgreSQL 18's binaries. On the Mac, `brew install postgresql@18` (the tests find Homebrew's copy; `pg_config` on the PATH may belong to an older version). Anywhere else, put them on the PATH or point `PG_BIN` at their folder:
 

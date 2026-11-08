@@ -8,11 +8,17 @@
     "test": "vitest"
   },
   "dependencies": {
+    "class-variance-authority": "0.7.1",
+    "cn": "0.5.2",
+    "date-fns": "4.4.0",
+    "lucide-react": "1.70.0",
     "next": "16.4.5",
     "pg": "8.23.1",
     "pg-connection-string": "2.14.1",
     "pgpass": "1.0.5",
+    "radix-ui": "1.8.1",
     "react": "19.3.1",
+    "react-day-picker": "10.0.2",
     "react-dom": "19.3.1"
   },
   "devDependencies": {
@@ -22,6 +28,7 @@
     "@types/node": "24.19.2",
     "@types/pg": "8.23.1",
     "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
     "jsdom": "31.0.0",
     "shadcn": "4.23.0",
     "tailwindcss": "4.3.5",

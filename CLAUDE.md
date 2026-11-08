@@ -9,6 +9,9 @@ Facts that change how to work in this repo. What the app is, setup and env vars:
 - The CSP allows `'unsafe-eval'` only when `NODE_ENV` is `development` (`lib/csp.ts`). A page that works in `yarn dev` can still break under the production policy, so check new pages with `yarn build && yarn start` too.
 - The pages are rendered per request (`dynamic = "force-dynamic"` in the layout) because the CSP nonce is per request. Don't make a page static.
 - Never commit `.env` files, and never print the database password or Pushover keys, including in command output.
+- The Distribution page is a port of anton-tesla-api-ws's, its behavior specified by the specs copied from there (`live-flow-scene`, `scene-weather`, `scene-replay`, `day-intervals`). Change behavior through those specs, and keep `/api/intervals` answering exactly as Flask's `/api/v2/intervals` until change 7 retires it (`scripts/compare-intervals.mjs`).
+- Next.js gives `instrumentation.ts`, pages and route handlers each their own copy of a module, so `lib/live.ts` keeps its state on `globalThis`. Keep it there, or the listener the server starts isn't the one pages read.
+- Install and add packages under Node 24 (`nvm use`): `jsdom` refuses Node 25, and `yarn add` fails under it.
 
 ## Working rules
 

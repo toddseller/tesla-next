@@ -14,11 +14,14 @@ const fromPasswordFile = () =>
 
 // This reads the production database the API writes to; a stray write must fail, not land.
 // UTC like the API's sessions, whatever the server's default zone.
-export const db = new Pool({
+// Shared with the live status listener (lib/live.ts), so it gets the same read-only, UTC session.
+export const connection = {
   ...target,
   password: password || fromPasswordFile,
   options: "-c default_transaction_read_only=on -c timezone=UTC",
-});
+};
+
+export const db = new Pool(connection);
 
 // An idle connection broken by a database restart must not take the app down; the pool reconnects on the next query.
 db.on("error", (error) => console.error("database connection lost:", error.message));
