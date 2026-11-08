@@ -1,19 +1,18 @@
--- The production schema of the tables lib/intervals reads, loaded into the tests' throwaway PostgreSQL by
--- test/postgres.ts. anton-tesla-api-ws owns these tables and changes them; regenerate after it does, on onyx:
+-- The production schema of the tables lib/intervals and lib/range read, loaded into the tests' throwaway PostgreSQL
+-- by test/postgres.ts. anton-tesla-api-ws owns these tables and changes them; regenerate after it does, on onyx:
 --
 --   pg_dump --schema-only --no-owner --no-privileges -t energy_interval -t battery_sample -t vehicle_interval \
---     -t charge_session -t weather_sample -t vehicle "$DATABASE_URL"
+--     -t charge_session -t weather_sample -t vehicle -t data -t meter_day "$DATABASE_URL"
 --
 -- run as anton's backup job runs pg_dump (deploy/backup-database there), then drop pg_dump's \restrict and
--- \unrestrict lines. Dumped 2026-11-07, at anton-tesla-api-ws 9a61314.
-
+-- \unrestrict lines. Dumped 2026-11-08, at anton-tesla-api-ws 86714a1.
 --
 -- PostgreSQL database dump
 --
 
 
 -- Dumped from database version 18.6 (Debian 18.6-1.pgdg13+2)
--- Dumped by pg_dump version 18.6 (Debian 18.6-1.pgdg13+2)
+-- Dumped by pg_dump version 18.6
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -54,6 +53,57 @@ CREATE TABLE public.charge_session (
 
 
 --
+-- Name: data; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.data (
+    id integer NOT NULL,
+    date character varying(30),
+    billing_cycle character varying(6),
+    solar_generated real,
+    from_grid real,
+    to_grid real,
+    from_powerwall real,
+    powerwall_from_grid real,
+    powerwall_from_solar real,
+    house_from_grid real,
+    house_from_solar real,
+    house_from_powerwall real,
+    total_house_usage real,
+    battery_percentage integer,
+    battery_status character varying(11),
+    load_power real,
+    solar_power real,
+    grid_power real,
+    battery_power real,
+    created timestamp with time zone,
+    modified timestamp with time zone,
+    powerwall_to_grid double precision DEFAULT 0 NOT NULL,
+    is_vpp boolean DEFAULT false NOT NULL
+);
+
+
+--
+-- Name: data_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.data_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: data_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.data_id_seq OWNED BY public.data.id;
+
+
+--
 -- Name: energy_interval; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -70,6 +120,19 @@ CREATE TABLE public.energy_interval (
     house_from_grid_wh integer NOT NULL,
     house_from_solar_wh integer NOT NULL,
     house_from_battery_wh integer NOT NULL
+);
+
+
+--
+-- Name: meter_day; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.meter_day (
+    date character varying(10) NOT NULL,
+    imported_wh integer NOT NULL,
+    exported_wh integer NOT NULL,
+    peak_imported_wh integer NOT NULL,
+    peak_exported_wh integer NOT NULL
 );
 
 
@@ -120,6 +183,13 @@ CREATE TABLE public.weather_sample (
 
 
 --
+-- Name: data id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.data ALTER COLUMN id SET DEFAULT nextval('public.data_id_seq'::regclass);
+
+
+--
 -- Name: battery_sample battery_sample_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -136,11 +206,35 @@ ALTER TABLE ONLY public.charge_session
 
 
 --
+-- Name: data data_date_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.data
+    ADD CONSTRAINT data_date_key UNIQUE (date);
+
+
+--
+-- Name: data data_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.data
+    ADD CONSTRAINT data_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: energy_interval energy_interval_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.energy_interval
     ADD CONSTRAINT energy_interval_pkey PRIMARY KEY (start_at);
+
+
+--
+-- Name: meter_day meter_day_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.meter_day
+    ADD CONSTRAINT meter_day_pkey PRIMARY KEY (date);
 
 
 --

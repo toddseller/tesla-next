@@ -30,13 +30,13 @@
     --font-mono: var(--font-plex-mono);
 }
 
-/* One color per energy flow, on every page. */
+/* One color per energy flow, on every page: the Tesla app's, as anton-tesla-api-ws's day views use them. */
 @theme {
-    --color-solar: #FBBF24;
-    --color-home: #60A5FA;
-    --color-powerwall: #34D399;
-    --color-grid: #CBD5E1;
-    --color-grid-fill: #475569;
+    --color-solar: #F7B500;
+    --color-home: #3E6AE1;
+    --color-powerwall: #31B76B;
+    --color-grid: #8E8E93;
+    --color-vehicle: #E8474F;
 }
 
 :root {

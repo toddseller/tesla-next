@@ -9,7 +9,7 @@ What each part does, exactly, is in [`openspec/specs/`](openspec/specs/); the re
 | Layer | Tech | Pinned in |
 |---|---|---|
 | App | Node 24, Next.js 16 (app router, standalone output), React 19, TypeScript 6 | `.nvmrc`, `package.json`, `Dockerfile` |
-| UI | Tailwind 4, shadcn/ui (Radix, `react-day-picker`, `lucide-react` icons), IBM Plex Sans and Mono through `next/font` | `package.json` |
+| UI | Tailwind 4, shadcn/ui (Radix, `react-day-picker`, `lucide-react` icons, charts on Recharts 3), IBM Plex Sans and Mono through `next/font` | `package.json` |
 | Database | PostgreSQL 18 at 192.168.40.5 through `pg`, read-only (a throwaway PostgreSQL 18 in tests) | `package.json` |
 | Tests | Vitest, Testing Library, jsdom | `package.json` |
 | Serving | onyx in Docker, behind its own Cloudflare tunnel | `docker-compose.yml`, `deploy/` |
@@ -58,6 +58,12 @@ anton-tesla-api-ws stays the writer: its scheduler reads Tesla and the weather a
   docker exec -e FLASK=http://nginx/api/v2/intervals -e NEXT=http://next:3000/api/intervals tesla-next-compare node /compare.mjs
   docker rm -f tesla-next-compare
   ```
+
+- **Daily totals over a range** (`/api/range?start_date=&end_date=`): a TypeScript port of Flask's `/api/v2/formatted` (`lib/range.ts`), reading `data` and PG&E's readings in `meter_day`, with Flask's rounding and its float sums. The Solar page reads the same function directly; the route exists so a script can hold it to Flask's answers until Flask's endpoint is retired. The script compares a sweep of about 90 ranges (every month, every true-up and calendar year, both sides of the 31-day limit, and the ways Flask cuts periods); run it the same way, with `scripts/compare-range.mjs` and `FLASK=http://nginx/api/v2/formatted NEXT=http://next:3000/api/range`. It imports `compare-intervals.mjs`, so copy both into the container.
+
+## The Solar page
+
+The Solar page (`/`) keeps its range and its open day in the address: `/?start=2026-10-01&end=2026-10-31` shows October 2026, and `&day=2026-10-14` opens that day. A missing or invalid range shows the current month; an invalid day is ignored. The server renders both from the address, and a `totals` event on the live stream reloads the bars or the day in place through `/api/range` and `/api/intervals`.
 
 ## Deploy
 
@@ -150,7 +156,7 @@ yarn vitest run
 
 Every test runs everywhere: locally, in the pre-commit hook and in the Docker build. Tests that need a database get their own: a throwaway PostgreSQL 18 started for the run, on a Unix socket in a temporary directory, removed when the run ends. They never touch production.
 
-The throwaway database is loaded with `test/schema.sql`, the production schema of the tables `/api/intervals` reads; its header says how to regenerate it after anton-tesla-api-ws changes them.
+The throwaway database is loaded with `test/schema.sql`, the production schema of the tables `/api/intervals` and `/api/range` read; its header says how to regenerate it after anton-tesla-api-ws changes them.
 
 It needs PostgreSQL 18's binaries. On the Mac, `brew install postgresql@18` (the tests find Homebrew's copy; `pg_config` on the PATH may belong to an older version). Anywhere else, put them on the PATH or point `PG_BIN` at their folder:
 

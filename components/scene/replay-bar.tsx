@@ -5,6 +5,7 @@ import { type FocusEvent, type ReactNode, useRef, useState } from "react";
 
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { toDate, toDay } from "@/lib/calendar-dates";
 import { FIRST_DAY, shiftDay, TIME_ZONE } from "@/lib/scene/replay";
 
 // Replay seconds per real second; the page starts at the default, real time.
@@ -19,13 +20,6 @@ export const DEFAULT_SPEED = 1;
 const clock = new Intl.DateTimeFormat("en-US", { timeZone: TIME_ZONE, hour: "numeric", minute: "2-digit" });
 const MINUTE = 60000;
 
-// The calendar works in the viewer's own dates; a site day "yyyy-MM-dd" is shown as that same calendar date.
-const toDate = (day: string) => {
-  const [y, m, d] = day.split("-").map(Number);
-  return new Date(y, m - 1, d);
-};
-const toDay = (date: Date) =>
-  `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 const dayLabel = new Intl.DateTimeFormat("en-US", { weekday: "short", month: "short", day: "numeric", year: "numeric" });
 
 const IconButton = ({ label, onClick, disabled, children }: { label: string; onClick: () => void; disabled?: boolean; children: ReactNode }) => (
