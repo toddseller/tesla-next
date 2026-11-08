@@ -11,7 +11,7 @@ import { useReload } from "@/components/solar/use-reload";
 import { useLiveStream } from "@/components/use-live-stream";
 import type { RangeItem } from "@/lib/range";
 import { siteToday } from "@/lib/scene/replay";
-import { address, datesLabel, isDaily, type Range, rangeIncludes } from "@/lib/solar/ranges";
+import { address, datesLabel, isDaily, presets, type Range, rangeIncludes } from "@/lib/solar/ranges";
 
 // Parsed during the server's render, where a throw would fail the whole page.
 const modifiedOf = (status: string | null): string | null => {
@@ -67,7 +67,7 @@ export function SolarPage({ range, items, today, initialStatus, day }: Props) {
     <div className="flex flex-col gap-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-[22px] font-semibold">Solar by date range</h1>
-        <RangeControls range={range} today={today} onRange={(next) => router.push(address(next))} />
+        <RangeControls range={range} presets={presets(today)} onRange={(next) => router.push(address(next))} />
       </div>
       <section aria-labelledby="range-title" className="flex flex-col gap-4 rounded-[10px] border bg-card p-4 sm:p-6">
         <div className="flex flex-wrap items-baseline justify-between gap-2">

@@ -1,5 +1,5 @@
-import { expect, test } from "vitest";
-import { difference, sweep } from "./compare-range.mjs";
+import { expect, test, vi } from "vitest";
+import { compareAll, difference, sweep } from "./compare-range.mjs";
 
 const ranges = sweep("2026-11-08");
 const has = (start, end) => ranges.some(([s, e]) => s === start && e === end);
@@ -31,4 +31,25 @@ test("only the fields the page reads are compared", () => {
   const next = { data: [{ date: "Oct 14", day: "2026-10-14", solar: 44.4, grid: -8.3, house: 34.0 }] };
   expect(difference(flask, next)).toBeNull();
   expect(difference(flask, { data: [{ ...next.data[0], grid: -8.4 }] })).toBe("[0].grid: -8.3 vs -8.4");
+});
+
+test("each range is fetched from both, and every mismatch is logged and counted", async () => {
+  const answers = {
+    "F?start_date=2026-10-01&end_date=2026-10-31": [200, { data: [{ solar: 1 }] }],
+    "N?start_date=2026-10-01&end_date=2026-10-31": [200, { data: [{ solar: 1 }] }],
+    "F?start_date=2026-11-01&end_date=2026-11-30": [200, { data: [{ solar: 1 }] }],
+    "N?start_date=2026-11-01&end_date=2026-11-30": [200, { data: [{ solar: 2 }] }],
+    "F?start_date=2026-12-01&end_date=2026-12-31": [200, { data: [] }],
+    "N?start_date=2026-12-01&end_date=2026-12-31": [400, { message: "no" }],
+  };
+  vi.stubGlobal("fetch", async (url) => ({ status: answers[url][0], json: async () => answers[url][1] }));
+  const log = vi.fn();
+  const ranges = [["2026-10-01", "2026-10-31"], ["2026-11-01", "2026-11-30"], ["2026-12-01", "2026-12-31"]];
+  expect(await compareAll("F", "N", ranges, difference, log)).toBe(2);
+  expect(log.mock.calls.map(([line]) => line)).toEqual([
+    "2026-11-01 to 2026-11-30: [0].solar: 1 vs 2",
+    "2026-12-01 to 2026-12-31: status 200 vs 400",
+    "3 ranges compared, 2 mismatched",
+  ]);
+  vi.unstubAllGlobals();
 });

@@ -39,21 +39,26 @@ async function fetchRange(base, [start, end]) {
   return { status: response.status, body: await response.json() };
 }
 
-async function main() {
-  const today = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Los_Angeles" }).format(new Date());
-  const ranges = sweep(today);
+// Shared with compare-impact.mjs: the number of ranges whose answers differ, each logged with its first difference.
+export async function compareAll(flask, next, ranges, differ, log = console.log) {
   let mismatches = 0;
   for (const range of ranges) {
-    const found = await Promise.all([fetchRange(FLASK, range), fetchRange(NEXT, range)])
-      .then(([flask, next]) => (flask.status !== next.status ? `status ${flask.status} vs ${next.status}` : difference(flask.body, next.body)))
+    const found = await Promise.all([fetchRange(flask, range), fetchRange(next, range)])
+      .then(([a, b]) => (a.status !== b.status ? `status ${a.status} vs ${b.status}` : differ(a.body, b.body)))
       .catch((error) => `request failed: ${error.message}`);
     if (found) {
       mismatches++;
-      console.log(`${range.join(" to ")}: ${found}`);
+      log(`${range.join(" to ")}: ${found}`);
     }
   }
-  console.log(`${ranges.length} ranges compared, ${mismatches} mismatched`);
-  process.exitCode = mismatches ? 1 : 0;
+  log(`${ranges.length} ranges compared, ${mismatches} mismatched`);
+  return mismatches;
+}
+
+export const siteToday = () => new Intl.DateTimeFormat("en-CA", { timeZone: "America/Los_Angeles" }).format(new Date());
+
+async function main() {
+  process.exitCode = (await compareAll(FLASK, NEXT, sweep(siteToday()), difference)) ? 1 : 0;
 }
 
 if (import.meta.url === pathToFileURL(process.argv[1]).href) await main();

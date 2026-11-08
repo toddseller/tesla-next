@@ -17,7 +17,10 @@ const gridIn = `CASE WHEN ${corrected} THEN ${meter("imported_wh")} ELSE data.fr
 const gridOut = `CASE WHEN ${corrected} THEN ${meter("exported_wh")} ELSE ${effectiveToGrid} END`;
 const extraImported = `CASE WHEN ${corrected} THEN ${meter("imported_wh")} - coalesce(data.from_grid, 0::integer) ELSE 0::integer END`;
 const extraExported = `CASE WHEN ${corrected} THEN ${meter("exported_wh")} - (${rawToGrid}) ELSE 0::integer END`;
-const house = `coalesce(data.total_house_usage, 0::integer) + ${extraImported} - ${extraExported}`;
+export const house = `coalesce(data.total_house_usage, 0::integer) + ${extraImported} - ${extraExported}`;
+export const houseGrid = `coalesce(data.house_from_grid, 0::integer) + ${extraImported}`;
+const solarLessExtra = `coalesce(data.house_from_solar, 0::integer) - ${extraExported}`;
+export const houseSolar = `CASE WHEN ${solarLessExtra} < 0::integer THEN 0::integer ELSE ${solarLessExtra} END`;
 
 const day = (year: number, month: number, date: number) => new Date(Date.UTC(year, month, date)).toISOString().slice(0, 10);
 const parts = (date: string) => date.split("-").map(Number);

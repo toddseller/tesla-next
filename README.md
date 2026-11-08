@@ -60,6 +60,7 @@ anton-tesla-api-ws stays the writer: its scheduler reads Tesla and the weather a
   ```
 
 - **Daily totals over a range** (`/api/range?start_date=&end_date=`): a TypeScript port of Flask's `/api/v2/formatted` (`lib/range.ts`), reading `data` and PG&E's readings in `meter_day`, with Flask's rounding and its float sums. The Solar page reads the same function directly; the route exists so a script can hold it to Flask's answers until Flask's endpoint is retired. The script compares a sweep of about 90 ranges (every month, every true-up and calendar year, both sides of the 31-day limit, and the ways Flask cuts periods); run it the same way, with `scripts/compare-range.mjs` and `FLASK=http://nginx/api/v2/formatted NEXT=http://next:3000/api/range`. It imports `compare-intervals.mjs`, so copy both into the container.
+- **Impact over a range** (`/api/impact?start_date=&end_date=`): a TypeScript port of Flask's `/api/v2/impact` (`lib/impact.ts`), the same corrected sums of `data` as `/api/range`, as the shares of the house's use from solar, the Powerwall and the grid. It leaves out Flask's live battery fields, which the top bar takes from the live stream. The Impact page reads the same function directly. `scripts/compare-impact.mjs` compares the ten figures over the range sweep plus the 15th of every month as a single day; run it the same way, with `FLASK=http://nginx/api/v2/impact NEXT=http://next:3000/api/impact`. It imports `compare-range.mjs` and `compare-intervals.mjs`, so copy all three into the container.
 
 ## The Solar page
 
