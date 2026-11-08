@@ -1,0 +1,113 @@
+"use client";
+
+import { useCallback, useEffect, useRef, useState } from "react";
+
+import type { Vehicle } from "@/lib/scene/live-scene";
+import type { IntervalRecord } from "@/lib/scene/replay";
+import type { WeatherReading } from "@/lib/scene/weather";
+
+// What Flask notifies each poll (anton-tesla-api-ws live-site-status), as /api/live forwards it.
+type LiveStatus = {
+  load_power?: number | null;
+  home_power?: number | null;
+  solar_power?: number | null;
+  grid_power?: number | null;
+  battery_power?: number | null;
+  battery_percentage?: number | null;
+  modified?: string | null;
+  vehicle?: Vehicle | null;
+  weather?: Partial<Record<"cover" | "rain" | "wind" | "windLow" | "windMid" | "windHigh" | "cirrus" | "low" | "mid" | "sun", number | null>> | null;
+};
+
+export type ReplayDay = { date: string; data: IntervalRecord[]; weather?: WeatherReading[] };
+
+export const EMPTY = {
+  solarPower: 0,
+  homePower: 0,
+  batteryPower: 0,
+  battery: undefined as number | undefined,
+  gridPower: 0,
+  vehicle: null as Vehicle | null,
+  liveReceived: false,
+  modifiedAt: null as Date | null,
+  weatherCover: null as number | null,
+  weatherRain: null as number | null,
+  weatherWind: null as number | null,
+  weatherWindLow: null as number | null,
+  weatherWindMid: null as number | null,
+  weatherWindHigh: null as number | null,
+  weatherCirrus: null as number | null,
+  weatherLow: null as number | null,
+  weatherMid: null as number | null,
+  weatherSun: null as number | null,
+};
+type Live = typeof EMPTY;
+
+const kw = (value: unknown) => parseFloat(String(value));
+
+// As anton's ContextProvider applied a live status: a missing battery reading or time keeps the last one.
+export const applyStatus = (previous: Live, status: LiveStatus): Live => ({
+  solarPower: kw(status.solar_power),
+  gridPower: kw(status.grid_power),
+  batteryPower: kw(status.battery_power),
+  homePower: kw(status.home_power ?? status.load_power),
+  battery: status.battery_percentage ?? previous.battery,
+  modifiedAt: status.modified != null ? new Date(status.modified) : previous.modifiedAt,
+  vehicle: status.vehicle ?? null,
+  weatherCover: status.weather?.cover ?? null,
+  weatherRain: status.weather?.rain ?? null,
+  weatherWind: status.weather?.wind ?? null,
+  weatherWindLow: status.weather?.windLow ?? null,
+  weatherWindMid: status.weather?.windMid ?? null,
+  weatherWindHigh: status.weather?.windHigh ?? null,
+  weatherCirrus: status.weather?.cirrus ?? null,
+  weatherLow: status.weather?.low ?? null,
+  weatherMid: status.weather?.mid ?? null,
+  weatherSun: status.weather?.sun ?? null,
+  liveReceived: true,
+});
+
+// The Distribution page's data: live status from the server-rendered status and then the stream, and the replayed
+// day's history, reloaded when the stream says that day's totals changed.
+export const useSiteData = (initialStatus: string | null) => {
+  const [live, setLive] = useState(() => (initialStatus ? applyStatus(EMPTY, JSON.parse(initialStatus)) : EMPTY));
+  const [replayDay, setReplayDay] = useState<string | null>(null);
+  const [replayData, setReplayData] = useState<ReplayDay | null>(null);
+
+  // Only the latest request's answer is kept, so a slow one can't overwrite a newer day.
+  const latest = useRef(0);
+  const fetchReplay = useCallback(async (day: string) => {
+    const request = ++latest.current;
+    try {
+      const response = await fetch(`/api/intervals?date=${day}`);
+      if (!response.ok) throw new Error(`/api/intervals answered ${response.status}`);
+      const data = await response.json();
+      if (latest.current === request) setReplayData(data);
+    } catch (error) {
+      console.error(error);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (replayDay) {
+      void fetchReplay(replayDay);
+    } else {
+      latest.current += 1;
+      setReplayData(null);
+    }
+  }, [replayDay, fetchReplay]);
+
+  const replayDayRef = useRef(replayDay);
+  replayDayRef.current = replayDay;
+  useEffect(() => {
+    const stream = new EventSource("/api/live");
+    stream.onmessage = (event) => setLive((previous) => applyStatus(previous, JSON.parse(event.data)));
+    stream.addEventListener("totals", (event) => {
+      const { date } = JSON.parse((event as MessageEvent).data);
+      if (date === replayDayRef.current) void fetchReplay(date);
+    });
+    return () => stream.close();
+  }, [fetchReplay]);
+
+  return { ...live, replayData, setReplayDay };
+};
