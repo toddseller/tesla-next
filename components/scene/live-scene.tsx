@@ -37,9 +37,6 @@ const watchReducedMotion = (onChange: () => void) => {
 };
 const useReducedMotion = () => useSyncExternalStore(watchReducedMotion, reducedMotion, () => false);
 
-// Where a flow gradient sits at `phase` (0 to 1 through the cycle): parked at
-// `rest` until its stage begins, sliding linearly to `to` during the stage, and
-// parked at `to` after it.
 export const flowOffset = (phase: number, { begin, end, rest, to }: { begin: number; end: number; rest: number[]; to: number[] }) => {
   const t = phase <= begin ? 0 : phase >= end ? 1 : (phase - begin) / (end - begin);
   return [rest[0] + (to[0] - rest[0]) * t, rest[1] + (to[1] - rest[1]) * t];
@@ -105,15 +102,12 @@ const Gradient = ({ id, path, color, stage }: LegProps) => {
 const Leg = ({ id, path, color, stage }: LegProps) =>
   useReducedMotion() ? <polyline className="scene-flow" points={points(path)} stroke={color} /> : <Gradient id={id} path={path} color={color} stage={stage} />;
 
-// The leg out to a destination, on its lane. The car's is its charging cable
-// from the Wall Connector, shown only with the garage open.
 const outLeg = (to: Link['to'], lane: number, cable: Point[] | undefined) => {
   if (to === 'car') return cable || [];
   return legPoints(to as LegName, lane).reverse();
 };
 
-// One source's flows: its own leg into the panel, then each destination's leg
-// out of it. A car with no cable in the render has only the first stage.
+// A car with no cable in the render has only the first stage.
 type Lane = { link: Link; lane: number; hidden?: boolean };
 const SourceFlows = ({ from, links, cable }: { from: Link['from']; links: Lane[]; cable: Point[] | undefined }) => {
   const color = FLOW_COLORS[from];
@@ -167,7 +161,6 @@ const bySource = (links: Link[]) =>
     return groups;
   }, []);
 
-// One image layer, on the render's spot in the stage.
 const Layer = ({ name, src, alt = '', className = 'scene-render', style }: { name: string; src: string; alt?: string; className?: string; style?: CSSProperties }) => (
   <img className={className} data-part={name} src={src} alt={alt} style={{ top: pct(RENDER.y, STAGE.height), height: pct(RENDER.height, STAGE.height), ...style }} />
 );
@@ -189,9 +182,8 @@ const Sunlight = ({ layers, sunlight, suffix = '' }: { layers: { face: 'south' |
     ];
   });
 
-// The night sky's points on the stars canvas: `box` is the stage's place in the
-// canvas, in CSS pixels (`scale` pixels to a stage unit), so they line up with
-// the moon, which is drawn in the stage. Each star twinkles at `ms`, if given.
+// `box` is the stage's place in the canvas, in CSS pixels (`scale` pixels to a stage unit), so the stars line up with
+// the moon, which is drawn in the stage.
 export const drawStars = (context: CanvasRenderingContext2D, stars: SkyPoint[], box: { left: number; top: number; width: number; scale: number }, ms?: number | null) => {
   context.clearRect(0, 0, context.canvas.width, context.canvas.height);
   stars.forEach((star) => {
@@ -204,8 +196,7 @@ export const drawStars = (context: CanvasRenderingContext2D, stars: SkyPoint[], 
   });
 };
 
-// Draws the night sky's points on the stars canvas, sized to the scene at the
-// screen's pixel density. An unlaid-out canvas (no width) has nothing to show.
+// A canvas not laid out yet (no width) has nothing to show.
 const paintStars = (canvas: HTMLCanvasElement | null, stage: HTMLDivElement | null, stars: SkyPoint[], ms: number) => {
   if (!canvas?.clientWidth || !stage) return;
   const density = window.devicePixelRatio || 1;
@@ -295,7 +286,7 @@ const TERMINATOR_STEPS = [-2, -1, 0, 1, 2];
 const TERMINATOR_STEP = 0.012;
 
 // The moon while it is up, its lit part showing its real face, clipped to the
-// phase: drawn from NASA's Lunar Reconnaissance Orbiter map (moonFace.js) with the
+// phase: drawn from NASA's Lunar Reconnaissance Orbiter map (moon-face.ts) with the
 // side that faces Earth now at its center, and mirrored like the scene's sky. The
 // real sky's angles counterclockwise from up are clockwise here: the face turns by
 // its axis and the lit part by its bright limb, as they are in the sky. It is bright with a
@@ -478,14 +469,6 @@ const LiveScene = ({ state, paused = false, drift = 1 }: { state: SceneState; pa
     return () => cancelAnimationFrame(frame);
   }, []);
   return (
-    // The scene is a padded frame carrying the clear sky, with the stars, the
-    // twilight glow, the overcast sky and the clouds over it; the stage inside it, below HEADROOM of sky,
-    // holds, in stage units and bottom to top: the moon, the sun's glow, the ground,
-    // the house and the sun's light
-    // on it, the lines, the elements over the ends of the lines, the sun's
-    // light on the solar panels element, the solar panels' glow, the
-    // Powerwall's charge bar, the night lights, the car, its plug,
-    // the Wall Connector over the top of its cable, the rain, and the labels.
     <div className={['scene', eased && 'scene-eased', still && 'scene-still'].filter(Boolean).join(' ')} data-part="scene" ref={scene} style={{ '--cover': cover, '--day': dusk } as CSSProperties}>
       {/* The day sky over the night backdrop, fading by --day: one gradient can't transition into another. */}
       <div className="scene-sky-day" data-part="sky-day" />

@@ -1,6 +1,4 @@
-// The real night sky over the site for the live scene: the bright stars and the
-// planets, where they are at a moment and how bright they show.
-// See openspec/specs/scene-weather.
+// See the scene-weather spec.
 
 import stars from "@/lib/scene/stars.json";
 import { horizontal, moonPhase, moonPosition, sunPosition, toDays } from "@/lib/scene/sun";
@@ -39,8 +37,7 @@ const BRIGHTNESS: Record<PlanetName, [number, (i: number) => number]> = {
   saturn: [-8.88, () => 0],
 };
 
-// A planet's position around the sun at `centuries` from J2000, in au, on the
-// J2000 ecliptic.
+// In au, on the J2000 ecliptic.
 const heliocentric = ([base, rate]: [Six, Six], centuries: number) => {
   const [a, e, inclination, longitude, perihelion, node] = base.map((value, i) => value + rate[i] * centuries);
   const anomaly = (((longitude - perihelion) % 360) + 540) % 360 - 180;
@@ -60,8 +57,7 @@ const heliocentric = ([base, rate]: [Six, Six], centuries: number) => {
 
 const length = (v: number[]) => Math.hypot(...v);
 
-// Venus, Mars, Jupiter and Saturn as seen from Earth at `date`: J2000 right
-// ascension and declination in degrees, and visual magnitude.
+// J2000 right ascension and declination in degrees, and visual magnitude, as seen from Earth.
 type Body = { ascension: number; declination: number; magnitude: number };
 
 export const planets = (date: Date) => {
@@ -101,13 +97,11 @@ export const limitingMagnitude = (sunAltitude: number, moon: { altitude: number;
   return limit - MOONLIGHT * lit * Math.max(0, Math.sin(moon.altitude * RAD));
 };
 
-// How much dimmer a star shows at `altitude` degrees than overhead, in
-// magnitudes, through the extra air (airmass capped at 10, near the horizon).
+// In magnitudes, through the extra air near the horizon (airmass capped at 10).
 export const extinction = (altitude: number) => 0.25 * (Math.min(10, 1 / Math.sin(Math.max(altitude, 0.1) * RAD)) - 1);
 
-// Where a body at compass direction `azimuth` sits across the scene: 0.95 at 60
-// degrees (east-northeast) to 0.05 at 300 (west-northwest), due south in the
-// middle, and on past the scene's edges beyond them.
+// The render looks at the house from the south: east-northeast (60 degrees) at the right, west-northwest (300) at
+// the left.
 export const azimuthX = (azimuth: number) => 0.95 - (0.9 * (azimuth - 60)) / 240;
 
 // Past this share of the scene's width beyond either edge, a point is out of
@@ -128,14 +122,11 @@ const tint = (colorIndex: number | null) => {
   return from.map((value, i) => Math.round(value + t * (to[i] - value)));
 };
 
-// A point's size in stage units and its brightness when fully out, by the
-// magnitude it shows at: Venus a bright point rather than a disc.
+// Stage units, capped so Venus shows as a bright point rather than a disc.
 const radiusOf = (magnitude: number) => Math.min(3, Math.max(0.6, 1.9 - 0.3 * magnitude));
 const peakOf = (magnitude: number) => Math.min(1, Math.max(0.3, 1 - 0.12 * (magnitude + 1)));
 
-// The stars and planets that show at the site at `now`: across the scene `x`,
-// height `altitude` in degrees, `radius` in stage units, `opacity` and `color`;
-// a star's `index` in the catalog, or a planet's name as `planet`.
+// `altitude` in degrees, `radius` in stage units; a star carries its catalog `index`, a planet its name.
 export type SkyPoint = { x: number; altitude: number; radius: number; opacity: number; color: string; index?: number; planet?: PlanetName };
 
 export const nightSky = (now: Date): SkyPoint[] => {

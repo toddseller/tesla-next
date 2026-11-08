@@ -1,4 +1,3 @@
-/* The live house scene: the house render on the app's dark backdrop, with energy lines and labels. */
 /* The frame: the backdrop, with room around the stage so the house and labels
    don't touch its sides (about 48px on desktop, 16px on a phone). */
 .scene {
@@ -76,7 +75,6 @@
   animation: none;
 }
 
-/* The sun's glow, centered on its spot; it moves and fades with the sun and the clouds. */
 .scene-sun-glow {
   position: absolute;
   aspect-ratio: 1;
@@ -97,7 +95,6 @@
   transition: opacity 1.5s ease;
 }
 
-/* The moon, centered on its spot, with a soft glow around it at night. */
 .scene-moon {
   position: absolute;
   aspect-ratio: 1;
@@ -259,8 +256,6 @@
   transition: opacity 0.15s ease;
 }
 
-/* The dark gray lines from each element to the electrical panel, and the
-   gradients moving along them from source to destination. */
 .scene-line,
 .scene-flow {
   fill: none;

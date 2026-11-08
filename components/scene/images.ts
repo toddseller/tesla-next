@@ -35,7 +35,6 @@ export const WALL_CONNECTOR = { name: "wall-connector", src: wallConnector };
 // own glass is opaque) and under the car.
 export const NIGHT_LIGHTS = { name: "night-lights", src: nightLights };
 
-// Every panel's glass in gold, blended over the panels while solar produces.
 export const SOLAR_GLOW = { name: "solar-glow", src: solarGlow };
 
 // The faces of the house by the way they face, for the sun's light and shade:

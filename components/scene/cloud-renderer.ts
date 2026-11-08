@@ -1,7 +1,7 @@
 import type { cloudInputs } from "@/components/scene/cloud-inputs";
 import {LAYERS, PRESETS} from "@/components/scene/cloud-looks";
 
-// The clouds in WebGL2 (openspec/changes/webgl-clouds/design.md). A bake pass
+// The clouds in WebGL2 (anton-tesla-api-ws's webgl-clouds design). A bake pass
 // writes each look's cloud shapes into a texture, one channel per layer (cirrus,
 // mid, low, dense), periodic across one scene width so the drift never shows a
 // seam. It runs once per day's shapes and canvas size, never per frame and never
