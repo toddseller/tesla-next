@@ -38,8 +38,8 @@ Code tasks are test-first: write or port the test, run it and see it fail for th
 
 ## 6. Release and checks (after merging)
 
-- [ ] 6.1 **(owner)** Publish a release; I watch the Deploy run
-- [ ] 6.2 On next.teslasolar.report: run `scripts/compare-true-up.mjs` on onyx with zero mismatches; a `totals` event updates the current year in place; side by side with teslasolar.report/true-up for the current year, '25 - '26 and '23 - '24; record the results in the design
+- [x] 6.1 **(owner)** Publish a release; I watch the Deploy run
+- [x] 6.2 On next.teslasolar.report: run `scripts/compare-true-up.mjs` on onyx with zero mismatches; a `totals` event updates the current year in place; side by side with teslasolar.report/true-up for the current year, '25 - '26 and '23 - '24; record the results in the design
 
 ## Workflow follow-up
 
