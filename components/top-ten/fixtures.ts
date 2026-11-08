@@ -22,3 +22,6 @@ export const EXPORT_MONTHS = ([
 }));
 
 export const TOP_TEN: TopTen = [{ solar: SOLAR }, { net_grid: EXPORT_DAYS }, { to_grid_months: EXPORT_MONTHS }];
+
+// May 30 and July 23, 2024 are VPP event days.
+export const WITHOUT_VPP: TopTen = [{ solar: SOLAR }, { net_grid: EXPORT_DAYS.slice(2) }, { to_grid_months: EXPORT_MONTHS }];

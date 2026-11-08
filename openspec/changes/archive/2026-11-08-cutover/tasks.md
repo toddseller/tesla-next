@@ -10,9 +10,9 @@ Code tasks are test-first: write the test, run it and see it fail for the right 
 
 ## 2. Release and switch (after merging)
 
-- [ ] 2.1 **(owner)** Publish a release; I watch the Deploy run
-- [ ] 2.2 **(owner)** In Cloudflare, move teslasolar.report's public hostname from `tsr-tunnel` to `tesla-next-tunnel`, service `http://next:3000`
-- [ ] 2.3 On teslasolar.report: the five pages answer 200 from tesla-next with no console message, `/numbers` lands on `/true-up`, a `/distribution?at=` replay link opens paused, a `totals` event reloads the Solar page in place, and the compare scripts still find no mismatch against Flask on onyx; record the results in the design
+- [x] 2.1 **(owner)** Publish a release; I watch the Deploy run
+- [x] 2.2 **(owner)** In Cloudflare, move teslasolar.report's public hostname from `tsr-tunnel` to `tesla-next-tunnel`, service `http://next:3000`
+- [x] 2.3 On teslasolar.report: the five pages answer 200 from tesla-next with no console message, `/numbers` lands on `/true-up`, a `/distribution?at=` replay link opens paused, a `totals` event reloads the Solar page in place, and the compare scripts still find no mismatch against Flask on onyx; record the results in the design
 
 ## 3. Soak (one week after the switch)
 

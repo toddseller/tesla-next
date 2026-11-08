@@ -135,3 +135,26 @@ test("fewer than ten days rank those there are", async () => {
   const { solar, days, months } = await rankings();
   expect([solar.length, days.length, months.length]).toEqual([2, 2, 1]);
 });
+
+test("without VPP days, the export days rank and take 10th place from the other days only", async () => {
+  await seed("2024-05-30", { solar_generated: 70, from_grid: 1, to_grid: 61, is_vpp: true });
+  for (let d = 1; d <= 9; d++) await seed(`2023-06-0${d}`, { from_grid: 0, to_grid: 50 + d });
+  await seed("2023-07-01", { from_grid: 0, to_grid: 42.14 });
+  await seed("2026-07-01", { from_grid: 0, to_grid: 42.06 });
+  const [[{ solar: withSolar }, { net_grid: withDays }], [{ solar }, { net_grid: days }]] = await Promise.all([topTen(true), topTen(false)]);
+  expect(withDays[0].day).toBe("2024-05-30");
+  expect(days[0].day).toBe("2023-06-09");
+  expect(days.map((d) => d.day)).not.toContain("2024-05-30");
+  expect(days).toHaveLength(10);
+  expect(days.at(-1)!.day).toBe("2026-07-01");
+  expect(solar).toEqual(withSolar);
+});
+
+test("without VPP days, a month sums its other days, and a month of VPP days only isn't ranked", async () => {
+  await seed("2024-05-01", { from_grid: 1, to_grid: 31 });
+  await seed("2024-05-30", { from_grid: 1, to_grid: 61, is_vpp: true });
+  await seed("2024-07-23", { from_grid: 1, to_grid: 50.6, is_vpp: true });
+  const months = async (withVpp: boolean) => (await topTen(withVpp))[2].to_grid_months.map((m) => [m.month, m.net_grid]);
+  expect(await months(true)).toEqual([["2024-05", -90], ["2024-07", -49.6]]);
+  expect(await months(false)).toEqual([["2024-05", -30]]);
+});

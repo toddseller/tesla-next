@@ -17,7 +17,7 @@ const lastPickable = () => {
 
 const holds = (preset: Preset, range: Range) => preset.range.start === range.start && preset.range.end === range.end;
 
-const presetStyle = (selected: boolean) =>
+export const presetStyle = (selected: boolean) =>
   `min-h-10 whitespace-nowrap rounded-md px-3.5 text-sm font-medium ${selected ? "bg-secondary text-white shadow-[inset_0_-2px_0_var(--primary)]" : "text-muted-foreground hover:text-foreground"}`;
 
 // Older true-up years, so the row keeps its size as years pass; an earlier year picked names the button.
