@@ -2,8 +2,10 @@
 // spec requires until Flask's is retired. Usage: node scripts/compare-intervals.mjs [first-date] [last-date]
 import { pathToFileURL } from "node:url";
 
-const FLASK = "https://teslasolar.report/api/v2/intervals";
-const NEXT = "https://next.teslasolar.report/api/intervals";
+// Cloudflare's rate limit refuses the public hosts after about 100 requests, so a full run goes to the apps directly
+// on onyx: FLASK=http://nginx/api/v2/intervals NEXT=http://next:3000/api/intervals (see README.md).
+const FLASK = process.env.FLASK ?? "https://teslasolar.report/api/v2/intervals";
+const NEXT = process.env.NEXT ?? "https://next.teslasolar.report/api/intervals";
 const FIRST_DAY = "2021-10-01";
 const AT_ONCE = 4;
 
