@@ -1,6 +1,6 @@
 # Tesla Solar Report (Next.js)
 
-The Next.js dashboard for https://teslasolar.report, being moved here from anton-tesla-api-ws one page at a time. Until the cutover it runs at https://next.teslasolar.report, and a page not moved yet links to its counterpart on the live site. The API in anton-tesla-api-ws keeps writing the database; this app only reads it.
+The Next.js dashboard at https://teslasolar.report, served from onyx. anton-tesla-api-ws writes the database; this app only reads it.
 
 What each part does, exactly, is in [`openspec/specs/`](openspec/specs/); the redesign's mockups are at https://claude.ai/artifact/7crQGRyQS9J8wSdKYJjD6d.
 
@@ -45,11 +45,7 @@ anton-tesla-api-ws stays the writer: its scheduler reads Tesla and the weather a
 - **Live status** (`/api/live`, a server-sent event stream). Flask sends each live status as a `pg_notify` on `live_status` about every 10 seconds, and each day whose totals it stores on `totals_updated`. One `LISTEN` connection in the server (`lib/live.ts`, started from `instrumentation.ts`) keeps the latest status and forwards both to every open page: live status as plain messages, totals as `event: totals`. The Distribution page is rendered with the latest status, so its labels show values before any script runs.
 - **A day's history** (`/api/intervals?date=YYYY-MM-DD`), which the Distribution page replays: a TypeScript port of Flask's `/api/v2/intervals` (`lib/intervals/`), reading `energy_interval`, `battery_sample`, `vehicle_interval`, `charge_session`, `weather_sample` and the car names anton keeps in `vehicle`. Until Flask's endpoint is retired, both must return the same JSON for every date:
 
-  ```sh
-  node scripts/compare-intervals.mjs [first-date] [last-date]   # teslasolar.report vs next.teslasolar.report
-  ```
-
-  It prints each mismatch's date and first differing field, and exits non-zero on any. Cloudflare's rate limit refuses either public host after about 100 requests (and then also the browser's live stream from the same address, until the limit clears), so run a full comparison on onyx, in a throwaway container on both apps' networks:
+  `scripts/compare-intervals.mjs [first-date] [last-date]` prints each mismatch's date and first differing field, and exits non-zero on any. Since the cutover, teslasolar.report is this app, so run it on onyx against both apps directly, in a throwaway container on both apps' networks:
 
   ```sh
   docker run -d --name tesla-next-compare --network tesla-next_default node:24.22.2-alpine3.24 sleep 3600
@@ -70,7 +66,7 @@ The Solar page (`/`) keeps its range and its open day in the address: `/?start=2
 
 ## Deploy
 
-The app runs on onyx (`onyx@192.168.40.63`) in `~/tesla-next`, a clone of this repository, with no published port. Its own Cloudflare tunnel container, `~/tesla-next-tunnel`, joins the compose network and Cloudflare routes `next.teslasolar.report` to `http://next:3000`. The only remote is `origin` (`git@github.com:toddseller/tesla-next.git`).
+The app runs on onyx (`onyx@192.168.40.63`) in `~/tesla-next`, a clone of this repository, with no published port. Its own Cloudflare tunnel container, `~/tesla-next-tunnel`, joins the compose network and Cloudflare routes `teslasolar.report` and `next.teslasolar.report` to `http://next:3000`. The only remote is `origin` (`git@github.com:toddseller/tesla-next.git`).
 
 Every pull request to `main` runs the `Tests` workflow. Its one job, `test`, builds the image (which audits the shipped dependencies and runs every test) and lints the workflows. The `main` ruleset requires it before a merge.
 
