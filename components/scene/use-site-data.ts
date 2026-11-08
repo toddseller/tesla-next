@@ -73,7 +73,14 @@ export const applyStatus = (previous: Live, status: LiveStatus): Live => ({
 // The Distribution page's data: live status from the server-rendered status and then the stream, and the replayed
 // day's history, reloaded when the stream says that day's totals changed.
 export const useSiteData = (initialStatus: string | null) => {
-  const [live, setLive] = useState(() => (initialStatus ? applyStatus(EMPTY, JSON.parse(initialStatus)) : EMPTY));
+  const [live, setLive] = useState(() => {
+    // Parsed during the server's render, where a throw would fail the whole page; the stream's next status fills it in.
+    try {
+      return initialStatus ? applyStatus(EMPTY, JSON.parse(initialStatus)) : EMPTY;
+    } catch {
+      return EMPTY;
+    }
+  });
   const [replayDay, setReplayDay] = useState<string | null>(null);
   const [replayData, setReplayData] = useState<ReplayDay | null>(null);
 

@@ -91,6 +91,11 @@ test("starts from the status the server rendered, before the stream sends anythi
   expect(result.current).toMatchObject({ solarPower: 6.1, liveReceived: true });
 });
 
+test("a server-rendered status that isn't JSON starts as if none had arrived, rather than failing the page", () => {
+  const { result } = renderHook(() => useSiteData("not json"));
+  expect(result.current).toMatchObject({ liveReceived: false, solarPower: 0 });
+});
+
 test("without one, starts with nothing received", () => {
   const { result } = renderHook(() => useSiteData(null));
   expect(result.current).toMatchObject({ liveReceived: false, vehicle: null, modifiedAt: null, weatherCover: null });
