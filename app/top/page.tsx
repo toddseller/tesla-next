@@ -1,5 +1,7 @@
-import { NotMovedYet } from "@/components/not-moved-yet";
+import { TopTenPage } from "@/components/top-ten/top-ten-page";
+import { siteToday } from "@/lib/scene/replay";
+import { topTen } from "@/lib/top-ten";
 
-export default function Page() {
-  return <NotMovedYet name="Top Ten" path="/top" />;
+export default async function Page() {
+  return <TopTenPage topTen={await topTen()} today={siteToday()} />;
 }
