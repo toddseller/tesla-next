@@ -30,8 +30,7 @@ const pad = (n: number) => String(n).padStart(2, "0");
 
 const wallParts = (instant: Date) => Object.fromEntries(wallClock.formatToParts(instant).map(({ type, value }) => [type, value]));
 
-// Minutes the site's clock is ahead of UTC at `instant` (negative: behind).
-function offsetMinutes(instant: Date) {
+function minutesAheadOfUtc(instant: Date) {
   const part = wallParts(instant);
   const wall = Date.UTC(+part.year, +part.month - 1, +part.day, +part.hour, +part.minute, +part.second);
   return Math.round((wall - instant.getTime()) / 60_000);
@@ -40,16 +39,15 @@ function offsetMinutes(instant: Date) {
 // Python's datetime.isoformat() for an instant shown at the site: "2026-11-07T00:00:00-08:00".
 export function localIso(instant: Date): string {
   const part = wallParts(instant);
-  const offset = offsetMinutes(instant);
+  const offset = minutesAheadOfUtc(instant);
   const sign = offset < 0 ? "-" : "+";
   const minutes = Math.abs(offset);
   return `${part.year}-${part.month}-${part.day}T${part.hour}:${part.minute}:${part.second}${sign}${pad(Math.floor(minutes / 60))}:${pad(minutes % 60)}`;
 }
 
-// The UTC milliseconds of midnight starting `day` (YYYY-MM-DD) at the site, as datetime.combine(day, time.min, LOCAL).
-// The site changes its clocks at 2 AM, so midnight always exists once.
+// As Python's datetime.combine(day, time.min, LOCAL). The site changes its clocks at 2 AM, so midnight always exists once.
 export function localMidnight(day: string): number {
   const wall = Date.parse(`${day}T00:00:00Z`);
-  const guess = wall - offsetMinutes(new Date(wall)) * 60_000;
-  return wall - offsetMinutes(new Date(guess)) * 60_000;
+  const guess = wall - minutesAheadOfUtc(new Date(wall)) * 60_000;
+  return wall - minutesAheadOfUtc(new Date(guess)) * 60_000;
 }

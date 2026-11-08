@@ -10,7 +10,6 @@ export async function loadCars(): Promise<Car[]> {
   return (await db.query<Car>("SELECT vin, display_name, streamed FROM vehicle")).rows;
 }
 
-// The car's current display name, or "Vehicle" for a VIN not on the account or without a name.
 export const carName = (cars: Car[], vin: string) => cars.find((car) => car.vin === vin)?.display_name || DEFAULT_NAME;
 
 // A charge session's average power names its car: only the Model Y charges this fast here, and the Model 3 tops out
@@ -18,7 +17,7 @@ export const carName = (cars: Car[], vin: string) => cars.find((car) => car.vin 
 const MODEL_Y_KW = 8.0;
 const MODEL_3_KW = 6.5;
 
-// The only streamed car whose VIN's 4th character is `model`, else null.
+// A model names a car only when exactly one streamed car is that model.
 function vinForModel(cars: Car[], model: string) {
   const matches = cars.filter((car) => car.streamed && car.vin.slice(3, 4) === model);
   return matches.length === 1 ? matches[0].vin : null;

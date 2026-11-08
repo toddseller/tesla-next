@@ -19,7 +19,6 @@ type LiveStatus = {
   weather?: Partial<Record<"cover" | "rain" | "wind" | "windLow" | "windMid" | "windHigh" | "cirrus" | "low" | "mid" | "sun", number | null>> | null;
 };
 
-// How long a page waits before opening a new stream after the browser gave up on one.
 const REOPEN_MS = 5000;
 
 export type ReplayDay = { date: string; data: IntervalRecord[]; weather?: WeatherReading[] };
@@ -48,7 +47,7 @@ type Live = typeof EMPTY;
 
 const kw = (value: unknown) => parseFloat(String(value));
 
-// As anton's ContextProvider applied a live status: a missing battery reading or time keeps the last one.
+// Battery readings and times can be missing right after Flask restarts; the last ones still hold.
 export const applyStatus = (previous: Live, status: LiveStatus): Live => ({
   solarPower: kw(status.solar_power),
   gridPower: kw(status.grid_power),
@@ -70,8 +69,6 @@ export const applyStatus = (previous: Live, status: LiveStatus): Live => ({
   liveReceived: true,
 });
 
-// The Distribution page's data: live status from the server-rendered status and then the stream, and the replayed
-// day's history, reloaded when the stream says that day's totals changed.
 export const useSiteData = (initialStatus: string | null) => {
   const [live, setLive] = useState(() => {
     // Parsed during the server's render, where a throw would fail the whole page; the stream's next status fills it in.

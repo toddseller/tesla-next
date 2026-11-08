@@ -11,7 +11,7 @@ const AT_ONCE = 4;
 
 const describe = (value) => (Array.isArray(value) ? `${value.length} items` : JSON.stringify(value));
 
-// The path of the first place two parsed responses differ, or null. Numbers compare with ===, so -0 equals 0.
+// === so that Python's -0.0 equals JavaScript's 0.
 export function firstDifference(a, b, path = "") {
   if (Array.isArray(a) && Array.isArray(b)) {
     if (a.length !== b.length) return `${path}: ${a.length} items vs ${b.length}`;

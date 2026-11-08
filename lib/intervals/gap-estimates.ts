@@ -3,9 +3,8 @@
 import { pyRound } from "./python";
 
 export const STEP = 5 * 60_000;
-const MAX_MISSING = 24; // 2 hours of 5 minute boundaries
+const MAX_MISSING = (2 * 60 * 60_000) / STEP;
 
-// Straight-line estimates for the missing boundaries between consecutive real points, for gaps of up to 2 hours.
 export function fill(points: Map<number, number>): Map<number, number> {
   const estimates = new Map<number, number>();
   const times = [...points.keys()].sort((a, b) => a - b);
@@ -22,15 +21,13 @@ export function fill(points: Map<number, number>): Map<number, number> {
 }
 
 export const SESSION_HORIZON = 12 * 60 * 60_000;
-const CHARGING_WH = 2000 / 12; // 2 kW over 5 minutes
-const MAX_QUIET = 6; // 30 minutes uncredited ends a session's walk
+const CHARGING_WH = (2000 * STEP) / (60 * 60_000);
+const MAX_QUIET = (30 * 60_000) / STEP;
 
 export type Session = [start: number, energyWh: number, car: string | null];
 
-// Charging per interval from charge sessions, in start order, placed on the load above the day's baseline (`excess`,
-// Wh) from each session's start on. Intervals in `known` keep their value, which counts toward the session, and the
-// first measured car the walk reaches replaces the session's own. Returns the Wh per interval and, per interval, the
-// car of the session that placed the most there.
+// A session's start is often when the car was plugged in, not when it charged, so its energy goes on the load above
+// the day's baseline (`excess`) from its start on; see the day-intervals spec.
 export function placeSessions(
   sessions: Session[],
   excess: Map<number, number>,

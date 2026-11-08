@@ -17,7 +17,7 @@ export function GET(request: Request) {
       // Flask's json.dumps writes one line, so one data field carries a whole status.
       const now = latest();
       if (now !== null) send(`data: ${now}\n\n`);
-      // Live status is the stream's plain message; totals have an event name of their own.
+      // Totals get an event name, so a page listens for them apart from live status.
       const unsubscribe = subscribe((payload, channel) => send(channel === "totals_updated" ? `event: totals\ndata: ${payload}\n\n` : `data: ${payload}\n\n`));
       const ping = setInterval(() => send(": ping\n\n"), PING_MS);
       stop = () => {

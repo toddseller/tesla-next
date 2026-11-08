@@ -14,10 +14,8 @@ const MINUTE = 60_000;
 const ESTIMATE_MARGIN = (2 * 60 + 5) * MINUTE;
 // Weather readings past the day's edges, so the replay can blend into its first and last hour.
 const WEATHER_MARGIN = 60 * MINUTE;
-// Wh over a 5 minute interval -> average kW
 const WH_TO_KW = 12 / 1000;
 
-// Directional flows Tesla reports -> energy_interval column.
 const FLOWS = {
   solar_to_home: "house_from_solar_wh",
   solar_to_powerwall: "battery_imported_from_solar_wh",
@@ -36,8 +34,6 @@ const ALL_FLOWS = [...Object.keys(FLOWS), ...Object.values(HOME_TO_VEHICLE)];
 type EnergyRow = { start_at: Date; solar_generated_wh: number } & Record<(typeof FLOWS)[keyof typeof FLOWS], number>;
 type Row = Record<string, number | string | boolean | null>;
 
-// Watt-hours per flow for one interval, with measured charging split out of the home flows in proportion to the
-// home's consumption and capped at it.
 function intervalWh(interval: EnergyRow, vehicleWh?: number) {
   const wh: Record<string, number> = {};
   for (const [flow, column] of Object.entries(FLOWS)) wh[flow] = interval[column];
@@ -54,7 +50,7 @@ function intervalWh(interval: EnergyRow, vehicleWh?: number) {
   return wh;
 }
 
-// [start, end] of the stored charge sessions, through the end of the latest one's walk; null without any.
+// Through the end of the latest session's walk, where its energy may still be placed.
 async function sessionCoverage(): Promise<[number, number] | null> {
   const { rows } = await db.query<{ start_at: Date; duration_s: number }>(
     "(SELECT start_at, duration_s FROM charge_session ORDER BY start_at LIMIT 1) UNION ALL (SELECT start_at, duration_s FROM charge_session ORDER BY start_at DESC LIMIT 1)",
@@ -64,7 +60,6 @@ async function sessionCoverage(): Promise<[number, number] | null> {
   return [first.start_at.getTime(), last.start_at.getTime() + Math.max(last.duration_s * 1000, SESSION_HORIZON)];
 }
 
-// Each interval's home consumption (Wh) over its day's baseline, the 25th percentile of that day.
 async function homeExcess(days: string[]) {
   const excess = new Map<number, number>();
   for (const day of days) {
@@ -73,14 +68,12 @@ async function homeExcess(days: string[]) {
       [day],
     );
     if (rows.length === 0) continue;
-    const baseline = rows.map((row) => row.home).sort((a, b) => a - b)[Math.floor(rows.length / 4)];
-    for (const row of rows) excess.set(row.start_at.getTime(), row.home - baseline);
+    const twentyFifthPercentile = rows.map((row) => row.home).sort((a, b) => a - b)[Math.floor(rows.length / 4)];
+    for (const row of rows) excess.set(row.start_at.getTime(), row.home - twentyFifthPercentile);
   }
   return excess;
 }
 
-// Charging from charge sessions for the day's intervals inside the coverage that aren't in `known`, and the car
-// inferred for each interval with charging. Inside the coverage an interval no session is placed on is 0 Wh.
 async function sessionEstimates(day: string, walkStart: number, start: number, end: number, known: Map<number, number>, knownVins: Map<number, string | null>, cars: Car[]) {
   const coverage = await sessionCoverage();
   const estimates = new Map<number, number>();
@@ -102,7 +95,7 @@ async function sessionEstimates(day: string, walkStart: number, start: number, e
   return { estimates, cars: new Map([...placedCars].filter(([t]) => estimates.has(t))) };
 }
 
-// The car of each estimated interval: the one plugged in on both sides of its gap, if the same.
+// A gap names a car only when the same one is plugged in on both sides of it.
 function gapVins(vins: Map<number, string | null>, estimated: Map<number, number>) {
   const named = new Map<number, string>();
   const times = [...vins.keys()].sort((a, b) => a - b);
@@ -190,7 +183,7 @@ export async function dayIntervals(day: string) {
   for (const instant of vehicleWh.keys()) recordAt(instant);
   for (const instant of new Set([...estimatedVehicle.keys(), ...sessionVehicle.keys()])) recordAt(instant).vehicle_estimated = true;
 
-  // The plugged-in car by its current name; never its VIN or color.
+  // By name only: VINs and colors stay private.
   const vins = new Map<number, string | null>([...sessions.cars, ...inDay(gapVins(measuredVin, estimatedVehicle)), ...inDay(measuredVin)]);
   for (const [instant, vin] of vins) if (vin) recordAt(instant).vehicle = carName(cars, vin);
 
