@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
 import { siteToday } from "@/lib/scene/replay";
-import { address, datesLabel, impactPresets, isDaily, parseDay, parseRange, presets, rangeIncludes, rangeLabel, stripRange } from "./ranges";
+import { address, datesLabel, impactPresets, isDaily, parseDay, parseRange, presets, rangeIncludes, rangeLabel, stripRange, trueUpPresets } from "./ranges";
 
 const march = { start: "2026-03-01", end: "2026-03-31" };
 
@@ -137,4 +137,30 @@ describe("the days strip", () => {
   test("holds the day's month when the range has monthly bars", () => {
     expect(stripRange({ start: "2025-10-01", end: "2026-09-30" }, "2026-05-10", "2026-11-07")).toEqual({ start: "2026-05-01", end: "2026-05-31" });
   });
+});
+
+// As /api/true-up-years lists them: '21 - '22 through the current year.
+const trueUpYearsTo = (current: number) =>
+  Array.from({ length: current - 2021 }, (_, i) => {
+    const end = 2022 + i;
+    return { label: `'${String(end - 1).slice(2)} - '${String(end).slice(2)}`, start_date: `${end - 1}-10-01`, end_date: `${end}-09-30`, last_read_date: `${end}-10-05`, current: end === current };
+  });
+
+test("in 2026: This year and the two before it, Earlier newest first, and All time to the current year's end", () => {
+  const { presets, earlier } = trueUpPresets(trueUpYearsTo(2027));
+  expect(presets).toEqual([
+    { label: "This year", range: { start: "2026-10-01", end: "2027-09-30" } },
+    { label: "'25 - '26", range: { start: "2025-10-01", end: "2026-09-30" } },
+    { label: "'24 - '25", range: { start: "2024-10-01", end: "2025-09-30" } },
+    { label: "All time", range: { start: "2021-10-01", end: "2027-09-30" } },
+  ]);
+  expect(earlier.map((year) => year.label)).toEqual(["'23 - '24", "'22 - '23", "'21 - '22"]);
+  expect(earlier[1].range).toEqual({ start: "2022-10-01", end: "2023-09-30" });
+});
+
+test("in 2036 there are still three year buttons, and Earlier holds the thirteen older years", () => {
+  const { presets, earlier } = trueUpPresets(trueUpYearsTo(2037));
+  expect(presets.map((p) => p.label)).toEqual(["This year", "'35 - '36", "'34 - '35", "All time"]);
+  expect(earlier).toHaveLength(13);
+  expect([earlier[0].label, earlier.at(-1)!.label]).toEqual(["'33 - '34", "'21 - '22"]);
 });

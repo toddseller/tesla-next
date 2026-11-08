@@ -1,8 +1,9 @@
--- The production schema of the tables lib/intervals and lib/range read, loaded into the tests' throwaway PostgreSQL
--- by test/postgres.ts. anton-tesla-api-ws owns these tables and changes them; regenerate after it does, on onyx:
+-- The production schema of the tables lib/intervals, lib/range and lib/true-up read, loaded into the tests' throwaway
+-- PostgreSQL by test/postgres.ts. anton-tesla-api-ws owns these tables and changes them; regenerate after it does, on onyx:
 --
 --   pg_dump --schema-only --no-owner --no-privileges -t energy_interval -t battery_sample -t vehicle_interval \
---     -t charge_session -t weather_sample -t vehicle -t data -t meter_day "$DATABASE_URL"
+--     -t charge_session -t weather_sample -t vehicle -t data -t meter_day -t meter_read -t rate_revision \
+--     -t nsc_rate -t true_up_statement -t true_up_statement_cycle -t vpp_payout "$DATABASE_URL"
 --
 -- run as anton's backup job runs pg_dump (deploy/backup-database there), then drop pg_dump's \restrict and
 -- \unrestrict lines. Dumped 2026-11-08, at anton-tesla-api-ws 86714a1.
@@ -137,6 +138,97 @@ CREATE TABLE public.meter_day (
 
 
 --
+-- Name: meter_read; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.meter_read (
+    read_date date NOT NULL,
+    year integer NOT NULL
+);
+
+
+--
+-- Name: nsc_rate; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.nsc_rate (
+    month date NOT NULL,
+    rate double precision NOT NULL
+);
+
+
+--
+-- Name: rate_revision; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.rate_revision (
+    effective_date date NOT NULL,
+    summer_peak_total double precision NOT NULL,
+    summer_off_peak_total double precision NOT NULL,
+    winter_peak_total double precision NOT NULL,
+    winter_off_peak_total double precision NOT NULL,
+    summer_peak_generation double precision NOT NULL,
+    summer_off_peak_generation double precision NOT NULL,
+    winter_peak_generation double precision NOT NULL,
+    winter_off_peak_generation double precision NOT NULL,
+    baseline_credit double precision NOT NULL,
+    bundled_pcia double precision NOT NULL,
+    vintage_pcia double precision NOT NULL,
+    nbc double precision NOT NULL,
+    summer_baseline_kwh double precision NOT NULL,
+    winter_baseline_kwh double precision NOT NULL,
+    minimum_delivery_daily double precision DEFAULT 0 NOT NULL
+);
+
+
+--
+-- Name: true_up_statement; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.true_up_statement (
+    true_up_end_year integer NOT NULL,
+    nem_charges double precision NOT NULL,
+    minimum_delivery double precision NOT NULL,
+    amount_due double precision NOT NULL
+);
+
+
+--
+-- Name: true_up_statement_cycle; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.true_up_statement_cycle (
+    end_read date NOT NULL,
+    true_up_end_year integer NOT NULL,
+    net_peak_kwh double precision NOT NULL,
+    net_off_peak_kwh double precision NOT NULL,
+    net_kwh double precision NOT NULL,
+    nem_charges double precision NOT NULL,
+    minimum_delivery double precision NOT NULL
+);
+
+
+--
+-- Name: true_up_statement_true_up_end_year_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.true_up_statement_true_up_end_year_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: true_up_statement_true_up_end_year_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.true_up_statement_true_up_end_year_seq OWNED BY public.true_up_statement.true_up_end_year;
+
+
+--
 -- Name: vehicle; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -156,6 +248,37 @@ CREATE TABLE public.vehicle_interval (
     energy_wh integer NOT NULL,
     vin character varying(17)
 );
+
+
+--
+-- Name: vpp_payout; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.vpp_payout (
+    season integer NOT NULL,
+    amount double precision NOT NULL,
+    paid_on date NOT NULL
+);
+
+
+--
+-- Name: vpp_payout_season_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.vpp_payout_season_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: vpp_payout_season_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.vpp_payout_season_seq OWNED BY public.vpp_payout.season;
 
 
 --
@@ -187,6 +310,20 @@ CREATE TABLE public.weather_sample (
 --
 
 ALTER TABLE ONLY public.data ALTER COLUMN id SET DEFAULT nextval('public.data_id_seq'::regclass);
+
+
+--
+-- Name: true_up_statement true_up_end_year; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.true_up_statement ALTER COLUMN true_up_end_year SET DEFAULT nextval('public.true_up_statement_true_up_end_year_seq'::regclass);
+
+
+--
+-- Name: vpp_payout season; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.vpp_payout ALTER COLUMN season SET DEFAULT nextval('public.vpp_payout_season_seq'::regclass);
 
 
 --
@@ -238,6 +375,46 @@ ALTER TABLE ONLY public.meter_day
 
 
 --
+-- Name: meter_read meter_read_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.meter_read
+    ADD CONSTRAINT meter_read_pkey PRIMARY KEY (read_date);
+
+
+--
+-- Name: nsc_rate nsc_rate_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.nsc_rate
+    ADD CONSTRAINT nsc_rate_pkey PRIMARY KEY (month);
+
+
+--
+-- Name: rate_revision rate_revision_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.rate_revision
+    ADD CONSTRAINT rate_revision_pkey PRIMARY KEY (effective_date);
+
+
+--
+-- Name: true_up_statement_cycle true_up_statement_cycle_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.true_up_statement_cycle
+    ADD CONSTRAINT true_up_statement_cycle_pkey PRIMARY KEY (end_read);
+
+
+--
+-- Name: true_up_statement true_up_statement_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.true_up_statement
+    ADD CONSTRAINT true_up_statement_pkey PRIMARY KEY (true_up_end_year);
+
+
+--
 -- Name: vehicle_interval vehicle_interval_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -254,6 +431,14 @@ ALTER TABLE ONLY public.vehicle
 
 
 --
+-- Name: vpp_payout vpp_payout_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.vpp_payout
+    ADD CONSTRAINT vpp_payout_pkey PRIMARY KEY (season);
+
+
+--
 -- Name: weather_sample weather_sample_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -266,6 +451,20 @@ ALTER TABLE ONLY public.weather_sample
 --
 
 CREATE INDEX ix_energy_interval_day ON public.energy_interval USING btree (day);
+
+
+--
+-- Name: ix_meter_read_year; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX ix_meter_read_year ON public.meter_read USING btree (year);
+
+
+--
+-- Name: ix_true_up_statement_cycle_true_up_end_year; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX ix_true_up_statement_cycle_true_up_end_year ON public.true_up_statement_cycle USING btree (true_up_end_year);
 
 
 --

@@ -37,6 +37,17 @@ export const impactPresets = (today: string): Preset[] => {
   ];
 };
 
+// The True-Up Tracker's years, from /api/true-up-years (oldest first, the current one last): the row keeps its size as
+// years pass, with older years in an Earlier menu.
+export function trueUpPresets(years: { label: string; start_date: string; end_date: string }[]) {
+  const newestFirst = years.map(({ label, start_date: start, end_date: end }) => ({ label, range: { start, end } })).reverse();
+  const [current, ...past] = newestFirst;
+  return {
+    presets: [{ ...current, label: "This year" }, ...past.slice(0, 2), { label: "All time", range: { start: years[0].start_date, end: current.range.end } }],
+    earlier: past.slice(2),
+  };
+}
+
 const single = (value: Param) => (typeof value === "string" ? value : null);
 
 export function parseRange(params: { start?: Param; end?: Param }, fallback: Range): Range {
