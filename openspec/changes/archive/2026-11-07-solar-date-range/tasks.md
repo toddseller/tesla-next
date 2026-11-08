@@ -41,8 +41,8 @@ Code tasks are test-first: write or port the test, run it and see it fail for th
 
 ## 6. Release and checks (after merging)
 
-- [ ] 6.1 **(owner)** Publish a release; I hold a Distribution page open through the deploy (live-distribution's task 6.2, the reconnect after a redeploy) and watch the Deploy run
-- [ ] 6.2 On next.teslasolar.report: run `scripts/compare-range.mjs` on onyx with zero mismatches; a `totals` event at a :xx:30 refresh updates the current month's bars and today's day view in place; side by side with teslasolar.report for October 2026, the 2025 to 2026 true-up year and October 14, 2026's five views; record the results in the design
+- [x] 6.1 **(owner)** Publish a release; I hold a Distribution page open through the deploy (live-distribution's task 6.2, the reconnect after a redeploy) and watch the Deploy run
+- [x] 6.2 On next.teslasolar.report: run `scripts/compare-range.mjs` on onyx with zero mismatches; a `totals` event at a :xx:30 refresh updates the current month's bars and today's day view in place; side by side with teslasolar.report for October 2026, the 2025 to 2026 true-up year and October 14, 2026's five views; record the results in the design
 
 ## Workflow follow-up
 

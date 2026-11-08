@@ -7,7 +7,7 @@ Code tasks are test-first: write or port the test, run it and see it fail for th
 - [x] 1.1 Propose `notify-live-status` in anton-tesla-api-ws: `pg_notify('live_status', payload)` after each successful `poll_live`, failures logged and never stopping the socket broadcast; a `vehicle` table (`vin`, `display_name`, `streamed`) replaced on each successful vehicle-list refresh; spec deltas for `live-site-status` and `vehicle-charging`
 - [x] 1.2 Apply it test-first in anton (pytest): the notification carries the socket payload; it's skipped with a log line over 8,000 bytes; a database failure leaves the socket event; the table holds the current list with `streamed` matching `streamable_vins()`; measure a real payload's size with weather and a car
 - [x] 1.3 Review (ponytail-review), commit, archive, PR; after you approve, merge and deploy with anton's `git push server main`; check on onyx that notifications arrive every 10 seconds (`LISTEN live_status` in psql) and that `vehicle` lists the cars
-- [ ] 1.4 **(owner, in anton)** Propose, apply, review, merge and deploy `notify-totals`: `pg_notify('totals_updated', '{"date": ...}')` beside each `totals_updated` socket emit, logged on failure; spec delta for `energy-intervals` or wherever that event is specified; I check on onyx that a notification arrives within a minute of a :xx:30 refresh
+- [x] 1.4 **(owner, in anton)** Propose, apply, review, merge and deploy `notify-totals`: `pg_notify('totals_updated', '{"date": ...}')` beside each `totals_updated` socket emit, logged on failure; spec delta for `energy-intervals` or wherever that event is specified; I check on onyx that a notification arrives within a minute of a :xx:30 refresh
 
 ## 2. Live status stream
 
@@ -43,7 +43,7 @@ Code tasks are test-first: write or port the test, run it and see it fail for th
 ## 6. Release and checks (after merging)
 
 - [x] 6.1 **(owner)** Publish a release; I watch the Deploy run
-- [ ] 6.2 On next.teslasolar.report: updates arrive within a second of Flask's notification (timed against `modified`), the page reconnects after a redeploy, and `node scripts/compare-intervals.mjs` reports no mismatch for every date; record the results in the design
+- [x] 6.2 On next.teslasolar.report: updates arrive within a second of Flask's notification (timed against `modified`), the page reconnects after a redeploy, and `node scripts/compare-intervals.mjs` reports no mismatch for every date; record the results in the design
 - [x] 6.3 Side-by-side with teslasolar.report at 375, 844, 1280 and 1920 pixels: by day, at night, in replay (a shared `?at=` link), with a car, and with rain through the development override locally; record any difference and fix it, or note why it's intended
 
 ## Workflow follow-up

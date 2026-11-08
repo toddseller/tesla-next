@@ -139,3 +139,11 @@ Nothing uses these tokens yet, so nothing else changes.
 3. Rollback: `tesla-next-next:previous`, as for any release.
 
 teslasolar.report is untouched.
+
+## Rollout (2026-11-07)
+
+- **Before merging:** besides the chart findings above, the review found the car's band stacking out of place when stepping onto a day with vehicle data, and the charge level's details reading "kW". Both were fixed test-first. Locally under `yarn build && yarn start`, on a throwaway database seeded from the public pages' figures (copying production rows to the Mac was refused), there were no CSP violations or console errors, no sideways scroll at 375 (the page pinned to 375 inside a 500 pixel window, the narrowest it allows), 500, 844, 1280 and 1440 pixels, the arrow keys stepped days, and back returned to the range in one press. The strip now opens centered on the shown day on narrow screens.
+- **Release `v2026.11.07.3`** passed the gate, rebuilt on onyx with its tests passing, and answered 200 at 03:18:53 UTC on 2026-11-08; the new container started at 03:18:49.
+- **Parity:** `scripts/compare-range.mjs` found no mismatch over its 94 ranges against the deployed app, run on onyx against the apps directly, as it had against a build of the branch before merging.
+- **Staying current:** with the current month open, `/api/range` reloaded at 03:20:30, 03:25:30 and 03:30:30, each 200, with no page reload. With today's day view open, its intervals and its strip reloaded at 03:35:30 and "Last updated at" moved from 7:31 to 7:36 PM.
+- **Side by side with Flask:** October 14, 2026's five views on next.teslasolar.report showed the same headlines and breakdowns as Flask's totals for that day (Solar 44.4 kWh: Home 12.6, Vehicle 2.9, Powerwall 20.4, Grid 8.4; Home 31.0; Vehicle 3.1; Powerwall 18.5 discharged, 20.4 charged; Grid 0.1 imported, 8.5 exported, 8.4 net exported), with the car's band between Home and Powerwall. The range bars' figures are covered by the parity sweep.
