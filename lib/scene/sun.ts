@@ -19,18 +19,16 @@ const OBLIQUITY = 23.4397 * RAD;
 export const toDays = (date: Date) => date.valueOf() / DAY_MS - 0.5 + J1970 - J2000;
 const fromJulian = (j: number) => new Date((j + 0.5 - J1970) * DAY_MS);
 
-// How far west of the site's meridian a right ascension (degrees) is at `date`, in radians.
+// Radians west of the site's meridian, for a right ascension in degrees.
 const hourAngleAt = (ascension: number, date: Date, lon: number) => RAD * (280.16 + 360.9856235 * toDays(date) + lon - ascension);
 
-// Right ascension and declination, in radians, of a point at ecliptic longitude and latitude in radians.
+// Radians in and out.
 const equatorial = (longitude: number, latitude: number) => ({
   ascension: Math.atan2(Math.sin(longitude) * Math.cos(OBLIQUITY) - Math.tan(latitude) * Math.sin(OBLIQUITY), Math.cos(longitude)),
   declination: Math.asin(Math.sin(latitude) * Math.cos(OBLIQUITY) + Math.cos(latitude) * Math.sin(OBLIQUITY) * Math.sin(longitude)),
 });
 
-// Height above the horizon and compass direction (clockwise from north), in
-// degrees, at the site at `date`, of a point in the sky at right ascension and
-// declination given in degrees: the sun, the moon, a star or a planet.
+// Degrees in and out; azimuth clockwise from north. Shared by the sun, the moon, the stars and the planets.
 export const horizontal = (ascension: number, declination: number, date: Date, { lat, lon } = SITE) => {
   const phi = lat * RAD;
   const delta = declination * RAD;
@@ -40,7 +38,7 @@ export const horizontal = (ascension: number, declination: number, date: Date, {
   return { altitude: altitude / RAD, azimuth: (azimuth / RAD + 540) % 360 };
 };
 
-// Sunrise and sunset of the local solar day containing `date`.
+// Of the solar day containing `date`, not its calendar day, so they never straddle midnight at the site.
 export const sunTimes = (date: Date, { lat, lon } = SITE) => {
   const lw = -lon * RAD;
   const phi = lat * RAD;
@@ -57,16 +55,14 @@ export const sunTimes = (date: Date, { lat, lon } = SITE) => {
   return { sunrise: fromJulian(noon - (set - noon)), sunset: fromJulian(set) };
 };
 
-// The sun's height above the horizon and compass direction (clockwise from
-// north), in degrees, at the site at `date`, for the house's sunlight, and its
-// height at that day's solar noon, for the season's peak.
-// The sun's ecliptic longitude `d` days from J2000, in radians.
+// Radians, `d` days from J2000.
 const sunLongitude = (d: number) => {
   const anomaly = RAD * (357.5291 + 0.98560028 * d);
   const centre = RAD * (1.9148 * Math.sin(anomaly) + 0.02 * Math.sin(2 * anomaly) + 0.0003 * Math.sin(3 * anomaly));
   return anomaly + centre + RAD * 102.9372 + Math.PI;
 };
 
+// Degrees. The noon altitude sets the season's peak for the house's sunlight.
 export const sunPosition = (date: Date, { lat, lon } = SITE) => {
   const d = toDays(date);
   const { ascension, declination } = equatorial(sunLongitude(d), 0);
@@ -87,16 +83,13 @@ const moonEcliptic = (d: number) => {
   return { longitude: meanLongitude + RAD * terms, latitude: RAD * 5.128 * Math.sin(argument), argument };
 };
 
-// The moon's height above the horizon and compass direction (clockwise from
-// north), in degrees, at the site at `date`.
 export const moonPosition = (date: Date, { lat, lon } = SITE) => {
   const { longitude, latitude } = moonEcliptic(toDays(date));
   const { ascension, declination } = equatorial(longitude, latitude);
   return horizontal(ascension / RAD, declination / RAD, date, { lat, lon });
 };
 
-// The tilt of the moon's equator to the ecliptic.
-const MOON_EQUATOR = 1.54242 * RAD;
+const MOON_EQUATOR_TILT = 1.54242 * RAD;
 const degrees = (angle: number) => ((angle / RAD) % 360 + 540) % 360 - 180;
 
 // How the moon faces us at the site at `date`, in degrees: `libration`, the
@@ -111,12 +104,12 @@ export const moonOrientation = (date: Date, { lat, lon } = SITE) => {
   const node = RAD * (125.045 - 0.0529538 * d);
   const w = moon.longitude - node;
   const beta = moon.latitude;
-  const along = Math.atan2(Math.sin(w) * Math.cos(beta) * Math.cos(MOON_EQUATOR) - Math.sin(beta) * Math.sin(MOON_EQUATOR), Math.cos(w) * Math.cos(beta));
-  const latitude = Math.asin(-Math.sin(w) * Math.cos(beta) * Math.sin(MOON_EQUATOR) - Math.sin(beta) * Math.cos(MOON_EQUATOR));
+  const along = Math.atan2(Math.sin(w) * Math.cos(beta) * Math.cos(MOON_EQUATOR_TILT) - Math.sin(beta) * Math.sin(MOON_EQUATOR_TILT), Math.cos(w) * Math.cos(beta));
+  const latitude = Math.asin(-Math.sin(w) * Math.cos(beta) * Math.sin(MOON_EQUATOR_TILT) - Math.sin(beta) * Math.cos(MOON_EQUATOR_TILT));
 
   const { ascension, declination } = equatorial(moon.longitude, beta);
-  const x = Math.sin(MOON_EQUATOR) * Math.sin(node);
-  const y = Math.sin(MOON_EQUATOR) * Math.cos(node) * Math.cos(OBLIQUITY) - Math.cos(MOON_EQUATOR) * Math.sin(OBLIQUITY);
+  const x = Math.sin(MOON_EQUATOR_TILT) * Math.sin(node);
+  const y = Math.sin(MOON_EQUATOR_TILT) * Math.cos(node) * Math.cos(OBLIQUITY) - Math.cos(MOON_EQUATOR_TILT) * Math.sin(OBLIQUITY);
   const pole = Math.asin(Math.hypot(x, y) * Math.cos(ascension - Math.atan2(x, y)) / Math.cos(latitude));
 
   const sun = equatorial(sunLongitude(d), 0);
@@ -142,7 +135,6 @@ export const moonPhase = (date: Date) => {
   return turn - Math.floor(turn);
 };
 
-// "day" from sunrise until sunset at the site, "night" otherwise.
 export const skyAt = (now: Date, site = SITE) => {
   const { sunrise, sunset } = sunTimes(now, site);
   return now >= sunrise && now < sunset ? "day" : "night";

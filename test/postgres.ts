@@ -35,7 +35,7 @@ export default function setup(project: TestProject) {
     // Los Angeles, like the production server's default, so a session that forgets UTC shows it.
     execFileSync(join(bin, "pg_ctl"), ["-D", data, "-o", `-c listen_addresses='' -k ${dir} -c timezone=America/Los_Angeles`, "-l", join(dir, "log"), "-w", "start"], { stdio: "ignore" });
     execFileSync(join(bin, "psql"), ["-h", dir, "-U", "postgres", "-d", "postgres", "-qc", "CREATE ROLE tsr_app LOGIN PASSWORD 'tsr'", "-c", "CREATE DATABASE tsr OWNER tsr_app"], { env: { ...process.env, PGPASSWORD: "postgres" }, stdio: "ignore" });
-    // The tables the intervals read uses, as production has them.
+    // Production's columns and types, so the intervals tests read what the real tables hold.
     execFileSync(join(bin, "psql"), ["-h", dir, "-U", "tsr_app", "-d", "tsr", "-q", "-v", "ON_ERROR_STOP=1", "-f", fileURLToPath(new URL("schema.sql", import.meta.url))], { env: { ...process.env, PGPASSWORD: "tsr" }, stdio: "ignore" });
     const passfile = join(dir, "pgpass");
     writeFileSync(passfile, "*:*:tsr:tsr_app:tsr\n", { mode: 0o600 });

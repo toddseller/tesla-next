@@ -42,9 +42,9 @@ Code tasks are test-first: write or port the test, run it and see it fail for th
 
 ## 6. Release and checks (after merging)
 
-- [ ] 6.1 **(owner)** Publish a release; I watch the Deploy run
+- [x] 6.1 **(owner)** Publish a release; I watch the Deploy run
 - [ ] 6.2 On next.teslasolar.report: updates arrive within a second of Flask's notification (timed against `modified`), the page reconnects after a redeploy, and `node scripts/compare-intervals.mjs` reports no mismatch for every date; record the results in the design
-- [ ] 6.3 Side-by-side with teslasolar.report at 375, 844, 1280 and 1920 pixels: by day, at night, in replay (a shared `?at=` link), with a car, and with rain through the development override locally; record any difference and fix it, or note why it's intended
+- [x] 6.3 Side-by-side with teslasolar.report at 375, 844, 1280 and 1920 pixels: by day, at night, in replay (a shared `?at=` link), with a car, and with rain through the development override locally; record any difference and fix it, or note why it's intended
 
 ## Workflow follow-up
 

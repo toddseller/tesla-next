@@ -1,5 +1,3 @@
-// Layout of the live house scene, in stage units.
-//
 // The stage is the house render (1600 x 777 units, whatever the images' pixel
 // size) with a band above it for the SOLAR and car labels and one below for
 // POWERWALL and GRID. Lines are written in render units and offset into the
@@ -90,7 +88,6 @@ export const CHARGE_BAR: Record<"bottomLeft" | "topLeft" | "topRight" | "bottomR
   bottomRight: [1374.3, 627.2],
 };
 
-// The bar at `percent`: its top edge `percent` of the way up each side.
 export const chargeBarPoints = (percent: number) => {
   const { bottomLeft, topLeft, topRight, bottomRight } = CHARGE_BAR;
   const up = ([bx, by]: Point, [tx, ty]: Point): Point => [bx + ((tx - bx) * percent) / 100, by + ((ty - by) * percent) / 100];
@@ -140,7 +137,6 @@ export const labelBox = (label: Label, lines: [string, number][], stageWidth: nu
   return { left, right: left + width, top, bottom: top + height };
 };
 
-// Corners replaced by short arcs, sampled as a polyline.
 export const roundCorners = (points: Point[], radius = BEND) => {
   const out: Point[] = [points[0]];
   points.slice(1, -1).forEach(([x, y], i) => {
@@ -161,7 +157,6 @@ export const roundCorners = (points: Point[], radius = BEND) => {
   return out;
 };
 
-// An element's leg as drawn, from the element to the panel, on its lane.
 export const legPoints = (name: LegName, lane = 0) => roundCorners(LEGS[name].map(([x, y]): Point => [x, y + lane * LANE_DROP]));
 
 export const pathLength = (points: Point[]) =>

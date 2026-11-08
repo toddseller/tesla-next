@@ -49,7 +49,15 @@ anton-tesla-api-ws stays the writer: its scheduler reads Tesla and the weather a
   node scripts/compare-intervals.mjs [first-date] [last-date]   # teslasolar.report vs next.teslasolar.report
   ```
 
-  It prints each mismatch's date and first differing field, and exits non-zero on any.
+  It prints each mismatch's date and first differing field, and exits non-zero on any. Cloudflare's rate limit refuses either public host after about 100 requests (and then also the browser's live stream from the same address, until the limit clears), so run a full comparison on onyx, in a throwaway container on both apps' networks:
+
+  ```sh
+  docker run -d --name tesla-next-compare --network tesla-next_default node:24.22.2-alpine3.24 sleep 3600
+  docker network connect anton-tesla-api-ws_default tesla-next-compare
+  docker cp scripts/compare-intervals.mjs tesla-next-compare:/compare.mjs
+  docker exec -e FLASK=http://nginx/api/v2/intervals -e NEXT=http://next:3000/api/intervals tesla-next-compare node /compare.mjs
+  docker rm -f tesla-next-compare
+  ```
 
 ## Deploy
 

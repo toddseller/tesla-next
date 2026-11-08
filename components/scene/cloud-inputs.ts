@@ -32,15 +32,12 @@ const fadeIn = (amount: number) => Math.min(1, amount / 0.04);
 // clouds a little lighter than the low.
 const BASE_OPACITY: Record<Layer, number> = { cirrus: 0.55, mid: 0.85, low: 0.95, dense: 1 };
 
-// What the cloud shader draws for this scene: plain numbers, from the scene
-// state and the cloud amounts as walked to a new reading (rain walked with them,
-// so the looks change gradually too).
+// The amounts arrive already walked toward a new reading, rain with them, so the looks change gradually too.
 export type SceneLight = Pick<SceneState, "sunGlow" | "twilight" | "moon" | "dusk">;
 
 export const cloudInputs = (state: SceneLight, { low = 0, mid = 0, cirrus = 0, rain = 0 }: Amounts & { rain?: number | null }) => {
   const weights = cloudWeights({ low, mid, cirrus }, rain);
   const look = Object.fromEntries(LOOK_KEYS.map((key) => [key, weights.reduce((t, { name, weight }) => t + weight * PRESETS[name].look![key], 0)])) as Look;
-  // The darker overcast cloud fades in from half the low cloud.
   const dense = Math.max(0, (low - 0.5) / 0.5);
   const shares: Record<Layer, number> = { cirrus, mid, low, dense };
   const opacity = Object.fromEntries(Object.entries(shares).map(([layer, share]) => [layer, BASE_OPACITY[layer as Layer] * look.opacity * fadeIn(share)])) as Record<Layer, number>;

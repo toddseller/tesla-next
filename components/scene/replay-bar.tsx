@@ -60,13 +60,8 @@ type Props = {
   onHold?: (on: boolean) => void;
 };
 
-// The live page's replay controls, over the scene's bottom on a desktop, on a
-// fade, and under it on a phone (the scene-replay spec):
-// the day, play and pause, the speed, a scrubber
-// over the day from midnight to midnight, and LIVE. Times are instants in ms;
-// days are the site's "yyyy-MM-dd". onHold(true) and onHold(false) bracket each
-// use that must keep the bar shown: an open date picker, a focused speed menu,
-// a held scrubber, and keyboard focus.
+// onHold(true) and onHold(false) bracket each use that must keep the bar shown: an open date picker, a focused speed
+// menu, a held scrubber, and keyboard focus.
 const ReplayBar = ({ live, day, today, time, span, playing, speed, onDay, onTime, onPlay, onSpeed, onLive, onHold = () => {} }: Props) => {
   const keyboard = useRef(false);
   const onFocus = (event: FocusEvent<HTMLDivElement>) => {

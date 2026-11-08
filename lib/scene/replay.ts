@@ -1,6 +1,5 @@
-// Replaying a past day on the live scene from the stored 5 minute history
-// (/api/intervals). Pure, so every rule is tested here; the page only keeps
-// the replay's time and draws this. See openspec/specs/scene-replay.
+// Pure, so every rule is tested here; the page only keeps the replay's time and draws this. See the scene-replay
+// spec.
 
 import { ACTIVE_KW, type Link, type LiveInput } from "@/lib/scene/live-scene";
 
@@ -15,7 +14,6 @@ const wallParts = new Intl.DateTimeFormat("en-US", {
   year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit",
 });
 
-// The site's wall clock at instant `ms`: { date: "yyyy-MM-dd", hour, minute }.
 export const wallTime = (ms: number) => {
   const p = Object.fromEntries(wallParts.formatToParts(new Date(ms)).map(({ type, value }) => [type, value]));
   return { date: `${p.year}-${p.month}-${p.day}`, hour: Number(p.hour), minute: Number(p.minute) };
@@ -28,8 +26,7 @@ const utcFields = (date: string, hour: number, minute: number) => {
   return Date.UTC(y, m - 1, d, hour, minute);
 };
 
-// The instant of a site wall time, corrected by the zone's offset at that
-// moment. On the fall-back night, 1:00 to 2:00 AM is the first one.
+// On the fall-back night, 1:00 to 2:00 AM is the first one.
 export const siteInstant = (date: string, hour = 0, minute = 0) => {
   const wanted = utcFields(date, hour, minute);
   let t = wanted;
@@ -45,7 +42,7 @@ export const shiftDay = (date: string, days: number) => {
   return new Date(Date.UTC(y, m - 1, d + days)).toISOString().slice(0, 10);
 };
 
-// Site midnight to the next site midnight: 23 or 25 hours on DST days.
+// 23 or 25 hours on the days the clocks change.
 export const daySpan = (date: string) => ({ start: siteInstant(date), end: siteInstant(shiftDay(date, 1)) });
 
 // The recorded flows by source, each in the order the live page links them,
@@ -56,15 +53,12 @@ const FLOWS = [
   ["grid", "home"], ["grid", "vehicle"], ["grid", "powerwall"],
 ].map(([from, to]) => ({ from, to: to === "vehicle" ? "car" : to, key: `${from}_to_${to}_kw` }) as Pick<Link, "from" | "to"> & { key: string });
 
-// One of /api/intervals' records: its start, each flow's kW (`solar_to_home_kw`, ...; null without energy data),
-// the battery and the car.
+// Each flow's kW is null in a record without energy data.
 export type IntervalRecord = { start: string; battery_percentage?: number | null; vehicle?: string | null; [key: string]: unknown };
 type Flows = Record<string, number>;
 export type Moment = { flows: Flows | null; battery: number | null; vehicle: string | null };
 export type Step = Moment & { start: number };
 
-// A day's records as steps in time order: start instant, flows (null without
-// energy data), battery reading and the plugged-in car.
 export const toSteps = (records: IntervalRecord[] = []): Step[] =>
   records
     .map((r) => ({
@@ -75,9 +69,8 @@ export const toSteps = (records: IntervalRecord[] = []): Step[] =>
     }))
     .sort((a, b) => a.start - b.start);
 
-// Where the day's data ends: the end of the latest step with flows, since the battery is
-// sampled live while Tesla publishes each step's energy minutes later; the latest step
-// when none has flows.
+// The latest step with flows, since the battery is sampled live while Tesla publishes each step's energy minutes
+// later.
 export const dataEnd = (steps: Step[]) => {
   if (!steps.length) return null;
   const last = steps.findLast((s) => s.flows) ?? steps[steps.length - 1];
@@ -86,11 +79,8 @@ export const dataEnd = (steps: Step[]) => {
 
 const lerp = (a: number, b: number, f: number) => a + (b - a) * f;
 
-// The moment at instant `t`. A power value is the average over its step, so it
-// stands for the step's middle and blends linearly to a neighboring step's
-// middle; battery charge is read at the step's start and blends to the next
-// reading. A value never blends toward a step without it: it holds over its
-// own step. The car is the step's own.
+// A power value is the average over its step, so it stands for the step's middle and blends to the neighboring
+// step's middle; battery charge is read at the step's start. A value never blends toward a step without it.
 export const momentAt = (steps: Step[], t: number): Moment => {
   const i = steps.findIndex((s) => s.start <= t && t < s.start + STEP_MS);
   if (i < 0) return { flows: null, battery: null, vehicle: null };
@@ -114,8 +104,7 @@ export const momentAt = (steps: Step[], t: number): Moment => {
   return { flows, battery, vehicle: step.vehicle };
 };
 
-// The scene's inputs for a moment, as sceneState takes them, and its links
-// straight from the recorded flows.
+// The links come straight from the recorded flows rather than being assigned as live.
 export const replayValues = ({ flows, battery, vehicle }: Moment): { values: LiveInput; links: Link[] } => {
   const kw = (from: string, to: string) => (flows ? flows[`${from}_to_${to}_kw`] : 0);
   const sum = (...pairs: [string, string][]) => pairs.reduce((total, [from, to]) => total + kw(from, to), 0);
@@ -139,8 +128,7 @@ export const replayValues = ({ flows, battery, vehicle }: Moment): { values: Liv
 
 const AT = /^(\d{4}-\d{2}-\d{2})T(\d{2}):(\d{2})$/;
 
-// A replay link's moment (`at`, a site wall time to the minute) as an instant,
-// or null unless it is a real moment from the first day of service to now.
+// null unless it's a real moment from the first day of service to now, so a bad link opens live.
 export const parseAt = (value: string | null | undefined, now = Date.now()) => {
   const match = AT.exec(value || "");
   if (!match) return null;

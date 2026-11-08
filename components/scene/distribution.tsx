@@ -13,7 +13,6 @@ import { dataEnd, daySpan, FIRST_DAY, formatAt, momentAt, parseAt, replayValues,
 // live; an amber warning, with the last update's time on hover, once they
 // stop, as the flows keep moving on the last data. It checks every second in
 // its own component, so the check re-renders only this line, not the scene.
-// The viewer's own clock, to the second: "12:33:37 PM".
 const SECONDS = new Intl.DateTimeFormat("en-US", { hour: "numeric", minute: "2-digit", second: "2-digit" });
 
 export const StaleWarning = ({ liveReceived, modifiedAt, renderedAt }: { liveReceived: boolean; modifiedAt: Date | null; renderedAt?: number }) => {
@@ -88,8 +87,6 @@ const useWalkedWeather = (weather: Sky) => {
   return shown;
 };
 
-// Live energy flows as an illustrated house and garage (openspec/specs/live-flow-scene),
-// or a replay of any day from history below it (openspec/specs/scene-replay).
 // Live, the scene follows the clock once a minute too, so it darkens through dusk
 // even if no live update arrives.
 // `renderedAt` is when the server rendered the page: the first render in the browser uses it too, so hydration finds
@@ -101,7 +98,7 @@ const Distribution = ({ initialStatus, search, renderedAt }: { initialStatus: st
   } = useSiteData(initialStatus);
   const searchParams = useMemo(() => new URLSearchParams(search), [search]);
   const [now, setNow] = useState(() => new Date(renderedAt ?? Date.now()));
-  // The replayed instant in ms, or null while live.
+  // null while live.
   const [replayTime, setReplayTime] = useState<number | null>(() => parseAt(searchParams.get("at")));
   const [playing, setPlaying] = useState(false);
   const [speed, setSpeed] = useState(DEFAULT_SPEED);
@@ -131,8 +128,7 @@ const Distribution = ({ initialStatus, search, renderedAt }: { initialStatus: st
   const end = dataEnd(steps);
   const span = daySpan(day);
 
-  // The address names the moment while replaying, rewritten in place, never during play.
-  // In place, without Next.js's navigation, which would render the page on the server again.
+  // Never during play, and without Next.js's navigation, which would render the page on the server again.
   const showInAddress = (t: number | null) => window.history.replaceState(null, "", t == null ? window.location.pathname : `?${new URLSearchParams({ at: formatAt(t) })}`);
   const replayAt = (t: number) => {
     const clamped = Math.max(siteInstant(FIRST_DAY), Math.min(t, Date.now()));

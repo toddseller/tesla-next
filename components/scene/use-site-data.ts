@@ -19,6 +19,8 @@ type LiveStatus = {
   weather?: Partial<Record<"cover" | "rain" | "wind" | "windLow" | "windMid" | "windHigh" | "cirrus" | "low" | "mid" | "sun", number | null>> | null;
 };
 
+const REOPEN_MS = 5000;
+
 export type ReplayDay = { date: string; data: IntervalRecord[]; weather?: WeatherReading[] };
 
 export const EMPTY = {
@@ -45,7 +47,7 @@ type Live = typeof EMPTY;
 
 const kw = (value: unknown) => parseFloat(String(value));
 
-// As anton's ContextProvider applied a live status: a missing battery reading or time keeps the last one.
+// Battery readings and times can be missing right after Flask restarts; the last ones still hold.
 export const applyStatus = (previous: Live, status: LiveStatus): Live => ({
   solarPower: kw(status.solar_power),
   gridPower: kw(status.grid_power),
@@ -67,10 +69,15 @@ export const applyStatus = (previous: Live, status: LiveStatus): Live => ({
   liveReceived: true,
 });
 
-// The Distribution page's data: live status from the server-rendered status and then the stream, and the replayed
-// day's history, reloaded when the stream says that day's totals changed.
 export const useSiteData = (initialStatus: string | null) => {
-  const [live, setLive] = useState(() => (initialStatus ? applyStatus(EMPTY, JSON.parse(initialStatus)) : EMPTY));
+  const [live, setLive] = useState(() => {
+    // Parsed during the server's render, where a throw would fail the whole page; the stream's next status fills it in.
+    try {
+      return initialStatus ? applyStatus(EMPTY, JSON.parse(initialStatus)) : EMPTY;
+    } catch {
+      return EMPTY;
+    }
+  });
   const [replayDay, setReplayDay] = useState<string | null>(null);
   const [replayData, setReplayData] = useState<ReplayDay | null>(null);
 
@@ -100,13 +107,26 @@ export const useSiteData = (initialStatus: string | null) => {
   const replayDayRef = useRef(replayDay);
   replayDayRef.current = replayDay;
   useEffect(() => {
-    const stream = new EventSource("/api/live");
-    stream.onmessage = (event) => setLive((previous) => applyStatus(previous, JSON.parse(event.data)));
-    stream.addEventListener("totals", (event) => {
-      const { date } = JSON.parse((event as MessageEvent).data);
-      if (date === replayDayRef.current) void fetchReplay(date);
-    });
-    return () => stream.close();
+    let stream: EventSource;
+    let reopen: ReturnType<typeof setTimeout> | undefined;
+    const open = () => {
+      stream = new EventSource("/api/live");
+      stream.onmessage = (event) => setLive((previous) => applyStatus(previous, JSON.parse(event.data)));
+      stream.addEventListener("totals", (event) => {
+        const { date } = JSON.parse((event as MessageEvent).data);
+        if (date === replayDayRef.current) void fetchReplay(date);
+      });
+      // The browser retries a dropped stream by itself, but gives up for good after any answer other than 200, such
+      // as Cloudflare's 429 or a 502 while the tunnel reconnects, so the page opens a new one.
+      stream.onerror = () => {
+        if (stream.readyState === EventSource.CLOSED) reopen = setTimeout(open, REOPEN_MS);
+      };
+    };
+    open();
+    return () => {
+      clearTimeout(reopen);
+      stream.close();
+    };
   }, [fetchReplay]);
 
   return { ...live, replayData, setReplayDay };

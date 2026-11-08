@@ -3,7 +3,6 @@
 import { db } from "@/lib/db";
 
 const REFERENCE_DAYS = 14;
-// Wh over a quarter-hour -> average kW
 const QUARTER_WH_TO_KW = 4 / 1000;
 // Below this best output (night, dawn, dusk) the roof says too little about the sky.
 const MIN_REFERENCE_KW = 1.0;
@@ -14,7 +13,6 @@ export function slot(instant: number) {
   return Math.floor((at.getUTCHours() * 60 + at.getUTCMinutes()) / 15);
 }
 
-// The roof's best quarter-hour output in kW for each slot over the 14 days before `day` (YYYY-MM-DD).
 export async function reference(day: string): Promise<Map<number, number>> {
   const { rows } = await db.query<{ day: string; start_at: Date; wh: number }>(
     "SELECT day::text AS day, start_at, solar_generated_wh AS wh FROM energy_interval WHERE day >= $1::date - $2::int AND day < $1::date",
@@ -31,13 +29,13 @@ export async function reference(day: string): Promise<Map<number, number>> {
   return best;
 }
 
-// How sunny it is, 0 to 1: the output over the best at that time; null when either is too small to judge by.
+// null when either is too small to judge the sky by.
 export function share(outputKw: number | null, referenceKw: number | null | undefined): number | null {
   if (outputKw === null || referenceKw == null || referenceKw < MIN_REFERENCE_KW) return null;
   return Math.min(1, outputKw / referenceKw);
 }
 
-// The average output in kW over the quarter-hour from `start`, by interval start; null until all three are stored.
+// null until all three of the quarter-hour's intervals are stored, so a part-hour doesn't read as a dull sky.
 export function quarterKw(solarWh: Map<number, number>, start: number): number | null {
   const wh = [0, 5, 10].map((minutes) => solarWh.get(start + minutes * 60_000));
   if (wh.some((value) => value === undefined)) return null;

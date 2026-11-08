@@ -28,11 +28,15 @@ Until the Next.js server has received its first live status since it started, th
 - **THEN** the labels show dashes, and fill in with the first update
 
 ### Requirement: Streams last through idle time and restarts
-An open stream SHALL send a keep-alive at least every 30 seconds, so Cloudflare does not close it, and a page whose stream was closed by a server restart SHALL reconnect by itself and resume receiving updates without a reload. A request for a stream SHALL always be answered with status 200 and a retry interval, so the browser keeps retrying.
+An open stream SHALL send a keep-alive at least every 30 seconds, so Cloudflare does not close it, and a page whose stream was closed by a server restart SHALL reconnect by itself and resume receiving updates without a reload. A request for a stream SHALL always be answered with status 200 and a retry interval, so the browser keeps retrying, and a page whose stream is closed for good, by any answer other than 200 on its way (such as Cloudflare's rate limit or a tunnel's 502), SHALL open a new one within about 5 seconds.
 
 #### Scenario: Deploy while a page is open
 - **WHEN** a release replaces the container while a viewer has the page open
 - **THEN** the page reconnects by itself and its labels resume updating, with no reload
+
+#### Scenario: Refused by Cloudflare
+- **WHEN** Cloudflare answers a page's stream with 429 for a minute
+- **THEN** the page keeps opening a new stream every few seconds, and its labels resume updating once Cloudflare lets it through, with no reload
 
 ### Requirement: Losing the database doesn't stop the pages
 When the server's notification connection to the database breaks, the server SHALL keep its open streams, reconnect to the database every few seconds, and resume forwarding updates once connected, with no page reload. While no updates arrive, the scene's stale-data warning applies.

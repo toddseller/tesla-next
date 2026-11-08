@@ -1,12 +1,9 @@
-// What the live house scene shows, derived from live status. Pure, so every
-// rule is tested here; the scene components only draw this state.
-// See openspec/specs/live-flow-scene.
+// Pure, so every rule is tested here; the scene components only draw this state. See the live-flow-scene spec.
 
 import { azimuthX, nightSky } from "@/lib/scene/night-sky";
 import { moonOrientation, moonPhase, moonPosition, SITE, skyAt, sunPosition, sunTimes } from "@/lib/scene/sun";
 import type { Sky } from "@/lib/scene/weather";
 
-// The plugged-in car, as live status sends it.
 export type Vehicle = { name: string; color?: string; charging_power?: number | null; battery_level?: number | null; battery_level_at?: string | null; charging_state?: string | null };
 
 // Live status in kW and percent; any of it may be missing before the first update.
@@ -39,12 +36,7 @@ const FULL_SUN_ALTITUDE = 25;
 const JUNE_NOON_ALTITUDE = 90 - (SITE.lat - 23.44);
 const sinDeg = (deg: number) => Math.sin((deg * Math.PI) / 180);
 
-// How lit each face direction is, from its own angle to the sun on the compass:
-// 1 with the sun straight out from it, 0 once the sun is a quarter turn past.
-// `strength` scales it all by the sun's height, 0 to 1, and by how much of the
-// sky is clear (openspec/specs/scene-weather); `peak` limits the
-// light (not the shade) by the season, from the noon sun's strength against
-// June's: 1 in June, about 0.5 in December. null while the sun is down.
+// `peak` limits the light, not the shade, by the season: 1 in June, about 0.5 in December (the scene-weather spec).
 const sunlight = (now: Date, cover: number | null | undefined): Sunlight | null => {
   const { altitude, azimuth, noonAltitude } = sunPosition(now);
   if (altitude <= 0) return null;
@@ -55,16 +47,12 @@ const sunlight = (now: Date, cover: number | null | undefined): Sunlight | null 
   } as Sunlight;
 };
 
-// Where the sun's glow sits in the sky, by day: `x` across the scene, 0.95 at
-// sunrise to 0.05 at sunset by the share of daylight gone, since the render
-// looks at the house from the southeast (east on the right, west on the left);
-// `altitude`, its height in degrees, for the sky's height scale.
-// `daylight` is how far the sun has climbed toward full strength (as the
-// sunlight's): 0 on the horizon, where the glow is dim and warm, to 1 at 25 degrees.
+// 0 on the horizon, where the sun's glow is dim and warm.
 const daylightAt = (altitude: number) => Math.min(1, Math.max(0, altitude) / FULL_SUN_ALTITUDE);
 // The sun glow and the moon fade out over their last 2 degrees above the horizon
 // (and in over their first), so they never pop in or out as they set or rise.
 const horizonFade = (altitude: number) => Math.min(1, Math.max(0, altitude / 2));
+// The render looks at the house from the southeast, so the sun crosses the scene from right to left.
 const sunGlow = (now: Date) => {
   const { sunrise, sunset } = sunTimes(now);
   const { altitude } = sunPosition(now);
@@ -74,33 +62,23 @@ const sunGlow = (now: Date) => {
   };
 };
 
-// The warm glow of sunset and sunrise: `strength` 1 with the sun on the horizon,
-// fading to 0 with it 6 degrees above or below (the end of civil twilight), and
-// `x` on the sun's side of the scene.
+// The end of civil twilight, where sunset's warm glow is gone.
 export const TWILIGHT_DEGREES = 6;
 const twilightAt = (now: Date) => {
   const { altitude, azimuth } = sunPosition(now);
   return { strength: Math.max(0, 1 - Math.abs(altitude) / TWILIGHT_DEGREES), x: azimuthX(azimuth) };
 };
 
-// How far the sky is from night through twilight, for the clouds' dimming: 1
-// with the sun 6 degrees up or more, 0 with it 6 degrees down or more.
+// For the clouds' dimming through twilight.
 const duskAt = (now: Date) => Math.min(1, Math.max(0, (sunPosition(now).altitude + TWILIGHT_DEGREES) / (2 * TWILIGHT_DEGREES)));
 
-// The shown day at the site as a whole number of days since 1970, the seed of
-// that day's cloud shapes. The site's zone is TIME_ZONE in replay.js, which
-// imports this file, so the formatter is here.
+// Each day's cloud shapes are seeded by its date. replay.ts, which has TIME_ZONE, imports this file, so the zone is
+// written out here.
 const siteDate = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Los_Angeles" });
 const cloudSeedAt = (now: Date) => Date.parse(siteDate.format(now)) / 86400000;
 
-// The moon in the sky while it is above the horizon, day or night (null below
-// it): `x` by its direction and `altitude` in degrees, on the scale the stars
-// use, with its phase (0 new, 0.5
-// full), `daylight`, how strongly the sun outshines it: 0 at night and with
-// the sun on the horizon, growing with the sun's height to 1 at 25 degrees, as
-// the sunlight's strength does, and `night`, how strongly its glow and dark side
-// show: 0 by day to 1 at night, as the scene turns through twilight. It carries
-// how it faces us (`libration`, `axis`, `brightLimb`; see moonOrientation).
+// Up by day too: the sun outshines it as its height grows (`daylight`), and its glow and dark side show as the
+// scene turns to night (`night`). Phase 0 is new, 0.5 full.
 const moonInSky = (now: Date) => {
   const { altitude, azimuth } = moonPosition(now);
   if (altitude <= 0) return null;
@@ -196,14 +174,8 @@ const capped = (value: number | null | undefined, cap: number) => (value == null
 export const sceneState = (
   { solarPower, homePower, batteryPower, battery, gridPower, vehicle, liveReceived }: LiveInput,
   now: Date = new Date(),
-  // Replay passes the recorded links, and has no 20% default for a missing charge.
-  // `cover` is the site's cloud cover, 0 clear to 1 overcast, and `rain` how hard
-  // it rains, 0 dry to 1 heaviest, and `wind` the wind across the scene in km/h,
-  // positive toward its right (`windLow`, `windMid` and `windHigh` likewise at each
-  // cloud band's height), and `cirrus`, `low` and `mid` the shares of the sky
-  // under high, low and mid cloud, 0 to 1: null without a recent reading, undefined
-  // before the weather is known, and `sun` how sunny the roof finds it, 0 to 1, null
-  // when it can't tell (openspec/specs/scene-weather).
+  // Replay passes the recorded links, and has no 20% default for a missing charge. A weather field is null without
+  // a recent reading and undefined before the weather is known; wind is km/h across the scene, positive to its right.
   { links, replay = false, cover, rain, wind, windLow, windMid, windHigh, cirrus, low, mid, sun }: SceneOptions = {}
 ) => {
   // The weather service's model can keep a marine layer for hours after the roof is in full sun.
@@ -232,9 +204,8 @@ export const sceneState = (
     labels,
     flows,
     links: links ?? sceneLinks({ solarPower, homePower, batteryPower, gridPower, vehicle }),
-    // Percent, 0 to 100, for the Powerwall's charge bar; null for no bar.
+    // null for no bar.
     charge: (replay || liveReceived) && battery != null ? Math.min(Math.max(battery, 0), 100) : replay ? null : DEFAULT_CHARGE,
-    // Opacity of the panels' glow; none while solar shows no flow.
     glow: (replay || liveReceived) && flows.solar ? Math.min(Math.max(Number(solarPower), 0) / SOLAR_GLOW.fullKw, 1) * SOLAR_GLOW.opacity : 0,
     replay,
     // As the sky at the site does, the cover capped by the roof's sunshine, not by
