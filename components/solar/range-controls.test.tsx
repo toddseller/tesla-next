@@ -4,6 +4,7 @@ import { act, cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 
 import { RangeControls } from "@/components/solar/range-controls";
+import { presets } from "@/lib/solar/ranges";
 
 const october = { start: "2026-10-01", end: "2026-10-31" };
 
@@ -24,7 +25,7 @@ const openPicker = () => act(() => fireEvent.click(screen.getByRole("button", { 
 
 test("each preset sets its range, and the one matching the shown range is marked", () => {
   const onRange = vi.fn();
-  render(<RangeControls range={{ start: "2026-11-01", end: "2026-11-30" }} today="2026-11-07" onRange={onRange} />);
+  render(<RangeControls range={{ start: "2026-11-01", end: "2026-11-30" }} presets={presets("2026-11-07")} onRange={onRange} />);
   expect([pressed("This month"), pressed("This year"), pressed("True-up year")]).toEqual(["true", "false", "false"]);
   fireEvent.click(screen.getByRole("button", { name: "True-up year" }));
   expect(onRange).toHaveBeenCalledWith({ start: "2026-10-01", end: "2027-09-30" });
@@ -33,13 +34,13 @@ test("each preset sets its range, and the one matching the shown range is marked
 });
 
 test("a range no preset gives marks none", () => {
-  render(<RangeControls range={october} today="2026-11-07" onRange={() => {}} />);
+  render(<RangeControls range={october} presets={presets("2026-11-07")} onRange={() => {}} />);
   expect([pressed("This month"), pressed("This year"), pressed("True-up year")]).toEqual(["false", "false", "false"]);
 });
 
 test("the picker shows the range and sets the two days picked, in either order", () => {
   const onRange = vi.fn();
-  render(<RangeControls range={october} today="2026-11-07" onRange={onRange} />);
+  render(<RangeControls range={october} presets={presets("2026-11-07")} onRange={onRange} />);
   expect(screen.getByRole("button", { name: /choose dates/i }).textContent).toMatch(/^Oct 1\s–\s31, 2026$/);
   openPicker();
   fireEvent.click(dayButton(/October 20th, 2026/));
@@ -49,12 +50,12 @@ test("the picker shows the range and sets the two days picked, in either order",
 });
 
 test("the picker offers nothing before the first day of service or after two years from today", () => {
-  render(<RangeControls range={{ start: "2021-10-01", end: "2021-10-31" }} today="2026-11-07" onRange={() => {}} />);
+  render(<RangeControls range={{ start: "2021-10-01", end: "2021-10-31" }} presets={presets("2026-11-07")} onRange={() => {}} />);
   openPicker();
   expect(dayButton(/October 9th, 2021/).disabled).toBe(true);
   expect(dayButton(/October 10th, 2021/).disabled).toBe(false);
   cleanup();
-  render(<RangeControls range={{ start: "2028-11-01", end: "2028-11-30" }} today="2026-11-07" onRange={() => {}} />);
+  render(<RangeControls range={{ start: "2028-11-01", end: "2028-11-30" }} presets={presets("2026-11-07")} onRange={() => {}} />);
   openPicker();
   expect(dayButton(/November 7th, 2028/).disabled).toBe(false);
   expect(dayButton(/November 8th, 2028/).disabled).toBe(true);

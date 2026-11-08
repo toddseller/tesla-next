@@ -7,7 +7,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { toDate, toDay } from "@/lib/calendar-dates";
 import { FIRST_DAY } from "@/lib/scene/replay";
-import { datesLabel, presets, type Range } from "@/lib/solar/ranges";
+import { datesLabel, type Preset, type Range } from "@/lib/solar/ranges";
 
 // Two years from the viewer's own today keeps inside the API's 732 days even when their clock is a day ahead of the site's.
 const lastPickable = () => {
@@ -15,7 +15,7 @@ const lastPickable = () => {
   return new Date(now.getFullYear() + 2, now.getMonth(), now.getDate());
 };
 
-export function RangeControls({ range, today, onRange }: { range: Range; today: string; onRange: (range: Range) => void }) {
+export function RangeControls({ range, presets, onRange }: { range: Range; presets: Preset[]; onRange: (range: Range) => void }) {
   const [open, setOpen] = useState(false);
   const [first, setFirst] = useState<string | null>(null);
   const onOpen = (value: boolean) => {
@@ -32,7 +32,7 @@ export function RangeControls({ range, today, onRange }: { range: Range; today: 
   return (
     <div className="flex flex-wrap items-center gap-2">
       <div role="group" aria-label="Preset ranges" className="grid grid-cols-3 gap-0.5 rounded-lg border border-input bg-card p-[3px] max-sm:w-full sm:flex">
-        {presets(today).map(({ label, range: preset }) => {
+        {presets.map(({ label, range: preset }) => {
           const selected = preset.start === range.start && preset.end === range.end;
           return (
             <button key={label} type="button" aria-pressed={selected} onClick={() => onRange(preset)}

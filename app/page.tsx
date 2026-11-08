@@ -3,14 +3,14 @@ import { dayIntervals } from "@/lib/intervals/intervals";
 import { latest } from "@/lib/live";
 import { rangeTotals } from "@/lib/range";
 import { siteToday } from "@/lib/scene/replay";
-import { parseDay, parseRange, stripRange } from "@/lib/solar/ranges";
+import { monthOf, parseDay, parseRange, stripRange } from "@/lib/solar/ranges";
 
 // The range and the open day live in the address, so a link or a reload shows the same page, rendered with its data.
 export default async function Page({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const params = await searchParams;
-  const range = parseRange(params);
-  const day = parseDay(params.day);
   const today = siteToday();
+  const range = parseRange(params, monthOf(today));
+  const day = parseDay(params.day);
   if (!day) {
     return <SolarPage range={range} items={await rangeTotals(range.start, range.end)} today={today} initialStatus={latest()} />;
   }

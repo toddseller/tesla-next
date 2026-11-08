@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
 import { siteToday } from "@/lib/scene/replay";
-import { address, datesLabel, isDaily, parseDay, parseRange, presets, rangeIncludes, rangeLabel, stripRange } from "./ranges";
+import { address, datesLabel, impactPresets, isDaily, parseDay, parseRange, presets, rangeIncludes, rangeLabel, stripRange } from "./ranges";
 
 const march = { start: "2026-03-01", end: "2026-03-31" };
 
@@ -42,6 +42,28 @@ describe("presets", () => {
   });
 });
 
+describe("impactPresets", () => {
+  const byLabel = (today: string) => Object.fromEntries(impactPresets(today).map(({ label, range }) => [label, range]));
+
+  test("today, the week from Sunday to Saturday, then the Solar page's three, in that order", () => {
+    expect(impactPresets("2026-11-08").map(({ label }) => label)).toEqual(["Today", "This week", "This month", "This year", "True-up year"]);
+    expect(byLabel("2026-11-08")).toMatchObject({
+      Today: { start: "2026-11-08", end: "2026-11-08" },
+      "This week": { start: "2026-11-08", end: "2026-11-14" },
+      "True-up year": { start: "2026-10-01", end: "2027-09-30" },
+    });
+  });
+
+  test("a Wednesday's week starts the Sunday before", () => {
+    expect(byLabel("2026-11-11")["This week"]).toEqual({ start: "2026-11-08", end: "2026-11-14" });
+  });
+
+  test("a week across a month end and a year end", () => {
+    expect(byLabel("2026-12-01")["This week"]).toEqual({ start: "2026-11-29", end: "2026-12-05" });
+    expect(byLabel("2026-12-31")["This week"]).toEqual({ start: "2026-12-27", end: "2027-01-02" });
+  });
+});
+
 describe("the address", () => {
   beforeEach(() => {
     vi.useFakeTimers({ toFake: ["Date"] });
@@ -49,10 +71,10 @@ describe("the address", () => {
   });
   afterEach(() => vi.useRealTimers());
 
-  const november = { start: "2026-11-01", end: "2026-11-30" };
+  const today = { start: "2026-11-07", end: "2026-11-07" };
 
   test("a valid range is taken as it is", () => {
-    expect(parseRange({ start: "2026-03-01", end: "2026-03-31" })).toEqual(march);
+    expect(parseRange({ start: "2026-03-01", end: "2026-03-31" }, today)).toEqual(march);
   });
 
   test.each([
@@ -63,8 +85,8 @@ describe("the address", () => {
     [{ start: "2026-10-01", end: "2030-01-01" }],
     [{ start: "2026-10-31", end: "2026-10-01" }],
     [{ start: ["2026-10-01", "2026-10-02"], end: "2026-10-31" }],
-  ])("%j falls back to the current month", (params) => {
-    expect(parseRange(params)).toEqual(november);
+  ])("%j falls back to the page's default", (params) => {
+    expect(parseRange(params, today)).toEqual(today);
   });
 
   test("a day from the first day of service to today is taken; any other is ignored", () => {

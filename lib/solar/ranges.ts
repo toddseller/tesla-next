@@ -15,7 +15,9 @@ const monthEnd = (date: string) => {
 export const monthOf = (date: string): Range => ({ start: `${date.slice(0, 7)}-01`, end: monthEnd(date) });
 
 // The true-up year runs October 1 to September 30.
-export const presets = (today: string) => {
+export type Preset = { label: string; range: Range };
+
+export const presets = (today: string): Preset[] => {
   const year = Number(today.slice(0, 4));
   const trueUpStart = today.slice(5) >= "10-01" ? year : year - 1;
   return [
@@ -25,12 +27,22 @@ export const presets = (today: string) => {
   ];
 };
 
+// Weeks run Sunday to Saturday, as anton's Impact page's did.
+export const impactPresets = (today: string): Preset[] => {
+  const sunday = shiftDay(today, -new Date(`${today}T00:00:00Z`).getUTCDay());
+  return [
+    { label: "Today", range: { start: today, end: today } },
+    { label: "This week", range: { start: sunday, end: shiftDay(sunday, 6) } },
+    ...presets(today),
+  ];
+};
+
 const single = (value: Param) => (typeof value === "string" ? value : null);
 
-export function parseRange(params: { start?: Param; end?: Param }): Range {
+export function parseRange(params: { start?: Param; end?: Param }, fallback: Range): Range {
   const [start, end] = [single(params.start), single(params.end)];
   const valid = !dateError("start", start) && !dateError("end", end) && start! <= end!;
-  return valid ? { start: start!, end: end! } : monthOf(siteToday());
+  return valid ? { start: start!, end: end! } : fallback;
 }
 
 export function parseDay(value: Param): string | null {
