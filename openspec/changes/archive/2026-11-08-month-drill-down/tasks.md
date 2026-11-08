@@ -14,8 +14,8 @@ Code tasks are test-first: write the test, run it and see it fail for the right 
 
 ## 3. Release and checks (after merging)
 
-- [ ] 3.1 **(owner)** Publish a release; I watch the Deploy run
-- [ ] 3.2 On next.teslasolar.report: from This year and True-up year a month opens its days, a day its 5-minute view, and back returns to the year; record the results in the design, committed on the next change's branch rather than a pull request of their own
+- [x] 3.1 **(owner)** Publish a release; I watch the Deploy run
+- [x] 3.2 On next.teslasolar.report: from This year and True-up year a month opens its days, a day its 5-minute view, and back returns to the year; record the results in the design, committed on the next change's branch rather than a pull request of their own
 
 ## Workflow follow-up
 

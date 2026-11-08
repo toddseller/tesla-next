@@ -3,6 +3,9 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   output: "standalone",
   poweredByHeader: false,
+  async redirects() {
+    return [{ source: "/numbers", destination: "/true-up", permanent: true }];
+  },
   async headers() {
     return [
       {

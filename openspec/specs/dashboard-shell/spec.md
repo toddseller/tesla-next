@@ -71,3 +71,10 @@ Every page SHALL end with a footer reading "© <current year> teslasolar.report"
 #### Scenario: The footer's year
 - **WHEN** a page is opened in 2027
 - **THEN** its footer reads "© 2027 teslasolar.report"
+
+### Requirement: The True-Up Tracker's old address
+`/numbers`, the True-Up Tracker's address on teslasolar.report before it was renamed, SHALL redirect permanently to `/true-up`, so old bookmarks open the True-Up Tracker.
+
+#### Scenario: An old bookmark
+- **WHEN** a viewer opens `/numbers`
+- **THEN** the response is a permanent redirect to `/true-up`, and the True-Up Tracker opens with "True-Up" marked as the current page
