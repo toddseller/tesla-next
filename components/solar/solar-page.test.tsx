@@ -49,6 +49,15 @@ test("a preset and a picked day each push their address", () => {
   expect(router.push).toHaveBeenLastCalledWith("/?start=2026-11-01&end=2026-11-30&day=2026-11-07");
 });
 
+test("a month bar of a long range pushes that month, and the subtitle says a month can be selected", () => {
+  const trueUpYear = { start: "2026-10-01", end: "2027-09-30" };
+  const months: RangeItem[] = [{ date: "Oct-26", solar: 997.6, grid: 299.5, house: 1261.7 }, { date: "Nov-26", solar: 240.2, grid: 120.1, house: 330.4 }];
+  const { container } = render(<SolarPage range={trueUpYear} items={months} today="2026-11-07" initialStatus={null} />);
+  expect(screen.getByText(/select a month for its days/)).toBeTruthy();
+  fireEvent.click(solarOf(container, "Oct 2026")!);
+  expect(router.push).toHaveBeenCalledWith("/?start=2026-10-01&end=2026-10-31");
+});
+
 test("the served bars draw with no request of their own", async () => {
   render(<SolarPage range={november} items={[item("2026-11-07", 12.1)]} today="2026-11-07" initialStatus={null} />);
   await settle();
