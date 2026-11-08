@@ -73,10 +73,10 @@ export function SolarPage({ range, items, today, initialStatus, day }: Props) {
         <div className="flex flex-wrap items-baseline justify-between gap-2">
           <h2 id="range-title" className="font-semibold">{datesLabel(range, "long")}</h2>
           <span className="text-sm text-muted-foreground">
-            {isDaily(range) ? "Daily · select a day for its 5-minute detail" : "Monthly · over 31 days, one bar per month"}
+            {isDaily(range) ? "Daily · select a day for its 5-minute detail" : "Monthly · select a month for its days"}
           </span>
         </div>
-        <RangeChart items={bars} onOpenDay={(next) => router.push(address(range, next))} />
+        <RangeChart items={bars} range={range} onOpenDay={(next) => router.push(address(range, next))} onOpenRange={(next) => router.push(address(next))} />
       </section>
     </div>
   );

@@ -25,11 +25,15 @@ const TRUE_UP_YEAR: RangeItem[] = [
   ["Jul-26", 1544.2, -353.2, 1112.3], ["Aug-26", 1440.0, 79.7, 1368.1], ["Sep-26", 1287.4, 350.0, 1495.8],
 ].map(([date, solar, grid, house]) => ({ date: date as string, solar: solar as number, grid: grid as number, house: house as number }));
 
+const OCTOBER_RANGE = { start: "2026-10-01", end: "2026-10-31" };
+const YEAR_RANGE = { start: "2025-10-01", end: "2026-09-30" };
+const periodItems = (labels: string[]) => labels.map((date) => ({ date, solar: 900, grid: -100, house: 800 }));
+
 const section = (container: HTMLElement, series: string, label: string) =>
   container.querySelector(`[data-series="${series}"][data-label="${label}"]`) as HTMLElement;
 
 test("a daily bar stacks solar and house above zero and negative grid below, rounding only its outer ends", () => {
-  const { container } = render(<RangeChart items={OCTOBER} onOpenDay={() => {}} />);
+  const { container } = render(<RangeChart items={OCTOBER} range={OCTOBER_RANGE} onOpenDay={() => {}} onOpenRange={() => {}} />);
   expect(container.querySelectorAll('[data-series="solar"]')).toHaveLength(31);
   expect(section(container, "solar", "Oct 14").dataset.ends).toBe("");
   expect(section(container, "grid", "Oct 14").dataset.ends).toBe("bottom");
@@ -39,21 +43,48 @@ test("a daily bar stacks solar and house above zero and negative grid below, rou
 
 test("clicking a daily bar opens its day", () => {
   const onOpenDay = vi.fn();
-  const { container } = render(<RangeChart items={OCTOBER} onOpenDay={onOpenDay} />);
+  const { container } = render(<RangeChart items={OCTOBER} range={OCTOBER_RANGE} onOpenDay={onOpenDay} onOpenRange={() => {}} />);
   fireEvent.click(section(container, "house", "Oct 14"));
   expect(onOpenDay).toHaveBeenCalledWith("2026-10-14");
 });
 
-test("monthly bars are labeled by month and year, and clicking one does nothing", () => {
-  const onOpenDay = vi.fn();
-  const { container } = render(<RangeChart items={TRUE_UP_YEAR} onOpenDay={onOpenDay} />);
+test("monthly bars are labeled by month and year, and clicking one opens its month", () => {
+  const [onOpenDay, onOpenRange] = [vi.fn(), vi.fn()];
+  const { container } = render(<RangeChart items={TRUE_UP_YEAR} range={YEAR_RANGE} onOpenDay={onOpenDay} onOpenRange={onOpenRange} />);
   expect(container.querySelectorAll('[data-series="solar"]')).toHaveLength(12);
-  fireEvent.click(section(container, "house", "May 2026"));
+  fireEvent.click(section(container, "house", "Oct 2025"));
+  expect(onOpenRange).toHaveBeenCalledWith({ start: "2025-10-01", end: "2025-10-31" });
   expect(onOpenDay).not.toHaveBeenCalled();
 });
 
+test("a month with no figures yet has nothing to open", () => {
+  const onOpenRange = vi.fn();
+  const items = [{ date: "Oct-26", solar: 997.6, grid: 299.5, house: 1261.7 }, { date: "Nov-26", solar: null, grid: null, house: null }];
+  const { container } = render(<RangeChart items={items} range={{ start: "2026-10-01", end: "2027-09-30" }} onOpenDay={() => {}} onOpenRange={onOpenRange} />);
+  fireEvent.click(section(container, "solar", "Nov 2026"));
+  expect(onOpenRange).not.toHaveBeenCalled();
+});
+
+test("a month-long period opens as Flask cuts it", () => {
+  const onOpenRange = vi.fn();
+  const { container } = render(
+    <RangeChart items={periodItems(["Jan-26", "Feb-26", "Mar-26", "Apr-26", "May-26"])} range={{ start: "2026-01-15", end: "2026-06-14" }} onOpenDay={() => {}} onOpenRange={onOpenRange} />,
+  );
+  fireEvent.click(section(container, "solar", "Feb 2026"));
+  expect(onOpenRange).toHaveBeenCalledWith({ start: "2026-02-15", end: "2026-03-14" });
+});
+
+test("a partial first month opens from the range's first day", () => {
+  const onOpenRange = vi.fn();
+  const { container } = render(
+    <RangeChart items={periodItems(["Jan-26", "Feb-26", "Mar-26", "Apr-26", "May-26", "Jun-26"])} range={{ start: "2026-01-15", end: "2026-06-30" }} onOpenDay={() => {}} onOpenRange={onOpenRange} />,
+  );
+  fireEvent.click(section(container, "solar", "Jan 2026"));
+  expect(onOpenRange).toHaveBeenCalledWith({ start: "2026-01-15", end: "2026-01-31" });
+});
+
 test("a legend names the flows, a note explains grid below zero, and the axis is in kWh", () => {
-  const { container } = render(<RangeChart items={OCTOBER} onOpenDay={() => {}} />);
+  const { container } = render(<RangeChart items={OCTOBER} range={OCTOBER_RANGE} onOpenDay={() => {}} onOpenRange={() => {}} />);
   for (const name of ["Solar", "Grid", "House"]) expect(screen.getByText(name)).toBeTruthy();
   expect(screen.getByText(/grid below zero/i).textContent).toMatch(/more energy sent to the grid than taken from it/);
   expect(container.querySelector("svg.recharts-surface")?.textContent).toMatch(/\d kWh/);
@@ -68,14 +99,14 @@ test("a day's details show its values and that clicking opens it", () => {
   expect(screen.getByText(/click to open the day/i)).toBeTruthy();
 });
 
-test("a month's details show its values, without the click", () => {
-  render(<BarDetails active label="May 2026" payload={[{ payload: { label: "May 2026", solar: 1683.2, grid: -254.5, house: 1345.5 } }]} />);
+test("a month's details show its values and that clicking shows its days", () => {
+  render(<BarDetails active label="May 2026" payload={[{ payload: { label: "May 2026", period: { start: "2026-05-01", end: "2026-05-31" }, solar: 1683.2, grid: -254.5, house: 1345.5 } }]} />);
   expect(screen.getByText("1,683.2 kWh")).toBeTruthy();
-  expect(screen.queryByText(/click/i)).toBeNull();
+  expect(screen.getByText(/click to see its days/i)).toBeTruthy();
 });
 
 test("the value axis steps by round numbers", () => {
-  const { container } = render(<RangeChart items={TRUE_UP_YEAR} onOpenDay={() => {}} />);
+  const { container } = render(<RangeChart items={TRUE_UP_YEAR} range={YEAR_RANGE} onOpenDay={() => {}} onOpenRange={() => {}} />);
   const labels = [...container.querySelectorAll("svg.recharts-surface text")].map((text) => text.textContent).filter((text) => /^-?[\d,]+( kWh)?$/.test(text!));
   expect(labels).toEqual(["-1,000", "0", "1,000", "2,000", "3,000", "4,000 kWh"]);
 });

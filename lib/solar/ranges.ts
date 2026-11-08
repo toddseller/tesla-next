@@ -14,6 +14,30 @@ const monthEnd = (date: string) => {
 
 export const monthOf = (date: string): Range => ({ start: `${date.slice(0, 7)}-01`, end: monthEnd(date) });
 
+const day = (year: number, month: number, date: number) => new Date(Date.UTC(year, month, date)).toISOString().slice(0, 10);
+const parts = (date: string) => date.split("-").map(Number);
+const monthLength = (year: number, month: number) => new Date(Date.UTC(year, month + 1, 0)).getUTCDate();
+
+// Flask's next_month: Jan 31 gives Feb 28 (29 in a leap year).
+const nextMonth = (date: string) => {
+  const [y, m, d] = parts(date);
+  const [year, month] = m === 12 ? [y + 1, 0] : [y, m];
+  return day(year, month, Math.min(d, monthLength(year, month)));
+};
+
+// Flask's get_time_range_list: month-long periods when neither end is a month boundary, calendar months otherwise.
+export function periods(start: string, end: string): [string, string][] {
+  const endsOnBoundary = parts(end)[2] >= 28;
+  const list: [string, string][] = [];
+  for (let first = start; ; ) {
+    const last = parts(first)[2] !== 1 && !endsOnBoundary ? shiftDay(nextMonth(first), -1) : monthEnd(first);
+    const next = shiftDay(last, 1);
+    if (next > end) return [...list, [first, end]];
+    list.push([first, last]);
+    first = next;
+  }
+}
+
 // The true-up year runs October 1 to September 30.
 export type Preset = { label: string; range: Range };
 

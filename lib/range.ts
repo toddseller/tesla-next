@@ -1,6 +1,6 @@
 import { db } from "@/lib/db";
 import { pyRound } from "@/lib/intervals/python";
-import { shiftDay } from "@/lib/scene/replay";
+import { periods } from "@/lib/solar/ranges";
 
 // Until a Tesla service visit on this day, Tesla's grid readings were about half of PG&E's meter; earlier days with
 // PG&E's readings take their grid figures from it (anton-tesla-api-ws models/data.py).
@@ -22,34 +22,7 @@ export const houseGrid = `coalesce(data.house_from_grid, 0::integer) + ${extraIm
 const solarLessExtra = `coalesce(data.house_from_solar, 0::integer) - ${extraExported}`;
 export const houseSolar = `CASE WHEN ${solarLessExtra} < 0::integer THEN 0::integer ELSE ${solarLessExtra} END`;
 
-const day = (year: number, month: number, date: number) => new Date(Date.UTC(year, month, date)).toISOString().slice(0, 10);
 const parts = (date: string) => date.split("-").map(Number);
-const monthLength = (year: number, month: number) => new Date(Date.UTC(year, month + 1, 0)).getUTCDate();
-
-// Flask's next_month: Jan 31 gives Feb 28 (29 in a leap year).
-const nextMonth = (date: string) => {
-  const [y, m, d] = parts(date);
-  const [year, month] = m === 12 ? [y + 1, 0] : [y, m];
-  return day(year, month, Math.min(d, monthLength(year, month)));
-};
-
-const endOfMonth = (date: string) => {
-  const [y, m] = parts(date);
-  return day(y, m - 1, monthLength(y, m - 1));
-};
-
-// Flask's get_time_range_list: month-long periods when neither end is a month boundary, calendar months otherwise.
-export function periods(start: string, end: string): [string, string][] {
-  const endsOnBoundary = parts(end)[2] >= 28;
-  const list: [string, string][] = [];
-  for (let first = start; ; ) {
-    const last = parts(first)[2] !== 1 && !endsOnBoundary ? shiftDay(nextMonth(first), -1) : endOfMonth(first);
-    const next = shiftDay(last, 1);
-    if (next > end) return [...list, [first, end]];
-    list.push([first, last]);
-    first = next;
-  }
-}
 
 export type RangeItem = { date: string; day?: string; solar: number | null; grid: number | null; house: number | null };
 

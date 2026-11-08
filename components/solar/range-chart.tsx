@@ -7,6 +7,7 @@ import { ChartContainer, ChartTooltip } from "@/components/ui/chart";
 import type { RangeItem } from "@/lib/range";
 import { type Bar as Totals, SERIES, stackEnds } from "@/lib/solar/bars";
 import { niceAxis, unitOnTopTick } from "@/lib/solar/day-views";
+import { isDaily, periods, type Range } from "@/lib/solar/ranges";
 
 const FLOWS = [
   { key: "solar", label: "Solar", color: "var(--color-solar)" },
@@ -14,10 +15,17 @@ const FLOWS = [
   { key: "house", label: "House", color: "var(--color-home)" },
 ] as const;
 
-type Row = Totals & { label: string; day?: string };
+type Row = Totals & { label: string; day?: string; period?: Range };
 
 // Flask labels a period "Oct-25".
 const toRow = (item: RangeItem): Row => ({ ...item, label: item.day ? item.date : item.date.replace("-", " 20") });
+
+// /api/range answers one item per period, in order, so the range's own periods say which days each bar holds. A period
+// with no saved days yet draws no bar, so it has nothing to open.
+const withPeriods = (items: RangeItem[], range: Range): Row[] => {
+  const spans = isDaily(range) ? [] : periods(range.start, range.end);
+  return items.map((item, i) => ({ ...toRow(item), ...(spans[i] && item.solar !== null && { period: { start: spans[i][0], end: spans[i][1] } }) }));
+};
 
 const kwh = (value: number) => `${value.toLocaleString("en-US", { minimumFractionDigits: 1, maximumFractionDigits: 1 })} kWh`;
 
@@ -33,11 +41,14 @@ export function roundedRect(x: number, top: number, width: number, height: numbe
 
 type ShapeProps = { x?: number; y?: number; width?: number; height?: number; fill?: string; payload?: Row };
 
-function section(key: (typeof SERIES)[number], onOpenDay: (day: string) => void) {
+type Open = { onOpenDay: (day: string) => void; onOpenRange: (range: Range) => void };
+
+function section(key: (typeof SERIES)[number], { onOpenDay, onOpenRange }: Open) {
   return function Section({ x = 0, y = 0, width = 0, height = 0, fill, payload }: ShapeProps) {
     if (!payload) return <g />;
     const ends = stackEnds(payload)[key];
-    const day = payload.day;
+    const { day, period } = payload;
+    const open = day ? () => onOpenDay(day) : period ? () => onOpenRange(period) : undefined;
     return (
       <path
         d={roundedRect(x, Math.min(y, y + height), width, Math.abs(height), ends.top, ends.bottom)}
@@ -45,8 +56,8 @@ function section(key: (typeof SERIES)[number], onOpenDay: (day: string) => void)
         data-series={key}
         data-label={payload.label}
         data-ends={[ends.top && "top", ends.bottom && "bottom"].filter(Boolean).join(" ")}
-        className={day ? "cursor-pointer" : undefined}
-        onClick={day ? () => onOpenDay(day) : undefined}
+        className={open ? "cursor-pointer" : undefined}
+        onClick={open}
       />
     );
   };
@@ -67,13 +78,15 @@ export function BarDetails({ active, label, payload }: { active?: boolean; label
           </span>
         ),
       )}
-      {row.day && <span className="border-t pt-1.5 text-xs text-muted-foreground">Click to open the day</span>}
+      {(row.day || row.period) && (
+        <span className="border-t pt-1.5 text-xs text-muted-foreground">{row.day ? "Click to open the day" : "Click to see its days"}</span>
+      )}
     </div>
   );
 }
 
-export function RangeChart({ items, onOpenDay }: { items: RangeItem[]; onOpenDay: (day: string) => void }) {
-  const rows = items.map(toRow);
+export function RangeChart({ items, range, ...open }: { items: RangeItem[]; range: Range } & Open) {
+  const rows = withPeriods(items, range);
   const axis = niceAxis(
     Math.min(0, ...rows.map((row) => row.grid ?? 0)),
     Math.max(1, ...rows.map((row) => (row.solar ?? 0) + Math.max(0, row.grid ?? 0) + (row.house ?? 0))),
@@ -88,7 +101,7 @@ export function RangeChart({ items, onOpenDay }: { items: RangeItem[]; onOpenDay
           <ReferenceLine y={0} className="stroke-muted-foreground/40" />
           <ChartTooltip cursor={{ className: "fill-white/5" }} content={<BarDetails />} />
           {FLOWS.map(({ key, color }) => (
-            <Bar key={key} dataKey={key} stackId="range" fill={color} maxBarSize={100} isAnimationActive={false} shape={section(key, onOpenDay)} />
+            <Bar key={key} dataKey={key} stackId="range" fill={color} maxBarSize={100} isAnimationActive={false} shape={section(key, open)} />
           ))}
         </BarChart>
       </ChartContainer>

@@ -24,8 +24,8 @@ Code tasks are test-first: write or port the test, run it and see it fail for th
 
 ## 4. Release and checks (after merging)
 
-- [ ] 4.1 **(owner)** Publish a release; I watch the Deploy run
-- [ ] 4.2 On next.teslasolar.report: run `scripts/compare-top-ten.mjs` on onyx with zero mismatches; a `totals` event reloads the rankings in place; side by side with teslasolar.report/top; record the results in the design, committed on the next change's branch rather than a pull request of their own
+- [x] 4.1 **(owner)** Publish a release; I watch the Deploy run
+- [x] 4.2 On next.teslasolar.report: run `scripts/compare-top-ten.mjs` on onyx with zero mismatches; a `totals` event reloads the rankings in place; side by side with teslasolar.report/top; record the results in the design, committed on the next change's branch rather than a pull request of their own
 
 ## Workflow follow-up
 
