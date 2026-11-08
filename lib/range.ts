@@ -13,8 +13,8 @@ const meter = (column: string) => `(SELECT meter_day.${column} / 1000.0::float8 
 const corrected = `(data.date < '${METER_FIX_DATE}'::varchar AND ${meter("imported_wh")} IS NOT NULL)`;
 const rawToGrid = "coalesce(data.to_grid, 0::integer) + coalesce(data.powerwall_to_grid, 0::integer)";
 const effectiveToGrid = `CASE WHEN data.is_vpp = true THEN coalesce(data.to_grid, 0::integer) ELSE ${rawToGrid} END`;
-const gridIn = `CASE WHEN ${corrected} THEN ${meter("imported_wh")} ELSE data.from_grid END`;
-const gridOut = `CASE WHEN ${corrected} THEN ${meter("exported_wh")} ELSE ${effectiveToGrid} END`;
+export const gridIn = `CASE WHEN ${corrected} THEN ${meter("imported_wh")} ELSE data.from_grid END`;
+export const gridOut = `CASE WHEN ${corrected} THEN ${meter("exported_wh")} ELSE ${effectiveToGrid} END`;
 const extraImported = `CASE WHEN ${corrected} THEN ${meter("imported_wh")} - coalesce(data.from_grid, 0::integer) ELSE 0::integer END`;
 const extraExported = `CASE WHEN ${corrected} THEN ${meter("exported_wh")} - (${rawToGrid}) ELSE 0::integer END`;
 export const house = `coalesce(data.total_house_usage, 0::integer) + ${extraImported} - ${extraExported}`;
@@ -58,13 +58,16 @@ const dayLabel = (date: string) => `${monthName(date)} ${parts(date)[2]}`;
 const periodLabel = (date: string) => `${monthName(date)}-${date.slice(2, 4)}`;
 const round1 = (value: number | null) => (value === null ? null : pyRound(value, 1));
 
-type DayRow = {
+export type DayRow = {
   date: string; solar_generated: number; from_grid: number | null; to_grid: number | null; powerwall_to_grid: number | null;
   is_vpp: boolean; total_house_usage: number | null; meter_imported: number | null; meter_exported: number | null;
 };
 
+export const dayColumns = `date, solar_generated, from_grid, to_grid, powerwall_to_grid, is_vpp, total_house_usage,
+  ${meter("imported_wh")} AS meter_imported, ${meter("exported_wh")} AS meter_exported`;
+
 // Flask's solar_json: the grid and house in Python, from the columns as Python reads them.
-function dailyItem(row: DayRow): RangeItem {
+export function dailyItem(row: DayRow): RangeItem {
   const isCorrected = row.date < METER_FIX_DATE && row.meter_imported !== null;
   const rawOut = (row.to_grid || 0) + (row.powerwall_to_grid || 0);
   const effectiveOut = row.is_vpp ? row.to_grid || 0 : rawOut;
@@ -85,9 +88,7 @@ function dailyItem(row: DayRow): RangeItem {
 export async function rangeTotals(start: string, end: string): Promise<RangeItem[]> {
   if (Date.parse(end) - Date.parse(start) <= 31 * 86_400_000) {
     const { rows } = await db.query<DayRow>(
-      `SELECT date, solar_generated, from_grid, to_grid, powerwall_to_grid, is_vpp, total_house_usage,
-         ${meter("imported_wh")} AS meter_imported, ${meter("exported_wh")} AS meter_exported
-       FROM data WHERE date BETWEEN $1 AND $2 ORDER BY id`,
+      `SELECT ${dayColumns} FROM data WHERE date BETWEEN $1 AND $2 ORDER BY id`,
       [start, end],
     );
     return rows.map(dailyItem);
