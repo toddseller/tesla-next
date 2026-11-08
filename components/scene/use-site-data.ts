@@ -19,6 +19,9 @@ type LiveStatus = {
   weather?: Partial<Record<"cover" | "rain" | "wind" | "windLow" | "windMid" | "windHigh" | "cirrus" | "low" | "mid" | "sun", number | null>> | null;
 };
 
+// How long a page waits before opening a new stream after the browser gave up on one.
+const REOPEN_MS = 5000;
+
 export type ReplayDay = { date: string; data: IntervalRecord[]; weather?: WeatherReading[] };
 
 export const EMPTY = {
@@ -100,13 +103,26 @@ export const useSiteData = (initialStatus: string | null) => {
   const replayDayRef = useRef(replayDay);
   replayDayRef.current = replayDay;
   useEffect(() => {
-    const stream = new EventSource("/api/live");
-    stream.onmessage = (event) => setLive((previous) => applyStatus(previous, JSON.parse(event.data)));
-    stream.addEventListener("totals", (event) => {
-      const { date } = JSON.parse((event as MessageEvent).data);
-      if (date === replayDayRef.current) void fetchReplay(date);
-    });
-    return () => stream.close();
+    let stream: EventSource;
+    let reopen: ReturnType<typeof setTimeout> | undefined;
+    const open = () => {
+      stream = new EventSource("/api/live");
+      stream.onmessage = (event) => setLive((previous) => applyStatus(previous, JSON.parse(event.data)));
+      stream.addEventListener("totals", (event) => {
+        const { date } = JSON.parse((event as MessageEvent).data);
+        if (date === replayDayRef.current) void fetchReplay(date);
+      });
+      // The browser retries a dropped stream by itself, but gives up for good after any answer other than 200, such
+      // as Cloudflare's 429 or a 502 while the tunnel reconnects, so the page opens a new one.
+      stream.onerror = () => {
+        if (stream.readyState === EventSource.CLOSED) reopen = setTimeout(open, REOPEN_MS);
+      };
+    };
+    open();
+    return () => {
+      clearTimeout(reopen);
+      stream.close();
+    };
   }, [fetchReplay]);
 
   return { ...live, replayData, setReplayDay };

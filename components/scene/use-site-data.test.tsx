@@ -37,8 +37,12 @@ test("home power falls back to load power", () => {
 
 // The stream: each instance the hook opens, and what it has been sent.
 class FakeStream {
+  static CONNECTING = 0;
+  static CLOSED = 2;
   static opened: FakeStream[] = [];
+  readyState = FakeStream.CONNECTING;
   onmessage: ((event: MessageEvent) => void) | null = null;
+  onerror: (() => void) | null = null;
   listeners: Record<string, (event: MessageEvent) => void> = {};
   closed = false;
   constructor(public url: string) {
@@ -49,6 +53,11 @@ class FakeStream {
   }
   close() {
     this.closed = true;
+  }
+  // The browser's own retry after a dropped connection keeps it connecting; an answer other than 200 closes it for good.
+  fail(forGood: boolean) {
+    this.readyState = forGood ? FakeStream.CLOSED : FakeStream.CONNECTING;
+    act(() => this.onerror?.());
   }
   send(data: unknown, name?: string) {
     const event = { data: JSON.stringify(data) } as MessageEvent;
@@ -125,4 +134,32 @@ test("a slow answer for an earlier day never replaces a later one", async () => 
   await waitFor(() => expect(result.current.replayData?.date).toBe("2026-10-19"));
   await act(async () => answerFirst(day("2026-10-18")));
   expect(result.current.replayData?.date).toBe("2026-10-19");
+});
+
+test("a stream the browser gives up on, after an answer other than 200, is opened again", () => {
+  vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+  try {
+    const { result, unmount } = renderHook(() => useSiteData(null));
+    FakeStream.opened[0].fail(true);
+    act(() => vi.advanceTimersByTime(5_000));
+    expect(FakeStream.opened).toHaveLength(2);
+    FakeStream.opened[1].send({ ...charging, solar_power: 2.2 });
+    expect(result.current.solarPower).toBe(2.2);
+    unmount();
+    expect(FakeStream.opened[1].closed).toBe(true);
+  } finally {
+    vi.useRealTimers();
+  }
+});
+
+test("a stream the browser is still retrying is left to it", () => {
+  vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+  try {
+    renderHook(() => useSiteData(null));
+    FakeStream.opened[0].fail(false);
+    act(() => vi.advanceTimersByTime(60_000));
+    expect(FakeStream.opened).toHaveLength(1);
+  } finally {
+    vi.useRealTimers();
+  }
 });

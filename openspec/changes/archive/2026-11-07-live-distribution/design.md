@@ -49,7 +49,7 @@ See proposal.md, Why. What anton-tesla-api-ws does today (at `c84caf0`):
   - then the latest payload, if there is one, then each new one;
   - a `: ping` every 25 seconds;
   - it unsubscribes when the request aborts.
-- **The page** opens an `EventSource('/api/live')`. The server component passes `latest()` as the initial status, so the labels are filled in the served HTML.
+- **The page** opens an `EventSource('/api/live')`, and opens a new one 5 seconds after the browser gives up on it: a browser retries a dropped stream by itself, but not one answered with anything other than 200, such as Cloudflare's 429. (Added after release: a rate limit tripped by the parity check froze an open page until reloaded.) The server component passes `latest()` as the initial status, so the labels are filled in the served HTML.
 - **Alternative: a per-stream `LISTEN` connection, as in the spike.** Rejected. It costs one database connection per viewer, and a page opening while the database is down would need the spike's 200-and-close dance. With one shared listener, streams never touch the database.
 - **Alternative: Flask writes the status to a table.** Rejected. It adds a write every 10 seconds only to serve the first 10 seconds after a Next.js restart.
 
