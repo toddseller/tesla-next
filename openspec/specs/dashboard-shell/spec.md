@@ -55,11 +55,15 @@ The site's icon SHALL be the current site's: the Tesla "T" on an orange disc tha
 - **THEN** the shortcut uses the same icon, at the size each phone asks for
 
 ### Requirement: One color per energy flow
-Wherever a page shows energy by flow, each flow SHALL keep one color: solar amber (`#FBBF24`), home blue (`#60A5FA`), Powerwall green (`#34D399`) and grid gray (`#CBD5E1` for figures, `#475569` for filled areas). The colors also differ in lightness, so the flows stay distinguishable without telling hue apart.
+Wherever a page shows energy by flow, each flow SHALL keep one color, the Tesla app's colors that anton-tesla-api-ws's day views use: solar amber (`#F7B500`), home blue (`#3E6AE1`), Powerwall green (`#31B76B`), grid gray (`#8E8E93`) and vehicle red (`#E8474F`). Filled areas use the same colors, translucent. The Distribution page's house scene keeps its own styling.
 
 #### Scenario: The same flow on two pages
 - **WHEN** a viewer sees solar on one page and then on another
 - **THEN** it is amber on both
+
+#### Scenario: The house on the Solar page
+- **WHEN** a viewer sees house use in the range chart and home use in the day view
+- **THEN** both are the same blue, `#3E6AE1`
 
 ### Requirement: Footer
 Every page SHALL end with a footer reading "© <current year> teslasolar.report".

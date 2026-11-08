@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 
+import { useLiveStream } from "@/components/use-live-stream";
 import type { Vehicle } from "@/lib/scene/live-scene";
 import type { IntervalRecord } from "@/lib/scene/replay";
 import type { WeatherReading } from "@/lib/scene/weather";
@@ -18,8 +19,6 @@ type LiveStatus = {
   vehicle?: Vehicle | null;
   weather?: Partial<Record<"cover" | "rain" | "wind" | "windLow" | "windMid" | "windHigh" | "cirrus" | "low" | "mid" | "sun", number | null>> | null;
 };
-
-const REOPEN_MS = 5000;
 
 export type ReplayDay = { date: string; data: IntervalRecord[]; weather?: WeatherReading[] };
 
@@ -104,30 +103,12 @@ export const useSiteData = (initialStatus: string | null) => {
     }
   }, [replayDay, fetchReplay]);
 
-  const replayDayRef = useRef(replayDay);
-  replayDayRef.current = replayDay;
-  useEffect(() => {
-    let stream: EventSource;
-    let reopen: ReturnType<typeof setTimeout> | undefined;
-    const open = () => {
-      stream = new EventSource("/api/live");
-      stream.onmessage = (event) => setLive((previous) => applyStatus(previous, JSON.parse(event.data)));
-      stream.addEventListener("totals", (event) => {
-        const { date } = JSON.parse((event as MessageEvent).data);
-        if (date === replayDayRef.current) void fetchReplay(date);
-      });
-      // The browser retries a dropped stream by itself, but gives up for good after any answer other than 200, such
-      // as Cloudflare's 429 or a 502 while the tunnel reconnects, so the page opens a new one.
-      stream.onerror = () => {
-        if (stream.readyState === EventSource.CLOSED) reopen = setTimeout(open, REOPEN_MS);
-      };
-    };
-    open();
-    return () => {
-      clearTimeout(reopen);
-      stream.close();
-    };
-  }, [fetchReplay]);
+  useLiveStream({
+    onStatus: (status) => setLive((previous) => applyStatus(previous, status)),
+    onTotals: (date) => {
+      if (date === replayDay) void fetchReplay(date);
+    },
+  });
 
   return { ...live, replayData, setReplayDay };
 };

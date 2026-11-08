@@ -5,6 +5,7 @@ import { act, cleanup, renderHook, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 
 import { applyStatus, EMPTY, useSiteData } from "@/components/scene/use-site-data";
+import { FakeStream } from "@/test/fake-event-source";
 
 const charging = {
   load_power: 11.3, home_power: 4.1, solar_power: 6.1, grid_power: 2.0, battery_power: 0, battery_percentage: 82,
@@ -34,36 +35,6 @@ test("a missing battery reading keeps the last one; no car and no weather are nu
 test("home power falls back to load power", () => {
   expect(applyStatus(EMPTY, { ...charging, home_power: undefined }).homePower).toBe(11.3);
 });
-
-// The stream: each instance the hook opens, and what it has been sent.
-class FakeStream {
-  static CONNECTING = 0;
-  static CLOSED = 2;
-  static opened: FakeStream[] = [];
-  readyState = FakeStream.CONNECTING;
-  onmessage: ((event: MessageEvent) => void) | null = null;
-  onerror: (() => void) | null = null;
-  listeners: Record<string, (event: MessageEvent) => void> = {};
-  closed = false;
-  constructor(public url: string) {
-    FakeStream.opened.push(this);
-  }
-  addEventListener(name: string, listener: (event: MessageEvent) => void) {
-    this.listeners[name] = listener;
-  }
-  close() {
-    this.closed = true;
-  }
-  // The browser's own retry after a dropped connection keeps it connecting; an answer other than 200 closes it for good.
-  fail(forGood: boolean) {
-    this.readyState = forGood ? FakeStream.CLOSED : FakeStream.CONNECTING;
-    act(() => this.onerror?.());
-  }
-  send(data: unknown, name?: string) {
-    const event = { data: JSON.stringify(data) } as MessageEvent;
-    act(() => (name ? this.listeners[name](event) : this.onmessage!(event)));
-  }
-}
 
 const day = (date: string, extra = {}) => ({ date, data: [], weather: [], ...extra });
 let fetches: string[];
