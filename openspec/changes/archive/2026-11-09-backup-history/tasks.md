@@ -49,8 +49,8 @@ Test-first throughout: each task's test is written and run red, for the right re
 
 ## 9. Release and checks (ask before publishing)
 
-- [ ] 9.1 With the owner's go-ahead, release; the deploy's health check passes
-- [ ] 9.2 On teslasolar.report: the Backup section's figures match a direct read-only query, the outage ranking leads with February 4, 2024, the 2024-02-04 day view is shaded from 2:51 PM, the savings card shows the recomputed figures, and the top bar carries `site_state` (a Go Off-Grid test only if the owner wants one); record these in design.md under a Rollout section
+- [x] 9.1 With the owner's go-ahead, release; the deploy's health check passes
+- [x] 9.2 On teslasolar.report: the Backup section's figures match a direct read-only query, the outage ranking leads with February 4, 2024, the 2024-02-04 day view is shaded from 2:51 PM, the savings card shows the recomputed figures, and the top bar carries `site_state` (a Go Off-Grid test only if the owner wants one); record these in design.md under a Rollout section
 
 ## Workflow follow-up
 

@@ -100,3 +100,13 @@ flowchart LR
 
   Day counts and efficiencies are unchanged, and both years have 0 storm watch days. The spec scenarios carry the new figures.
 - **Backup history, all time:** 94 events, 35 outages, 44 blips, 14 commissioning (on or before PTO day, October 22, 2021) and 1 test. The outages total 156.9 hours, the longest 52 h 16 m from February 4, 2024, and the house used 206.9 kWh through them, 130.0 from the Powerwalls and 76.3 from solar. The outage ranking leads with February 4, 2024 (52.3 h), December 14, 2024 (35.4 h), August 9, 2022 (11.4 h) and June 3, 2024 (10.5 h). PTO day's 11.3-hour event first counted as an outage; the owner had PTO day count as commissioning, and these figures are recounted that way (read-only, from the live app's container). The savings figures above don't move, since every priced year is after it.
+
+## Rollout
+
+- **Release `v2026.11.09.1`** (merge `999e67e`): its Deploy run passed at 18:46 UTC on November 9, 2026, and onyx runs the merge commit. `/api/backup`, `/api/backup?year=all` and `/api/top-ten` answered 200.
+- **Backup figures:** `/api/backup?year=all` gives 94 events (35 outages, 44 blips, 14 commissioning, 1 test), 156.9 hours, the longest 52 h 16 m from February 4, 2024, and 206.9 kWh (Powerwalls 130.0, solar 76.3), the same as the direct read-only recount before the pull request. This year (`/api/backup`) has no outages and lists the morning's test. The Impact page shows the same tiles and all 94 rows.
+- **Top Ten:** the outage ranking leads with February 4, 2024 (52.3 h, 16.9 h ahead of December 14, 2024), then August 9, 2022 and June 3, 2024.
+- **Day view:** 2024-02-04 shades three spans on its chart and lists them: two one-minute outages at 12:30 and 2:27 PM, then the long one from 2:51 PM to midnight.
+- **Savings:** `/api/true-up-savings` answers the recomputed figures of the Results table for both years, with no storm watch days.
+- **Live:** a stream opening on `/api/live` sends the latest status, then `event: site_state` with the open stretch (`on_grid` from 17:15:21 UTC, no storm watch). On the grid, the top bar shows no added pill. No Go Off-Grid test was run.
+- **Pages:** Impact (All time and this year), Top Ten and the 2024-02-04 day view at 1280 and 375 pixels, in a headless browser: no console errors and no sideways scrolling.
