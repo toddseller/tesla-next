@@ -28,8 +28,8 @@ Code tasks are test-first: write the test, run it and see it fail for the right 
 
 ## 5. Release and checks (after merging)
 
-- [ ] 5.1 **(owner)** Publish a release; I watch the Deploy run
-- [ ] 5.2 On teslasolar.report: the card's Powerwalls entry on '25 - '26 and the current year matches 3.3's figures, no console message, and `scripts/compare-true-up.mjs` still finds no mismatch against Flask on onyx; record the results in the design, committed on the next change's branch
+- [x] 5.1 **(owner)** Publish a release; I watch the Deploy run
+- [x] 5.2 On teslasolar.report: the card's Powerwalls entry on '25 - '26 and the current year matches 3.3's figures, no console message, and `scripts/compare-true-up.mjs` still finds no mismatch against Flask on onyx; record the results in the design, committed on the next change's branch
 
 ## Workflow follow-up
 
