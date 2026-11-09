@@ -2,23 +2,39 @@
 
 import { useRouter } from "next/navigation";
 
+import { BackupSection } from "@/components/impact/backup-section";
 import { SelfPowered, SolarOffset } from "@/components/impact/sections";
 import { RangeControls } from "@/components/solar/range-controls";
 import { useReload } from "@/components/solar/use-reload";
 import { useLiveStream } from "@/components/use-live-stream";
+import type { BackupHistory } from "@/lib/backup";
+import { backupParam } from "@/lib/backup-years";
 import type { ImpactFigures } from "@/lib/impact";
 import { siteToday } from "@/lib/scene/replay";
 import { datesLabel, impactPresets, type Range, rangeIncludes } from "@/lib/solar/ranges";
 
-const address = ({ start, end }: Range) => `/impact?start=${start}&end=${end}`;
+type Props = { range: Range; figures: ImpactFigures; today: string; backup: BackupHistory; backupYear: Range };
 
-export function ImpactPage({ range, figures, today }: { range: Range; figures: ImpactFigures; today: string }) {
+export function ImpactPage({ range, figures, today, backup, backupYear }: Props) {
   const router = useRouter();
+  const address = ({ start, end }: Range, year = backupYear) => {
+    const backupValue = backupParam(year, today);
+    return `/impact?start=${start}&end=${end}${backupValue ? `&backup=${backupValue}` : ""}`;
+  };
   const [shown, reload] = useReload(address(range), figures);
   const reloadFor = (date: string) => {
     if (rangeIncludes(range, date)) void reload(`/api/impact?start_date=${range.start}&end_date=${range.end}`, (body: { data: ImpactFigures }) => body.data);
   };
-  useLiveStream({ onTotals: reloadFor, onReopen: () => reloadFor(siteToday()) });
+  const [shownBackup, reloadBackup] = useReload(address(range), backup);
+  const backupValue = backupParam(backupYear, today);
+  const reloadYear = () => void reloadBackup(`/api/backup${backupValue ? `?year=${backupValue}` : ""}`, (body: { data: BackupHistory }) => body.data);
+  useLiveStream({
+    onTotals: reloadFor, onOutages: reloadYear, onSiteState: reloadYear,
+    onReopen: () => {
+      reloadFor(siteToday());
+      reloadYear();
+    },
+  });
 
   return (
     <div className="flex flex-col gap-5">
@@ -36,6 +52,7 @@ export function ImpactPage({ range, figures, today }: { range: Range; figures: I
           <SolarOffset figures={shown} />
         </div>
       </section>
+      <BackupSection history={shownBackup} year={backupYear} today={today} onYear={(year) => router.replace(address(range, year), { scroll: false })} />
     </div>
   );
 }

@@ -55,4 +55,6 @@ Rollback: the release's own rollback (`tesla-next-next:previous`) brings back th
 
 ## Rollout
 
-Recorded as tasks 5.1 to 5.3 run.
+- **Release `v2026.11.09.0`** (PR #18, published November 9, 2026): the Deploy run passed, its health check on the server's previous `bin/deploy` logging "https://next.teslasolar.report/ answered 200: deployed v2026.11.09.0" at 14:51 UTC. Later releases check https://teslasolar.report/.
+- **Top Ten on teslasolar.report:** `/top` (Without VPP events) leads the export days with Wednesday, May 21, 2025, the same first day as `/api/top-ten` and `/api/top-ten?vpp=without`; `/top?vpp=with` leads with Thursday, May 30, 2024, as `/api/top-ten?vpp=with` does.
+- **The redirect (November 9, 2026):** a Cloudflare Redirect Rule (hostname equals `next.teslasolar.report`, dynamic target `concat("https://teslasolar.report", http.request.uri.path)`, 301, query string kept), with `next`'s proxied DNS record and its tunnel route left in place. `/distribution?at=2026-11-07T12:30`, `/`, `/top?vpp=with`, `/?start=2026-10-01&end=2026-10-31&day=2026-10-14`, `http://` `/impact` and `/api/live` on next.teslasolar.report each answered 301 to the same path and query on teslasolar.report, in one hop. In headless Chromium the replay link landed on `https://teslasolar.report/distribution?at=2026-11-07T12:30` paused (Play shown), with no console message but the software renderer's own GL warnings.

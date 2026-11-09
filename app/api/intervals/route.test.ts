@@ -75,6 +75,7 @@ beforeEach(async () => {
   await owner.query("DELETE FROM energy_interval WHERE day BETWEEN '2026-09-28' AND '2026-10-18' OR day = '2026-01-10'");
   await owner.query("DELETE FROM battery_sample; DELETE FROM vehicle_interval; DELETE FROM charge_session; DELETE FROM weather_sample");
   await owner.query("DELETE FROM vehicle WHERE vin LIKE '%TEST000%'");
+  await owner.query("DELETE FROM grid_outage WHERE start_at BETWEEN '2026-09-28' AND '2026-10-19'; DELETE FROM site_state WHERE start_at BETWEEN '2026-09-28' AND '2026-10-19'");
 });
 
 afterAll(async () => {
@@ -213,7 +214,7 @@ test("a day without weather has an empty list", async () => {
   await energy(16, 12, 0, { house_from_solar_wh: 100 });
   const body = await getDay();
   expect(body.weather).toEqual([]);
-  expect(Object.keys(body).sort()).toEqual(["data", "date", "totals", "vehicle_data", "vehicle_includes_estimates", "vehicle_includes_session_estimates", "weather"]);
+  expect(Object.keys(body).sort()).toEqual(["data", "date", "off_grid", "storm_watch", "totals", "vehicle_data", "vehicle_includes_estimates", "vehicle_includes_session_estimates", "weather"]);
 });
 
 // test_intervals_estimates.py
@@ -551,4 +552,24 @@ test("a measured car names the rest of its session", async () => {
   await session(at(14, 23, 0), 3600, 7600); // 7.6 kW: the power rule alone would say the Model 3
   const records = byTime(await getDay(14));
   expect([records["23:30"].vehicle_estimated, records["23:30"].vehicle]).toEqual([true, "R2D2"]);
+});
+
+// backup-history: the day's off-grid and storm watch spans.
+
+test("an outage across midnight is listed whole on both its days, with its kind", async () => {
+  await owner.query("INSERT INTO grid_outage VALUES ($1, $2)", [new Date(at(15, 22, 0)), new Date(at(16, 2, 30))]);
+  const span = { start: new Date(at(15, 22, 0)).toISOString(), end: new Date(at(16, 2, 30)).toISOString(), kind: "outage" };
+  expect((await getDay(15)).off_grid).toEqual([span]);
+  expect((await getDay(16)).off_grid).toEqual([span]);
+  expect((await getDay(17)).off_grid).toEqual([]);
+});
+
+test("a storm watch stretch still open is listed with no end; stretches without storm watch aren't", async () => {
+  await owner.query("INSERT INTO site_state VALUES ($1, $2, 'on_grid', false), ($2, NULL, 'on_grid', true)", [new Date(at(16, 9, 0)), new Date(at(16, 14, 2))]);
+  expect((await getDay(16)).storm_watch).toEqual([{ start: new Date(at(16, 14, 2)).toISOString(), end: null }]);
+});
+
+test("a day without either has empty lists", async () => {
+  const body = await getDay(16);
+  expect([body.off_grid, body.storm_watch]).toEqual([[], []]);
 });

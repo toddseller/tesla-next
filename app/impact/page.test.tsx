@@ -4,6 +4,8 @@ import { afterEach, beforeEach, expect, test, vi } from "vitest";
 
 const impactFigures = vi.hoisted(() => vi.fn());
 vi.mock("@/lib/impact", () => ({ impactFigures }));
+const backupHistory = vi.hoisted(() => vi.fn(async () => ({ summary: { outages: 0, seconds: 0, longest: null, house_kwh: 0, powerwalls_kwh: 0, solar_kwh: 0 }, events: [] })));
+vi.mock("@/lib/backup", () => ({ backupHistory }));
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn() }) }));
 
 const { default: Page } = await import("./page");
@@ -42,4 +44,11 @@ test.each([
   const html = await served(params);
   expect(impactFigures).toHaveBeenCalledWith("2026-11-08", "2026-11-08");
   expect(html).toContain("November 8, 2026");
+});
+
+test("the Backup section is served for the year in the address, this true-up year without one", async () => {
+  await served({ backup: "23-24" });
+  expect(backupHistory).toHaveBeenLastCalledWith({ start: "2023-10-01", end: "2024-09-30" });
+  await served();
+  expect(backupHistory).toHaveBeenLastCalledWith({ start: "2026-10-01", end: "2027-09-30" });
 });

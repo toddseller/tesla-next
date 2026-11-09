@@ -3,8 +3,8 @@
 import { cleanup, render, screen, within } from "@testing-library/react";
 import { afterEach, expect, test } from "vitest";
 
-import { dayEntries, solarEntries } from "@/components/top-ten/entries";
-import { EXPORT_DAYS, SOLAR } from "@/components/top-ten/fixtures";
+import { dayEntries, outageEntries, solarEntries } from "@/components/top-ten/entries";
+import { EXPORT_DAYS, OUTAGES, SOLAR } from "@/components/top-ten/fixtures";
 import { Ranking } from "@/components/top-ten/ranking";
 
 afterEach(cleanup);
@@ -45,4 +45,14 @@ test("an empty ranking says there is nothing to rank yet", () => {
   expect(card.textContent).toContain("Nothing to rank yet");
   expect(within(card).queryByRole("img")).toBeNull();
   expect(within(card).queryByRole("list")).toBeNull();
+});
+
+test("the outage record reads in hours", () => {
+  render(<Ranking record="Longest outage" chart="Top ten outages" subtitle="Longest time off the grid" flow="powerwall" entries={outageEntries(OUTAGES)} today="2026-11-09" />);
+  const card = screen.getByRole("region", { name: "Longest outage" });
+  expect(card.textContent).toContain("52.3h");
+  expect(within(card).getByRole("link", { name: "Sunday, February 4, 2024" }).getAttribute("href")).toBe("/?start=2024-02-01&end=2024-02-29&day=2024-02-04");
+  expect(card.textContent).toContain("Record for 2 years, 9 months");
+  expect(card.textContent).toContain("16.9 h ahead of #2");
+  expect(within(card).getByRole("img", { name: /^Top ten outages: #1 52\.3 h Feb 4, 2024; #2 35\.4 h/ })).toBeTruthy();
 });

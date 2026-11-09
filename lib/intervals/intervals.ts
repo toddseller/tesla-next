@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { fill, placeSessions, SESSION_HORIZON, STEP } from "./gap-estimates";
 import { shiftDay } from "@/lib/scene/replay";
 import { localIso, localMidnight, pyRound } from "./python";
+import { type BackupKind, EVENTS } from "@/lib/backup";
 import { quarterKw, reference, share, slot } from "./sunshine";
 import { type Car, carName, loadCars, sessionVin } from "./vehicles";
 import { rainFrom, skyFrom, windAcross, windsAloft } from "./weather";
@@ -211,6 +212,17 @@ export async function dayIntervals(day: string) {
     };
   });
 
+  // Spans overlapping the day, given whole: the day view cuts them to the day.
+  const [offGrid, storm] = await Promise.all([
+    db.query<{ start_at: Date; end_at: Date; kind: BackupKind }>(
+      `SELECT * FROM (${EVENTS}) e WHERE start_at < $2 AND end_at > $1 ORDER BY start_at`, [new Date(start), new Date(end)],
+    ),
+    db.query<{ start_at: Date; end_at: Date | null }>(
+      "SELECT start_at, end_at FROM site_state WHERE storm_mode_active AND start_at < $2 AND (end_at IS NULL OR end_at > $1) ORDER BY start_at",
+      [new Date(start), new Date(end)],
+    ),
+  ]);
+
   // Watt-hour precision; the page rounds for display only.
   const totals = Object.fromEntries(ALL_FLOWS.map((flow) => [flow, totalWh[flow] / 1000]));
   return {
@@ -221,5 +233,7 @@ export async function dayIntervals(day: string) {
     totals,
     data,
     weather,
+    off_grid: offGrid.rows.map((r) => ({ start: r.start_at.toISOString(), end: r.end_at.toISOString(), kind: r.kind })),
+    storm_watch: storm.rows.map((r) => ({ start: r.start_at.toISOString(), end: r.end_at?.toISOString() ?? null })),
   };
 }

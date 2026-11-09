@@ -35,8 +35,12 @@ beforeAll(async () => {
 });
 
 beforeEach(async () => {
-  await owner.query("DELETE FROM data; DELETE FROM meter_day");
+  await owner.query("DELETE FROM data; DELETE FROM meter_day; DELETE FROM grid_outage; DELETE FROM site_state");
 });
+
+// An outage from a site wall time, lasting so many hours.
+const storeOutage = (start: string, hours: number) =>
+  owner.query("INSERT INTO grid_outage SELECT t, t + make_interval(secs => $2) FROM (SELECT ($1 || ' America/Los_Angeles')::timestamptz AS t) s", [start, hours * 3600]);
 
 afterAll(async () => {
   await owner.end();
@@ -47,8 +51,38 @@ test("every caller says whether VPP days count, since the route's and the page's
   expectTypeOf(topTen).parameters.toEqualTypeOf<[withVpp: boolean]>();
 });
 
-test("an empty database gives three empty rankings", async () => {
-  expect(await topTen(true)).toEqual([{ solar: [] }, { net_grid: [] }, { to_grid_months: [] }]);
+test("an empty database gives four empty rankings", async () => {
+  expect(await topTen(true)).toEqual([{ solar: [] }, { net_grid: [] }, { to_grid_months: [] }, { outages: [] }]);
+});
+
+test("the longest outages by hours, with the day they began in the site's time; other kinds aren't ranked", async () => {
+  await storeOutage("2024-02-04 14:51:38", 52.27);
+  await storeOutage("2024-12-14 05:55:41", 35.44);
+  await storeOutage("2024-12-31 23:30:00", 2);
+  await storeOutage("2021-10-12 06:25:52", 52.35);
+  await storeOutage("2025-01-05 10:00:00", 0.005);
+  await storeOutage("2026-11-09 08:36:41", 2);
+  await owner.query("INSERT INTO site_state VALUES ('2026-11-09 08:36:00-08', '2026-11-09 10:40:00-08', 'off_grid_intentional', false)");
+  expect((await topTen(false))[3].outages).toEqual([
+    { date: "Feb 4, 2024", hours: 52.3, day: "2024-02-04" },
+    { date: "Dec 14, 2024", hours: 35.4, day: "2024-12-14" },
+    { date: "Dec 31, 2024", hours: 2, day: "2024-12-31" },
+  ]);
+});
+
+test("outages that read the same to a tenth of an hour rank the newer first, and the newer wins 10th place", async () => {
+  for (let d = 1; d <= 9; d++) await storeOutage(`2023-01-0${d} 08:00:00`, 10 + d);
+  await storeOutage("2023-02-01 08:00:00", 7.24);
+  await storeOutage("2025-02-01 08:00:00", 7.16);
+  const outages = (await topTen(false))[3].outages;
+  expect(outages).toHaveLength(10);
+  expect(outages.at(-1)!.day).toBe("2025-02-01");
+});
+
+test("VPP events don't change the outage ranking", async () => {
+  await storeOutage("2024-02-04 14:51:38", 52.27);
+  await seed("2024-02-04", { is_vpp: true });
+  expect((await topTen(true))[3]).toEqual((await topTen(false))[3]);
 });
 
 test("solar days by the stored figure, ten of them, with their labels and each row's day", async () => {

@@ -1,9 +1,10 @@
-import { latest, subscribe } from "@/lib/live";
+import { latest, siteState, subscribe } from "@/lib/live";
 
 export const dynamic = "force-dynamic";
 
 // Cloudflare closes a stream idle for about 100 seconds.
 const PING_MS = 25_000;
+const EVENTS: Record<string, string> = { totals_updated: "totals", outages_updated: "outages", site_state_updated: "site_state" };
 
 // shortcut: open streams aren't capped; each costs a socket and a timer, fine for the site's handful of viewers. Cap them if it ever gets heavy traffic.
 export function GET(request: Request) {
@@ -17,8 +18,10 @@ export function GET(request: Request) {
       // anton's scheduler sends each status as one line of JSON, so one data field carries a whole status.
       const now = latest();
       if (now !== null) send(`data: ${now}\n\n`);
-      // Totals get an event name, so a page listens for them apart from live status.
-      const unsubscribe = subscribe((payload, channel) => send(channel === "totals_updated" ? `event: totals\ndata: ${payload}\n\n` : `data: ${payload}\n\n`));
+      const site = siteState();
+      if (site !== null) send(`event: site_state\ndata: ${site}\n\n`);
+      // Everything but live status gets an event name, so a page listens for each apart.
+      const unsubscribe = subscribe((payload, channel) => send(EVENTS[channel] ? `event: ${EVENTS[channel]}\ndata: ${payload}\n\n` : `data: ${payload}\n\n`));
       const ping = setInterval(() => send(": ping\n\n"), PING_MS);
       stop = () => {
         clearInterval(ping);

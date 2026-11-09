@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import { useLiveStream } from "@/components/use-live-stream";
-import { type LiveStatus, liveStatus } from "@/lib/live-status";
+import { gridPill, type LiveStatus, liveStatus, type SiteState } from "@/lib/live-status";
 
 const pages = [
   { name: "Solar", href: "/" },
@@ -15,28 +15,45 @@ const pages = [
   { name: "Top Ten", href: "/top" },
 ];
 
-// The Powerwalls' live charge and state at the bar's end. `renderedAt` is when the server rendered the page with the
-// status it held: the first render in the browser uses it too, so hydration finds the same text.
-function Status({ initialStatus, renderedAt }: { initialStatus: string | null; renderedAt: number }) {
+const PILL_STYLES = {
+  outage: "border-primary text-foreground",
+  storm: "border-solar text-solar",
+  test: "border-dashed border-muted-foreground text-foreground",
+};
+
+type Props = { initialStatus: string | null; initialSite: string | null; renderedAt: number };
+
+// The Powerwalls' live charge and state at the bar's end, after an off-grid or storm watch pill when there is one.
+// `renderedAt` is when the server rendered the page with the status it held: the first render in the browser uses it
+// too, so hydration finds the same text.
+function Status({ initialStatus, initialSite, renderedAt }: Props) {
   const [status, setStatus] = useState<LiveStatus | null>(() => initialStatus && JSON.parse(initialStatus));
+  const [site, setSite] = useState<SiteState | null>(() => initialSite && JSON.parse(initialSite));
   const [now, setNow] = useState(() => new Date(renderedAt));
-  useLiveStream({ onStatus: setStatus });
+  useLiveStream({ onStatus: setStatus, onSiteState: setSite });
   useEffect(() => {
     setNow(new Date());
     const timer = setInterval(() => setNow(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
   const { live, word, time, pill } = liveStatus(status, now);
+  const grid = gridPill(status, site);
   return (
-    <p data-part="live-status" className="order-2 flex w-full items-center gap-2.5 font-mono text-[13px] text-muted-foreground sm:order-3 sm:w-auto">
+    <p data-part="live-status" className="order-2 flex w-full flex-wrap items-center gap-2.5 font-mono text-[13px] whitespace-nowrap text-muted-foreground sm:order-3 sm:w-auto">
       <span data-part="dot" aria-hidden className={`size-2 rounded-full ${live ? "bg-powerwall" : "bg-muted-foreground"}`} />
       <span>{word} {time}</span>
+      {grid && (
+        <span data-part="grid-pill" className={`flex items-center gap-1.5 rounded-full border px-2.5 py-1 ${PILL_STYLES[grid.kind]}`}>
+          {grid.kind === "outage" && <span aria-hidden className="size-1.5 rounded-full bg-primary" />}
+          {grid.text}
+        </span>
+      )}
       <span className="rounded-full border border-input px-2.5 py-1 text-foreground">{pill}</span>
     </p>
   );
 }
 
-export function TopBar({ initialStatus, renderedAt }: { initialStatus: string | null; renderedAt: number }) {
+export function TopBar({ initialStatus, initialSite, renderedAt }: Props) {
   const path = usePathname();
   return (
     <header className="flex flex-wrap items-center gap-x-6 gap-y-2 border-b px-4 py-3 sm:px-8">
@@ -62,7 +79,7 @@ export function TopBar({ initialStatus, renderedAt }: { initialStatus: string | 
           );
         })}
       </nav>
-      <Status initialStatus={initialStatus} renderedAt={renderedAt} />
+      <Status initialStatus={initialStatus} initialSite={initialSite} renderedAt={renderedAt} />
     </header>
   );
 }

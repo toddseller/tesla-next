@@ -1,12 +1,15 @@
--- The production schema of the tables lib/intervals, lib/range and lib/true-up read, loaded into the tests' throwaway
--- PostgreSQL by test/postgres.ts. anton-tesla-api-ws owns these tables and changes them; regenerate after it does, on onyx:
+-- The production schema of the tables lib/intervals, lib/range, lib/backup and lib/true-up read, loaded into the tests'
+-- throwaway PostgreSQL by test/postgres.ts. anton-tesla-api-ws owns these tables and changes them; regenerate after it
+-- does, on onyx:
 --
 --   pg_dump --schema-only --no-owner --no-privileges -t energy_interval -t battery_sample -t vehicle_interval \
 --     -t charge_session -t weather_sample -t vehicle -t data -t meter_day -t meter_read -t rate_revision \
---     -t nsc_rate -t true_up_statement -t true_up_statement_cycle -t vpp_payout "$DATABASE_URL"
+--     -t nsc_rate -t true_up_statement -t true_up_statement_cycle -t vpp_payout -t grid_outage -t site_state \
+--     "$DATABASE_URL"
 --
 -- run as anton's backup job runs pg_dump (deploy/backup-database there), then drop pg_dump's \restrict and
--- \unrestrict lines. Dumped 2026-11-08, at anton-tesla-api-ws 86714a1.
+-- \unrestrict lines. Dumped 2026-11-08, at anton-tesla-api-ws 86714a1; grid_outage and site_state written by hand from
+-- anton's models (api/models/grid.py, ae61e56), as its init_db creates them, until the next dump.
 --
 -- PostgreSQL database dump
 --
@@ -465,6 +468,34 @@ CREATE INDEX ix_meter_read_year ON public.meter_read USING btree (year);
 --
 
 CREATE INDEX ix_true_up_statement_cycle_true_up_end_year ON public.true_up_statement_cycle USING btree (true_up_end_year);
+
+
+--
+-- Name: grid_outage; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.grid_outage (
+    start_at timestamp with time zone NOT NULL,
+    end_at timestamp with time zone NOT NULL
+);
+
+ALTER TABLE ONLY public.grid_outage
+    ADD CONSTRAINT grid_outage_pkey PRIMARY KEY (start_at);
+
+
+--
+-- Name: site_state; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.site_state (
+    start_at timestamp with time zone NOT NULL,
+    end_at timestamp with time zone,
+    island_status character varying NOT NULL,
+    storm_mode_active boolean NOT NULL
+);
+
+ALTER TABLE ONLY public.site_state
+    ADD CONSTRAINT site_state_pkey PRIMARY KEY (start_at);
 
 
 --

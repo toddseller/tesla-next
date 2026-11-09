@@ -1,10 +1,11 @@
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 
 type Listener = (payload: string, channel: string) => void;
-const live = vi.hoisted(() => ({ current: null as string | null, listeners: new Set<Listener>() }));
+const live = vi.hoisted(() => ({ current: null as string | null, site: null as string | null, listeners: new Set<Listener>() }));
 
 vi.mock("@/lib/live", () => ({
   latest: () => live.current,
+  siteState: () => live.site,
   subscribe: (listener: Listener) => {
     live.listeners.add(listener);
     return () => live.listeners.delete(listener);
@@ -26,6 +27,7 @@ function open() {
 
 beforeEach(() => {
   live.current = null;
+  live.site = null;
   live.listeners.clear();
 });
 
@@ -65,6 +67,31 @@ test("sends updated totals as a totals event", async () => {
   await read();
   publish('{"date":"2026-11-07"}', "totals_updated");
   expect(await read()).toBe('event: totals\ndata: {"date":"2026-11-07"}\n\n');
+});
+
+test("sends the site's state stretch after the latest status when a stream opens", async () => {
+  live.current = '{"solar_power":2.8}';
+  live.site = '{"start":"2026-11-09T14:25:52.000Z","island_status":"off_grid_unintentional","storm_mode_active":false}';
+  const { read } = open();
+  await read();
+  expect(await read()).toBe('data: {"solar_power":2.8}\n\n');
+  expect(await read()).toBe('event: site_state\ndata: {"start":"2026-11-09T14:25:52.000Z","island_status":"off_grid_unintentional","storm_mode_active":false}\n\n');
+});
+
+test("sends a changed stretch as a site_state event, and changed outages as an outages event", async () => {
+  const { read } = open();
+  await read();
+  publish('{"start":"2026-11-09T22:02:10.000Z","island_status":"on_grid","storm_mode_active":true}', "site_state_updated");
+  expect(await read()).toBe('event: site_state\ndata: {"start":"2026-11-09T22:02:10.000Z","island_status":"on_grid","storm_mode_active":true}\n\n');
+  publish("{}", "outages_updated");
+  expect(await read()).toBe("event: outages\ndata: {}\n\n");
+});
+
+test("sends island status and storm watch in a status as anton sent them", async () => {
+  const { read } = open();
+  await read();
+  publish('{"island_status":"off_grid_unintentional","storm_mode_active":true}');
+  expect(await read()).toBe('data: {"island_status":"off_grid_unintentional","storm_mode_active":true}\n\n');
 });
 
 test("pings every 25 seconds", async () => {

@@ -170,6 +170,7 @@ export function savingsText(savings: Savings, season: Cost["vpp"], current: bool
   if (savings.held_days) parts.push([`Keeping charge, ${plural(savings.held_days, "day")}`, effect(savings.powerwalls_held)]);
   if (savings.used_days) parts.push([`Storing solar, ${plural(savings.used_days, "day")}`, effect(savings.powerwalls_used)]);
   if (savings.vpp_days) parts.push([`VPP events, ${plural(savings.vpp_days, "day")}`, effect(savings.powerwalls_vpp)]);
+  if (savings.storm_days) parts.push([`Storm watch, ${plural(savings.storm_days, "day")}`, effect(savings.powerwalls_storm)]);
   const less = savings.peak_only && Math.round((actual.total - savings.peak_only.total) * 100) / 100;
   const whatIf = savings.peak_only && savings.used_days
     ? {

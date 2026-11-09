@@ -25,7 +25,7 @@ afterEach(() => {
   vi.useRealTimers();
 });
 
-const bar = (status: object | null = STATUS) => <TopBar initialStatus={status && JSON.stringify(status)} renderedAt={RENDERED_AT} />;
+const bar = (status: object | null = STATUS) => <TopBar initialStatus={status && JSON.stringify(status)} initialSite={null} renderedAt={RENDERED_AT} />;
 const shown = () => {
   const status = document.querySelector('[data-part="live-status"]')!;
   return { text: status.textContent, live: status.querySelector('[data-part="dot"]')!.className.includes("bg-powerwall") };
@@ -79,4 +79,38 @@ test("no status yet shows dashes", () => {
   render(bar(null));
 
   expect(shown()).toEqual({ text: "LIVE —PW — · —", live: false });
+});
+
+const OUTAGE = { ...STATUS, battery_status: "Discharging", island_status: "off_grid_unintentional", storm_mode_active: false };
+const OFF_GRID_STRETCH = { start: "2026-11-08T14:25:52Z", island_status: "off_grid_unintentional", storm_mode_active: false };
+const pill = () => document.querySelector('[data-part="grid-pill"]');
+
+test("an outage shows OFF GRID SINCE the stretch the page was rendered with, before the Powerwall pill", () => {
+  render(<TopBar initialStatus={JSON.stringify(OUTAGE)} initialSite={JSON.stringify(OFF_GRID_STRETCH)} renderedAt={RENDERED_AT} />);
+  expect(pill()!.textContent).toBe("OFF GRID SINCE 6:25 AM");
+  expect(shown().text).toBe("LIVE 9:59 AMOFF GRID SINCE 6:25 AMPW 92% · DISCHARGING");
+});
+
+test("a site_state event fills in the outage's start", () => {
+  render(<TopBar initialStatus={JSON.stringify(OUTAGE)} initialSite={null} renderedAt={RENDERED_AT} />);
+  expect(pill()!.textContent).toBe("OFF GRID");
+  FakeStream.opened[0].send(OFF_GRID_STRETCH, "site_state");
+  expect(pill()!.textContent).toBe("OFF GRID SINCE 6:25 AM");
+});
+
+test("a test, storm watch and going back on the grid", () => {
+  render(bar());
+  expect(pill()).toBeNull();
+  FakeStream.opened[0].send({ ...STATUS, island_status: "off_grid_intentional", storm_mode_active: false });
+  expect(pill()!.textContent).toBe("OFF GRID TEST");
+  FakeStream.opened[0].send({ ...STATUS, island_status: "on_grid", storm_mode_active: true });
+  expect(pill()!.textContent).toBe("STORM WATCH");
+  FakeStream.opened[0].send({ ...STATUS, island_status: "on_grid", storm_mode_active: false });
+  expect(pill()).toBeNull();
+});
+
+test("a stale status keeps its OFF GRID pill beside LAST", () => {
+  render(<TopBar initialStatus={JSON.stringify(OUTAGE)} initialSite={null} renderedAt={RENDERED_AT} />);
+  act(() => vi.advanceTimersByTime(3 * 60_000));
+  expect(shown()).toEqual({ text: "LAST 9:59 AMOFF GRIDPW 92% · DISCHARGING", live: false });
 });

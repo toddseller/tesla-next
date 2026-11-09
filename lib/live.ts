@@ -1,10 +1,10 @@
 import { Client } from "pg";
-import { connection } from "./db";
+import { connection, db } from "./db";
 
-// anton-tesla-api-ws's scheduler notifies each live status (poll_live) about every 10 seconds, and each day whose
-// totals it stores.
+// anton-tesla-api-ws's scheduler notifies each live status (poll_live) about every 10 seconds, each day whose totals it
+// stores, each refresh that changes the outages, and each change in the site's state stretches it stores.
 const LIVE = "live_status";
-const TOTALS = "totals_updated";
+const CHANNELS = [LIVE, "totals_updated", "outages_updated", "site_state_updated"];
 const RETRY_MS = 5000;
 // A connection that dies without a word (the database host losing power, a network drop) never errors, and pg turns
 // TCP keep-alive off, so a minute without a live status, six of anton's polls, counts as lost.
@@ -12,8 +12,8 @@ const SILENCE_MS = 60_000;
 
 type Listener = (payload: string, channel: string) => void;
 
-// `current` is the notification's JSON text, so streams forward it byte for byte.
-type State = { current: string | null; subscribers: Set<Listener>; started: boolean };
+// `current` is the notification's JSON text, so streams forward it byte for byte; `site` is the open state stretch.
+type State = { current: string | null; site: string | null; subscribers: Set<Listener>; started: boolean };
 
 declare global {
   var liveStatus: State | undefined;
@@ -21,9 +21,23 @@ declare global {
 
 // Next.js gives instrumentation, pages and route handlers each their own copy of this module, so the state lives on
 // globalThis: the listener instrumentation starts is the one pages and streams read.
-const state = (globalThis.liveStatus ??= { current: null, subscribers: new Set(), started: false });
+const state = (globalThis.liveStatus ??= { current: null, site: null, subscribers: new Set(), started: false });
 
 export const latest = () => state.current;
+export const siteState = () => state.site;
+
+// anton's notification says only that the stretches changed, so the open one is read here and sent on in its place.
+async function readSite() {
+  const { rows } = await db.query<{ start_at: Date; island_status: string; storm_mode_active: boolean }>(
+    "SELECT start_at, island_status, storm_mode_active FROM site_state WHERE end_at IS NULL ORDER BY start_at DESC LIMIT 1",
+  );
+  state.site = rows[0] ? JSON.stringify({ start: rows[0].start_at.toISOString(), island_status: rows[0].island_status, storm_mode_active: rows[0].storm_mode_active }) : null;
+  return state.site;
+}
+
+const send = (payload: string, channel: string) => {
+  for (const listener of state.subscribers) listener(payload, channel);
+};
 
 export function subscribe(listener: Listener) {
   state.subscribers.add(listener);
@@ -63,12 +77,18 @@ async function listen() {
       state.current = payload;
       watch();
     }
-    for (const listener of state.subscribers) listener(payload, channel);
+    if (channel === "site_state_updated") {
+      readSite().then((site) => send(String(site), channel), (error) => console.error("site state read failed:", error.message));
+      return;
+    }
+    send(payload, channel);
   });
   try {
     await client.connect();
-    await client.query(`LISTEN ${LIVE}; LISTEN ${TOTALS}`);
+    await client.query(CHANNELS.map((channel) => `LISTEN ${channel}`).join("; "));
     watch();
+    // Also after a reconnect, and sent on, so a change notified while the connection was down isn't missed.
+    await readSite().then((site) => send(String(site), "site_state_updated"), (error) => console.error("site state read failed:", error.message));
   } catch (error) {
     retry(error as Error);
   }

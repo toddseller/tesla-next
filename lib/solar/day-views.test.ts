@@ -3,7 +3,7 @@
 // stacking and axis ranges; the estimate tests dropped with the dashes they checked.
 import { describe, expect, test } from "vitest";
 
-import { chargeLevel, clockTime, FLOW_COLORS, hasBatteryHistory, outlines, timeTick, unitOnTopTick, viewChart, viewSummary } from "./day-views";
+import { chargeLevel, clockTime, daySpans, FLOW_COLORS, hasBatteryHistory, outlines, timeTick, unitOnTopTick, viewChart, viewSummary } from "./day-views";
 
 // Oct 16, 2026 at watt-hour precision (Tesla app: Total Generated 43.3, Home 12.3 kWh).
 const totals = {
@@ -322,5 +322,41 @@ describe("outlines", () => {
   test("a gap stays a gap", () => {
     const withGap = [{ minute: 0, solar_to_home_kw: 1 }, { minute: 5, solar_to_home_kw: null }, { minute: 10, solar_to_home_kw: 1 }];
     expect(outlines(viewChart("solar", withGap)).map((r) => r.solar_to_home_top)).toEqual([1, null, 1]);
+  });
+});
+
+describe("off-grid and storm watch spans", () => {
+  const DAY = "2024-02-04";
+  const day = (spans: Partial<Pick<Parameters<typeof daySpans>[0], "off_grid" | "storm_watch">>, data: Parameters<typeof daySpans>[0]["data"] = []) =>
+    daySpans({ date: DAY, data, off_grid: [], storm_watch: [], ...spans });
+
+  test("an outage running past midnight is cut to the day and says so", () => {
+    expect(day({ off_grid: [{ start: "2024-02-04T22:51:38Z", end: "2024-02-07T03:07:50Z", kind: "outage" }] })).toEqual([
+      { kind: "off_grid", from: 891 + 38 / 60, to: 1440, text: "Off grid (outage) 2:51 PM to midnight" },
+    ]);
+  });
+
+  test("a span from the day before starts at midnight; a blip reads its one minute", () => {
+    expect(day({
+      off_grid: [{ start: "2024-02-03T22:00:00Z", end: "2024-02-04T09:30:00Z", kind: "outage" }, { start: "2024-02-04T17:14:10Z", end: "2024-02-04T17:14:28Z", kind: "blip" }],
+    }).map(({ text, from, to }) => [text, Math.round(from * 60), Math.round(to * 60)])).toEqual([
+      ["Off grid (outage) midnight to 1:30 AM", 0, 90 * 60],
+      ["Off grid (blip) 9:14 AM to 9:14 AM", 554 * 60 + 10, 554 * 60 + 28],
+    ]);
+  });
+
+  test("storm watch gives the Powerwalls' grid charging inside it, each interval by its part inside", () => {
+    const data = [
+      { minute: 1195, grid_to_powerwall_kw: 6 }, // 7:55 PM, half outside a span starting 7:57:30
+      { minute: 1200, grid_to_powerwall_kw: 12 },
+      { minute: 1435, grid_to_powerwall_kw: 12 },
+    ];
+    expect(day({ storm_watch: [{ start: "2024-02-05T03:57:30Z", end: null }] }, data)).toEqual([
+      { kind: "storm", from: 1197.5, to: 1440, text: "Storm watch 7:57 PM to now, 2.3 kWh charged from the grid" },
+    ]);
+  });
+
+  test("a day without spans has none", () => {
+    expect(day({})).toEqual([]);
   });
 });

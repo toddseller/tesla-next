@@ -45,6 +45,24 @@ function EarlierMenu({ range, years, onRange }: { range: Range; years: Preset[];
   );
 }
 
+type Group = { label: string; range: Range; presets: Preset[]; earlier?: Preset[]; onRange: (range: Range) => void };
+
+// The preset buttons, with an Earlier menu of older true-up years before the last, All time, when there are any.
+export function PresetGroup({ label, range, presets, earlier, onRange }: Group) {
+  return (
+    <div role="group" aria-label={label} className="grid grid-cols-3 gap-0.5 rounded-lg border border-input bg-card p-[3px] max-sm:w-full sm:flex">
+      {presets.map((preset, i) => (
+        <Fragment key={preset.label}>
+          {earlier && i === presets.length - 1 && <EarlierMenu range={range} years={earlier} onRange={onRange} />}
+          <button type="button" aria-pressed={holds(preset, range)} onClick={() => onRange(preset.range)} className={presetStyle(holds(preset, range))}>
+            {preset.label}
+          </button>
+        </Fragment>
+      ))}
+    </div>
+  );
+}
+
 export function RangeControls({ range, presets, earlier, onRange }: { range: Range; presets: Preset[]; earlier?: Preset[]; onRange: (range: Range) => void }) {
   const [open, setOpen] = useState(false);
   const [first, setFirst] = useState<string | null>(null);
@@ -61,17 +79,7 @@ export function RangeControls({ range, presets, earlier, onRange }: { range: Ran
   const shown = first ? { from: toDate(first), to: toDate(first) } : { from: toDate(range.start), to: toDate(range.end) };
   return (
     <div className="flex flex-wrap items-center gap-2">
-      <div role="group" aria-label="Preset ranges" className="grid grid-cols-3 gap-0.5 rounded-lg border border-input bg-card p-[3px] max-sm:w-full sm:flex">
-        {presets.map((preset, i) => (
-          <Fragment key={preset.label}>
-            {/* The menu goes before the last preset, which for the true-up years is All time. */}
-            {earlier && i === presets.length - 1 && <EarlierMenu range={range} years={earlier} onRange={onRange} />}
-            <button type="button" aria-pressed={holds(preset, range)} onClick={() => onRange(preset.range)} className={presetStyle(holds(preset, range))}>
-              {preset.label}
-            </button>
-          </Fragment>
-        ))}
-      </div>
+      <PresetGroup label="Preset ranges" range={range} presets={presets} earlier={earlier} onRange={onRange} />
       <Popover open={open} onOpenChange={onOpen}>
         <PopoverTrigger asChild>
           <button type="button" aria-label="Choose dates"
