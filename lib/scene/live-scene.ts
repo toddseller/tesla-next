@@ -18,7 +18,7 @@ export type SceneOptions = Sky & { links?: Link[]; replay?: boolean };
 // Below this a flow displays as 0.0 kW and counts as idle.
 export const ACTIVE_KW = 0.1;
 const STALE_AFTER_HOURS = 6;
-const DASH = "—";
+export const DASH = "—";
 // The Powerwall charge bar's level before the first reading: the usual backup
 // reserve, rather than an empty bar.
 export const DEFAULT_CHARGE = 20;
