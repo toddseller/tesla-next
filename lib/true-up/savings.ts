@@ -92,8 +92,9 @@ export function peakOnlyDay({ solarOnly, shortfall, peakExported }: CaseDay, eff
   };
 }
 
-// WestLight's rates are known from August 2024, so '24 - '25 is the first true-up year that can be priced in full.
-const FIRST_YEAR = "2024-10-01";
+// PG&E's rates and readings are stored from autumn 2023 (WestLight's estimated until August 2024), so '23 - '24 is the
+// first true-up year that can be priced.
+const FIRST_YEAR = "2023-10-01";
 
 // A true-up year's cost to the house so far in three cases, each PG&E's NEM charges plus WestLight's generation, all
 // calculated from the same days so their differences come from the energy alone: actual, solar with no Powerwalls, and
@@ -169,6 +170,8 @@ export async function trueUpSavings(start: string, end: string) {
     through,
     pge_rates: inEffect(through, newestFirst(revisions))!.effective_date,
     westlight_rates: westlightIn(through)!.effective_date,
+    // The estimated revisions come before the known ones, so a year's first day says whether any were used.
+    estimated_rates: Boolean(westlightIn(first)?.estimated),
   };
 }
 

@@ -195,7 +195,7 @@ When a `totals` event arrives for a day from the first shown cycle's first day t
 - **THEN** the page does not reload its data
 
 ### Requirement: Savings card
-With one true-up year from '24 - '25 on shown, the page SHALL show a card below the tiles, "What the system saved" (see true-up-savings): the saving (no-system cost less actual cost) in whole dollars, "so far" for the current year, and the no-system cost it comes out of; and a key giving what was paid, split into PG&E and WestLight Energy, what solar saved, and the Powerwalls.
+With one true-up year from '23 - '24 on shown, the page SHALL show a card below the tiles, "What the system saved" (see true-up-savings): the saving (no-system cost less actual cost) in whole dollars, "so far" for the current year, and the no-system cost it comes out of; and a key giving what was paid, split into PG&E and WestLight Energy, what solar saved, and the Powerwalls.
 
 #### Scenario: '25 - '26
 - **WHEN** '25 - '26 is shown, costing $6,693.86 with no system, $966.56 with solar only and $1,118.07 actual ($825.00 PG&E, $293.07 WestLight)
@@ -205,8 +205,12 @@ With one true-up year from '24 - '25 on shown, the page SHALL show a card below 
 - **WHEN** the current year is shown
 - **THEN** the card reads its saving so far, through the last day counted
 
+#### Scenario: '23 - '24
+- **WHEN** '23 - '24 is shown
+- **THEN** the savings card is shown
+
 #### Scenario: Before '24 - '25, All time or a custom range
-- **WHEN** '23 - '24, All time or a custom range is shown
+- **WHEN** '22 - '23, All time or a custom range is shown
 - **THEN** there is no savings card
 
 ### Requirement: Savings bar
@@ -232,7 +236,7 @@ The key SHALL give the Powerwalls' effect on the bill, "saved" or "cost" with th
 - **THEN** the Powerwalls' entry gives no VPP credit
 
 ### Requirement: The card names its estimates
-The card SHALL say its figures are estimates of PG&E's and WestLight Energy's charges; how many of the year's days before April 27, 2026 were rebuilt from PG&E's meter or used without it, when there are any; and, when the last day counted is more than 12 months after the newest WestLight rate's date, that WestLight's rates are from that date.
+The card SHALL say its figures are estimates of PG&E's and WestLight Energy's charges; how many of the year's days before April 27, 2026 were rebuilt from PG&E's meter or used without it, when there are any; when the last day counted is more than 12 months after the newest WestLight rate's date, that WestLight's rates are from that date; and when any WestLight rate used was estimated, that WestLight's generation rates are estimated from PG&E's.
 
 #### Scenario: '25 - '26
 - **WHEN** '25 - '26 is shown, with 205 days rebuilt and January 28, 2026 without PG&E's reading
@@ -241,6 +245,10 @@ The card SHALL say its figures are estimates of PG&E's and WestLight Energy's ch
 #### Scenario: Rates out of date
 - **WHEN** the current year is shown on 2027-11-01 and the newest WestLight rate is from 2026-03-01
 - **THEN** the card says WestLight's rates are from March 2026
+
+#### Scenario: '23 - '24
+- **WHEN** '23 - '24 is shown
+- **THEN** the card says WestLight's generation rates that year are estimated from PG&E's
 
 ### Requirement: The card on a phone
 On a 375-pixel-wide screen the card SHALL fit the page's single column with no horizontal scrolling, its key stacked as one label and amount per row.
@@ -282,3 +290,10 @@ Under the Powerwalls' bill effect the key SHALL give its parts: what the held da
 #### Scenario: No storm watch yet
 - **WHEN** a year has no storm watch days
 - **THEN** the key has no storm watch line
+
+### Requirement: The Payback card on the page
+The True-Up Tracker SHALL show the Payback card (see system-payback) below the cycle list, for every range, rendered with the page and reloaded when the savings are.
+
+#### Scenario: A totals event
+- **WHEN** a `totals` event arrives for today
+- **THEN** the Payback card updates in place, with no page reload

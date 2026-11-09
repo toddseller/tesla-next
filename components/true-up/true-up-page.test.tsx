@@ -5,6 +5,7 @@ import { afterEach, beforeEach, expect, test, vi } from "vitest";
 
 import { COST_25_26, CURRENT, CURRENT_COST, CURRENT_SAVINGS, SAVINGS_25_26, YEAR_25_26, YEARS } from "@/components/true-up/fixtures";
 import { TrueUpPage } from "@/components/true-up/true-up-page";
+import type { Payback } from "@/lib/true-up/payback";
 import { FakeStream } from "@/test/fake-event-source";
 
 const router = vi.hoisted(() => ({ push: vi.fn() }));
@@ -41,8 +42,12 @@ afterEach(() => {
 
 const settle = () => act(() => new Promise((resolve) => setTimeout(resolve, 0)));
 const pressed = (name: string) => screen.getByRole("button", { name }).getAttribute("aria-pressed");
-const page = (range = THIS_YEAR, cycles = CURRENT, cost = CURRENT_COST, savings: typeof CURRENT_SAVINGS | null = CURRENT_SAVINGS) =>
-  <TrueUpPage range={range} years={YEARS} cycles={cycles} cost={cost} savings={savings} today="2026-11-08" />;
+const page = (range = THIS_YEAR, cycles = CURRENT, cost = CURRENT_COST, savings: typeof CURRENT_SAVINGS | null = CURRENT_SAVINGS, payback: Payback | null = null) =>
+  <TrueUpPage range={range} years={YEARS} cycles={cycles} cost={cost} savings={savings} payback={payback} today="2026-11-08" />;
+const PAYBACK: Payback = {
+  solar: { year: 2025, projected: false, estimated: true }, system: { year: 2030, projected: true, estimated: true },
+  powerwalls: { year: null, wont: true }, outages: { count: 35, hours: 156.9, longest_hours: 52.3 },
+};
 const RELOADS = (range: { start: string; end: string }) =>
   ["cycles", "true-up-cost", "true-up-savings"].map((route) => `/api/${route}?start_date=${range.start}&end_date=${range.end}`);
 const savingsCard = () => screen.getByRole("region", { name: "What the system saved" }).textContent;
@@ -125,4 +130,26 @@ test("a failed reload keeps the data", async () => {
   await settle();
   expect(screen.getByRole("region", { name: "Charges so far" }).textContent).toContain("$106.46");
   expect(savingsCard()).toContain("$411");
+});
+
+test("the Payback card shows for any range with payback data, and not without", () => {
+  render(page(YEAR_25, YEAR_25_26, COST_25_26, SAVINGS_25_26, PAYBACK));
+  expect(screen.getByRole("region", { name: "Payback" })).toBeTruthy();
+  cleanup();
+  render(page());
+  expect(screen.queryByRole("region", { name: "Payback" })).toBeNull();
+});
+
+test("a totals event for today reloads the Payback card whatever range is shown, keeping it when the reload fails", async () => {
+  render(page({ start: "2022-10-01", end: "2023-09-30" }, [], CURRENT_COST, null, PAYBACK));
+  answers["/api/payback"] = { ...PAYBACK, system: { year: 2029, projected: true, estimated: true } };
+  FakeStream.opened[0].send({ date: "2026-11-08" }, "totals");
+  await settle();
+  expect(fetches).toContain("/api/payback");
+  expect(screen.getByRole("region", { name: "Payback" }).textContent).toContain("2029");
+  failing = true;
+  vi.spyOn(console, "error").mockImplementation(() => {});
+  FakeStream.opened[0].send({ date: "2026-11-08" }, "totals");
+  await settle();
+  expect(screen.getByRole("region", { name: "Payback" }).textContent).toContain("2029");
 });

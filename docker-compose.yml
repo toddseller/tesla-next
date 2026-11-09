@@ -8,9 +8,12 @@ services:
         AUDIT_RUN: ${AUDIT_RUN:-}
     env_file:
       - ./.env
-    # The app reads the password from here when DATABASE_URL has none, like the API's container.
+    # The app reads the password from here when DATABASE_URL has none, like the API's container, and the system's private
+    # costs (README, Environment) from the costs file; both stay outside the repository.
     volumes:
       - ${PGPASS_FILE:-/dev/null}:/run/secrets/pgpass:ro
+      - ${SYSTEM_COSTS_FILE:-/dev/null}:/run/secrets/system-costs.json:ro
     environment:
       - PGPASSFILE=/run/secrets/pgpass
+      - SYSTEM_COSTS_FILE=/run/secrets/system-costs.json
     # No published port: only the tunnel container (tesla-next-tunnel), joined to this network, reaches it.

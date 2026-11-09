@@ -24,6 +24,13 @@ test("a true-up year answers with its savings", async () => {
   expect(trueUpSavings).toHaveBeenCalledWith("2024-10-01", "2025-09-30");
 });
 
+test("'23 - '24 answers its savings, marked as priced at estimated rates", async () => {
+  trueUpSavings.mockResolvedValue({ solar_saved: 5_000, estimated_rates: true });
+
+  expect(await get("?start_date=2023-10-01&end_date=2024-09-30")).toEqual({ status: 200, body: { data: { solar_saved: 5_000, estimated_rates: true } } });
+  expect(trueUpSavings).toHaveBeenCalledWith("2023-10-01", "2024-09-30");
+});
+
 test("a range without savings answers null", async () => {
   trueUpSavings.mockResolvedValue(null);
 
