@@ -14,7 +14,7 @@ The app SHALL NOT be published on the server's network. Only its Cloudflare tunn
 - **THEN** nothing answers
 
 #### Scenario: Through the tunnel
-- **WHEN** a browser opens https://next.teslasolar.report
+- **WHEN** a browser opens https://teslasolar.report
 - **THEN** the dashboard loads
 
 ### Requirement: Security headers
@@ -41,3 +41,10 @@ No page SHALL break under the security headers: opening each page SHALL produce 
 #### Scenario: Opening each page
 - **WHEN** each of the five page addresses is opened in a browser with no content blockers
 - **THEN** the browser reports no CSP violations, and the beacon's report to `/cdn-cgi/rum` succeeds
+
+### Requirement: The preview address redirects
+https://next.teslasolar.report SHALL answer every request with a permanent redirect to https://teslasolar.report, keeping the path and query, so links from before the cutover still open.
+
+#### Scenario: A shared replay link
+- **WHEN** a browser opens https://next.teslasolar.report/distribution?at=2026-11-07T12:30
+- **THEN** it is sent with status 301 to https://teslasolar.report/distribution?at=2026-11-07T12:30

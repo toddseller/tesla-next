@@ -1,6 +1,6 @@
 // Ported from anton-tesla-api-ws resources/intervals.py: a day's 5 minute records, totals and weather, for the
-// Distribution page's replay. It must answer exactly as Flask's /api/v2/intervals did (see the day-intervals spec), so
-// it keeps that code's order of work, including summing the day's intervals in the order the database returns them.
+// Distribution page's replay. It answered exactly as anton's /api/v2/intervals did until that was retired, and keeps
+// that code's order of work, including summing the day's intervals in the order the database returns them.
 import { db } from "@/lib/db";
 import { fill, placeSessions, SESSION_HORIZON, STEP } from "./gap-estimates";
 import { shiftDay } from "@/lib/scene/replay";

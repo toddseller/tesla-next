@@ -17,7 +17,7 @@ const FLOWS = [
 
 type Row = Totals & { label: string; day?: string; period?: Range };
 
-// Flask labels a period "Oct-25".
+// The range labels a period "Oct-25".
 const toRow = (item: RangeItem): Row => ({ ...item, label: item.day ? item.date : item.date.replace("-", " 20") });
 
 // /api/range answers one item per period, in order, so the range's own periods say which days each bar holds. A period

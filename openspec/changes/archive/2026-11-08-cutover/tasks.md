@@ -16,7 +16,7 @@ Code tasks are test-first: write the test, run it and see it fail for the right 
 
 ## 3. Soak (one week after the switch)
 
-- [ ] 3.1 After midnight's `finish_yesterday`, a `totals` event for yesterday reaches the open Solar page on teslasolar.report, and on the first day of a month This month shows the new month; record what the week showed in the design, with the date the soak ended
+- [x] 3.1 After midnight's `finish_yesterday`, a `totals` event for yesterday reaches the open Solar page on teslasolar.report, and on the first day of a month This month shows the new month; record what the week showed in the design, with the date the soak ended
 
 ## Workflow follow-up
 

@@ -1,7 +1,7 @@
 // Ported from anton-tesla-api-ws tests/test_reports_top_ten.py and test_meter_corrections.py's top-ten test, with the
 // tie rule and NULL handling of the top-ten spec, against a database of its own.
 import type { Client } from "pg";
-import { afterAll, beforeAll, beforeEach, expect, test, vi } from "vitest";
+import { afterAll, beforeAll, beforeEach, expect, expectTypeOf, test, vi } from "vitest";
 
 import { ownDatabase } from "@/test/true-up";
 
@@ -25,7 +25,7 @@ const storeMeter = (day: string, importedKwh: number, exportedKwh: number) =>
   owner.query("INSERT INTO meter_day VALUES ($1, $2, $3, 0, 0)", [day, importedKwh * 1000, exportedKwh * 1000]);
 
 async function rankings() {
-  const [{ solar }, { net_grid }, { to_grid_months }] = await topTen();
+  const [{ solar }, { net_grid }, { to_grid_months }] = await topTen(true);
   return { solar, days: net_grid, months: to_grid_months };
 }
 
@@ -43,11 +43,15 @@ afterAll(async () => {
   vi.unstubAllEnvs();
 });
 
-test("an empty database gives three empty rankings", async () => {
-  expect(await topTen()).toEqual([{ solar: [] }, { net_grid: [] }, { to_grid_months: [] }]);
+test("every caller says whether VPP days count, since the route's and the page's defaults are without them", () => {
+  expectTypeOf(topTen).parameters.toEqualTypeOf<[withVpp: boolean]>();
 });
 
-test("solar days by the stored figure, ten of them, with Flask's labels and each row's day", async () => {
+test("an empty database gives three empty rankings", async () => {
+  expect(await topTen(true)).toEqual([{ solar: [] }, { net_grid: [] }, { to_grid_months: [] }]);
+});
+
+test("solar days by the stored figure, ten of them, with their labels and each row's day", async () => {
   for (let d = 1; d <= 12; d++) await seed(`2026-01-${String(d).padStart(2, "0")}`, { solar_generated: d + 0.25 });
   const { solar } = await rankings();
   expect(solar.map((s) => s.solar)).toEqual([12.25, 11.25, 10.25, 9.25, 8.25, 7.25, 6.25, 5.25, 4.25, 3.25]);
@@ -93,7 +97,7 @@ test("a day with no imports recorded counts them as 0", async () => {
   expect((await rankings()).days).toEqual([{ date: "Jul 1, 2026", net_grid: -12.3, day: "2026-07-01" }]);
 });
 
-test("export months are summed over their days, with Flask's labels and each row's month", async () => {
+test("export months are summed over their days, with their labels and each row's month", async () => {
   await seed("2024-05-01", { from_grid: 1, to_grid: 30 });
   await seed("2024-05-02", { from_grid: 1, to_grid: 30 });
   await seed("2024-06-01", { from_grid: 1, to_grid: 40 });
@@ -112,7 +116,7 @@ test("figures that read the same to a tenth rank the newer date first", async ()
 
 test("a tie for 10th place is won by the newer 11th day", async () => {
   for (let d = 1; d <= 9; d++) await seed(`2023-06-0${d}`, { from_grid: 0, to_grid: 50 + d });
-  // Flask's ORDER BY puts the older day 10th: it exported a little more, but both read 42.1.
+  // Ordering by the exact figure would put the older day 10th: it exported a little more, but both read 42.1.
   await seed("2023-07-01", { from_grid: 0, to_grid: 42.14 });
   await seed("2026-07-01", { from_grid: 0, to_grid: 42.06 });
   const { days } = await rankings();

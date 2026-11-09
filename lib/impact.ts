@@ -10,7 +10,7 @@ export type ImpactFigures = {
 
 type Sums = { total_solar: number | null; from_powerwall: number | null; from_solar: number | null; from_grid: number | null; total_house: number | null };
 
-// Flask's get_impact_data, as /api/v2/impact answers it.
+// Ported from anton-tesla-api-ws's get_impact_data (models/data.py).
 export async function impactFigures(start: string, end: string): Promise<ImpactFigures> {
   const { rows: [sums] } = await db.query<Sums>(
     `SELECT sum(data.solar_generated) AS total_solar, sum(data.house_from_powerwall) AS from_powerwall,

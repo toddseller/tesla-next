@@ -6,9 +6,9 @@ import { periods } from "@/lib/solar/ranges";
 // PG&E's readings take their grid figures from it (anton-tesla-api-ws models/data.py).
 const METER_FIX_DATE = "2026-04-27";
 
-// Flask's hybrid properties as SQLAlchemy renders them through psycopg 3: each literal is a typed parameter, so the
+// anton-tesla-api-ws's hybrid properties as SQLAlchemy rendered them through psycopg 3: each literal is a typed parameter, so the
 // meter's kWh are float8 and every CASE and sum that mixes them with the real columns is float8 too. The casts are
-// what make the sums round as Flask's do.
+// what keep the sums rounding as the site has always shown them.
 const meter = (column: string) => `(SELECT meter_day.${column} / 1000.0::float8 FROM meter_day WHERE meter_day.date = data.date)`;
 const corrected = `(data.date < '${METER_FIX_DATE}'::varchar AND ${meter("imported_wh")} IS NOT NULL)`;
 const rawToGrid = "coalesce(data.to_grid, 0::integer) + coalesce(data.powerwall_to_grid, 0::integer)";
@@ -39,7 +39,7 @@ export type DayRow = {
 export const dayColumns = `date, solar_generated, from_grid, to_grid, powerwall_to_grid, is_vpp, total_house_usage,
   ${meter("imported_wh")} AS meter_imported, ${meter("exported_wh")} AS meter_exported`;
 
-// Flask's solar_json: the grid and house in Python, from the columns as Python reads them.
+// anton's solar_json: the grid and house in Python, from the columns as Python reads them.
 export function dailyItem(row: DayRow): RangeItem {
   const isCorrected = row.date < METER_FIX_DATE && row.meter_imported !== null;
   const rawOut = (row.to_grid || 0) + (row.powerwall_to_grid || 0);
@@ -57,7 +57,7 @@ export function dailyItem(row: DayRow): RangeItem {
   };
 }
 
-// Daily items up to 31 days after the start, Flask's periods beyond, as Flask's /api/v2/formatted answers.
+// Daily items up to 31 days after the start, periods beyond.
 export async function rangeTotals(start: string, end: string): Promise<RangeItem[]> {
   if (Date.parse(end) - Date.parse(start) <= 31 * 86_400_000) {
     const { rows } = await db.query<DayRow>(
@@ -67,7 +67,7 @@ export async function rangeTotals(start: string, end: string): Promise<RangeItem
     return rows.map(dailyItem);
   }
   const list = periods(start, end);
-  // One query, but each period summed by its own scan as Flask's per-period queries are, so float sums add in the same order.
+  // One query, but each period summed by its own scan as anton's per-period queries were, so float sums add in the order they always have.
   const { rows } = await db.query<{ solar: number | null; from_grid: number | null; to_grid: number | null; house: number | null }>(
     `SELECT s.* FROM unnest($1::varchar[], $2::varchar[]) WITH ORDINALITY AS p(first, last, n)
      CROSS JOIN LATERAL (

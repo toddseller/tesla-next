@@ -276,12 +276,12 @@ describe("a deploy", () => {
     expect(curlCalls()).toEqual([]);
   });
 
-  it("succeeds when the site answers 200, checking next.teslasolar.report by default", () => {
+  it("succeeds when the site answers 200, checking teslasolar.report by default", () => {
     release("v1", { "app/page.tsx": "v2\n" });
     const result = deploy(["deploy", "v1"]);
     expect(result.code).toBe(0);
     expect(curlCalls()).toHaveLength(1);
-    expect(curlCalls()[0]).toMatch(/https:\/\/next\.teslasolar\.report\//);
+    expect(curlCalls()[0]).toMatch(/https:\/\/teslasolar\.report\//);
     expect(result.out).toMatch(/answered 200: deployed v1/);
   });
 

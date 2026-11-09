@@ -3,8 +3,6 @@ import { dateError } from "@/lib/request-dates";
 
 export const dynamic = "force-dynamic";
 
-// Answers as Flask's /api/v2/impact does, less the live battery fields, so scripts/compare-impact.mjs can check the
-// port until cutover.
 export async function GET(request: Request) {
   const params = new URL(request.url).searchParams;
   const [start, end] = [params.get("start_date"), params.get("end_date")];

@@ -1,5 +1,5 @@
 // Ported from anton-tesla-api-ws services/sunshine.py: how sunny it was at the house, from the roof's own output.
-// The live share stays in Flask, which keeps the recent output in memory.
+// The live share is anton's scheduler's, which keeps the recent output in memory.
 import { db } from "@/lib/db";
 
 const REFERENCE_DAYS = 14;

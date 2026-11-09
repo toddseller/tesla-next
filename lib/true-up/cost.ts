@@ -10,8 +10,8 @@ import { FIRST_TRUE_UP_END_YEAR, OCTOBER, readsFor, trueUpLabel } from "@/lib/tr
 type Billed = { nem_charges: number; net_kwh: number };
 type Pricing = { revisions: Revision[]; billed: Map<string, Billed> };
 
-// Flask looks rates and PG&E's figures up for every cycle; loading them once per request gives the same answers, since
-// only Flask's refreshes and imports change them. A page render shares one load among the cost, the cycles and the savings.
+// anton looked rates and PG&E's figures up for every cycle; loading them once per request gives the same answers, since
+// only anton's refreshes and imports change them. A page render shares one load among the cost, the cycles and the savings.
 export const loadPricing = cache(async (): Promise<Pricing> => {
   const [revisions, billed] = await Promise.all([
     db.query<{ revision: Revision }>("SELECT row_to_json(r) AS revision FROM rate_revision r"),
@@ -35,7 +35,7 @@ export function cycleCharges(first: string, last: string, days: Record<string, D
   return { nem_charges: estimate, nem_source: estimate === null ? null : "calculated", estimated_nem_charges: null, billed_net_kwh: null };
 }
 
-// Flask's /api/v2/sheet rows: each billing cycle's grid energy and NEM charges.
+// Each billing cycle's grid energy and NEM charges.
 export async function cycleRows(start: string, end: string, pricing?: Pricing) {
   const [cycles, prices] = await Promise.all([cycleGrids(start, end), pricing ?? loadPricing()]);
   return cycles.map(({ row, grid }) => ({ ...row, ...cycleCharges(row.first_day, row.last_day, grid.days, prices) }));
@@ -93,7 +93,7 @@ const left = (cycle: CycleRow) => daysFrom(cycle.through ?? cycle.last_day, cycl
 
 export const isTrueUpYear = (start: string, end: string) => start.slice(5) === "10-01" && end === `${Number(start.slice(0, 4)) + 1}-09-30`;
 
-// A true-up year's dollars, as Flask's /api/v2/true_up_cost answers them: all null but the newest rates' date unless the
+// A true-up year's dollars: all null but the newest rates' date unless the
 // range is a true-up year.
 export async function trueUpCost(start: string, end: string, today: string) {
   const pricing = await loadPricing();

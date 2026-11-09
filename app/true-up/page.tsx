@@ -6,7 +6,7 @@ import { trueUpSavings } from "@/lib/true-up/savings";
 import { trueUpYears } from "@/lib/true-up/reads";
 
 // The range lives in the address, so a link or a reload shows the same page, rendered with its data. The current true-up
-// year turns over on the October read, as Flask's does.
+// year turns over on the October read, as PG&E's billing does.
 export default async function Page({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const today = siteToday();
   const years = await trueUpYears(today);

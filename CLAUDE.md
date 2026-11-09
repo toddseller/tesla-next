@@ -9,16 +9,16 @@ Facts that change how to work in this repo. What the app is, setup and env vars:
 - The CSP allows `'unsafe-eval'` only when `NODE_ENV` is `development` (`lib/csp.ts`). A page that works in `yarn dev` can still break under the production policy, so check new pages with `yarn build && yarn start` too.
 - The pages are rendered per request (`dynamic = "force-dynamic"` in the layout) because the CSP nonce is per request. Don't make a page static.
 - Never commit `.env` files, and never print the database password or Pushover keys, including in command output.
-- The Distribution page is a port of anton-tesla-api-ws's, its behavior specified by the specs copied from there (`live-flow-scene`, `scene-weather`, `scene-replay`, `day-intervals`). Change behavior through those specs, and keep `/api/intervals` answering exactly as Flask's `/api/v2/intervals` until change 7 retires it (`scripts/compare-intervals.mjs`).
-- The Solar page's day views and range chart are ported from anton-tesla-api-ws too (specs `solar-range-chart`, `solar-day-view`). Keep `/api/range` answering exactly as Flask's `/api/v2/formatted` until change 7 (`scripts/compare-range.mjs`): Flask's totals are float sums of `real` columns with meter corrections, so its SQL must keep Flask's casts.
+- The Distribution page is a port of anton-tesla-api-ws's, its behavior specified by the specs copied from there (`live-flow-scene`, `scene-weather`, `scene-replay`, `day-intervals`). Change behavior through those specs.
+- The Solar page's day views and range chart are ported from anton-tesla-api-ws too (specs `solar-range-chart`, `solar-day-view`). `lib/range.ts` keeps anton's float8 casts and per-period scans over the `real` columns, so totals round as the site has always shown them; changing either shifts some totals by 0.1 kWh.
 - Next.js gives `instrumentation.ts`, pages and route handlers each their own copy of a module, so `lib/live.ts` keeps its state on `globalThis`. Keep it there, or the listener the server starts isn't the one pages read.
 - Install and add packages under Node 24 (`nvm use`): `jsdom` refuses Node 25, and `yarn add` fails under it.
 
 ## Working rules
 
-- Ask before publishing a release (a `v*` tag, in GitHub's web UI); the tag deploys it to next.teslasolar.report. Merging to `main` deploys nothing. See README.md, Deploy.
+- Ask before publishing a release (a `v*` tag, in GitHub's web UI); the tag deploys it to teslasolar.report. Merging to `main` deploys nothing. See README.md, Deploy.
 - Changes go through OpenSpec: `/opsx:explore`, `/opsx:propose`, `/opsx:apply`, then `/opsx:archive` with the delta specs synced into `openspec/specs/`.
-- The migration from anton-tesla-api-ws is a series of changes, one per page, each starting with its own mockups (except Distribution, whose house scene keeps its styling). The design system lives in `app/globals.css`; use its tokens (`text-solar`, `bg-card`, `text-muted-foreground`), not hex values.
+- A new page or a page redesign starts with its own mockups (Distribution's house scene keeps its styling). The design system lives in `app/globals.css`; use its tokens (`text-solar`, `bg-card`, `text-muted-foreground`), not hex values.
 - A change that touches a version pin or an env var updates `README.md` in the same change.
 
 ## Verifying

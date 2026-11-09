@@ -22,8 +22,8 @@ Code tasks are test-first: write the test, run it and see it fail for the right 
 
 ## 5. Release and checks (after merging)
 
-- [ ] 5.1 **(owner)** Publish a release; I watch the Deploy run
-- [ ] 5.2 On teslasolar.report: the top bar shows LIVE with the current charge and state on every page and updates without a reload, one `/api/live` stream per tab, no console message; record the results in the design, committed on the next change's branch
+- [x] 5.1 **(owner)** Publish a release; I watch the Deploy run
+- [x] 5.2 On teslasolar.report: the top bar shows LIVE with the current charge and state on every page and updates without a reload, one `/api/live` stream per tab, no console message; record the results in the design, committed on the next change's branch
 
 ## Workflow follow-up
 

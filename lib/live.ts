@@ -1,18 +1,18 @@
 import { Client } from "pg";
 import { connection } from "./db";
 
-// Flask notifies each live status (anton-tesla-api-ws, poll_live) about every 10 seconds, and each day whose totals it
-// stores, as it emits its own socket events.
+// anton-tesla-api-ws's scheduler notifies each live status (poll_live) about every 10 seconds, and each day whose
+// totals it stores.
 const LIVE = "live_status";
 const TOTALS = "totals_updated";
 const RETRY_MS = 5000;
 // A connection that dies without a word (the database host losing power, a network drop) never errors, and pg turns
-// TCP keep-alive off, so a minute without a live status, six of Flask's polls, counts as lost.
+// TCP keep-alive off, so a minute without a live status, six of anton's polls, counts as lost.
 const SILENCE_MS = 60_000;
 
 type Listener = (payload: string, channel: string) => void;
 
-// `current` is Flask's JSON text, so streams forward it byte for byte.
+// `current` is the notification's JSON text, so streams forward it byte for byte.
 type State = { current: string | null; subscribers: Set<Listener>; started: boolean };
 
 declare global {

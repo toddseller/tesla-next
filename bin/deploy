@@ -54,7 +54,7 @@ main() {
   # A new value each deploy makes the image rerun its dependency audit against today's advisories.
   AUDIT_RUN="$(date +%s)" docker compose up -d --build --remove-orphans || refuse 'the image did not build; the app was not replaced'
 
-  local url="${DEPLOY_HEALTH_URL:-https://next.teslasolar.report/}" tries="${DEPLOY_HEALTH_TRIES:-10}" interval="${DEPLOY_HEALTH_INTERVAL:-3}"
+  local url="${DEPLOY_HEALTH_URL:-https://teslasolar.report/}" tries="${DEPLOY_HEALTH_TRIES:-10}" interval="${DEPLOY_HEALTH_INTERVAL:-3}"
   local attempt code
   for ((attempt = 1; attempt <= tries; attempt++)); do
     code="$(curl -sS -o /dev/null -w '%{http_code}' --max-time 10 "$url" || true)"

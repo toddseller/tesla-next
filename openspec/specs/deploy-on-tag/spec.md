@@ -108,7 +108,7 @@ When the server moves to a new commit, the script SHALL keep the image that was 
 - **THEN** the owner can restore the rollback image with the steps in the README, without building anything
 
 ### Requirement: A deploy succeeds only when the site answers
-After the container is recreated, the script SHALL check that https://next.teslasolar.report/ answers 200 within about 30 seconds, and the deploy SHALL be reported as failed in GitHub when it doesn't, or when any earlier step fails.
+After the container is recreated, the script SHALL check that https://teslasolar.report/ answers 200 within about 30 seconds, and the deploy SHALL be reported as failed in GitHub when it doesn't, or when any earlier step fails.
 
 #### Scenario: Site up
 - **WHEN** the site answers 200 after the rebuild
