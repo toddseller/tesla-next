@@ -32,8 +32,8 @@ Test-first throughout: each task's test is written and run red, for the right re
 
 ## 6. Release and checks (ask before publishing)
 
-- [ ] 6.1 With the owner's go-ahead, release; the deploy's health check passes
-- [ ] 6.2 On teslasolar.report: the Payback card and '23 - '24's savings card match the onyx run, `/api/payback` holds no dollar amount, at 1280 and 375 pixels with no console errors; record in design.md under Rollout
+- [x] 6.1 With the owner's go-ahead, release; the deploy's health check passes
+- [x] 6.2 On teslasolar.report: the Payback card and '23 - '24's savings card match the onyx run, `/api/payback` holds no dollar amount, at 1280 and 375 pixels with no console errors; record in design.md under Rollout
 
 ## Workflow follow-up
 

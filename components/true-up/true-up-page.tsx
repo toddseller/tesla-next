@@ -66,6 +66,7 @@ export function TrueUpPage({ range, years, cycles: served, cost: servedCost, sav
       <Tiles cycles={cycles} cost={year && cost} year={year} today={today} />
       <MeteringNote cycles={cycles} />
       {year && savings && <SavingsCard savings={savings} season={cost?.vpp ?? null} current={year.current} />}
+      {payback && <PaybackCard payback={payback} today={today} />}
       <section aria-labelledby="cycle-chart" className="flex flex-col gap-3.5 rounded-[10px] border bg-card px-4 py-5 sm:px-6">
         <h2 id="cycle-chart" className="font-semibold">{year ? yearName(year.label) : datesLabel(range, "short")} by billing cycle</h2>
         <CycleChart cycles={cycles} cost={year && cost} oneYear={Boolean(year)} />
@@ -74,7 +75,6 @@ export function TrueUpPage({ range, years, cycles: served, cost: servedCost, sav
         <h2 id="cycle-list" className="font-semibold">Billing cycles</h2>
         <CycleList cycles={cycles} />
       </section>
-      {payback && <PaybackCard payback={payback} today={today} />}
     </div>
   );
 }

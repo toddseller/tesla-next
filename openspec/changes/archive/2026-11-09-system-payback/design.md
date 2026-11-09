@@ -109,3 +109,11 @@ The joint rate comparisons were the first source considered (July 2023: PCE's av
 
   - '23 - '24's actual cost of $39.90 is far below the later years'. That fits the year before the household's second EV (`cost.ts` counts years as comparable only from '24 - '25 for that reason): less use, so solar's credits nearly covered it. Its 364 days rebuilt from PG&E's meter means its energy is as good as the later years'; only WestLight's generation rate is estimated.
 - The onyx run's years predate the two review fixes; counting '21 - '22 from PTO only once adds about 2.5% to that year's estimate, which leaves solar's 2025 and the whole system's 2028 as they were or earlier. The rollout check confirms the live years.
+
+## Rollout
+
+Released as v2026.11.09.3 on 2026-11-09; the Deploy workflow and its health check passed.
+
+- `/api/payback` on teslasolar.report answers years and markers only, as the onyx run did: solar paid for itself in 2025 (estimated), the whole system is projected for 2028, the Powerwalls won't pay back, and 35 outages, 156.9 h, the longest 52.3 h. It holds no dollar amount.
+- '23 - '24's savings match the onyx run to the cent ($6,507.85 without the system, $39.90 paid, $6,510.65 saved by solar, $42.70 added by the Powerwalls) and are marked estimated; '24 - '25 and '25 - '26 are unchanged.
+- At desktop width the timeline shows the four markers on alternating rows, with ticks 2022 to 2032; at 375 pixels (headless Chromium, as the desktop browser window wouldn't shrink) it becomes the vertical list from 2021 to 2031. No sideways scrolling, and no console errors on load.
