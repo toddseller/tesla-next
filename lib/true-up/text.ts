@@ -156,17 +156,28 @@ const yearAfter = (iso: string) => `${Number(iso.slice(0, 4)) + 1}${iso.slice(4)
 export function savingsText(savings: Savings, season: Cost["vpp"], current: boolean) {
   const { actual, no_system: noSystem, solar_saved: solar, powerwalls_added: powerwalls } = savings;
   const saved = Math.round((noSystem.total - actual.total) * 100) / 100;
-  const parts: [string, number][] = powerwalls < 0 ? [["paid", actual.total], ["saved", saved]] : [["paid", actual.total], ["powerwalls", powerwalls], ["solar", solar]];
+  const bar: [string, number][] = powerwalls < 0 ? [["paid", actual.total], ["saved", saved]] : [["paid", actual.total], ["powerwalls", powerwalls], ["solar", solar]];
   const spoken = powerwalls < 0
     ? `${wholeDollars(saved)} saved`
     : `${wholeDollars(powerwalls)} saved by the Powerwalls, ${wholeDollars(solar)} saved by solar`;
 
   const vpp = season && (season.payout ?? (season.estimate || null));
-  const vppNote = season && vpp
-    ? season.payout !== null ? `The VPP credit is the ${season.season} season's payout.` : `The VPP credit is an estimate for the ${season.season} season.`
+  const vppText = season && vpp
+    ? `${wholeDollars(vpp)} VPP credit, ${season.payout !== null ? `the ${season.season} season's payout` : `an estimate for the ${season.season} season`}.`
+    : null;
+  const effect = (dollars: number) => `${wholeDollars(dollars)} ${dollars < 0 ? "cost" : "saved"}`;
+  const parts: [string, string][] = [];
+  if (savings.held_days) parts.push([`Keeping charge, ${plural(savings.held_days, "day")}`, effect(savings.powerwalls_held)]);
+  if (savings.used_days) parts.push([`Storing solar, ${plural(savings.used_days, "day")}`, effect(savings.powerwalls_used)]);
+  if (savings.vpp_days) parts.push([`VPP events, ${plural(savings.vpp_days, "day")}`, effect(savings.powerwalls_vpp)]);
+  const less = savings.peak_only && Math.round((actual.total - savings.peak_only.total) * 100) / 100;
+  const whatIf = savings.peak_only && savings.used_days
+    ? {
+      value: Math.round(Math.abs(less!)) === 0 ? "About the same" : `About ${wholeDollars(less!)} ${less! > 0 ? "less" : "more"}`,
+      line: `Covering only 4 to 9 p.m. on ${savings.used_days === 1 ? "that day" : `those ${savings.used_days} days`}.`,
+    }
     : null;
   const nem2 = powerwalls < 0 ? "Under NEM2, exporting solar earns about what importing it later costs, so storing it pays only between 4 and 9 p.m." : null;
-  const line = [vppNote, nem2].filter(Boolean).join(" ");
 
   const { rebuilt_days: rebuilt, uncorrected_days: uncorrected } = savings;
   const days = rebuilt && uncorrected
@@ -180,15 +191,11 @@ export function savingsText(savings: Savings, season: Cost["vpp"], current: bool
   return {
     saved: wholeDollars(saved),
     unit: `estimate${current ? " so far" : ""}, of ${wholeDollars(noSystem.total)} without solar or Powerwalls`,
-    bar: { parts, label: `Of ${wholeDollars(noSystem.total)}: ${wholeDollars(actual.total)} paid, ${spoken}` },
+    bar: { parts: bar, label: `Of ${wholeDollars(noSystem.total)}: ${wholeDollars(actual.total)} paid, ${spoken}` },
     paid: wholeCredit(actual.total),
     paidSplit: `PG&E ${wholeCredit(actual.pge)} · WestLight ${wholeCredit(actual.westlight)}`,
     solar: wholeDollars(solar),
-    powerwalls: {
-      bill: `${wholeDollars(powerwalls)} ${powerwalls < 0 ? "cost" : "saved"} on the bill`,
-      vpp: vpp ? `${wholeDollars(vpp)} VPP credit` : null,
-      line: line || null,
-    },
+    powerwalls: { bill: `${effect(powerwalls)} on the bill`, vpp: vppText, parts, whatIf, nem2 },
     estimates: ["Estimates of PG&E's and WestLight Energy's charges.", days, stale].filter(Boolean).join(" "),
   };
 }

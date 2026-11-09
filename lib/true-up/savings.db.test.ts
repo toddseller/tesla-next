@@ -1,7 +1,7 @@
 import type { Client } from "pg";
 import { afterAll, beforeAll, beforeEach, expect, test, vi } from "vitest";
 import { MARCH_2026, ownDatabase, putInterval, seedIntervals, storeMeterDays, storeReads, storeRevision } from "@/test/true-up";
-import { minimumDelivery, priceDays, type Revision } from "./pricing";
+import { type DayGrid, minimumDelivery, priceDays, type Revision } from "./pricing";
 import { generationCharges } from "./westlight";
 
 let owner: Client;
@@ -15,7 +15,7 @@ beforeAll(async () => {
 });
 
 beforeEach(async () => {
-  await owner.query("DELETE FROM meter_read; DELETE FROM energy_interval; DELETE FROM meter_day; DELETE FROM rate_revision");
+  await owner.query("DELETE FROM meter_read; DELETE FROM energy_interval; DELETE FROM meter_day; DELETE FROM rate_revision; DELETE FROM data");
   for (const year of [2024, 2025, 2026]) await storeReads(owner, year);
 });
 
@@ -34,6 +34,7 @@ test("a sunny interval and an evening one, in each case", async () => {
   expect(days["2026-06-10"]).toEqual({
     solarOnly: { imported: 400, exported: 600, peak_net: 400 },
     noSystem: { imported: 700, exported: 0, peak_net: 400 },
+    shortfall: 400, peakExported: 0, vpp: false, powerwalls: { peak: 400, charged: 600, discharged: 400 },
   });
 });
 
@@ -50,7 +51,18 @@ test("a day before the meter fix is scaled to PG&E's readings, period by period"
   expect(days["2025-07-10"]).toEqual({
     solarOnly: { imported: 8000, exported: 3000, peak_net: 8000 },
     noSystem: { imported: 6000, exported: 0, peak_net: 8000 },
+    // The shortfall comes from the rebuilt house use, not Tesla's half-read grid.
+    shortfall: 8000, peakExported: 0, vpp: false, powerwalls: { peak: 0, charged: 0, discharged: 0 },
   });
+});
+
+test("solar exported from 4 to 9 p.m. is kept apart from the rest of the day's exports", async () => {
+  await putInterval(owner, "2026-06-10 17:00", { solar_generated_wh: 1000, house_from_solar_wh: 200, grid_exported_from_solar_wh: 800 });
+  await putInterval(owner, "2026-06-10 12:00", { solar_generated_wh: 500, grid_exported_from_solar_wh: 500 });
+
+  const days = await savings.caseDays("2026-06-10", "2026-06-10");
+
+  expect(days["2026-06-10"]).toMatchObject({ solarOnly: { exported: 1300 }, shortfall: 0, peakExported: 800 });
 });
 
 test("a rebuilt day's actual case is PG&E's", async () => {
@@ -155,6 +167,79 @@ test("a day with PG&E's reading and no intervals counts in no case", async () =>
   expect(result.actual).toEqual(without!.actual);
   expect(result.powerwalls_added).toBe(without!.powerwalls_added);
   expect(result.rebuilt_days).toBe(1);
+});
+
+// October 5, 2026 the batteries covered the evening; October 6 they sat full while the house imported at 6 p.m.
+async function usedAndHeld() {
+  await storeRevision(owner, "2026-03-01", { minimum_delivery_daily: 0.39167 });
+  await putInterval(owner, "2026-10-05 12:00", { solar_generated_wh: 10000, house_from_solar_wh: 1000, battery_imported_from_solar_wh: 6000, grid_exported_from_solar_wh: 3000 });
+  await putInterval(owner, "2026-10-05 18:00", { house_from_battery_wh: 5400, battery_exported_wh: 5400 });
+  await putInterval(owner, "2026-10-06 12:00", { solar_generated_wh: 8000, house_from_solar_wh: 1000, battery_imported_from_solar_wh: 7000 });
+  await putInterval(owner, "2026-10-06 18:00", { grid_imported_wh: 4000, house_from_grid_wh: 4000 });
+}
+
+const price = (days: Record<string, DayGrid>, nem: boolean) => {
+  const revisions = rates("2026-03-01", 0.39167);
+  const pge = priceDays("2026-10-05", "2026-10-06", days, revisions)!;
+  const floored = nem ? Math.max(pge, minimumDelivery("2026-10-05", "2026-10-06", revisions)) : pge;
+  return Math.round((floored + generationCharges("2026-10-05", "2026-10-06", days)!.total) * 100) / 100;
+};
+
+test("used and held days split what the Powerwalls added, and peak-only reprices the used days", async () => {
+  await usedAndHeld();
+
+  const result = (await savings.trueUpSavings("2026-10-01", "2027-09-30"))!;
+  const days = await savings.caseDays("2026-10-05", "2026-10-06");
+  const { days: actual } = await grid.dailyGrid("2026-10-05", "2026-10-06");
+
+  expect([result.used_days, result.held_days]).toEqual([1, 1]);
+  // Measured on the used day alone: the held day's 7 kWh charge with nothing out is standby the held part already carries.
+  expect(result.efficiency).toBeCloseTo(5400 / 6000, 6);
+  // Held days as solar only, used days as they were.
+  const heldAsSolarOnly = price({ "2026-10-05": actual["2026-10-05"], "2026-10-06": days["2026-10-06"].solarOnly }, true);
+  expect(result.powerwalls_used).toBe(Math.round((result.solar_only.total - heldAsSolarOnly) * 100) / 100);
+  expect(Math.round((result.powerwalls_held + result.powerwalls_used) * 100) / 100).toBe(result.powerwalls_added);
+  // Peak-only: the held day as it was, the used day covering only its evening.
+  const peakOnly = { "2026-10-05": savings.peakOnlyDay(days["2026-10-05"], 5400 / 6000), "2026-10-06": actual["2026-10-06"] };
+  expect(result.peak_only!.total).toBe(price(peakOnly, true));
+});
+
+test("a VPP event day is its own part, kept as it was in peak-only and left out of the efficiency", async () => {
+  await usedAndHeld();
+  // October 7: the batteries charge from solar and export 10 kWh to the grid at 6 p.m. for a marked VPP event.
+  await putInterval(owner, "2026-10-07 12:00", { solar_generated_wh: 12000, house_from_solar_wh: 1000, battery_imported_from_solar_wh: 11000 });
+  await putInterval(owner, "2026-10-07 18:00", { battery_exported_wh: 10000, grid_exported_from_battery_wh: 10000 });
+  await owner.query("INSERT INTO data (date, is_vpp) VALUES ('2026-10-07', true)");
+
+  const result = (await savings.trueUpSavings("2026-10-01", "2027-09-30"))!;
+  const days = await savings.caseDays("2026-10-05", "2026-10-07");
+  const { days: actual } = await grid.dailyGrid("2026-10-05", "2026-10-07");
+  const priceAll = (map: Record<string, DayGrid>) => {
+    const revisions = rates("2026-03-01", 0.39167);
+    const pge = Math.max(priceDays("2026-10-05", "2026-10-07", map, revisions)!, minimumDelivery("2026-10-05", "2026-10-07", revisions));
+    return Math.round((pge + generationCharges("2026-10-05", "2026-10-07", map)!.total) * 100) / 100;
+  };
+
+  expect(days["2026-10-07"].vpp).toBe(true);
+  expect([result.used_days, result.held_days, result.vpp_days]).toEqual([1, 1, 1]);
+  expect(result.efficiency).toBeCloseTo(5400 / 6000, 6);
+  const heldAs = priceAll({ ...actual, "2026-10-06": days["2026-10-06"].solarOnly });
+  const heldAndVppAs = priceAll({ ...actual, "2026-10-06": days["2026-10-06"].solarOnly, "2026-10-07": days["2026-10-07"].solarOnly });
+  expect(result.powerwalls_vpp).toBe(Math.round((heldAndVppAs - heldAs) * 100) / 100);
+  expect(result.powerwalls_used).toBe(Math.round((result.solar_only.total - heldAndVppAs) * 100) / 100);
+  expect(Math.round((result.powerwalls_held + result.powerwalls_vpp + result.powerwalls_used) * 100) / 100).toBe(result.powerwalls_added);
+  expect(result.peak_only!.total).toBe(priceAll({ ...actual, "2026-10-05": savings.peakOnlyDay(days["2026-10-05"], 5400 / 6000) }));
+});
+
+test("a year with only held days has no peak-only case", async () => {
+  await storeRevision(owner, "2026-03-01");
+  await putInterval(owner, "2026-10-06 12:00", { solar_generated_wh: 8000, house_from_solar_wh: 1000, battery_imported_from_solar_wh: 7000 });
+  await putInterval(owner, "2026-10-06 18:00", { grid_imported_wh: 4000, house_from_grid_wh: 4000 });
+
+  const result = (await savings.trueUpSavings("2026-10-01", "2027-09-30"))!;
+
+  expect([result.used_days, result.held_days, result.peak_only]).toEqual([0, 1, null]);
+  expect(result.powerwalls_held).toBe(result.powerwalls_added);
 });
 
 test.each([

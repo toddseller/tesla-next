@@ -14,7 +14,10 @@ async function get(query: string) {
 afterEach(() => trueUpSavings.mockReset());
 
 test("a true-up year answers with its savings", async () => {
-  const data = { solar_saved: 2289.45, powerwalls_added: 215.65, through: "2025-10-02" };
+  const data = {
+    solar_saved: 2289.45, powerwalls_added: 215.65, powerwalls_held: -20.1, powerwalls_used: 235.75, held_days: 40, used_days: 325,
+    peak_only: { pge: 600, westlight: 150, total: 750 }, efficiency: 0.86, through: "2025-10-02",
+  };
   trueUpSavings.mockResolvedValue(data);
 
   expect(await get("?start_date=2024-10-01&end_date=2025-09-30")).toEqual({ status: 200, body: { data } });
