@@ -7,7 +7,7 @@ const day = (kwh: { imported?: number; exported?: number; shortfall?: number; pe
   return {
     solarOnly: { imported: wh(kwh.imported), exported: wh(kwh.exported), peak_net: wh(kwh.shortfall) - wh(kwh.peakExported) },
     noSystem: { imported: 0, exported: 0, peak_net: 0 },
-    shortfall: wh(kwh.shortfall), peakExported: wh(kwh.peakExported), vpp: false,
+    shortfall: wh(kwh.shortfall), peakExported: wh(kwh.peakExported), vpp: false, storm: false,
     powerwalls: { peak: wh(kwh.peak), charged: 0, discharged: 0 },
   };
 };

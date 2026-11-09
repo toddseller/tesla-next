@@ -2,11 +2,16 @@
 
 import { type RefObject, useEffect, useRef } from "react";
 
+import type { SiteState } from "@/lib/live-status";
+
 const REOPEN_MS = 5000;
 
 type Handlers = {
   onStatus?: (status: Record<string, unknown>) => void;
   onTotals?: (date: string) => void;
+  onOutages?: () => void;
+  // The site's open state stretch, null when there is none.
+  onSiteState?: (stretch: SiteState | null) => void;
   // The stream is back after it was lost, so anything sent meanwhile was missed.
   onReopen?: () => void;
 };
@@ -30,6 +35,11 @@ function open() {
     const status = JSON.parse(event.data);
     each((on) => on.onStatus?.(status));
   };
+  stream.addEventListener("outages", () => each((on) => on.onOutages?.()));
+  stream.addEventListener("site_state", (event) => {
+    const stretch = JSON.parse((event as MessageEvent).data);
+    each((on) => on.onSiteState?.(stretch));
+  });
   stream.addEventListener("totals", (event) => {
     const { date } = JSON.parse((event as MessageEvent).data);
     each((on) => on.onTotals?.(date));

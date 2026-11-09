@@ -31,6 +31,18 @@ test("statuses and totals reach their handlers, and the stream closes with the p
   expect(stream.closed).toBe(true);
 });
 
+test("outage and site-state events reach their own handlers", () => {
+  const on = { onOutages: vi.fn(), onSiteState: vi.fn() };
+  renderHook(() => useLiveStream(on));
+  const [stream] = FakeStream.opened;
+  const stretch = { start: "2026-11-09T22:02:10.000Z", island_status: "on_grid", storm_mode_active: true };
+  stream.send({}, "outages");
+  stream.send(stretch, "site_state");
+  stream.send(null, "site_state");
+  expect(on.onOutages).toHaveBeenCalledTimes(1);
+  expect(on.onSiteState.mock.calls).toEqual([[stretch], [null]]);
+});
+
 test("the latest render's handlers are the ones called, without opening a new stream", () => {
   const first = handlers();
   const second = handlers();

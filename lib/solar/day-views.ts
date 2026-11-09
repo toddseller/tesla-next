@@ -1,6 +1,8 @@
 // Solar, Home, Vehicle, Powerwall and Grid day views, modeled on the Tesla app, built from the ten flows /api/intervals
 // returns. Vehicle lines in other views appear only on days with vehicle data (the response's vehicle_data flag).
 
+import { wallTime } from "@/lib/scene/replay";
+
 export const FLOW_COLORS = {
   solar: "var(--color-solar)",
   home: "var(--color-home)",
@@ -217,4 +219,37 @@ export function outlines({ series, rows }: Pick<ReturnType<typeof viewChart>, "s
     }
     return { ...row, ...tops };
   });
+}
+
+export type OffGridSpan = { start: string; end: string; kind: string };
+export type StormSpan = { start: string; end: string | null };
+type SpanDay = { date: string; data: Interval[]; off_grid: OffGridSpan[]; storm_watch: StormSpan[] };
+
+// A time's minute in the shown day, with seconds as a fraction, 0 or 1440 when it falls before or after it.
+function dayMinute(iso: string, date: string) {
+  const ms = Date.parse(iso);
+  const wall = wallTime(ms);
+  if (wall.date !== date) return wall.date < date ? 0 : 1440;
+  return wall.hour * 60 + wall.minute + (ms % 60_000) / 60_000;
+}
+
+const edge = (iso: string | null, date: string) => {
+  if (iso === null) return "now";
+  const minute = dayMinute(iso, date);
+  return wallTime(Date.parse(iso)).date === date ? clockTime(Math.floor(minute)) : "midnight";
+};
+
+// The day's off-grid and storm watch spans, cut to the day for shading, each with its line for the list under the
+// charts; storm watch adds what the Powerwalls charged from the grid inside it, each 5-minute record by its part inside.
+export function daySpans({ date, data, off_grid, storm_watch }: SpanDay) {
+  const cut = (start: string, end: string | null) => ({ from: dayMinute(start, date), to: end === null ? 1440 : dayMinute(end, date) });
+  const fromGrid = (from: number, to: number) =>
+    data.reduce((kwh, r) => kwh + Number(r.grid_to_powerwall_kw ?? 0) * Math.max(0, Math.min(r.minute + 5, to) - Math.max(r.minute, from)) / 60, 0);
+  return [
+    ...off_grid.map(({ start, end, kind }) => ({ kind: "off_grid" as const, ...cut(start, end), text: `Off grid (${kind}) ${edge(start, date)} to ${edge(end, date)}` })),
+    ...storm_watch.map(({ start, end }) => {
+      const span = cut(start, end);
+      return { kind: "storm" as const, ...span, text: `Storm watch ${edge(start, date)} to ${edge(end, date)}, ${fromGrid(span.from, span.to).toFixed(1)} kWh charged from the grid` };
+    }),
+  ];
 }

@@ -3,8 +3,8 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, expect, test } from "vitest";
 
-import { dayEntries, solarEntries } from "@/components/top-ten/entries";
-import { EXPORT_DAYS, SOLAR } from "@/components/top-ten/fixtures";
+import { dayEntries, outageEntries, solarEntries } from "@/components/top-ten/entries";
+import { EXPORT_DAYS, OUTAGES, SOLAR } from "@/components/top-ten/fixtures";
 import { Timeline } from "@/components/top-ten/timeline";
 
 afterEach(cleanup);
@@ -42,6 +42,10 @@ test("solar days are drawn in the solar color, exports in the grid color", () =>
   cleanup();
   render(<Timeline label="Top ten export days" entries={dayEntries(EXPORT_DAYS)} flow="grid" today="2026-11-08" />);
   expect(dot(5).className).toContain("bg-grid");
+  cleanup();
+  render(<Timeline label="Top ten outages" entries={outageEntries(OUTAGES)} flow="powerwall" today="2026-11-09" />);
+  expect(dot(2).className).toContain("bg-powerwall");
+  expect(dot(2).getAttribute("title")).toBe("#2: 35.4 h, Dec 14, 2024");
 });
 
 test("the timeline is described in words", () => {

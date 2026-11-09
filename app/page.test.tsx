@@ -48,7 +48,7 @@ test("a malformed range is served as the current month, with no error", async ()
 });
 
 test("an open day is served with its data, its strip's bars and the latest live update", async () => {
-  dayIntervals.mockResolvedValue({ date: "2026-10-14", vehicle_data: false, totals: { solar_to_home: 12.27 }, data: [] });
+  dayIntervals.mockResolvedValue({ date: "2026-10-14", vehicle_data: false, totals: { solar_to_home: 12.27 }, data: [], off_grid: [], storm_watch: [] });
   const page = await Page({ searchParams: Promise.resolve({ start: "2026-10-01", end: "2026-10-31", day: "2026-10-14" }) });
   expect(dayIntervals).toHaveBeenCalledWith("2026-10-14");
   expect(page.props.day.data.date).toBe("2026-10-14");
@@ -64,7 +64,7 @@ test("a day after today is ignored, and the range is served", async () => {
 });
 
 test("a day outside the range has its own month in the strip", async () => {
-  dayIntervals.mockResolvedValue({ date: "2026-11-01", totals: {}, data: [] });
+  dayIntervals.mockResolvedValue({ date: "2026-11-01", totals: {}, data: [], off_grid: [], storm_watch: [] });
   await Page({ searchParams: Promise.resolve({ start: "2026-10-01", end: "2026-10-31", day: "2026-11-01" }) });
   expect(rangeTotals).toHaveBeenCalledWith("2026-11-01", "2026-11-07");
 });

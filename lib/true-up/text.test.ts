@@ -189,7 +189,7 @@ describe("the VPP credit", () => {
 const YEAR_25_26 = {
   actual: { pge: 825, westlight: 293.07, total: 1118.07 }, solar_only: { pge: 678.61, westlight: 288.62, total: 967.23 },
   no_system: { pge: 5207.64, westlight: 1487.03, total: 6694.67 }, solar_saved: 5727.44, powerwalls_added: -150.84,
-  powerwalls_held: -83.08, powerwalls_vpp: 42.5, powerwalls_used: -110.26, held_days: 129, vpp_days: 6, used_days: 232,
+  powerwalls_held: -83.08, powerwalls_vpp: 42.5, powerwalls_storm: 0, powerwalls_used: -110.26, held_days: 129, vpp_days: 6, storm_days: 0, used_days: 232,
   peak_only: { pge: 731.49, westlight: 253.9, total: 985.39 } as { pge: number; westlight: number; total: number } | null, efficiency: 0.85 as number | null,
   rebuilt_days: 205, uncorrected_days: 1, through: "2026-10-04", pge_rates: "2026-06-01", westlight_rates: "2026-07-01",
 };
@@ -252,6 +252,13 @@ describe("savingsText", () => {
     expect(text.powerwalls.parts).toEqual([
       ["Keeping charge, 129 days", "$83 cost"], ["Storing solar, 217 days", "$93 cost"], ["VPP events, 21 days", "$25 saved"],
     ]);
+  });
+
+  test("storm watch days are their own part, after VPP events, and left out with none", () => {
+    const text = savingsText({ ...YEAR_25_26, storm_days: 3, powerwalls_storm: -18.4, used_days: 229, powerwalls_used: -91.86 }, SEASON_2026, false);
+
+    expect(text.powerwalls.parts.slice(-2)).toEqual([["VPP events, 6 days", "$43 saved"], ["Storm watch, 3 days", "$18 cost"]]);
+    expect(savingsText(YEAR_25_26, SEASON_2026, false).powerwalls.parts.map(([label]) => label)).not.toContain("Storm watch, 0 days");
   });
 
   test("no used days: the held part alone and no what-if", () => {

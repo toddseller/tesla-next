@@ -12,7 +12,7 @@ const router = vi.hoisted(() => ({ replace: vi.fn() }));
 vi.mock("next/navigation", () => ({ useRouter: () => router }));
 
 // Today's totals make November 8, 2026 the best export day.
-const NEW_RECORD: TopTen = [TOP_TEN[0], { net_grid: [{ date: "Nov 8, 2026", net_grid: -61.2, day: "2026-11-08" }, ...EXPORT_DAYS.slice(0, 9)] }, TOP_TEN[2]];
+const NEW_RECORD: TopTen = [TOP_TEN[0], { net_grid: [{ date: "Nov 8, 2026", net_grid: -61.2, day: "2026-11-08" }, ...EXPORT_DAYS.slice(0, 9)] }, TOP_TEN[2], TOP_TEN[3]];
 
 let fetches: string[];
 let failing: boolean;
@@ -93,4 +93,13 @@ test("with VPP events, the switch and the footnote say so, and Without goes back
   screen.getByText(/The export rankings include VPP event days, when Tesla discharged the Powerwalls to the grid for PG&E\./);
   fireEvent.click(screen.getByRole("button", { name: "Without VPP events" }));
   expect(router.replace).toHaveBeenLastCalledWith("/top");
+});
+
+test("the longest outages come last, and an outages event reloads the rankings", async () => {
+  render(<TopTenPage topTen={TOP_TEN} withVpp={false} today="2026-11-09" />);
+  const regions = screen.getAllByRole("region").map((region) => region.getAttribute("aria-labelledby") && region.querySelector("h2")!.textContent);
+  expect(regions).toEqual(["Best solar day", "Best export day", "Best export month", "Longest outage"]);
+  FakeStream.opened[0].send({}, "outages");
+  await settle();
+  expect(fetches).toEqual(["/api/top-ten"]);
 });

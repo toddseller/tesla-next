@@ -2,7 +2,7 @@
 // Ported from anton-tesla-api-ws components/DayView.test.jsx with its values; it mocked Chart.js, these draw with
 // Recharts. The estimate note tests are dropped with the notes (solar-day-view, "Flows drawn without estimate markings").
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
-import { afterEach, describe, expect, test } from "vitest";
+import { afterEach, describe, expect, test, vi } from "vitest";
 
 import { DayDetails, DayView } from "@/components/solar/day-view";
 
@@ -16,6 +16,8 @@ const day = {
   data: [{ minute: 720, solar_to_home_kw: 1.2, solar_to_powerwall_kw: 4.8, solar_to_grid_kw: 0.4,
            powerwall_to_home_kw: 0, powerwall_to_grid_kw: 0, grid_to_home_kw: 0, grid_to_powerwall_kw: 0,
            battery_percentage: null }],
+  off_grid: [],
+  storm_watch: [],
 };
 
 const areas = (container: HTMLElement) => container.querySelectorAll('[data-testid="day-chart"] .recharts-area');
@@ -98,7 +100,7 @@ test("breakdowns sit in their own column beside the chart from 1280 pixels", () 
 });
 
 test("breakdowns for metering noise show dashes instead of percentages", () => {
-  const noise = { date: "2026-10-17", totals: { grid_to_home: 0.042, solar_to_grid: 0.019, powerwall_to_grid: 0.024 }, data: [] };
+  const noise = { date: "2026-10-17", totals: { grid_to_home: 0.042, solar_to_grid: 0.019, powerwall_to_grid: 0.024 }, data: [], off_grid: [], storm_watch: [] };
   render(<DayView day={noise} />);
 
   fireEvent.click(screen.getByRole("tab", { name: "Grid" }));
@@ -222,8 +224,8 @@ test("a step's details list the flows, not their outlines", () => {
 test("stepping onto a day with vehicle data stacks the car's band where it belongs", () => {
   const flows = { solar_to_home_kw: 1, solar_to_vehicle_kw: 1, solar_to_powerwall_kw: 1, solar_to_grid_kw: 1 };
   const steps = [720, 725].map((minute) => ({ minute, ...flows }));
-  const { container, rerender } = render(<DayView day={{ date: "2021-10-31", vehicle_data: false, totals: {}, data: steps }} />);
-  rerender(<DayView day={{ date: "2021-11-01", vehicle_data: true, totals: {}, data: steps }} />);
+  const { container, rerender } = render(<DayView day={{ date: "2021-10-31", vehicle_data: false, totals: {}, data: steps, off_grid: [], storm_watch: [] }} />);
+  rerender(<DayView day={{ date: "2021-11-01", vehicle_data: true, totals: {}, data: steps, off_grid: [], storm_watch: [] }} />);
   // Each band's lower edge sits higher than the one beneath it, so ordering by lower edge gives the stack bottom-up.
   const lowerEdge = (path: Element) => Math.max(...path.getAttribute("d")!.match(/,(-?[\d.]+)/g)!.map((y) => Number(y.slice(1))));
   const bands = [...container.querySelectorAll('[data-testid="day-chart"] .recharts-area-area')]
@@ -236,4 +238,38 @@ test("the charge level's details are in percent", () => {
   render(<DayDetails active label={120} payload={[{ dataKey: "level", name: "Battery", value: 48, unit: "%", color: "var(--color-powerwall)" }]} />);
   expect(screen.getByText("48%")).toBeTruthy();
   expect(screen.queryByText(/kW/)).toBeNull();
+});
+
+describe("off-grid and storm watch spans", () => {
+  const spans = {
+    ...day,
+    off_grid: [{ start: "2026-10-16T21:51:38Z", end: "2026-10-18T03:07:50Z", kind: "outage" }],
+    storm_watch: [{ start: "2026-10-16T19:00:00Z", end: null }],
+  };
+  const shading = (container: HTMLElement, selector: string) => container.querySelectorAll(`${selector} .recharts-reference-area`).length;
+
+  test("every view shades them and lists them under the charts", () => {
+    const { container } = render(<DayView day={spans} />);
+    expect(shading(container, '[data-testid="day-chart"]')).toBe(2);
+    expect(screen.getByRole("list", { name: "Off grid and storm watch" }).textContent).toBe(
+      "Off grid (outage) 2:51 PM to midnightStorm watch 12:00 PM to now, 0.0 kWh charged from the grid",
+    );
+    fireEvent.click(screen.getByRole("tab", { name: "Powerwall" }));
+    expect(shading(container, '[data-testid="day-chart"]')).toBe(2);
+  });
+
+  test("two blips in the same minute are two lines", () => {
+    const error = vi.spyOn(console, "error").mockImplementation(() => {});
+    const blip = (seconds: number) => ({ start: `2026-10-16T16:14:${seconds}Z`, end: `2026-10-16T16:14:${seconds + 5}Z`, kind: "blip" });
+    render(<DayView day={{ ...day, off_grid: [blip(10), blip(40)] }} />);
+    expect(screen.getByRole("list", { name: "Off grid and storm watch" }).children).toHaveLength(2);
+    expect(error.mock.calls.flat().join(" ")).not.toMatch(/same key/);
+    error.mockRestore();
+  });
+
+  test("a day without spans has no shading and no list", () => {
+    const { container } = render(<DayView day={day} />);
+    expect(shading(container, '[data-testid="day-chart"]')).toBe(0);
+    expect(screen.queryByRole("list", { name: "Off grid and storm watch" })).toBeNull();
+  });
 });

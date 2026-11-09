@@ -16,7 +16,7 @@ const october = { start: "2026-10-01", end: "2026-10-31" };
 const stripItems: RangeItem[] = Array.from({ length: 31 }, (_, i) => ({
   date: `Oct ${i + 1}`, day: `2026-10-${String(i + 1).padStart(2, "0")}`, solar: 30 + i, grid: 1, house: 2,
 }));
-const dayOf = (date: string) => ({ date, vehicle_data: false, totals: { solar_to_home: 12.27 }, data: [] });
+const dayOf = (date: string) => ({ date, vehicle_data: false, totals: { solar_to_home: 12.27 }, data: [], off_grid: [], storm_watch: [] });
 
 const page = (date: string, extra: Partial<Parameters<typeof SolarPage>[0]> = {}) => (
   <SolarPage range={october} items={stripItems} today="2026-11-07" initialStatus={null}

@@ -21,7 +21,10 @@ export const EXPORT_MONTHS = ([
   date: new Date(`${month}-01T00:00:00Z`).toLocaleDateString("en-US", { month: "short", year: "numeric", timeZone: "UTC" }), net_grid: -figure, month,
 }));
 
-export const TOP_TEN: TopTen = [{ solar: SOLAR }, { net_grid: EXPORT_DAYS }, { to_grid_months: EXPORT_MONTHS }];
+// The two longest outages Tesla's backup history held on November 9, 2026.
+export const OUTAGES = days([["2024-02-04", 52.3], ["2024-12-14", 35.4]]).map(({ date, day, figure }) => ({ date, hours: figure, day }));
+
+export const TOP_TEN: TopTen = [{ solar: SOLAR }, { net_grid: EXPORT_DAYS }, { to_grid_months: EXPORT_MONTHS }, { outages: OUTAGES }];
 
 // May 30 and July 23, 2024 are VPP event days.
-export const WITHOUT_VPP: TopTen = [{ solar: SOLAR }, { net_grid: EXPORT_DAYS.slice(2) }, { to_grid_months: EXPORT_MONTHS }];
+export const WITHOUT_VPP: TopTen = [{ solar: SOLAR }, { net_grid: EXPORT_DAYS.slice(2) }, { to_grid_months: EXPORT_MONTHS }, { outages: OUTAGES }];
