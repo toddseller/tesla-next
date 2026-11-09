@@ -6,6 +6,11 @@ const impactFigures = vi.hoisted(() => vi.fn());
 vi.mock("@/lib/impact", () => ({ impactFigures }));
 const backupHistory = vi.hoisted(() => vi.fn(async () => ({ summary: { outages: 0, seconds: 0, longest: null, house_kwh: 0, powerwalls_kwh: 0, solar_kwh: 0, closest: null, blips: [] }, events: [] })));
 vi.mock("@/lib/backup", () => ({ backupHistory }));
+const carCharging = vi.hoisted(() => vi.fn(async () => ({
+  since: null, cars_since: null, total_kwh: 10, solar_kwh: 0, powerwall_kwh: 6, grid_kwh: 4,
+  solar_percentage: 0, powerwall_percentage: 60, grid_percentage: 40, off_grid_percentage: 60, cars: [],
+})));
+vi.mock("@/lib/car-charging", () => ({ carCharging }));
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn() }) }));
 
 const { default: Page } = await import("./page");
@@ -51,4 +56,11 @@ test("the Backup section is served for the year in the address, this true-up yea
   expect(backupHistory).toHaveBeenLastCalledWith({ start: "2023-10-01", end: "2024-09-30" });
   await served();
   expect(backupHistory).toHaveBeenLastCalledWith({ start: "2026-10-01", end: "2027-09-30" });
+});
+
+test("the range's car charging is served with the page, counted up to today at the site", async () => {
+  const html = await served({ start: "2026-10-18", end: "2026-10-18" });
+  expect(carCharging).toHaveBeenCalledWith("2026-10-18", "2026-10-18", "2026-11-08");
+  expect(html).toContain("Home car charging");
+  expect(html).toContain("kWh into the cars");
 });
