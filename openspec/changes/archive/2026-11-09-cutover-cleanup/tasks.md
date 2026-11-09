@@ -24,9 +24,9 @@
 
 ## 5. Rollout (after the merge; release asked first)
 
-- [ ] 5.1 The user publishes the release; the Deploy run passes its health check (on next.teslasolar.report this once, see design.md); record the tag and time in design.md's Rollout
-- [ ] 5.2 On teslasolar.report: `/top` shows Without VPP events with the same export days as `/api/top-ten`, and With VPP events matches `/api/top-ten?vpp=with`; record it
-- [ ] 5.3 After the user adds the Cloudflare redirect: https://next.teslasolar.report/distribution?at=2026-11-07T12:30 answers 301 to the same path and query on teslasolar.report, and the page opens paused at that time; record it
+- [x] 5.1 The user publishes the release; the Deploy run passes its health check (on next.teslasolar.report this once, see design.md); record the tag and time in design.md's Rollout
+- [x] 5.2 On teslasolar.report: `/top` shows Without VPP events with the same export days as `/api/top-ten`, and With VPP events matches `/api/top-ten?vpp=with`; record it
+- [x] 5.3 After the user adds the Cloudflare redirect: https://next.teslasolar.report/distribution?at=2026-11-07T12:30 answers 301 to the same path and query on teslasolar.report, and the page opens paused at that time; record it
 
 ## Workflow follow-up
 
