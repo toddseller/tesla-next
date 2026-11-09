@@ -54,4 +54,4 @@ Released as v2026.11.09.5 on 2026-11-09; the Deploy workflow and its health chec
 
 - `/api/car-charging` on teslasolar.report matches the onyx run: All time 3,215.7 kWh, 35% solar, 23% Powerwall, 42% grid, Tesla T.I.E. Fighter 139.6 kWh and R2D2 53.3 kWh measured from Oct 17, 2026; 0.93 s on the first request after the deploy, 0.16 s after, with no VIN in the answer.
 - Day totals match the Distribution replay: 16.7 kWh on 2026-10-24 and 22.2 kWh on 2026-07-21.
-- At desktop width (1680 pixels, as the browser window wouldn't shrink to 1280) the section sits between the energy section and Backup for This year and All time, with no console errors and no sideways scrolling. At 375 pixels (headless Chromium) All time and November 2026 (11.4 kWh, 99% grid, R2D2 only) stack in one column.
+- At desktop width (1680 pixels, as the browser window wouldn't shrink to 1280) the section sits between the energy section and Backup for Today and All time, with no console errors and no sideways scrolling. At 375 pixels (headless Chromium) All time and November 2026 (11.4 kWh, 99% grid, R2D2 only) stack in one column.
