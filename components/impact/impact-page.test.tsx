@@ -20,7 +20,7 @@ const figures = (selfPowered: number): ImpactFigures => ({
 });
 
 const THIS_YEAR = { start: "2026-10-01", end: "2027-09-30" };
-const NO_BACKUP: BackupHistory = { summary: { outages: 0, seconds: 0, longest: null, house_kwh: 0, powerwalls_kwh: 0, solar_kwh: 0 }, events: [] };
+const NO_BACKUP: BackupHistory = { summary: { outages: 0, seconds: 0, longest: null, house_kwh: 0, powerwalls_kwh: 0, solar_kwh: 0, closest: null, blips: [] }, events: [] };
 
 let fetches: string[];
 let answers: (() => Promise<{ ok: boolean; json: () => unknown }>)[];

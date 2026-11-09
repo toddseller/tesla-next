@@ -20,7 +20,7 @@ beforeAll(async () => {
 });
 
 beforeEach(async () => {
-  await owner.query("DELETE FROM grid_outage; DELETE FROM site_state; DELETE FROM energy_interval");
+  await owner.query("DELETE FROM grid_outage; DELETE FROM site_state; DELETE FROM energy_interval; DELETE FROM weather_sample");
 });
 
 afterAll(async () => {
@@ -74,7 +74,7 @@ test("a short test is a test, not a blip; a commissioning test is commissioning"
 test("an event with no stretch over it, from before site state was kept, is an outage", async () => {
   await outage("2024-02-04 14:51:38", 52.27 * 3600);
   await stretch("2026-11-09 09:15:21", null, "on_grid");
-  expect(await allEvents()).toEqual([
+  expect(await allEvents()).toMatchObject([
     { start: "2024-02-04T22:51:38.000Z", end: new Date(Date.parse("2024-02-04T22:51:38Z") + 52.27 * 3600_000).toISOString(), kind: "outage" },
   ]);
 });
@@ -119,7 +119,52 @@ test("the house's energy during outages counts each interval by its part inside 
 
 test("a year without events has no outages, no longest and an empty list", async () => {
   expect(await backup.backupHistory(YEAR_23_24)).toEqual({
-    summary: { outages: 0, seconds: 0, longest: null, house_kwh: 0, powerwalls_kwh: 0, solar_kwh: 0 },
+    summary: { outages: 0, seconds: 0, longest: null, house_kwh: 0, powerwalls_kwh: 0, solar_kwh: 0, closest: null, blips: [{ label: "'23 - '24", count: 0 }] },
     events: [],
   });
+});
+
+// Five-minute intervals from a site wall time, each with the same flows, as test/true-up's putInterval stores one.
+// Wall-clock arithmetic, as no test crosses a daylight saving change.
+async function intervals(from: string, count: number, wh: Parameters<typeof putInterval>[2]) {
+  const start = Date.parse(`${from.replace(" ", "T")}:00Z`);
+  for (let i = 0; i < count; i++) await putInterval(owner, new Date(start + i * 300_000).toISOString().slice(0, 16).replace("T", " "), wh);
+}
+const weather = (at: string, code: number, wind: number) =>
+  owner.query("INSERT INTO weather_sample (sampled_at, weather_code, cloud_cover, wind_speed) VALUES ($1, $2, 100, $3)", [site(at), code, wind]);
+
+test("an outage that started full carries its rebuilt battery figures and weather, and is the year's closest call", async () => {
+  await intervals("2024-02-04 14:40", 2, { grid_exported_from_solar_wh: 300 });
+  await intervals("2024-02-04 14:50", 24, { battery_exported_wh: 500, house_from_battery_wh: 500 });
+  await outage("2024-02-04 14:50:00", 2 * 3600);
+  await weather("2024-02-04 13:00:00", 65, 45);
+  await weather("2024-02-04 15:00:00", 61, 30);
+  await weather("2024-02-04 16:00:00", 95, 60);
+  const { summary, events } = await backup.backupHistory(YEAR_23_24);
+  expect(events[0].battery).toMatchObject({ drop_kwh: 12, full: true, complete: true, refilled: false });
+  expect(events[0].battery!.low_percent).toBeCloseTo(100 - 12 / 0.36, 6);
+  expect(events[0].weather).toBe("Heavy rain, high wind");
+  expect(summary.closest).toEqual({ percent: events[0].battery!.low_percent, at: events[0].battery!.low_at });
+});
+
+test("an outage with no full signal before it gives its drop only; one with gaps is incomplete", async () => {
+  await intervals("2024-03-01 10:00", 12, { battery_exported_wh: 100 });
+  await outage("2024-03-01 10:00:00", 3600);
+  await intervals("2024-04-01 09:50", 2, { grid_exported_from_solar_wh: 300 });
+  await intervals("2024-04-01 10:00", 6, { battery_exported_wh: 100 });
+  await outage("2024-04-01 10:00:00", 3600);
+  const { summary, events } = await backup.backupHistory(YEAR_23_24);
+  expect(events.map((e) => [e.battery!.full, e.battery!.complete, e.battery!.low_percent])).toEqual([[true, false, null], [false, true, null]]);
+  expect(events[1].battery!.drop_kwh).toBeCloseTo(1.2, 6);
+  expect(events.map((e) => e.weather)).toEqual([null, null]);
+  expect(summary.closest).toBeNull();
+});
+
+test("only outages carry battery figures and weather, and the summary counts blips per true-up year", async () => {
+  await outage("2023-12-01 12:00:00", 20);
+  await outage("2024-03-01 10:00:00", 600);
+  await stretch("2024-03-01 09:59:00", "2024-03-01 10:20:00", "off_grid_intentional");
+  const { summary, events } = await backup.backupHistory(YEAR_23_24);
+  expect(events.map((e) => [e.kind, e.battery, e.weather])).toEqual([["test", null, null], ["blip", null, null]]);
+  expect(summary.blips).toEqual([{ label: "'23 - '24", count: 1 }]);
 });
