@@ -35,7 +35,7 @@ const ALL_FLOWS = [...Object.keys(FLOWS), ...Object.values(HOME_TO_VEHICLE)];
 type EnergyRow = { start_at: Date; solar_generated_wh: number } & Record<(typeof FLOWS)[keyof typeof FLOWS], number>;
 type Row = Record<string, number | string | boolean | null>;
 
-function intervalWh(interval: EnergyRow, vehicleWh?: number) {
+export function intervalWh(interval: EnergyRow, vehicleWh?: number) {
   const wh: Record<string, number> = {};
   for (const [flow, column] of Object.entries(FLOWS)) wh[flow] = interval[column];
   for (const vehicleFlow of Object.values(HOME_TO_VEHICLE)) wh[vehicleFlow] = 0;
@@ -51,7 +51,7 @@ function intervalWh(interval: EnergyRow, vehicleWh?: number) {
   return wh;
 }
 
-// Through the end of the latest session's walk, where its energy may still be placed.
+// Through the end of the latest session's stretch, where its energy may still be placed.
 async function sessionCoverage(): Promise<[number, number] | null> {
   const { rows } = await db.query<{ start_at: Date; duration_s: number }>(
     "(SELECT start_at, duration_s FROM charge_session ORDER BY start_at LIMIT 1) UNION ALL (SELECT start_at, duration_s FROM charge_session ORDER BY start_at DESC LIMIT 1)",
@@ -75,18 +75,20 @@ async function homeExcess(days: string[]) {
   return excess;
 }
 
-async function sessionEstimates(day: string, walkStart: number, start: number, end: number, known: Map<number, number>, knownVins: Map<number, string | null>, cars: Car[]) {
+async function sessionEstimates(day: string, stretchStart: number, start: number, end: number, known: Map<number, number>, knownVins: Map<number, string | null>, cars: Car[]) {
   const coverage = await sessionCoverage();
   const estimates = new Map<number, number>();
   if (coverage === null) return { estimates, cars: new Map<number, string | null>() };
-  // shortcut: sessions from two days before are left out; they only matter if a walk crosses two midnights.
+  // shortcut: sessions from two days before are left out, so a stretch on this day can be chosen differently from the
+  // day before's when one of those sessions took load first; the totals then differ by that overlap only.
   const { rows } = await db.query<{ start_at: Date; duration_s: number; energy_wh: number }>(
     "SELECT start_at, duration_s, energy_wh FROM charge_session WHERE start_at >= $1 AND start_at < $2 ORDER BY start_at",
-    [new Date(walkStart), new Date(end)],
+    // Through the next day, whose first session ends this day's last one's stretch.
+    [new Date(stretchStart), new Date(localMidnight(shiftDay(day, 2)))],
   );
   const [placed, placedCars] = placeSessions(
-    rows.map((s) => [s.start_at.getTime(), s.energy_wh, sessionVin(cars, s.energy_wh, s.duration_s)]),
-    await homeExcess([shiftDay(day, -1), day]),
+    rows.map((s) => [s.start_at.getTime(), s.duration_s, s.energy_wh, sessionVin(cars, s.energy_wh, s.duration_s)]),
+    await homeExcess([shiftDay(day, -1), day, shiftDay(day, 1)]),
     known,
     knownVins,
   );
@@ -108,22 +110,49 @@ function gapVins(vins: Map<number, string | null>, estimated: Map<number, number
   return named;
 }
 
-export async function dayIntervals(day: string) {
+const inDayOf = (start: number, end: number) => <V>(values: Map<number, V>) => new Map([...values].filter(([t]) => start <= t && t < end));
+
+// The day's charging per 5 minutes, measured, gap-filled or placed from charge sessions, with the day's energy
+// intervals it is split across. measuredVins names only the cars the Wall Connector measured, alone or on both sides of
+// a gap; vins adds the cars sessions are credited to by their power, for the replay.
+export async function dayCharging(day: string) {
   const start = localMidnight(day);
   const end = localMidnight(shiftDay(day, 1));
-  const inDay = <V>(values: Map<number, V>) => new Map([...values].filter(([t]) => start <= t && t < end));
+  const inDay = inDayOf(start, end);
 
-  // From the day before, for charge sessions whose walk crosses midnight.
-  const walkStart = localMidnight(shiftDay(day, -1));
+  // From the day before, for charge sessions whose stretch crosses midnight.
+  const stretchStart = localMidnight(shiftDay(day, -1));
   const cars = await loadCars();
   const vehicleRows = (
     await db.query<{ start_at: Date; energy_wh: number; vin: string | null }>(
       "SELECT start_at, energy_wh, vin FROM vehicle_interval WHERE start_at >= $1 AND start_at < $2",
-      [new Date(walkStart - ESTIMATE_MARGIN), new Date(end + ESTIMATE_MARGIN)],
+      // Through the next day too, where a session's stretch can reach.
+      [new Date(stretchStart - ESTIMATE_MARGIN), new Date(localMidnight(shiftDay(day, 2)) + ESTIMATE_MARGIN)],
     )
   ).rows;
   const measuredVehicle = new Map(vehicleRows.map((v) => [v.start_at.getTime(), v.energy_wh]));
   const measuredVin = new Map(vehicleRows.map((v) => [v.start_at.getTime(), v.vin]));
+
+  const vehicleWh = inDay(measuredVehicle);
+  const allEstimated = fill(measuredVehicle);
+  const estimatedVehicle = inDay(allEstimated);
+  const sessions = await sessionEstimates(day, stretchStart, start, end, new Map([...allEstimated, ...measuredVehicle]), measuredVin, cars);
+  const sessionVehicle = sessions.estimates;
+  const charging = new Map([...sessionVehicle, ...estimatedVehicle, ...vehicleWh]);
+  const measuredVins = new Map<number, string | null>([...inDay(gapVins(measuredVin, estimatedVehicle)), ...inDay(measuredVin)]);
+  const vins = new Map<number, string | null>([...sessions.cars, ...measuredVins]);
+  const intervals = await db.query<EnergyRow>(
+    `SELECT start_at, solar_generated_wh, ${Object.values(FLOWS).join(", ")} FROM energy_interval WHERE day = $1`,
+    [day],
+  );
+  return { cars, vehicleWh, estimatedVehicle, sessionVehicle, charging, measuredVins, vins, intervals: intervals.rows };
+}
+
+export async function dayIntervals(day: string) {
+  const start = localMidnight(day);
+  const end = localMidnight(shiftDay(day, 1));
+  const inDay = inDayOf(start, end);
+  const { cars, vehicleWh, estimatedVehicle, sessionVehicle, charging, vins, intervals } = await dayCharging(day);
   const realBattery = new Map(
     (
       await db.query<{ sampled_at: Date; percentage: number }>(
@@ -133,12 +162,6 @@ export async function dayIntervals(day: string) {
     ).rows.map((s) => [s.sampled_at.getTime(), s.percentage]),
   );
 
-  const vehicleWh = inDay(measuredVehicle);
-  const allEstimated = fill(measuredVehicle);
-  const estimatedVehicle = inDay(allEstimated);
-  const sessions = await sessionEstimates(day, walkStart, start, end, new Map([...allEstimated, ...measuredVehicle]), measuredVin, cars);
-  const sessionVehicle = sessions.estimates;
-  const charging = new Map([...sessionVehicle, ...estimatedVehicle, ...vehicleWh]);
   const battery = new Map<number, [number, boolean]>([...inDay(realBattery)].map(([t, pct]) => [t, [pct, false]]));
   for (const [t, pct] of inDay(fill(realBattery))) battery.set(t, [pyRound(pct), true]);
 
@@ -160,11 +183,7 @@ export async function dayIntervals(day: string) {
   const totalWh: Record<string, number> = Object.fromEntries(ALL_FLOWS.map((flow) => [flow, 0]));
   let includesEstimates = false;
   let includesSessionEstimates = false;
-  const intervals = await db.query<EnergyRow>(
-    `SELECT start_at, solar_generated_wh, ${Object.values(FLOWS).join(", ")} FROM energy_interval WHERE day = $1`,
-    [day],
-  );
-  for (const interval of intervals.rows) {
+  for (const interval of intervals) {
     const instant = interval.start_at.getTime();
     solarWh.set(instant, interval.solar_generated_wh);
     const estimated = estimatedVehicle.has(instant);
@@ -185,7 +204,6 @@ export async function dayIntervals(day: string) {
   for (const instant of new Set([...estimatedVehicle.keys(), ...sessionVehicle.keys()])) recordAt(instant).vehicle_estimated = true;
 
   // By name only: VINs and colors stay private.
-  const vins = new Map<number, string | null>([...sessions.cars, ...inDay(gapVins(measuredVin, estimatedVehicle)), ...inDay(measuredVin)]);
   for (const [instant, vin] of vins) if (vin) recordAt(instant).vehicle = carName(cars, vin);
 
   const data = [...records.keys()]

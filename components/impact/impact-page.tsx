@@ -3,27 +3,33 @@
 import { useRouter } from "next/navigation";
 
 import { BackupSection } from "@/components/impact/backup-section";
+import { CarChargingSection } from "@/components/impact/car-charging";
 import { SelfPowered, SolarOffset } from "@/components/impact/sections";
 import { RangeControls } from "@/components/solar/range-controls";
 import { useReload } from "@/components/solar/use-reload";
 import { useLiveStream } from "@/components/use-live-stream";
 import type { BackupHistory } from "@/lib/backup";
 import { backupParam } from "@/lib/backup-years";
+import type { CarCharging } from "@/lib/car-charging";
 import type { ImpactFigures } from "@/lib/impact";
 import { siteToday } from "@/lib/scene/replay";
 import { datesLabel, impactPresets, type Range, rangeIncludes } from "@/lib/solar/ranges";
 
-type Props = { range: Range; figures: ImpactFigures; today: string; backup: BackupHistory; backupYear: Range };
+type Props = { range: Range; figures: ImpactFigures; today: string; backup: BackupHistory; backupYear: Range; charging: CarCharging | null };
 
-export function ImpactPage({ range, figures, today, backup, backupYear }: Props) {
+export function ImpactPage({ range, figures, today, backup, backupYear, charging }: Props) {
   const router = useRouter();
   const address = ({ start, end }: Range, year = backupYear) => {
     const backupValue = backupParam(year, today);
     return `/impact?start=${start}&end=${end}${backupValue ? `&backup=${backupValue}` : ""}`;
   };
   const [shown, reload] = useReload(address(range), figures);
+  const [shownCharging, reloadCharging] = useReload(address(range), charging);
   const reloadFor = (date: string) => {
-    if (rangeIncludes(range, date)) void reload(`/api/impact?start_date=${range.start}&end_date=${range.end}`, (body: { data: ImpactFigures }) => body.data);
+    if (!rangeIncludes(range, date)) return;
+    const dates = `start_date=${range.start}&end_date=${range.end}`;
+    void reload(`/api/impact?${dates}`, (body: { data: ImpactFigures }) => body.data);
+    void reloadCharging(`/api/car-charging?${dates}`, (body: { data: CarCharging | null }) => body.data);
   };
   const [shownBackup, reloadBackup] = useReload(address(range), backup);
   const backupValue = backupParam(backupYear, today);
@@ -52,6 +58,7 @@ export function ImpactPage({ range, figures, today, backup, backupYear }: Props)
           <SolarOffset figures={shown} />
         </div>
       </section>
+      {shownCharging && <CarChargingSection charging={shownCharging} range={range} />}
       <BackupSection history={shownBackup} year={backupYear} today={today} onYear={(year) => router.replace(address(range, year), { scroll: false })} />
     </div>
   );

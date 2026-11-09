@@ -453,8 +453,8 @@ test("a day covered only by sessions", async () => {
   const records = byTime(body);
   expect(["09:55", "10:00", "10:05", "10:10"].map((t) => vehicleKw(records[t]))).toEqual([0, kw(667), kw(333), 0]);
   for (const t of ["09:55", "10:00", "10:05"]) expect([records[t].vehicle_estimated, records[t].vehicle]).toEqual([true, null]);
-  // Coverage ends with the session's 12 hour walk, at 21:58.
-  expect([records["21:55"].vehicle_estimated, records["22:00"].vehicle_estimated]).toEqual([true, false]);
+  // Coverage runs 24 hours past the session's start, so the rest of the day is estimated.
+  expect(records["23:55"].vehicle_estimated).toBe(true);
   expect([body.vehicle_data, body.vehicle_includes_session_estimates, body.vehicle_includes_estimates]).toEqual([true, true, false]);
 });
 

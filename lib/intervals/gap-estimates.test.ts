@@ -71,43 +71,55 @@ const sum = (m: Map<number, number>) => [...m.values()].reduce((a, b) => a + b, 
 
 test("a charge starting at plug-in", () => {
   const excess = merge(flat(at(9, 0), at(12, 0), 1.0), new Map([[at(10, 0), kwWh(8)], [at(10, 5), kwWh(8)]]));
-  expectClose(asLocal(placeSessions([[at(9, 58), 1000, null]], excess, new Map(), new Map())[0]), { "10:00": 2000 / 3, "10:05": 1000 / 3 });
+  expectClose(asLocal(placeSessions([[at(9, 58), 420, 1000, null]], excess, new Map(), new Map())[0]), { "10:00": 2000 / 3, "10:05": 1000 / 3 });
 });
 
 test("a scheduled charge found after midnight", () => {
   const excess = merge(flat(at(19, 0), at(0, 0, 18), 1.0), flat(at(0, 5, 18), at(7, 0, 18), 8.7));
-  const placed = placeSessions([[at(19, 22), 46300, null]], excess, new Map(), new Map())[0];
+  const placed = placeSessions([[at(19, 22), 21855, 46300, null]], excess, new Map(), new Map())[0];
   expect(Math.min(...placed.keys())).toBe(at(0, 5, 18));
   expect(sum(placed)).toBeCloseTo(46300, 6);
 });
 
 test("a later session gets only the load left", () => {
   const excess = new Map([[at(8, 0), 600]]);
-  expectClose(asLocal(placeSessions([[at(7, 58), 400, null], [at(7, 59), 900, null]], excess, new Map(), new Map())[0]), { "08:00": 600 });
+  expectClose(asLocal(placeSessions([[at(7, 58), 300, 400, null], [at(8, 3), 300, 900, null]], excess, new Map(), new Map())[0]), { "08:00": 600 });
 });
 
-test("the walk ends 30 minutes after the charge", () => {
+test("nothing is placed outside the session's stretch", () => {
   const excess = merge(flat(at(14, 0), at(18, 0), 1.0), flat(at(14, 45), at(15, 5), 8.0), new Map([[at(17, 40), kwWh(3)]]));
-  const placed = placeSessions([[at(14, 44), 2600, null]], excess, new Map(), new Map())[0];
+  const placed = placeSessions([[at(14, 44), 1200, 2600, null]], excess, new Map(), new Map())[0];
   expect(placed.has(at(17, 40))).toBe(false);
   expect(sum(placed)).toBeCloseTo(4 * kwWh(7), 6);
 });
 
-test("no matching load places nothing", () => {
-  const excess = merge(flat(at(8, 0), at(20, 0), 2.5), new Map([[at(20, 30), kwWh(9)]]));
-  expect(placeSessions([[at(8, 0), 5000, null]], excess, new Map(), new Map())[0].size).toBe(0);
+test("no matching load within 24 hours places nothing", () => {
+  const excess = merge(flat(at(8, 0), at(8, 0, 18), 2.5), new Map([[at(8, 30, 18), kwWh(9)]]));
+  expect(placeSessions([[at(8, 0), 3600, 5000, null]], excess, new Map(), new Map())[0].size).toBe(0);
+});
+
+test("a charge the next day, past a brief load the evening before", () => {
+  const excess = merge(flat(at(16, 0), at(18, 0, 18), 1.0), flat(at(17, 0), at(17, 40), 4.0), flat(at(10, 0, 18), at(16, 0, 18), 6.0));
+  const placed = placeSessions([[at(16, 50), 20736, 30115, null]], excess, new Map(), new Map())[0];
+  expect(Math.min(...placed.keys())).toBe(at(10, 0, 18));
+  expect(sum(placed)).toBeCloseTo(71 * kwWh(5), 6);
+});
+
+test("of two equal stretches, the earlier", () => {
+  const excess = new Map([[at(8, 0), 600], [at(12, 0), 600]]);
+  expectClose(asLocal(placeSessions([[at(7, 58), 300, 500, null]], excess, new Map(), new Map())[0]), { "08:00": 500 });
 });
 
 test("known charging counts toward the session", () => {
   const excess = flat(at(14, 50), at(15, 10), 8.0);
-  const placed = placeSessions([[at(14, 50), 900, null]], excess, new Map([[at(14, 50), 396]]), new Map())[0];
+  const placed = placeSessions([[at(14, 50), 900, 900, null]], excess, new Map([[at(14, 50), 396]]), new Map())[0];
   expect(placed.has(at(14, 50))).toBe(false);
   expect(sum(placed)).toBeCloseTo(504, 6);
 });
 
 test("each interval names the session that placed most", () => {
   const excess = new Map([[at(8, 0), 600], [at(8, 5), 600]]);
-  const [wh, cars] = placeSessions([[at(7, 58), 700, "Y"], [at(7, 59), 900, "3"]], excess, new Map(), new Map());
+  const [wh, cars] = placeSessions([[at(7, 58), 300, 700, "Y"], [at(8, 3), 300, 900, "3"]], excess, new Map(), new Map());
   expectClose(asLocal(wh), { "08:00": 600, "08:05": 600 });
   expect([...cars]).toEqual([[at(8, 0), "Y"], [at(8, 5), "3"]]);
 });
@@ -115,8 +127,15 @@ test("each interval names the session that placed most", () => {
 test("a measured car replaces the inferred one", () => {
   const excess = flat(at(23, 0), at(2, 0, 18), 8.0);
   const known = new Map([[at(23, 0), 600], [at(23, 5), 600], [at(23, 10), 600]]);
-  const [wh, cars] = placeSessions([[at(22, 58), 10000, "3"]], excess, known, new Map([...known.keys()].map((t) => [t, "Y"])));
+  const [wh, cars] = placeSessions([[at(22, 58), 3600, 10000, "3"]], excess, known, new Map([...known.keys()].map((t) => [t, "Y"])));
   expect(wh.has(at(23, 0))).toBe(false);
   expect(wh.size).toBeGreaterThan(0);
   expect(new Set(cars.values())).toEqual(new Set(["Y"]));
+});
+
+test("a session's stretch ends before the next session starts, so it can't take that charge", () => {
+  const excess = merge(flat(at(14, 0), at(14, 0, 18), 1.0), flat(at(14, 5), at(14, 45), 7.0), flat(at(11, 20, 18), at(13, 0, 18), 9.3));
+  const [placed] = placeSessions([[at(14, 2), 6840, 9600, null], [at(11, 14, 18), 6120, 16200, null]], excess, new Map(), new Map());
+  expect(sum(new Map([...placed].filter(([t]) => t < at(0, 0, 18))))).toBeCloseTo(8 * kwWh(6), 6);
+  expect(sum(new Map([...placed].filter(([t]) => t >= at(11, 0, 18))))).toBeCloseTo(20 * kwWh(8.3), 6);
 });
