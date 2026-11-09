@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 // The savings card, from the true-up-tracker spec.
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, within } from "@testing-library/react";
 import { afterEach, expect, test } from "vitest";
 
 import { COST_25_26, CURRENT_SAVINGS, SAVINGS_25_26 } from "@/components/true-up/fixtures";
@@ -20,6 +20,26 @@ test("'25 - '26: the saving of the no-system bill, the key, and the Powerwalls b
     expect(card).toContain(text);
   expect(screen.getByRole("img").getAttribute("aria-label")).toBe("Of $6,695: $1,118 paid, $5,577 saved");
   expect(parts()).toEqual([["bg-grid", "1118.07"], ["bg-solar", "5576.6"]]);
+});
+
+test("'25 - '26: the Powerwalls' row splits their cost, and the what-if sits in its own panel", () => {
+  render(<SavingsCard savings={SAVINGS_25_26} season={COST_25_26.vpp} current={false} />);
+
+  const row = screen.getByRole("group", { name: "Powerwalls" }).textContent;
+  for (const text of ["$151 cost on the bill", "$368 VPP credit, an estimate for the 2026 season.", "Keeping charge, 129 days", "$83 cost", "Storing solar, 232 days", "$110 cost", "VPP events, 6 days", "$43 saved"])
+    expect(row).toContain(text);
+  const whatIf = within(screen.getByRole("group", { name: "What if (simulation)" })).getByText("About $133 less").parentElement!.textContent;
+  expect(whatIf).toContain("Covering only 4 to 9 p.m. on those 232 days.");
+  expect(whatIf).toContain("Under NEM2, exporting solar earns about what importing it later costs");
+});
+
+test("without used days there is no what-if, and the NEM2 sentence stays under the bill", () => {
+  const heldOnly = { ...CURRENT_SAVINGS, held_days: 35, used_days: 0, powerwalls_held: -23.95, powerwalls_used: 0, peak_only: null };
+
+  render(<SavingsCard savings={heldOnly} season={null} current />);
+
+  expect(screen.queryByRole("group", { name: "What if (simulation)" })).toBeNull();
+  expect(screen.getByRole("group", { name: "Powerwalls" }).textContent).toContain("Under NEM2,");
 });
 
 test("a year the Powerwalls saved money splits the bar three ways in the flows' colors", () => {

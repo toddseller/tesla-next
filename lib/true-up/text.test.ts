@@ -189,6 +189,8 @@ describe("the VPP credit", () => {
 const YEAR_25_26 = {
   actual: { pge: 825, westlight: 293.07, total: 1118.07 }, solar_only: { pge: 678.61, westlight: 288.62, total: 967.23 },
   no_system: { pge: 5207.64, westlight: 1487.03, total: 6694.67 }, solar_saved: 5727.44, powerwalls_added: -150.84,
+  powerwalls_held: -83.08, powerwalls_vpp: 42.5, powerwalls_used: -110.26, held_days: 129, vpp_days: 6, used_days: 232,
+  peak_only: { pge: 731.49, westlight: 253.9, total: 985.39 } as { pge: number; westlight: number; total: number } | null, efficiency: 0.85 as number | null,
   rebuilt_days: 205, uncorrected_days: 1, through: "2026-10-04", pge_rates: "2026-06-01", westlight_rates: "2026-07-01",
 };
 const SEASON_2026 = { season: 2026, payout: null, paid_on: null, kwh: 183.8, estimate: 367.6 };
@@ -201,8 +203,10 @@ describe("savingsText", () => {
     expect(text.bar).toEqual({ parts: [["paid", 1118.07], ["saved", 5576.6]], label: "Of $6,695: $1,118 paid, $5,577 saved" });
     expect(text.powerwalls).toEqual({
       bill: "$151 cost on the bill",
-      vpp: "$368 VPP credit",
-      line: "The VPP credit is an estimate for the 2026 season. Under NEM2, exporting solar earns about what importing it later costs, so storing it pays only between 4 and 9 p.m.",
+      vpp: "$368 VPP credit, an estimate for the 2026 season.",
+      parts: [["Keeping charge, 129 days", "$83 cost"], ["Storing solar, 232 days", "$110 cost"], ["VPP events, 6 days", "$43 saved"]],
+      whatIf: { value: "About $133 less", line: "Covering only 4 to 9 p.m. on those 232 days." },
+      nem2: "Under NEM2, exporting solar earns about what importing it later costs, so storing it pays only between 4 and 9 p.m.",
     });
     expect(text.estimates).toBe("Estimates of PG&E's and WestLight Energy's charges. 205 days before April 27, 2026 rebuilt from PG&E's meter, 1 as Tesla read it.");
   });
@@ -217,7 +221,7 @@ describe("savingsText", () => {
       parts: [["paid", 905.1], ["powerwalls", 215.65], ["solar", 2289.45]],
       label: "Of $3,410: $905 paid, $216 saved by the Powerwalls, $2,289 saved by solar",
     });
-    expect(text.powerwalls).toEqual({ bill: "$216 saved on the bill", vpp: null, line: null });
+    expect([text.powerwalls.bill, text.powerwalls.vpp, text.powerwalls.nem2]).toEqual(["$216 saved on the bill", null, null]);
   });
 
   test("a WestLight credit reads as a credit, not a charge", () => {
@@ -230,8 +234,38 @@ describe("savingsText", () => {
   test("a paid season gives its payout", () => {
     const text = savingsText(YEAR_25_26, { season: 2025, payout: 728.26, paid_on: "2026-04-15", kwh: 364.1, estimate: 728.2 }, false);
 
-    expect(text.powerwalls.vpp).toBe("$728 VPP credit");
-    expect(text.powerwalls.line).toMatch(/^The VPP credit is the 2025 season's payout\. Under NEM2/);
+    expect(text.powerwalls.vpp).toBe("$728 VPP credit, the 2025 season's payout.");
+  });
+
+  test.each([
+    ["peak-only would have cost more", 1130.47, "About $12 more"],
+    ["peak-only within a dollar", 1118.4, "About the same"],
+  ])("%s", (_, total, value) => {
+    const text = savingsText({ ...YEAR_25_26, peak_only: { pge: 0, westlight: 0, total } }, null, false);
+
+    expect(text.powerwalls.whatIf!.value).toBe(value);
+  });
+
+  test("VPP event days are their own part, after storing solar", () => {
+    const text = savingsText({ ...YEAR_25_26, vpp_days: 21, powerwalls_vpp: 25.01, used_days: 217, powerwalls_used: -92.77 }, SEASON_2026, false);
+
+    expect(text.powerwalls.parts).toEqual([
+      ["Keeping charge, 129 days", "$83 cost"], ["Storing solar, 217 days", "$93 cost"], ["VPP events, 21 days", "$25 saved"],
+    ]);
+  });
+
+  test("no used days: the held part alone and no what-if", () => {
+    const text = savingsText({ ...YEAR_25_26, held_days: 35, used_days: 0, vpp_days: 0, powerwalls_held: -23.95, powerwalls_used: 0, powerwalls_vpp: 0, peak_only: null }, null, true);
+
+    expect(text.powerwalls.parts).toEqual([["Keeping charge, 35 days", "$24 cost"]]);
+    expect(text.powerwalls.whatIf).toBeNull();
+  });
+
+  test("one day of each reads in the singular, and a part that saved says so", () => {
+    const text = savingsText({ ...YEAR_25_26, held_days: 1, used_days: 1, vpp_days: 0, powerwalls_held: -1.2, powerwalls_used: 3.4, powerwalls_vpp: 0 }, null, true);
+
+    expect(text.powerwalls.parts).toEqual([["Keeping charge, 1 day", "$1 cost"], ["Storing solar, 1 day", "$3 saved"]]);
+    expect(text.powerwalls.whatIf!.line).toBe("Covering only 4 to 9 p.m. on that day.");
   });
 
   test("a season with no events yet gives no VPP credit", () => {

@@ -39,8 +39,31 @@ export function SavingsCard({ savings, season, current }: { savings: Savings; se
       <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:gap-x-10">
         <Key swatch="bg-grid" label="Paid" value={text.paid}>{text.paidSplit}</Key>
         <Key swatch="bg-solar" label="Solar saved" value={text.solar}>Against buying it all from the grid</Key>
-        <Key swatch={cost ? "ring-[1.5px] ring-powerwall ring-inset" : "bg-powerwall"} label="Powerwalls"
-          value={[powerwalls.bill, powerwalls.vpp].filter(Boolean).join(" · ")}>{powerwalls.line}</Key>
+      </div>
+      <div role="group" aria-labelledby="powerwalls" className="grid gap-4 border-t pt-4 sm:grid-cols-3 sm:gap-6">
+        <div className="flex flex-col gap-1">
+          <span id="powerwalls" className="flex items-center gap-2 text-[13px] text-muted-foreground">
+            <span aria-hidden className={`size-2.5 rounded-[3px] ${cost ? "ring-[1.5px] ring-powerwall ring-inset" : "bg-powerwall"}`} />Powerwalls
+          </span>
+          <span className="font-mono text-xl font-semibold">{powerwalls.bill}</span>
+          {powerwalls.vpp && <p className="text-[13px] text-muted-foreground">{powerwalls.vpp}</p>}
+          {!powerwalls.whatIf && powerwalls.nem2 && <p className="text-[13px] text-muted-foreground">{powerwalls.nem2}</p>}
+        </div>
+        <div className="flex flex-col gap-2.5">
+          {powerwalls.parts.map(([label, value]) => (
+            <div key={label} className="flex items-baseline justify-between gap-3 sm:flex-col sm:gap-1">
+              <span className="text-[13px] text-muted-foreground">{label}</span>
+              <span className="font-mono text-lg font-semibold">{value}</span>
+            </div>
+          ))}
+        </div>
+        {powerwalls.whatIf && (
+          <div role="group" aria-label="What if (simulation)" className="flex flex-col gap-1.5 rounded-lg border border-dashed px-3.5 py-3">
+            <span aria-hidden className="text-[13px] text-muted-foreground">What if (simulation)</span>
+            <span className="font-mono text-lg font-semibold">{powerwalls.whatIf.value}</span>
+            <p className="text-[13px] text-muted-foreground">{[powerwalls.whatIf.line, powerwalls.nem2].filter(Boolean).join(" ")}</p>
+          </div>
+        )}
       </div>
     </section>
   );
