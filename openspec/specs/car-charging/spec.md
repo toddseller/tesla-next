@@ -1,7 +1,7 @@
 # car-charging Specification
 
 ## Purpose
-TBD - created by archiving change car-charging. Update Purpose after archive.
+Says how much the cars were charged at home over a range and where that energy came from: solar, the Powerwalls or the grid, for the household and for each car the Wall Connector measured.
 
 ## Requirements
 
