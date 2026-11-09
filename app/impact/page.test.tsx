@@ -4,7 +4,7 @@ import { afterEach, beforeEach, expect, test, vi } from "vitest";
 
 const impactFigures = vi.hoisted(() => vi.fn());
 vi.mock("@/lib/impact", () => ({ impactFigures }));
-const backupHistory = vi.hoisted(() => vi.fn(async () => ({ summary: { outages: 0, seconds: 0, longest: null, house_kwh: 0, powerwalls_kwh: 0, solar_kwh: 0 }, events: [] })));
+const backupHistory = vi.hoisted(() => vi.fn(async () => ({ summary: { outages: 0, seconds: 0, longest: null, house_kwh: 0, powerwalls_kwh: 0, solar_kwh: 0, closest: null, blips: [] }, events: [] })));
 vi.mock("@/lib/backup", () => ({ backupHistory }));
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn() }) }));
 
