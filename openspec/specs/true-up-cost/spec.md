@@ -130,13 +130,13 @@ A true-up year's VPP season SHALL be the one in the year it ends, from 2024 on: 
 - **WHEN** '22 - '23 is requested
 - **THEN** it has no VPP season
 
-### Requirement: Cost data matches Flask's
-`GET /api/true-up-cost?start_date=&end_date=` SHALL answer with status 200 and data equal to Flask's `/api/v2/true_up_cost` for every range from 2021-10-01 to 732 days after today, all its fields null but the newest rates' date unless the range is a true-up year, until change 7 (cutover) retires it. Other requests SHALL get status 400 and a message.
+### Requirement: Cost data
+`GET /api/true-up-cost?start_date=&end_date=` SHALL answer with status 200 and a true-up year's dollars as this spec defines them, for every range from 2021-10-01 to 732 days after today, all its fields null but the newest rates' date unless the range is a true-up year. Other requests SHALL get status 400 and a message.
 
-#### Scenario: Every true-up year
-- **WHEN** a script requests each true-up year from `/api/true-up-cost` and from Flask's `/api/v2/true_up_cost`
-- **THEN** the answers are equal, field by field
+#### Scenario: A true-up year
+- **WHEN** a client requests `/api/true-up-cost` for 2025-10-01 to 2026-09-30
+- **THEN** the answer is status 200 with that year's charges, amount due and VPP season
 
 #### Scenario: A range that isn't a true-up year
 - **WHEN** All Time or a custom range is requested
-- **THEN** every field is null but `rates_effective`, as from Flask
+- **THEN** every field is null but `rates_effective`

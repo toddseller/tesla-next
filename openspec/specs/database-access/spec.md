@@ -2,7 +2,7 @@
 
 ## Purpose
 
-How the dashboard reads the site's database, which the API in anton-tesla-api-ws writes: as the site's own login, in sessions that cannot write and run in UTC, with the password kept out of the repository and out of `.env`.
+How the dashboard reads the site's database, which the scheduler and scripts in anton-tesla-api-ws write: as the site's own login, in sessions that cannot write and run in UTC, with the password kept out of the repository and out of `.env`.
 
 ## Requirements
 

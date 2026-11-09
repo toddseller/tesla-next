@@ -117,21 +117,6 @@ Every `totals` event SHALL reload the rankings without reloading the page, and s
 - **WHEN** a reload fails
 - **THEN** the rankings shown stay as they were
 
-### Requirement: Data matches Flask's
-`GET /api/top-ten` SHALL answer with status 200 and data equal to Flask's `/api/v2/top_ten`, a list of `solar`, `net_grid` and `to_grid_months` rankings with Flask's date labels and figures (exports as negative net figures), until change 7 (cutover) retires it. The rows SHALL differ only in the order of rows whose figures read the same to a tenth, in which row is 10th when it ties with the 11th, and in each row also giving its ISO date (`day`, or `month` as `YYYY-MM`). `GET /api/top-ten?vpp=without` SHALL answer in the same shape with the export rankings without VPP days.
-
-#### Scenario: Compared with Flask
-- **WHEN** a script requests `/api/top-ten` and Flask's `/api/v2/top_ten`
-- **THEN** each ranking has the same rows with the same figures, in the same order apart from rows with equal figures
-
-#### Scenario: Without VPP days
-- **WHEN** `/api/top-ten?vpp=without` is requested and May 30, 2024 is a VPP day
-- **THEN** May 30, 2024 is not among the `net_grid` days, and the `solar` ranking equals that of `/api/top-ten`
-
-#### Scenario: An empty database
-- **WHEN** `/api/top-ten` is requested before any day is saved
-- **THEN** the answer is status 200 with three empty rankings
-
 ### Requirement: VPP event days left out by default
 A switch reading "Without VPP events" and "With VPP events" SHALL choose how both export rankings are shown, without VPP days unless the visitor picks With VPP events. The choice SHALL be in the address, `/top` without and `/top?vpp=with` with, any other `vpp` value reading as without, and choosing SHALL replace the address without a new history entry. The page SHALL be rendered, and each reload SHALL fetch, the rankings the address chooses. The solar ranking SHALL be the same either way.
 
@@ -153,3 +138,22 @@ The page's footnote SHALL read "The export rankings leave out VPP event days, wh
 #### Scenario: Switching
 - **WHEN** the visitor switches from Without VPP events to With VPP events
 - **THEN** the footnote's sentence changes from "leave out" to "include"
+
+### Requirement: Top ten data
+`GET /api/top-ten` SHALL answer with status 200 and a list of `solar`, `net_grid` and `to_grid_months` rankings, each row with its date label, its figure (exports as negative net figures) and its ISO date (`day`, or `month` as `YYYY-MM`). The export rankings SHALL leave VPP days out unless the request has `vpp=with`; any other `vpp` value SHALL read as without, as on the page.
+
+#### Scenario: Without VPP days by default
+- **WHEN** `/api/top-ten` is requested and May 30, 2024 is a VPP day
+- **THEN** May 30, 2024 is not among the `net_grid` days
+
+#### Scenario: With VPP days
+- **WHEN** `/api/top-ten?vpp=with` is requested
+- **THEN** May 30, 2024 leads the `net_grid` days at 60.0 kWh, and the `solar` ranking equals that of `/api/top-ten`
+
+#### Scenario: The old parameter
+- **WHEN** `/api/top-ten?vpp=without` is requested
+- **THEN** the answer equals that of `/api/top-ten`
+
+#### Scenario: An empty database
+- **WHEN** `/api/top-ten` is requested before any day is saved
+- **THEN** the answer is status 200 with three empty rankings

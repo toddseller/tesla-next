@@ -54,7 +54,7 @@ The page SHALL offer the same date-range picker as the Solar page, showing the c
 - **THEN** the address becomes `/impact?start=2026-10-10&end=2026-10-20` and the page shows that range
 
 ### Requirement: Impact figures
-For its range, the page SHALL take from the `data` table, with the meter corrections Flask applies to days before 2026-04-27: solar generated, home use, and home use from solar, the Powerwall and the grid, each a sum rounded to one decimal place. Each share SHALL be its part of home use as a whole percentage, rounded as Python's `round` does; self-powered SHALL be the solar share plus the Powerwall share, and energy offset solar generated as a share of home use.
+For its range, the page SHALL take from the `data` table, with PG&E's meter readings standing in for Tesla's grid figures on days before 2026-04-27 that have them (as `solar-range-chart`'s bar values do): solar generated, home use, and home use from solar, the Powerwall and the grid, each a sum rounded to one decimal place. Each share SHALL be its part of home use as a whole percentage, rounded as Python's `round` does; self-powered SHALL be the solar share plus the Powerwall share, and energy offset solar generated as a share of home use.
 
 #### Scenario: A meter-corrected day
 - **WHEN** the range is 2025-12-10, whose Tesla figures are 20 kWh in, 4 kWh out and 30 kWh of house use, and PG&E's meter read 40 kWh in and 8 kWh out
@@ -132,12 +132,12 @@ When reloading the page's figures fails, the page SHALL keep showing the figures
 - **WHEN** the page shows today and a reload after a `totals` event fails
 - **THEN** the figures stay as they were
 
-### Requirement: Impact data matches Flask's
-`GET /api/impact?start_date=&end_date=` SHALL answer with status 200 and `{"data": {...}}` holding `from_solar_percentage`, `from_powerwall_percentage`, `from_grid_percentage`, `self_powered_percentage`, `total_solar_percentage`, `total_solar`, `from_solar`, `from_powerwall`, `from_grid` and `total_house`, each equal to Flask's `/api/v2/impact` for every range from 2021-10-01 to 732 days after today, until change 7 (cutover) retires it. Other requests SHALL get status 400 and a message.
+### Requirement: Impact data
+`GET /api/impact?start_date=&end_date=` SHALL answer with status 200 and `{"data": {...}}` holding `from_solar_percentage`, `from_powerwall_percentage`, `from_grid_percentage`, `self_powered_percentage`, `total_solar_percentage`, `total_solar`, `from_solar`, `from_powerwall`, `from_grid` and `total_house`, as "Impact figures" defines them, for every range from 2021-10-01 to 732 days after today. Other requests SHALL get status 400 and a message.
 
-#### Scenario: Any valid range
-- **WHEN** a script requests the same range from `/api/impact` and from Flask's `/api/v2/impact`
-- **THEN** each of the ten figures is equal
+#### Scenario: A valid range
+- **WHEN** a client requests `/api/impact?start_date=2025-12-10&end_date=2025-12-10`
+- **THEN** the answer is status 200 with the ten figures for that day
 
 #### Scenario: A malformed date
 - **WHEN** a client requests `/api/impact?start_date=nope&end_date=2026-01-31`

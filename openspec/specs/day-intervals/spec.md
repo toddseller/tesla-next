@@ -251,10 +251,3 @@ The car names in the response, and the streamed cars a session's car is inferred
 #### Scenario: A car renamed in the Tesla app
 - **WHEN** R2D2 is renamed and the vehicle list has refreshed since
 - **THEN** past days name it by its new name
-
-### Requirement: The same answer as Flask's
-Until anton-tesla-api-ws's `/api/v2/intervals` is retired, `/api/intervals?date=` SHALL return the same JSON as it, compared as parsed values, for every date in the site's window, with the same 400 responses for dates outside it.
-
-#### Scenario: Every stored day
-- **WHEN** both endpoints are asked for every date from 2021-10-01 to today
-- **THEN** every pair of responses is equal

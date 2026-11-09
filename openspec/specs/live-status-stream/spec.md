@@ -2,16 +2,16 @@
 
 ## Purpose
 
-How live status reaches tesla-next's pages: Flask, which reads Tesla every 10 seconds, notifies the database, and the Next.js server streams each update to every open page, without Socket.IO or Flask's HTTP side.
+How live status reaches tesla-next's pages: anton-tesla-api-ws's scheduler, which reads Tesla every 10 seconds, notifies the database, and the Next.js server streams each update to every open page.
 
 ## Requirements
 
 ### Requirement: Updates reach open pages within a second
-Each live status Flask notifies SHALL reach every open page as a server-sent event within one second, with the same fields as anton's `live` socket event: `load_power`, `home_power`, `solar_power`, `grid_power`, `battery_power`, `battery_percentage`, `battery_status`, `vehicle`, `modified` and `weather`. All open pages SHALL receive identical content.
+Each live status anton-tesla-api-ws notifies on `live_status` SHALL reach every open page as a server-sent event within one second, with the notification's fields: `load_power`, `home_power`, `solar_power`, `grid_power`, `battery_power`, `battery_percentage`, `battery_status`, `vehicle`, `modified` and `weather`. All open pages SHALL receive identical content.
 
 #### Scenario: Two pages open
-- **WHEN** two browsers have the Distribution page open for one minute while Flask polls every 10 seconds
-- **THEN** each receives about six updates, each within a second of Flask's notification, with identical content
+- **WHEN** two browsers have the Distribution page open for one minute while anton polls every 10 seconds
+- **THEN** each receives about six updates, each within a second of anton's notification, with identical content
 
 #### Scenario: Another page open
 - **WHEN** a browser has the Solar page open for one minute
@@ -61,25 +61,11 @@ The server's notification connection SHALL use the same read-only session settin
 - **THEN** the database refuses it
 
 ### Requirement: New totals reach open pages
-When Flask stores updated totals for a day, every open stream SHALL receive a `totals` event naming that day, within a second, as anton's `totals_updated` socket event does, so a page showing that day can reload it.
+When anton-tesla-api-ws notifies `totals_updated` for a day, every open stream SHALL receive a `totals` event naming that day, within a second, so a page showing that day can reload it.
 
 #### Scenario: Replaying today
-- **WHEN** today is replayed and Flask stores the 2:20 PM interval
+- **WHEN** today is replayed and anton stores the 2:20 PM interval
 - **THEN** the page receives a `totals` event for today and reloads its history
-
-### Requirement: Flask notifies each live status
-In anton-tesla-api-ws, after each successful live status read Flask SHALL send the payload it broadcasts as its `live` socket event as a database notification as well. A failed notification SHALL be logged and SHALL NOT stop the socket broadcast or the next poll.
-
-#### Scenario: Database unreachable
-- **WHEN** the database is unreachable while Tesla is reachable
-- **THEN** socket clients on teslasolar.report keep receiving `live` events every 10 seconds, and the failed notification is logged
-
-### Requirement: Flask notifies updated totals
-In anton-tesla-api-ws, wherever Flask emits its `totals_updated` socket event it SHALL also send `{"date": "YYYY-MM-DD"}` as a database notification. A failed notification SHALL be logged and SHALL NOT stop the socket event or the stored totals.
-
-#### Scenario: A day's totals change
-- **WHEN** the 5 minute refresh stores new intervals for today
-- **THEN** socket clients get `totals_updated` for today as before, and a `totals_updated` notification names today
 
 ### Requirement: One stream per tab
 A page's top bar and the page itself SHALL share one stream: a browser tab SHALL hold at most one open stream however many parts of the page listen to it, each receiving every live status and `totals` event, and the stream SHALL close when nothing on the page listens any more.

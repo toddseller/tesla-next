@@ -76,12 +76,12 @@ Days before April 27, 2026 with PG&E data SHALL use PG&E's readings, totals and 
 - **WHEN** the cycles are requested on October 21, 2026, in the cycle that started October 5
 - **THEN** that cycle's last day with data is October 21, and the cycles after it have null totals
 
-### Requirement: Cycle data matches Flask's
-`GET /api/true-up-years` SHALL answer as Flask's `/api/v2/true_up_years`, and `GET /api/cycles?start_date=&end_date=` with status 200 and rows equal to Flask's `/api/v2/sheet` for every range from 2021-10-01 to 732 days after today, NEM charges included (see true-up-cost), until change 7 (cutover) retires them. Other requests SHALL get status 400 and a message.
+### Requirement: Cycle data
+`GET /api/true-up-years` SHALL answer with the true-up years as "True-up years" defines them, and `GET /api/cycles?start_date=&end_date=` with status 200 and one row per billing cycle in the range as "A cycle's grid energy" defines it, NEM charges included (see true-up-cost), for every range from 2021-10-01 to 732 days after today. Other requests SHALL get status 400 and a message.
 
-#### Scenario: Any true-up year
-- **WHEN** a script requests a true-up year from `/api/cycles` and from Flask's `/api/v2/sheet`
-- **THEN** every row is equal, field by field
+#### Scenario: A true-up year
+- **WHEN** a client requests `/api/cycles` for 2025-10-01 to 2026-09-30
+- **THEN** the answer is status 200 with a row for each of that year's billing cycles
 
 #### Scenario: A malformed date
 - **WHEN** a client requests `/api/cycles?start_date=nope&end_date=2026-09-30`
