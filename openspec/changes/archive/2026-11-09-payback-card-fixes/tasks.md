@@ -19,8 +19,8 @@
 
 ## 5. Rollout
 
-- [ ] 5.1 With the owner's go-ahead, release; the deploy's health check passes
-- [ ] 5.2 On teslasolar.report at 1280 and 375 pixels the card matches 4.2's checks; record in design.md under Rollout
+- [x] 5.1 With the owner's go-ahead, release; the deploy's health check passes
+- [x] 5.2 On teslasolar.report at 1280 and 375 pixels the card matches 4.2's checks; record in design.md under Rollout
 
 ## Workflow follow-up
 

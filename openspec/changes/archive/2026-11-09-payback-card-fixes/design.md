@@ -24,3 +24,10 @@
 ## Migration Plan
 
 Release as usual; the card's data and the costs file are untouched, so rollback is the previous image.
+
+## Rollout
+
+Released as v2026.11.09.4 on 2026-11-09; the Deploy workflow and its health check passed.
+
+- At desktop width (1680 pixels, as the browser window wouldn't shrink to 1280) on teslasolar.report, each of the four dots' centres measured 0 pixels from the line's, and the line is dashed from today to 2028. On This year the card follows the savings card; on All time it follows the tiles; both before the chart. No console errors, no sideways scrolling.
+- At 375 pixels (headless Chromium) the rail joins 2021 to 2031, in solar's colour through 2025 to today and grey after, with today a hollow ring and the card after the savings card.
