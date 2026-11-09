@@ -26,8 +26,8 @@ Test-first throughout: each task's test is written and run red, for the right re
 
 ## 5. Release and checks (ask before publishing)
 
-- [ ] 5.1 With the owner's go-ahead, release; the deploy's health check passes
-- [ ] 5.2 On teslasolar.report: the section's figures match the onyx run, at 1280 and 375 pixels with no console errors; record in design.md under Rollout
+- [x] 5.1 With the owner's go-ahead, release; the deploy's health check passes
+- [x] 5.2 On teslasolar.report: the section's figures match the onyx run, at 1280 and 375 pixels with no console errors; record in design.md under Rollout
 - [ ] 5.3 At the first real outage logged by `battery_sample`, compare its rebuilt lowest charge with the samples' lowest and record the difference in design.md (may come after the archive, as a rollout record of its own)
 
 ## Workflow follow-up
