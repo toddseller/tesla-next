@@ -76,3 +76,41 @@ test("a marker near the timeline's end hangs its label inward", () => {
   expect(marks.at(-1)!.dataset.align).toBe("end");
   expect(marks[0].dataset.align).toBe("center");
 });
+
+const centre = (el: HTMLElement) => parseFloat(el.style.top) + parseFloat(el.style.height) / 2;
+
+test("every marker's dot sits centred on the line, ringed in the card's colour", () => {
+  const { container } = render(<PaybackCard payback={PAYBACK} today="2026-11-09" />);
+  const box = container.querySelector<HTMLElement>('[data-part="timeline"]')!;
+  const line = centre(container.querySelector<HTMLElement>('[data-part="track"]')!);
+  const marks = [...container.querySelectorAll<HTMLElement>('[data-part="mark"]')];
+  expect(marks).toHaveLength(4);
+  for (const mark of marks) {
+    const dot = mark.querySelector<HTMLElement>('[data-part="dot"]')!;
+    expect(parseFloat(box.style.height) - parseFloat(mark.style.bottom) - parseFloat(dot.style.height) / 2).toBe(line);
+    expect(dot.className).toContain("shadow-[0_0_0_3px_var(--card)]");
+  }
+});
+
+test("the line is dashed from today to a projected whole-system year", () => {
+  const { container } = render(<PaybackCard payback={PAYBACK} today="2026-11-09" />);
+  const dashed = container.querySelector<HTMLElement>('[data-part="projection"]')!;
+  const [, today, system] = [...container.querySelectorAll<HTMLElement>('[data-part="mark"]')];
+  expect(dashed.style.left).toBe(today.style.left);
+  expect(parseFloat(dashed.style.left) + parseFloat(dashed.style.width)).toBeCloseTo(parseFloat(system.style.left), 6);
+  expect(dashed.style.background).toContain("repeating-linear-gradient");
+});
+
+test("with the whole system already paid for, nothing is dashed", () => {
+  const { container } = render(<PaybackCard payback={{ ...PAYBACK, system: { year: 2026, projected: false, estimated: true } }} today="2026-11-09" />);
+  expect(container.querySelector('[data-part="projection"]')).toBeNull();
+});
+
+test("on a phone a rail joins the steps, solar up to today and grey after, with none after the last; today is a hollow ring", () => {
+  const { container } = render(<PaybackCard payback={PAYBACK} today="2026-11-09" />);
+  const steps = [...container.querySelectorAll<HTMLElement>("ol > li")];
+  expect(steps.map((step) => step.querySelector("span.font-mono")!.textContent)).toEqual(["2021", "2025", "2026", "2030", "2031"]);
+  const rails = steps.map((step) => step.querySelector<HTMLElement>('[data-part="rail"]')?.className ?? null);
+  expect(rails.map((rail) => rail && (rail.includes("bg-solar") ? "solar" : "grey"))).toEqual(["solar", "solar", "grey", "grey", null]);
+  expect(steps[2].querySelector('[data-part="dot"]')!.className).toContain("border-muted-foreground");
+});

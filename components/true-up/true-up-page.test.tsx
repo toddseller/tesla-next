@@ -153,3 +153,19 @@ test("a totals event for today reloads the Payback card whatever range is shown,
   await settle();
   expect(screen.getByRole("region", { name: "Payback" }).textContent).toContain("2029");
 });
+
+const follows = (later: HTMLElement, earlier: HTMLElement) => Boolean(earlier.compareDocumentPosition(later) & Node.DOCUMENT_POSITION_FOLLOWING);
+
+test("on a true-up year the Payback card follows the savings card and comes before the billing-cycle chart", () => {
+  render(page(YEAR_25, YEAR_25_26, COST_25_26, SAVINGS_25_26, PAYBACK));
+  const payback = screen.getByRole("region", { name: "Payback" });
+  expect(follows(payback, screen.getByRole("region", { name: "What the system saved" }))).toBe(true);
+  expect(follows(screen.getByRole("region", { name: /by billing cycle$/ }), payback)).toBe(true);
+});
+
+test("on All time, with no savings card, the Payback card follows the tiles and comes before the chart", () => {
+  render(page({ start: "2021-10-01", end: "2027-09-30" }, CURRENT, null as never, null, PAYBACK));
+  const payback = screen.getByRole("region", { name: "Payback" });
+  expect(screen.queryByRole("region", { name: "What the system saved" })).toBeNull();
+  expect(follows(screen.getByRole("region", { name: /by billing cycle$/ }), payback)).toBe(true);
+});

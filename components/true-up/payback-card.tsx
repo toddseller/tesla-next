@@ -8,6 +8,11 @@ const FROM = Date.parse("2021-10-22T00:00:00Z");
 const WARRANTY = Date.parse("2031-10-22T00:00:00Z");
 const WARRANTY_ENDS = 2031;
 const yearStart = (year: number) => Date.parse(`${year}-01-01T00:00:00Z`);
+// The track and every dot share one centre line, so the dots sit on it.
+const HEIGHT = 80;
+const LINE = 56;
+const DOT = 14;
+const BAR = { top: LINE - 2, height: 4 };
 
 function heading({ solar, system }: Payback) {
   if (solar.year === null) return "Solar's payback can't be projected yet";
@@ -27,7 +32,7 @@ export function PaybackCard({ payback, today }: { payback: Payback; today: strin
   const midYear = (year: number) => Date.parse(`${year}-07-01T00:00:00Z`);
   const marks: Mark[] = [
     solar.year !== null && { label: solar.projected ? "Solar (projected)" : "Solar paid back", year: solar.year, ms: midYear(solar.year), style: solar.projected ? "border-2 border-solar bg-card" : "bg-solar" },
-    { label: "Today", year: thisYear, ms: now, style: "bg-muted-foreground" },
+    { label: "Today", year: thisYear, ms: now, style: "border-2 border-muted-foreground bg-card" },
     system.year !== null && { label: system.projected ? "Whole system (projected)" : "Whole system paid", year: system.year, ms: midYear(system.year), style: system.projected ? "border-2 border-solar bg-card" : "bg-solar" },
     { label: "Powerwall warranty ends", year: WARRANTY_ENDS, ms: WARRANTY, style: "bg-powerwall" },
   ].filter((mark): mark is Mark => Boolean(mark)).sort((a, b) => a.ms - b.ms);
@@ -57,16 +62,22 @@ export function PaybackCard({ payback, today }: { payback: Payback; today: strin
         {/* Across the card on wider screens, down it on a phone. */}
         <div aria-hidden className="hidden flex-col gap-2 sm:flex">
           {/* Neighbouring labels take turns between two rows, so close years don't overlap. */}
-          <div className="relative h-20">
-            <div className="absolute inset-x-0 top-[54px] h-1 rounded-full bg-input" />
-            <div className="absolute left-0 top-[54px] h-1 rounded-full bg-solar" style={{ width: at(now) }} />
+          <div data-part="timeline" className="relative" style={{ height: HEIGHT }}>
+            <div data-part="track" className="absolute inset-x-0 rounded-full bg-input" style={BAR} />
+            <div className="absolute left-0 rounded-full bg-solar" style={{ ...BAR, width: at(now) }} />
+            {system.year !== null && system.projected && midYear(system.year) > now && (
+              <div data-part="projection" className="absolute" style={{
+                ...BAR, left: at(now), width: `${(share(midYear(system.year)) - share(now)) * 100}%`,
+                background: "repeating-linear-gradient(90deg, var(--color-solar) 0 8px, transparent 8px 14px)",
+              }} />
+            )}
             {marks.map((mark, i) => (
               <div key={mark.label} data-part="mark" data-row={i % 2} data-align={align(mark.ms)}
                 className={`absolute flex flex-col text-xs whitespace-nowrap ${ALIGN[align(mark.ms)]}`}
-                style={{ left: at(mark.ms), top: i % 2 ? 18 : 0 }}>
+                style={{ left: at(mark.ms), bottom: HEIGHT - LINE - DOT / 2 }}>
                 <span>{mark.label}</span>
                 <span className="w-px bg-input" style={{ height: i % 2 ? 10 : 28 }} />
-                <span className={`size-3.5 rounded-full ${mark.style}`} />
+                <span data-part="dot" className={`rounded-full shadow-[0_0_0_3px_var(--card)] ${mark.style}`} style={{ width: DOT, height: DOT }} />
               </div>
             ))}
           </div>
@@ -75,11 +86,14 @@ export function PaybackCard({ payback, today }: { payback: Payback; today: strin
           </div>
         </div>
         <ol aria-hidden className="flex flex-col sm:hidden">
-          {[{ label: "System went in (PTO)", year: 2021, style: "bg-muted-foreground" }, ...marks]
-            .map((step) => (
-              <li key={step.label} className="flex gap-3.5 pb-3">
-                <span className={`mt-1 size-3 shrink-0 rounded-full ${step.style}`} />
-                <span className="flex flex-col">
+          {[{ label: "System went in (PTO)", year: 2021, ms: FROM, style: "bg-muted-foreground" }, ...marks]
+            .map((step, i, steps) => (
+              <li key={step.label} className="flex gap-3.5">
+                <span className="flex w-3 shrink-0 flex-col items-center">
+                  <span data-part="dot" className={`mt-1 size-3 rounded-full ${step.style}`} />
+                  {i < steps.length - 1 && <span data-part="rail" className={`min-h-7 w-[3px] flex-1 ${step.ms < now ? "bg-solar" : "bg-input"}`} />}
+                </span>
+                <span className="flex flex-col pb-3">
                   <span className="font-mono text-[15px] font-semibold">{step.year}</span>
                   <span className="text-[13px] text-muted-foreground">{step.label}</span>
                 </span>
