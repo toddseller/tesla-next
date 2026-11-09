@@ -1,6 +1,7 @@
 // The True-Up Tracker's figures and wording, from /api/cycles rows and /api/true-up-cost, ported from anton-tesla-api-ws's
 // utils/trueUp.js with mockup A's wording. Client-safe: the types are imported for their shape only.
 import type { cycleRows, trueUpCost } from "@/lib/true-up/cost";
+import type { Savings } from "@/lib/true-up/savings";
 
 export type Cycle = Awaited<ReturnType<typeof cycleRows>>[number];
 export type Cost = Awaited<ReturnType<typeof trueUpCost>>;
@@ -143,5 +144,51 @@ export function vppText(season: Cost["vpp"], today: string): TileText | null {
     value: wholeDollars(season.estimate),
     unit: "estimate",
     line: `${season.season} season${soFar}: ${kwh(season.kwh)} kWh in VPP events at $2.00. Paid by Tesla around spring ${season.season + 1}, apart from PG&E's true-up.`,
+  };
+}
+
+const plural = (count: number, word: string) => `${count} ${word}${count === 1 ? "" : "s"}`;
+const wholeCredit = (value: number) => `${wholeDollars(value)}${Math.round(value) < 0 ? " credit" : ""}`;
+const yearAfter = (iso: string) => `${Number(iso.slice(0, 4)) + 1}${iso.slice(4)}`;
+
+// The savings card: what the system saved of the no-system bill, the bar's parts, and the key. The Powerwalls' effect on
+// the bill sits beside the VPP credit they earn, since under NEM2 the bill alone barely credits them.
+export function savingsText(savings: Savings, season: Cost["vpp"], current: boolean) {
+  const { actual, no_system: noSystem, solar_saved: solar, powerwalls_added: powerwalls } = savings;
+  const saved = Math.round((noSystem.total - actual.total) * 100) / 100;
+  const parts: [string, number][] = powerwalls < 0 ? [["paid", actual.total], ["saved", saved]] : [["paid", actual.total], ["powerwalls", powerwalls], ["solar", solar]];
+  const spoken = powerwalls < 0
+    ? `${wholeDollars(saved)} saved`
+    : `${wholeDollars(powerwalls)} saved by the Powerwalls, ${wholeDollars(solar)} saved by solar`;
+
+  const vpp = season && (season.payout ?? (season.estimate || null));
+  const vppNote = season && vpp
+    ? season.payout !== null ? `The VPP credit is the ${season.season} season's payout.` : `The VPP credit is an estimate for the ${season.season} season.`
+    : null;
+  const nem2 = powerwalls < 0 ? "Under NEM2, exporting solar earns about what importing it later costs, so storing it pays only between 4 and 9 p.m." : null;
+  const line = [vppNote, nem2].filter(Boolean).join(" ");
+
+  const { rebuilt_days: rebuilt, uncorrected_days: uncorrected } = savings;
+  const days = rebuilt && uncorrected
+    ? `${plural(rebuilt, "day")} before April 27, 2026 rebuilt from PG&E's meter, ${uncorrected} as Tesla read it.`
+    : rebuilt ? `${plural(rebuilt, "day")} before April 27, 2026 rebuilt from PG&E's meter.`
+      : uncorrected ? `${plural(uncorrected, "day")} before April 27, 2026 as Tesla read it.` : null;
+  const stale = savings.through > yearAfter(savings.westlight_rates)
+    ? `WestLight's rates are from ${date(savings.westlight_rates, { month: "long", year: "numeric" })}.`
+    : null;
+
+  return {
+    saved: wholeDollars(saved),
+    unit: `estimate${current ? " so far" : ""}, of ${wholeDollars(noSystem.total)} without solar or Powerwalls`,
+    bar: { parts, label: `Of ${wholeDollars(noSystem.total)}: ${wholeDollars(actual.total)} paid, ${spoken}` },
+    paid: wholeCredit(actual.total),
+    paidSplit: `PG&E ${wholeCredit(actual.pge)} · WestLight ${wholeCredit(actual.westlight)}`,
+    solar: wholeDollars(solar),
+    powerwalls: {
+      bill: `${wholeDollars(powerwalls)} ${powerwalls < 0 ? "cost" : "saved"} on the bill`,
+      vpp: vpp ? `${wholeDollars(vpp)} VPP credit` : null,
+      line: line || null,
+    },
+    estimates: ["Estimates of PG&E's and WestLight Energy's charges.", days, stale].filter(Boolean).join(" "),
   };
 }

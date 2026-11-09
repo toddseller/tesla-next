@@ -34,15 +34,21 @@ export async function storeReads(owner: Client, year: number, dates = publishedR
   await owner.query("INSERT INTO meter_read (read_date, year) SELECT unnest($1::date[]), $2", [dates, year]);
 }
 
-type Wh = Partial<Record<"grid_imported_wh" | "grid_exported_from_solar_wh" | "grid_exported_from_battery_wh", number>>;
+// energy_interval's flows after its start and day, in table order.
+const FLOWS = [
+  "solar_generated_wh", "grid_imported_wh", "grid_exported_from_solar_wh", "grid_exported_from_battery_wh", "battery_exported_wh",
+  "battery_imported_from_grid_wh", "battery_imported_from_solar_wh", "house_from_grid_wh", "house_from_solar_wh", "house_from_battery_wh",
+] as const;
 
-const values = (wh: Wh) => [wh.grid_imported_wh ?? 0, wh.grid_exported_from_solar_wh ?? 0, wh.grid_exported_from_battery_wh ?? 0];
+type Wh = Partial<Record<(typeof FLOWS)[number], number>>;
+
+const values = (wh: Wh) => FLOWS.map((flow) => wh[flow] ?? 0);
 
 // Every 5-minute interval of the site days first to last.
 export async function seedIntervals(owner: Client, first: string, last: string, wh: Wh) {
   await owner.query(
     `INSERT INTO energy_interval
-     SELECT t, (t AT TIME ZONE 'America/Los_Angeles')::date, 0, $3, $4, $5, 0, 0, 0, 0, 0, 0
+     SELECT t, (t AT TIME ZONE 'America/Los_Angeles')::date, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12
      FROM generate_series($1::timestamp AT TIME ZONE 'America/Los_Angeles',
        ($2::date + 1)::timestamp AT TIME ZONE 'America/Los_Angeles' - interval '5 minutes', interval '5 minutes') AS t`,
     [first, last, ...values(wh)],
@@ -53,7 +59,7 @@ export async function seedIntervals(owner: Client, first: string, last: string, 
 export async function putInterval(owner: Client, at: string, wh: Wh) {
   await owner.query(
     `INSERT INTO energy_interval
-     SELECT t, (t AT TIME ZONE 'America/Los_Angeles')::date, 0, $2, $3, $4, 0, 0, 0, 0, 0, 0
+     SELECT t, (t AT TIME ZONE 'America/Los_Angeles')::date, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11
      FROM (SELECT $1::timestamp AT TIME ZONE 'America/Los_Angeles' AS t) AS s`,
     [at, ...values(wh)],
   );

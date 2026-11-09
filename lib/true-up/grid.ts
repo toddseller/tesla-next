@@ -1,3 +1,5 @@
+import { cache } from "react";
+
 import { db } from "@/lib/db";
 import { pyRound } from "@/lib/intervals/python";
 import { shiftDay } from "@/lib/scene/replay";
@@ -67,8 +69,9 @@ export function cycleRow(first: string, last: string, trueUp: string, { days, me
 
 export type CycleRow = ReturnType<typeof cycleRow>;
 
-// One row per PG&E billing cycle starting in the range, with each cycle's days for pricing it.
-export async function cycleGrids(start: string, end: string) {
+// One row per PG&E billing cycle starting in the range, with each cycle's days for pricing it. The True-Up Tracker's
+// cycles, cost and savings each ask for the same year, so one page render shares one load.
+export const cycleGrids = cache(async (start: string, end: string) => {
   const spans = await billingCycles(start, end);
   if (!spans.length) return [];
   const all = await dailyGrid(spans[0][0], spans.at(-1)![1]);
@@ -79,6 +82,6 @@ export async function cycleGrids(start: string, end: string) {
     const grid = within(all, first, last);
     return { grid, row: cycleRow(first, last, trueUpLabel(endYearOf(last, october.get(Number(last.slice(0, 4)))!)), grid) };
   });
-}
+});
 
 export const cycles = async (start: string, end: string) => (await cycleGrids(start, end)).map(({ row }) => row);

@@ -30,10 +30,11 @@ export function cents(amount: number): number {
   return (sign * kept) / 100;
 }
 
-const seasonOf = (day: string): Season => (day.slice(5, 7) >= "06" && day.slice(5, 7) <= "09" ? "summer" : "winter");
+export const seasonOf = (day: string): Season => (day.slice(5, 7) >= "06" && day.slice(5, 7) <= "09" ? "summer" : "winter");
 
-const inEffect = (day: string, newestFirst: Revision[]) => newestFirst.find((r) => r.effective_date <= day);
-const newestFirst = (revisions: Revision[]) => [...revisions].sort((a, b) => b.effective_date.localeCompare(a.effective_date));
+type Dated = { effective_date: string };
+export const inEffect = <R extends Dated>(day: string, newestFirst: R[]) => newestFirst.find((r) => r.effective_date <= day);
+export const newestFirst = <R extends Dated>(revisions: R[]) => [...revisions].sort((a, b) => b.effective_date.localeCompare(a.effective_date));
 
 export type Segment = { first: string; last: string; season: Season; revision: Revision; days: number; allowance: number };
 

@@ -2,11 +2,12 @@
 import { renderToString } from "react-dom/server";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 
-import { COST_25_26, CURRENT, CURRENT_COST, YEAR_25_26, YEARS } from "@/components/true-up/fixtures";
+import { COST_25_26, CURRENT, CURRENT_COST, CURRENT_SAVINGS, SAVINGS_25_26, YEAR_25_26, YEARS } from "@/components/true-up/fixtures";
 
-const mocks = vi.hoisted(() => ({ trueUpYears: vi.fn(), cycleRows: vi.fn(), trueUpCost: vi.fn() }));
+const mocks = vi.hoisted(() => ({ trueUpYears: vi.fn(), cycleRows: vi.fn(), trueUpCost: vi.fn(), trueUpSavings: vi.fn() }));
 vi.mock("@/lib/true-up/reads", () => ({ trueUpYears: mocks.trueUpYears }));
 vi.mock("@/lib/true-up/cost", () => ({ cycleRows: mocks.cycleRows, trueUpCost: mocks.trueUpCost }));
+vi.mock("@/lib/true-up/savings", () => ({ trueUpSavings: mocks.trueUpSavings }));
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn() }) }));
 
 const { default: Page } = await import("./page");
@@ -20,6 +21,7 @@ beforeEach(() => {
   mocks.trueUpYears.mockImplementation(async (today: string) => (today >= "2026-10-05" ? YEARS : YEARS.slice(0, -1).map((y, i, all) => ({ ...y, current: i === all.length - 1 }))));
   mocks.cycleRows.mockImplementation(async (start: string) => (start === "2025-10-01" ? YEAR_25_26 : CURRENT));
   mocks.trueUpCost.mockImplementation(async (start: string) => (start === "2025-10-01" ? COST_25_26 : CURRENT_COST));
+  mocks.trueUpSavings.mockImplementation(async (start: string) => (start === "2025-10-01" ? SAVINGS_25_26 : CURRENT_SAVINGS));
 });
 
 afterEach(() => {
@@ -34,6 +36,9 @@ test("a shared link serves '25 - '26 with its tiles and cycles", async () => {
   expect(mocks.trueUpCost).toHaveBeenCalledWith("2025-10-01", "2026-09-30", "2026-11-08");
   expect(html).toContain("Net for the year");
   expect(html).toContain("$767.73");
+  expect(mocks.trueUpSavings).toHaveBeenCalledWith("2025-10-01", "2026-09-30");
+  expect(html).toContain("What the system saved");
+  expect(html).toContain("$5,577");
   expect(html).toContain("Oct 3 to Nov 3");
   expect(html).toContain("&#x27;25\u00a0-\u00a0&#x27;26<!-- --> by billing cycle");
 });
@@ -42,6 +47,8 @@ test("a range that isn't a true-up year is served without its cost", async () =>
   at("2026-11-08T20:00:00Z");
   const html = await served({ start: "2021-10-01", end: "2027-09-30" });
   expect(mocks.trueUpCost).not.toHaveBeenCalled();
+  expect(mocks.trueUpSavings).not.toHaveBeenCalled();
+  expect(html).not.toContain("What the system saved");
   expect(html).toContain(">Net<");
   expect(html).not.toContain("Charges so far");
 });

@@ -1,9 +1,10 @@
 // Ported from anton-tesla-api-ws tests/test_live_rest.py's and test_meter_corrections.py's impact tests, with the same
-// values, against the tests' throwaway PostgreSQL.
-import { Client } from "pg";
-import { afterAll, beforeAll, beforeEach, expect, inject, test, vi } from "vitest";
+// values, against the tests' throwaway PostgreSQL. range.db.test.ts clears the same tables, so this file has a database
+// of its own.
+import type { Client } from "pg";
+import { afterAll, beforeAll, beforeEach, expect, test, vi } from "vitest";
+import { ownDatabase } from "@/test/true-up";
 
-const pg = inject("pg");
 let owner: Client;
 let impactFigures: typeof import("./impact").impactFigures;
 
@@ -26,11 +27,8 @@ async function seedDay(date: string, overrides: Partial<typeof PLAIN> = {}) {
 }
 
 beforeAll(async () => {
-  vi.stubEnv("DATABASE_URL", `postgresql://${pg.user}:${pg.password}@/${pg.database}?host=${pg.host}`);
-  vi.resetModules();
+  owner = await ownDatabase("tsr_impact");
   ({ impactFigures } = await import("./impact"));
-  owner = new Client({ ...pg });
-  await owner.connect();
 });
 
 beforeEach(async () => {

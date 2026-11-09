@@ -19,8 +19,8 @@ Code tasks are test-first: write the test, run it and see it fail for the right 
 
 ## 4. Release and checks (after merging)
 
-- [ ] 4.1 **(owner)** Publish a release; I watch the Deploy run
-- [ ] 4.2 On teslasolar.report: `/top` leads its export days without May 30 and July 23, 2024, `/top?vpp=with` leads with May 30, 2024 at 60.0 kWh, the footnote follows the switch, no console message, and `scripts/compare-top-ten.mjs` still finds no mismatch against Flask on onyx; record the results in the design, committed on the next change's branch
+- [x] 4.1 **(owner)** Publish a release; I watch the Deploy run
+- [x] 4.2 On teslasolar.report: `/top` leads its export days without May 30 and July 23, 2024, `/top?vpp=with` leads with May 30, 2024 at 60.0 kWh, the footnote follows the switch, no console message, and `scripts/compare-top-ten.mjs` still finds no mismatch against Flask on onyx; record the results in the design, committed on the next change's branch
 
 ## Workflow follow-up
 
