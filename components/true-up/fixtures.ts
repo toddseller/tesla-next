@@ -1,6 +1,7 @@
 // The current year on November 8, 2026 and '25 - '26, with mockup A's figures, as /api/cycles and /api/true-up-cost
 // answer for them.
 import type { TrueUpYear } from "@/lib/true-up/reads";
+import type { Savings } from "@/lib/true-up/savings";
 import type { Cost, Cycle } from "@/lib/true-up/text";
 
 const row = (
@@ -84,3 +85,16 @@ export const YEARS: TrueUpYear[] = [2022, 2023, 2024, 2025, 2026, 2027].map((end
 }));
 
 export const yearOf = (end: number) => YEARS.find((year) => year.end_date === `${end}-09-30`)!;
+
+// '25 - '26 and the current year's savings as the real run priced them on November 8, 2026.
+export const SAVINGS_25_26: Savings = {
+  actual: { pge: 825, westlight: 293.07, total: 1118.07 }, solar_only: { pge: 678.61, westlight: 288.62, total: 967.23 },
+  no_system: { pge: 5207.64, westlight: 1487.03, total: 6694.67 }, solar_saved: 5727.44, powerwalls_added: -150.84,
+  rebuilt_days: 205, uncorrected_days: 1, through: "2026-10-04", pge_rates: "2026-06-01", westlight_rates: "2026-07-01",
+};
+
+export const CURRENT_SAVINGS: Savings = {
+  actual: { pge: 106.67, westlight: 27.36, total: 134.03 }, solar_only: { pge: 84.88, westlight: 25.22, total: 110.1 },
+  no_system: { pge: 436.73, westlight: 108.04, total: 544.77 }, solar_saved: 434.67, powerwalls_added: -23.93,
+  rebuilt_days: 0, uncorrected_days: 0, through: "2026-11-08", pge_rates: "2026-06-01", westlight_rates: "2026-07-01",
+};

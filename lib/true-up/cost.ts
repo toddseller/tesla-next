@@ -1,3 +1,5 @@
+import { cache } from "react";
+
 import { db } from "@/lib/db";
 import { pyRound } from "@/lib/intervals/python";
 import { shiftDay } from "@/lib/scene/replay";
@@ -9,8 +11,8 @@ type Billed = { nem_charges: number; net_kwh: number };
 type Pricing = { revisions: Revision[]; billed: Map<string, Billed> };
 
 // Flask looks rates and PG&E's figures up for every cycle; loading them once per request gives the same answers, since
-// only Flask's refreshes and imports change them.
-export async function loadPricing(): Promise<Pricing> {
+// only Flask's refreshes and imports change them. A page render shares one load among the cost, the cycles and the savings.
+export const loadPricing = cache(async (): Promise<Pricing> => {
   const [revisions, billed] = await Promise.all([
     db.query<{ revision: Revision }>("SELECT row_to_json(r) AS revision FROM rate_revision r"),
     db.query<Billed & { end_read: string }>("SELECT end_read::text AS end_read, nem_charges, net_kwh FROM true_up_statement_cycle"),
@@ -19,7 +21,7 @@ export async function loadPricing(): Promise<Pricing> {
     revisions: revisions.rows.map((row) => row.revision),
     billed: new Map(billed.rows.map(({ end_read, ...cycle }) => [end_read, cycle])),
   };
-}
+});
 
 // A cycle's NEM charges and their source: PG&E's statement or bill when one covers it, otherwise calculated over its days
 // with data so far, otherwise none. A cycle with PG&E's figure also gets the calculated estimate and PG&E's net kWh.
@@ -89,6 +91,8 @@ const daysFrom = (first: string, last: string) => (Date.parse(last) - Date.parse
 // The share of the open cycle's days still to come.
 const left = (cycle: CycleRow) => daysFrom(cycle.through ?? cycle.last_day, cycle.last_day) / (daysFrom(cycle.first_day, cycle.last_day) + 1);
 
+export const isTrueUpYear = (start: string, end: string) => start.slice(5) === "10-01" && end === `${Number(start.slice(0, 4)) + 1}-09-30`;
+
 // A true-up year's dollars, as Flask's /api/v2/true_up_cost answers them: all null but the newest rates' date unless the
 // range is a true-up year.
 export async function trueUpCost(start: string, end: string, today: string) {
@@ -103,7 +107,7 @@ export async function trueUpCost(start: string, end: string, today: string) {
     vpp: null as Awaited<ReturnType<typeof vppSeason>>, rates_effective: newest?.effective_date ?? null,
   };
   const endYear = Number(end.slice(0, 4));
-  if (start.slice(5) !== "10-01" || end !== `${Number(start.slice(0, 4)) + 1}-09-30`) return result;
+  if (!isTrueUpYear(start, end)) return result;
   result.vpp = await vppSeason(endYear);
   const rows = await cycleRows(start, end, pricing);
   const finished = today >= (await readsFor(endYear))[OCTOBER];

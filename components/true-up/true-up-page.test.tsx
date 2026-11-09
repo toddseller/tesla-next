@@ -3,7 +3,7 @@
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 
-import { COST_25_26, CURRENT, CURRENT_COST, YEAR_25_26, YEARS } from "@/components/true-up/fixtures";
+import { COST_25_26, CURRENT, CURRENT_COST, CURRENT_SAVINGS, SAVINGS_25_26, YEAR_25_26, YEARS } from "@/components/true-up/fixtures";
 import { TrueUpPage } from "@/components/true-up/true-up-page";
 import { FakeStream } from "@/test/fake-event-source";
 
@@ -41,9 +41,11 @@ afterEach(() => {
 
 const settle = () => act(() => new Promise((resolve) => setTimeout(resolve, 0)));
 const pressed = (name: string) => screen.getByRole("button", { name }).getAttribute("aria-pressed");
-const page = (range = THIS_YEAR, cycles = CURRENT, cost = CURRENT_COST) =>
-  <TrueUpPage range={range} years={YEARS} cycles={cycles} cost={cost} today="2026-11-08" />;
-const RELOADS = (range: { start: string; end: string }) => [`/api/cycles?start_date=${range.start}&end_date=${range.end}`, `/api/true-up-cost?start_date=${range.start}&end_date=${range.end}`];
+const page = (range = THIS_YEAR, cycles = CURRENT, cost = CURRENT_COST, savings: typeof CURRENT_SAVINGS | null = CURRENT_SAVINGS) =>
+  <TrueUpPage range={range} years={YEARS} cycles={cycles} cost={cost} savings={savings} today="2026-11-08" />;
+const RELOADS = (range: { start: string; end: string }) =>
+  ["cycles", "true-up-cost", "true-up-savings"].map((route) => `/api/${route}?start_date=${range.start}&end_date=${range.end}`);
+const savingsCard = () => screen.getByRole("region", { name: "What the system saved" }).textContent;
 
 test("This year is marked, and the presets and Earlier menu push their addresses", () => {
   render(page());
@@ -61,20 +63,26 @@ test("the served data shows with no request of its own", async () => {
   await settle();
   expect(fetches).toEqual([]);
   expect(screen.getByRole("region", { name: "Charges so far" }).textContent).toContain("$106.46");
+  expect(savingsCard()).toContain("$411");
 });
 
-test("totals for today reload the cycles and cost in place", async () => {
-  answers = { "/api/cycles": CURRENT, "/api/true-up-cost": { ...CURRENT_COST, charges_so_far: 110.5 } };
+test("totals for today reload the cycles, cost and savings in place", async () => {
+  answers = {
+    "/api/cycles": CURRENT, "/api/true-up-cost": { ...CURRENT_COST, charges_so_far: 110.5 },
+    "/api/true-up-savings": { ...CURRENT_SAVINGS, actual: { pge: 80, westlight: 20, total: 100 } },
+  };
   render(page());
+  expect(savingsCard()).toContain("$411");
   FakeStream.opened[0].send({ date: "2026-11-08" }, "totals");
   await settle();
   expect(fetches).toEqual(RELOADS(THIS_YEAR));
   expect(screen.getByRole("region", { name: "Charges so far" }).textContent).toContain("$110.50");
+  expect(savingsCard()).toContain("$445");
 });
 
 test("'25 - '26 reloads for a day in its last cycle, past September 30", async () => {
-  answers = { "/api/cycles": YEAR_25_26, "/api/true-up-cost": COST_25_26 };
-  render(page(YEAR_25, YEAR_25_26, COST_25_26));
+  answers = { "/api/cycles": YEAR_25_26, "/api/true-up-cost": COST_25_26, "/api/true-up-savings": SAVINGS_25_26 };
+  render(page(YEAR_25, YEAR_25_26, COST_25_26, SAVINGS_25_26));
   FakeStream.opened[0].send({ date: "2026-10-05" }, "totals");
   expect(fetches).toEqual([]);
   FakeStream.opened[0].send({ date: "2026-10-02" }, "totals");
@@ -102,7 +110,8 @@ test("a past year doesn't reload for today, and a reopened stream reloads only a
 test("a range that isn't a true-up year reloads its cycles alone", async () => {
   const allTime = { start: "2021-10-01", end: "2027-09-30" };
   answers = { "/api/cycles": CURRENT };
-  render(page(allTime, CURRENT, null as never));
+  render(page(allTime, CURRENT, null as never, null));
+  expect(screen.queryByRole("region", { name: "What the system saved" })).toBeNull();
   FakeStream.opened[0].send({ date: "2026-11-08" }, "totals");
   await settle();
   expect(fetches).toEqual([RELOADS(allTime)[0]]);
@@ -115,4 +124,5 @@ test("a failed reload keeps the data", async () => {
   FakeStream.opened[0].send({ date: "2026-11-08" }, "totals");
   await settle();
   expect(screen.getByRole("region", { name: "Charges so far" }).textContent).toContain("$106.46");
+  expect(savingsCard()).toContain("$411");
 });

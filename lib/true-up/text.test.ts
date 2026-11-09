@@ -2,7 +2,7 @@
 import { describe, expect, test } from "vitest";
 import {
   billedText, chargesSoFarText, type Cycle, chargesText, cycleDates, estimateText, kwh, netLabel, projectionText, runningNet,
-  startedCycles, totals, trueUpText, uncorrectedDays, vppText, yearName,
+  savingsText, startedCycles, totals, trueUpText, uncorrectedDays, vppText, yearName,
 } from "./text";
 
 const cycle = (first_day: string, last_day: string, true_up: string, net: number, extra = {}) => ({
@@ -180,5 +180,76 @@ describe("the VPP credit", () => {
 
   test("no season", () => {
     expect(vppText(null, "2026-11-08")).toBeNull();
+  });
+});
+
+// --- The savings card -------------------------------------------------------------------
+
+// '25 - '26 as the real run priced it on November 8, 2026.
+const YEAR_25_26 = {
+  actual: { pge: 825, westlight: 293.07, total: 1118.07 }, solar_only: { pge: 678.61, westlight: 288.62, total: 967.23 },
+  no_system: { pge: 5207.64, westlight: 1487.03, total: 6694.67 }, solar_saved: 5727.44, powerwalls_added: -150.84,
+  rebuilt_days: 205, uncorrected_days: 1, through: "2026-10-04", pge_rates: "2026-06-01", westlight_rates: "2026-07-01",
+};
+const SEASON_2026 = { season: 2026, payout: null, paid_on: null, kwh: 183.8, estimate: 367.6 };
+
+describe("savingsText", () => {
+  test("'25 - '26: the Powerwalls cost money, beside their VPP credit estimate", () => {
+    const text = savingsText(YEAR_25_26, SEASON_2026, false);
+
+    expect(text).toMatchObject({ saved: "$5,577", unit: "estimate, of $6,695 without solar or Powerwalls", paid: "$1,118", paidSplit: "PG&E $825 · WestLight $293", solar: "$5,727" });
+    expect(text.bar).toEqual({ parts: [["paid", 1118.07], ["saved", 5576.6]], label: "Of $6,695: $1,118 paid, $5,577 saved" });
+    expect(text.powerwalls).toEqual({
+      bill: "$151 cost on the bill",
+      vpp: "$368 VPP credit",
+      line: "The VPP credit is an estimate for the 2026 season. Under NEM2, exporting solar earns about what importing it later costs, so storing it pays only between 4 and 9 p.m.",
+    });
+    expect(text.estimates).toBe("Estimates of PG&E's and WestLight Energy's charges. 205 days before April 27, 2026 rebuilt from PG&E's meter, 1 as Tesla read it.");
+  });
+
+  test("a year the Powerwalls saved money splits the bar three ways", () => {
+    const year = { ...YEAR_25_26, actual: { pge: 700, westlight: 205.1, total: 905.1 }, solar_only: { pge: 900, westlight: 220.75, total: 1120.75 },
+      no_system: { pge: 2800, westlight: 610.2, total: 3410.2 }, solar_saved: 2289.45, powerwalls_added: 215.65 };
+
+    const text = savingsText(year, null, false);
+
+    expect(text.bar).toEqual({
+      parts: [["paid", 905.1], ["powerwalls", 215.65], ["solar", 2289.45]],
+      label: "Of $3,410: $905 paid, $216 saved by the Powerwalls, $2,289 saved by solar",
+    });
+    expect(text.powerwalls).toEqual({ bill: "$216 saved on the bill", vpp: null, line: null });
+  });
+
+  test("a WestLight credit reads as a credit, not a charge", () => {
+    const text = savingsText({ ...YEAR_25_26, actual: { pge: 143.74, westlight: -71.91, total: 71.83 } }, null, false);
+
+    expect([text.paid, text.paidSplit]).toEqual(["$72", "PG&E $144 · WestLight $72 credit"]);
+    expect(savingsText({ ...YEAR_25_26, actual: { pge: 120, westlight: -150, total: -30 } }, null, false).paid).toBe("$30 credit");
+  });
+
+  test("a paid season gives its payout", () => {
+    const text = savingsText(YEAR_25_26, { season: 2025, payout: 728.26, paid_on: "2026-04-15", kwh: 364.1, estimate: 728.2 }, false);
+
+    expect(text.powerwalls.vpp).toBe("$728 VPP credit");
+    expect(text.powerwalls.line).toMatch(/^The VPP credit is the 2025 season's payout\. Under NEM2/);
+  });
+
+  test("a season with no events yet gives no VPP credit", () => {
+    expect(savingsText(YEAR_25_26, { ...SEASON_2026, season: 2027, kwh: 0, estimate: 0 }, true).powerwalls.vpp).toBeNull();
+  });
+
+  test("the current year reads so far, and days after the fix need no note", () => {
+    const text = savingsText({ ...YEAR_25_26, rebuilt_days: 0, uncorrected_days: 0, through: "2026-11-08" }, null, true);
+
+    expect([text.saved, text.unit]).toEqual(["$5,577", "estimate so far, of $6,695 without solar or Powerwalls"]);
+    expect(text.estimates).toBe("Estimates of PG&E's and WestLight Energy's charges.");
+  });
+
+  test("one rebuilt day, and WestLight rates more than a year old", () => {
+    const text = savingsText({ ...YEAR_25_26, rebuilt_days: 1, uncorrected_days: 0, through: "2027-11-01", westlight_rates: "2026-03-01" }, null, true);
+
+    expect(text.estimates).toBe(
+      "Estimates of PG&E's and WestLight Energy's charges. 1 day before April 27, 2026 rebuilt from PG&E's meter. WestLight's rates are from March 2026.",
+    );
   });
 });
