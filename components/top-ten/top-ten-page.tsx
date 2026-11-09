@@ -15,7 +15,7 @@ export function TopTenPage({ topTen: served, withVpp, today }: { topTen: TopTen;
   const router = useRouter();
   const shown = CHOICES.find((choice) => choice.withVpp === withVpp)!;
   const [[{ solar }, { net_grid: days }, { to_grid_months: months }], reload] = useReload(shown.address, served);
-  const reloadAll = () => void reload(withVpp ? "/api/top-ten" : "/api/top-ten?vpp=without", (body: { data: TopTen }) => body.data);
+  const reloadAll = () => void reload(withVpp ? "/api/top-ten?vpp=with" : "/api/top-ten", (body: { data: TopTen }) => body.data);
   useLiveStream({ onTotals: reloadAll, onReopen: reloadAll });
 
   return (

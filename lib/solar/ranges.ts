@@ -18,14 +18,14 @@ const day = (year: number, month: number, date: number) => new Date(Date.UTC(yea
 const parts = (date: string) => date.split("-").map(Number);
 const monthLength = (year: number, month: number) => new Date(Date.UTC(year, month + 1, 0)).getUTCDate();
 
-// Flask's next_month: Jan 31 gives Feb 28 (29 in a leap year).
+// anton's next_month: Jan 31 gives Feb 28 (29 in a leap year).
 const nextMonth = (date: string) => {
   const [y, m, d] = parts(date);
   const [year, month] = m === 12 ? [y + 1, 0] : [y, m];
   return day(year, month, Math.min(d, monthLength(year, month)));
 };
 
-// Flask's get_time_range_list: month-long periods when neither end is a month boundary, calendar months otherwise.
+// anton's get_time_range_list: month-long periods when neither end is a month boundary, calendar months otherwise.
 export function periods(start: string, end: string): [string, string][] {
   const endsOnBoundary = parts(end)[2] >= 28;
   const list: [string, string][] = [];
@@ -88,7 +88,7 @@ export function parseDay(value: Param): string | null {
 export const address = (range: Range, day?: string | null) =>
   `/?start=${range.start}&end=${range.end}${day ? `&day=${day}` : ""}`;
 
-// Flask's /api/v2/formatted switches to periods when the end is more than 31 days after the start.
+// The range switches to periods when the end is more than 31 days after the start.
 export const isDaily = (range: Range) => range.end <= shiftDay(range.start, 31);
 
 const part = (date: string, month: "long" | "short") => ({

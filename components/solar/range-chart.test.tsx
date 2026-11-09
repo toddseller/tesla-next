@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-// The range chart of the solar-range-chart spec, with October 2026 and the 2025 to 2026 true-up year as Flask answers
+// The range chart of the solar-range-chart spec, with October 2026 and the 2025 to 2026 true-up year as /api/range answers
 // for them.
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, expect, test, vi } from "vitest";
@@ -65,7 +65,7 @@ test("a month with no figures yet has nothing to open", () => {
   expect(onOpenRange).not.toHaveBeenCalled();
 });
 
-test("a month-long period opens as Flask cuts it", () => {
+test("a month-long period opens as the range cuts it", () => {
   const onOpenRange = vi.fn();
   const { container } = render(
     <RangeChart items={periodItems(["Jan-26", "Feb-26", "Mar-26", "Apr-26", "May-26"])} range={{ start: "2026-01-15", end: "2026-06-14" }} onOpenDay={() => {}} onOpenRange={onOpenRange} />,

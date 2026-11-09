@@ -1,5 +1,5 @@
-// The intervals read must answer exactly as anton-tesla-api-ws's Python did, so these reproduce two of Python's
-// behaviors JavaScript doesn't share.
+// The intervals read answers as anton-tesla-api-ws's Python did, so these reproduce two of Python's behaviors
+// JavaScript doesn't share.
 
 export const SITE_ZONE = "America/Los_Angeles";
 

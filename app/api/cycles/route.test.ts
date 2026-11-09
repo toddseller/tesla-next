@@ -13,7 +13,7 @@ async function get(query: string) {
 
 afterEach(() => cycleRows.mockReset());
 
-test("a valid range answers with its cycles, as Flask's /api/v2/sheet", async () => {
+test("a valid range answers with its cycles", async () => {
   const row = { first_day: "2025-10-03", last_day: "2025-11-03", true_up: "'25 - '26", net: 364, nem_charges: 113.41, nem_source: "statement" };
   cycleRows.mockResolvedValue([row]);
 

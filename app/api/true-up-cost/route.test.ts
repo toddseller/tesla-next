@@ -13,7 +13,7 @@ async function get(query: string) {
 
 afterEach(() => trueUpCost.mockReset());
 
-test("a valid range answers with its dollars as of today, as Flask's /api/v2/true_up_cost", async () => {
+test("a valid range answers with its dollars as of today", async () => {
   const data = { amount_due: 767.73, source: "statement", rates_effective: "2026-06-01" };
   trueUpCost.mockResolvedValue(data);
 

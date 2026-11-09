@@ -3,7 +3,6 @@ import { cycleRows } from "@/lib/true-up/cost";
 
 export const dynamic = "force-dynamic";
 
-// Answers as Flask's /api/v2/sheet does, so scripts/compare-true-up.mjs can check the port until cutover.
 export async function GET(request: Request) {
   const params = new URL(request.url).searchParams;
   const [start, end] = [params.get("start_date"), params.get("end_date")];

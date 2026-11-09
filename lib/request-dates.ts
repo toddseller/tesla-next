@@ -1,6 +1,6 @@
 import { shiftDay, siteToday } from "@/lib/scene/replay";
 
-// The site's dates, as anton-tesla-api-ws's parse_day sets them: the first day of service to two years ahead.
+// The site's dates, as anton-tesla-api-ws's parse_day set them: the first day of service to two years ahead.
 const FIRST_DAY = "2021-10-01";
 const HORIZON_DAYS = 732;
 

@@ -7,7 +7,7 @@ import type { Vehicle } from "@/lib/scene/live-scene";
 import type { IntervalRecord } from "@/lib/scene/replay";
 import type { WeatherReading } from "@/lib/scene/weather";
 
-// What Flask notifies each poll (anton-tesla-api-ws live-site-status), as /api/live forwards it.
+// What anton's scheduler notifies each poll (anton-tesla-api-ws live-site-status), as /api/live forwards it.
 type LiveStatus = {
   load_power?: number | null;
   home_power?: number | null;
@@ -46,7 +46,7 @@ type Live = typeof EMPTY;
 
 const kw = (value: unknown) => parseFloat(String(value));
 
-// Battery readings and times can be missing right after Flask restarts; the last ones still hold.
+// Battery readings and times can be missing right after anton's scheduler restarts; the last ones still hold.
 export const applyStatus = (previous: Live, status: LiveStatus): Live => ({
   solarPower: kw(status.solar_power),
   gridPower: kw(status.grid_power),

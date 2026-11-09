@@ -49,7 +49,7 @@ test("a totals event reloads the rankings in place", async () => {
   render(<TopTenPage topTen={TOP_TEN} withVpp today="2026-11-08" />);
   FakeStream.opened[0].send({ date: "2026-11-08" }, "totals");
   await settle();
-  expect(fetches).toEqual(["/api/top-ten"]);
+  expect(fetches).toEqual(["/api/top-ten?vpp=with"]);
   expect(exportRecord()).toContain("Sunday, November 8, 2026");
 });
 
@@ -61,7 +61,7 @@ test("a stream that opens again after it was lost reloads them", async () => {
   stream.fail(false);
   stream.connect();
   await settle();
-  expect(fetches).toEqual(["/api/top-ten"]);
+  expect(fetches).toEqual(["/api/top-ten?vpp=with"]);
   expect(exportRecord()).toContain("Sunday, November 8, 2026");
 });
 
@@ -70,7 +70,7 @@ test("a failed reload keeps the rankings shown", async () => {
   render(<TopTenPage topTen={TOP_TEN} withVpp today="2026-11-08" />);
   FakeStream.opened[0].send({ date: "2026-11-08" }, "totals");
   await settle();
-  expect(fetches).toEqual(["/api/top-ten"]);
+  expect(fetches).toEqual(["/api/top-ten?vpp=with"]);
   expect(exportRecord()).toContain("Thursday, May 30, 2024");
 });
 
@@ -84,7 +84,7 @@ test("without VPP events, the switch, the footnote and a reload say so", async (
   expect(router.replace).toHaveBeenLastCalledWith("/top?vpp=with");
   FakeStream.opened[0].send({ date: "2026-11-08" }, "totals");
   await settle();
-  expect(fetches).toEqual(["/api/top-ten?vpp=without"]);
+  expect(fetches).toEqual(["/api/top-ten"]);
 });
 
 test("with VPP events, the switch and the footnote say so, and Without goes back to /top", () => {

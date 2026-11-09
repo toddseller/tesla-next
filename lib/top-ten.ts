@@ -5,7 +5,7 @@ import { dailyItem, dayColumns, type DayRow, gridIn, gridOut } from "@/lib/range
 export type SolarDay = { date: string; solar: number; day: string };
 export type GridDay = { date: string; net_grid: number; day: string };
 export type GridMonth = { date: string; net_grid: number; month: string };
-// Flask's /api/v2/top_ten, so the route, the server page and the page's reloads share one shape.
+// One shape for the route, the server page and the page's reloads.
 export type TopTen = [{ solar: SolarDay[] }, { net_grid: GridDay[] }, { to_grid_months: GridMonth[] }];
 
 const dayLabel = (day: string) =>
@@ -20,7 +20,7 @@ const ten = <T>(rows: T[], shown: (row: T) => number, date: (row: T) => string) 
 
 const net = `coalesce(${gridIn}, 0::integer) - ${gridOut}`;
 
-export async function topTen(withVpp = true): Promise<TopTen> {
+export async function topTen(withVpp: boolean): Promise<TopTen> {
   const kept = withVpp ? "true" : "NOT data.is_vpp";
   const [solar, days, months] = await Promise.all([
     db.query<{ date: string; solar_generated: number }>(

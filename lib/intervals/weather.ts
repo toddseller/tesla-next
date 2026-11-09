@@ -1,5 +1,5 @@
 // Ported from anton-tesla-api-ws services/weather.py: the sky the scene draws from a stored reading. The live status's
-// weather is still computed there by Flask; see the scene-weather spec.
+// weather is computed there by anton's scheduler; see the scene-weather spec.
 import { pyRound } from "./python";
 
 type Percent = number | null;

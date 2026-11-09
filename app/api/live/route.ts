@@ -14,7 +14,7 @@ export function GET(request: Request) {
       const send = (text: string) => controller.enqueue(encoder.encode(text));
       // EventSource keeps retrying only after a 200, and Next.js holds the headers until the first bytes.
       send("retry: 5000\n: open\n\n");
-      // Flask's json.dumps writes one line, so one data field carries a whole status.
+      // anton's scheduler sends each status as one line of JSON, so one data field carries a whole status.
       const now = latest();
       if (now !== null) send(`data: ${now}\n\n`);
       // Totals get an event name, so a page listens for them apart from live status.
