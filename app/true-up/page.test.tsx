@@ -4,10 +4,11 @@ import { afterEach, beforeEach, expect, test, vi } from "vitest";
 
 import { COST_25_26, CURRENT, CURRENT_COST, CURRENT_SAVINGS, SAVINGS_25_26, YEAR_25_26, YEARS } from "@/components/true-up/fixtures";
 
-const mocks = vi.hoisted(() => ({ trueUpYears: vi.fn(), cycleRows: vi.fn(), trueUpCost: vi.fn(), trueUpSavings: vi.fn() }));
+const mocks = vi.hoisted(() => ({ trueUpYears: vi.fn(), cycleRows: vi.fn(), trueUpCost: vi.fn(), trueUpSavings: vi.fn(), payback: vi.fn() }));
 vi.mock("@/lib/true-up/reads", () => ({ trueUpYears: mocks.trueUpYears }));
 vi.mock("@/lib/true-up/cost", () => ({ cycleRows: mocks.cycleRows, trueUpCost: mocks.trueUpCost }));
 vi.mock("@/lib/true-up/savings", () => ({ trueUpSavings: mocks.trueUpSavings }));
+vi.mock("@/lib/true-up/payback", () => ({ payback: mocks.payback }));
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn() }) }));
 
 const { default: Page } = await import("./page");
@@ -73,4 +74,15 @@ test("the day before the October read, the current year is still '25 - '26; on t
   at("2026-10-05T20:00:00Z");
   await served();
   expect(mocks.cycleRows).toHaveBeenLastCalledWith("2026-10-01", "2027-09-30");
+});
+
+test("the Payback card is served with the page when there are payback years, for any range", async () => {
+  at("2026-11-08T20:00:00Z");
+  mocks.payback.mockResolvedValue({
+    solar: { year: 2025, projected: false, estimated: true }, system: { year: 2030, projected: true, estimated: true },
+    powerwalls: { year: null, wont: true }, outages: { count: 35, hours: 156.9, longest_hours: 52.3 },
+  });
+  expect(await served({ start: "2022-10-01", end: "2023-09-30" })).toContain("Solar paid for itself in 2025");
+  mocks.payback.mockResolvedValue(null);
+  expect(await served()).not.toContain("Payback");
 });

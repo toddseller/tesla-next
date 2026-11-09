@@ -191,7 +191,7 @@ const YEAR_25_26 = {
   no_system: { pge: 5207.64, westlight: 1487.03, total: 6694.67 }, solar_saved: 5727.44, powerwalls_added: -150.84,
   powerwalls_held: -83.08, powerwalls_vpp: 42.5, powerwalls_storm: 0, powerwalls_used: -110.26, held_days: 129, vpp_days: 6, storm_days: 0, used_days: 232,
   peak_only: { pge: 731.49, westlight: 253.9, total: 985.39 } as { pge: number; westlight: number; total: number } | null, efficiency: 0.85 as number | null,
-  rebuilt_days: 205, uncorrected_days: 1, through: "2026-10-04", pge_rates: "2026-06-01", westlight_rates: "2026-07-01",
+  rebuilt_days: 205, uncorrected_days: 1, through: "2026-10-04", pge_rates: "2026-06-01", westlight_rates: "2026-07-01", estimated_rates: false,
 };
 const SEASON_2026 = { season: 2026, payout: null, paid_on: null, kwh: 183.8, estimate: 367.6 };
 
@@ -291,6 +291,14 @@ describe("savingsText", () => {
 
     expect(text.estimates).toBe(
       "Estimates of PG&E's and WestLight Energy's charges. 1 day before April 27, 2026 rebuilt from PG&E's meter. WestLight's rates are from March 2026.",
+    );
+  });
+
+  test("a year priced at estimated WestLight rates says so", () => {
+    const text = savingsText({ ...YEAR_25_26, rebuilt_days: 361, uncorrected_days: 5, estimated_rates: true }, null, false);
+
+    expect(text.estimates).toBe(
+      "Estimates of PG&E's and WestLight Energy's charges. 361 days before April 27, 2026 rebuilt from PG&E's meter, 5 as Tesla read it. WestLight's generation rates this year are estimated from PG&E's.",
     );
   });
 });

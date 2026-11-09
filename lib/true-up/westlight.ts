@@ -4,18 +4,28 @@ import { cents, type DayGrid, inEffect, newestFirst, seasonOf } from "@/lib/true
 // WestLight Energy (Peninsula Clean Energy until 2026) bills generation on PG&E's bill, netted by period like PG&E's NEM
 // charges, against its own credit balance, which it cashes out each April.
 type Rates = Record<`${"summer" | "winter"}_${"peak" | "off_peak"}`, number>;
-export type WestLightRevision = Rates & { effective_date: string; eco100: number; bonus: number };
+export type WestLightRevision = Rates & { effective_date: string; eco100: number; bonus: number; estimated?: true };
 
 const revision = (effective_date: string, [summer_peak, summer_off_peak, winter_peak, winter_off_peak]: number[], eco100: number): WestLightRevision =>
   ({ effective_date, summer_peak, summer_off_peak, winter_peak, winter_off_peak, eco100, bonus: 0.01 });
+
+// Before August 2024 no sheet survives, so each PG&E revision from September 2023 (rate_revision's generation columns)
+// is scaled per period by WestLight's August 2024 rate over PG&E's generation rate in effect that day (0.92791,
+// 0.91407, 0.91942, 0.91305), so the last estimate equals the first sheet. April 2024 repeats March's rates.
+const estimated = (effective_date: string, rates: number[]): WestLightRevision => ({ ...revision(effective_date, rates, 0.01), estimated: true });
 
 const AUGUST_2024 = [0.20001, 0.12116, 0.14296, 0.11761];
 const FEBRUARY_2025 = [0.18948, 0.11478, 0.13543, 0.11142];
 
 // E-TOU-C's "Generation rate" column of WestLight's residential rate sheets, the bill's rates. ECO100's premium changes on
-// its own dates, by board decision; the Net Generation Bonus stayed at 1 cent through them. No 2023 sheet survives, so
-// the rates start with August 2024. To add a revision, add its row from the new sheet (westlightenergy.org).
+// its own dates, by board decision; the Net Generation Bonus stayed at 1 cent through them. To add a revision, add its row
+// from the new sheet (westlightenergy.org).
 export const WESTLIGHT: WestLightRevision[] = [
+  estimated("2023-09-01", [0.18350, 0.12278, 0.13714, 0.11334]),
+  estimated("2024-01-01", [0.20773, 0.14664, 0.16116, 0.13719]),
+  estimated("2024-03-01", [0.20777, 0.14668, 0.16119, 0.13722]),
+  estimated("2024-06-01", [0.21920, 0.14006, 0.16197, 0.13649]),
+  estimated("2024-07-01", AUGUST_2024),
   revision("2024-08-01", AUGUST_2024, 0.01),
   revision("2025-01-01", AUGUST_2024, 0.015),
   revision("2025-02-10", FEBRUARY_2025, 0.015),

@@ -197,6 +197,9 @@ export function savingsText(savings: Savings, season: Cost["vpp"], current: bool
     paidSplit: `PG&E ${wholeCredit(actual.pge)} · WestLight ${wholeCredit(actual.westlight)}`,
     solar: wholeDollars(solar),
     powerwalls: { bill: `${effect(powerwalls)} on the bill`, vpp: vppText, parts, whatIf, nem2 },
-    estimates: ["Estimates of PG&E's and WestLight Energy's charges.", days, stale].filter(Boolean).join(" "),
+    estimates: [
+      "Estimates of PG&E's and WestLight Energy's charges.", days, stale,
+      savings.estimated_rates && "WestLight's generation rates this year are estimated from PG&E's.",
+    ].filter(Boolean).join(" "),
   };
 }

@@ -6,11 +6,13 @@ import { RangeControls } from "@/components/solar/range-controls";
 import { useReload } from "@/components/solar/use-reload";
 import { CycleChart } from "@/components/true-up/cycle-chart";
 import { CycleList, MeteringNote } from "@/components/true-up/cycle-list";
+import { PaybackCard } from "@/components/true-up/payback-card";
 import { SavingsCard } from "@/components/true-up/savings-card";
 import { Tiles } from "@/components/true-up/tiles";
 import { useLiveStream } from "@/components/use-live-stream";
 import { siteToday } from "@/lib/scene/replay";
 import { datesLabel, type Range, rangeIncludes, trueUpPresets } from "@/lib/solar/ranges";
+import type { Payback } from "@/lib/true-up/payback";
 import type { TrueUpYear } from "@/lib/true-up/reads";
 import type { Savings } from "@/lib/true-up/savings";
 import { type Cost, type Cycle, yearName } from "@/lib/true-up/text";
@@ -18,13 +20,14 @@ import { type Cost, type Cycle, yearName } from "@/lib/true-up/text";
 const address = ({ start, end }: Range) => `/true-up?start=${start}&end=${end}`;
 const query = ({ start, end }: Range) => `start_date=${start}&end_date=${end}`;
 
-type Props = { range: Range; years: TrueUpYear[]; cycles: Cycle[]; cost: Cost | null; savings: Savings | null; today: string };
+type Props = { range: Range; years: TrueUpYear[]; cycles: Cycle[]; cost: Cost | null; savings: Savings | null; payback: Payback | null; today: string };
 
-export function TrueUpPage({ range, years, cycles: served, cost: servedCost, savings: servedSavings, today }: Props) {
+export function TrueUpPage({ range, years, cycles: served, cost: servedCost, savings: servedSavings, payback: servedPayback, today }: Props) {
   const router = useRouter();
   const [cycles, reloadCycles] = useReload(address(range), served);
   const [cost, reloadCost] = useReload(address(range), servedCost);
   const [savings, reloadSavings] = useReload(address(range), servedSavings);
+  const [payback, reloadPayback] = useReload(address(range), servedPayback);
   const year = years.find((y) => y.start_date === range.start && y.end_date === range.end) ?? null;
   // A true-up year's last cycle runs past September 30, so the days that count are the cycles', not the range's.
   const days = cycles.length ? { start: cycles[0].first_day, end: cycles.at(-1)!.last_day } : range;
@@ -35,7 +38,20 @@ export function TrueUpPage({ range, years, cycles: served, cost: servedCost, sav
     void reloadCost(`/api/true-up-cost?${query(range)}`, (body: { data: Cost }) => body.data);
     void reloadSavings(`/api/true-up-savings?${query(range)}`, (body: { data: Savings | null }) => body.data);
   };
-  useLiveStream({ onTotals: reloadFor, onReopen: () => reloadFor(siteToday()) });
+  // Payback covers the system's whole life, so today's totals move it whatever range is shown.
+  const reloadPaybackFor = (date: string) => {
+    if (servedPayback && date === siteToday()) void reloadPayback("/api/payback", (body: { data: Payback | null }) => body.data);
+  };
+  useLiveStream({
+    onTotals: (date) => {
+      reloadFor(date);
+      reloadPaybackFor(date);
+    },
+    onReopen: () => {
+      reloadFor(siteToday());
+      reloadPaybackFor(siteToday());
+    },
+  });
   const { presets, earlier } = trueUpPresets(years);
 
   return (
@@ -58,6 +74,7 @@ export function TrueUpPage({ range, years, cycles: served, cost: servedCost, sav
         <h2 id="cycle-list" className="font-semibold">Billing cycles</h2>
         <CycleList cycles={cycles} />
       </section>
+      {payback && <PaybackCard payback={payback} today={today} />}
     </div>
   );
 }

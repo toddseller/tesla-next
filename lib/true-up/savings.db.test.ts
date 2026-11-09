@@ -311,8 +311,17 @@ test("a year with only held days has no peak-only case", async () => {
   expect(result.powerwalls_held).toBe(result.powerwalls_added);
 });
 
+test("'23 - '24 has savings, marked as priced at estimated WestLight rates; '24 - '25's aren't", async () => {
+  await storeRevision(owner, "2023-09-01");
+  await seedIntervals(owner, "2023-10-05", "2023-10-06", { grid_imported_wh: 10, house_from_grid_wh: 10 });
+  await seedIntervals(owner, "2024-10-05", "2024-10-06", { grid_imported_wh: 10, house_from_grid_wh: 10 });
+
+  expect((await savings.trueUpSavings("2023-10-01", "2024-09-30"))!.estimated_rates).toBe(true);
+  expect((await savings.trueUpSavings("2024-10-01", "2025-09-30"))!.estimated_rates).toBe(false);
+});
+
 test.each([
-  ["'23 - '24", "2023-10-01", "2024-09-30"],
+  ["'22 - '23", "2022-10-01", "2023-09-30"],
   ["a calendar year", "2025-01-01", "2025-12-31"],
   ["All time", "2021-10-01", "2027-09-30"],
 ])("%s has no savings", async (_, start, end) => {

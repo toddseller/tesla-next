@@ -34,12 +34,24 @@ test("a cycle across a revision prices each side at its own rates", () => {
 });
 
 test("a day before the first revision has no rates", () => {
-  expect(generationCharges("2024-07-20", "2024-08-10", { "2024-07-31": day(0, 10) })).toBeNull();
+  expect(generationCharges("2023-08-20", "2023-09-10", { "2023-08-31": day(0, 10) })).toBeNull();
 });
 
 test("the revision in effect on a day, the newest past the last", () => {
-  expect(westlightIn("2024-07-31")).toBeUndefined();
+  expect(westlightIn("2023-08-31")).toBeUndefined();
   expect(westlightIn("2025-02-09")!.effective_date).toBe("2025-01-01");
   expect(westlightIn("2025-02-10")!.effective_date).toBe("2025-02-10");
   expect(westlightIn("2027-11-01")).toBe(WESTLIGHT.at(-1));
+});
+
+test("'23 - '24 is priced at estimated revisions: PG&E's generation times each period's August 2024 ratio", () => {
+  expect(westlightIn("2024-03-15")).toMatchObject({ effective_date: "2024-03-01", summer_peak: 0.20777, winter_off_peak: 0.13722, estimated: true });
+  expect(westlightIn("2023-09-01")).toMatchObject({ effective_date: "2023-09-01", estimated: true });
+});
+
+test("from August 2024 the rates are WestLight's own, not estimated", () => {
+  expect(westlightIn("2024-08-15")!.estimated).toBeFalsy();
+  // The ratio is taken where both are known, so the last estimate equals the first known sheet.
+  const [july, august] = WESTLIGHT.filter((r) => r.effective_date === "2024-07-01" || r.effective_date === "2024-08-01");
+  expect([july.summer_peak, july.summer_off_peak, july.winter_peak, july.winter_off_peak]).toEqual([august.summer_peak, august.summer_off_peak, august.winter_peak, august.winter_off_peak]);
 });
