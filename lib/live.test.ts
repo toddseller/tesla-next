@@ -58,6 +58,25 @@ async function until(check: () => boolean, what: string, timeout = 10_000, poke 
   }
 }
 
+const listener = async () => (await owner.query("SELECT pid FROM pg_stat_activity WHERE query LIKE 'LISTEN %' AND datname = current_database()")).rows[0]?.pid;
+
+// The listener waits 5 seconds before reconnecting; a fake clock passes them at once. Stepping a second at a time
+// stays far below the minute that would set off the watchdog's own reconnect.
+async function killListener() {
+  const killed = await listener();
+  vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"], shouldAdvanceTime: true });
+  try {
+    expect((await owner.query("SELECT pg_terminate_backend($1) AS ended", [killed])).rows[0].ended).toBe(true);
+    let pid: number | undefined;
+    await until(() => pid !== undefined && pid !== killed, "the reconnect", 3_000, async () => {
+      await vi.advanceTimersByTimeAsync(1_000);
+      pid = await listener();
+    });
+  } finally {
+    vi.useRealTimers();
+  }
+}
+
 test("the open site-state stretch is read when the listener starts", async () => {
   await until(() => live.siteState() === OPEN, "reading the open stretch");
 });
@@ -143,12 +162,11 @@ test("reconnects after its connection is killed and keeps delivering", async () 
   const received: string[] = [];
   const unsubscribe = live.subscribe((payload) => received.push(payload));
   await deliver('{"solar_power":4.0}', received);
-  const { rowCount } = await owner.query("SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE query LIKE 'LISTEN %'");
-  expect(rowCount).toBe(1);
-  await deliver('{"solar_power":4.2}', received, 15_000);
+  await killListener();
+  await deliver('{"solar_power":4.2}', received);
   expect(live.latest()).toBe('{"solar_power":4.2}');
   unsubscribe();
-}, 20_000);
+});
 
 test("updated totals reach subscribers by their own name, and aren't the latest status", async () => {
   const live: string[] = [];
@@ -162,7 +180,6 @@ test("updated totals reach subscribers by their own name, and aren't the latest 
 });
 
 test("reconnects after a minute without a live status, as a dead connection never reports itself", async () => {
-  const listener = async () => (await owner.query("SELECT pid FROM pg_stat_activity WHERE query LIKE 'LISTEN %'")).rows[0]?.pid;
   const received: string[] = [];
   const unsubscribe = liveModule().subscribe((payload) => received.push(payload));
   const before = await listener();
@@ -190,8 +207,7 @@ test("after a reconnect the open stretch is read again and sent on, as a change 
   const unsubscribe = live.subscribe((payload, channel) => (channel === "site_state_updated" ? received : statuses).push(payload));
   // Connected first, so the reconnect below is one.
   await deliver('{"solar_power":6.0}', statuses);
-  const { rowCount } = await owner.query("SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE query LIKE 'LISTEN %' AND datname = current_database()");
-  expect(rowCount).toBe(1);
-  await until(() => received.includes(OPEN), "the stretch after the reconnect", 15_000);
+  await killListener();
+  await until(() => received.includes(OPEN), "the stretch after the reconnect");
   unsubscribe();
-}, 20_000);
+});

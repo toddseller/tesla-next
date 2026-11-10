@@ -1,7 +1,7 @@
 // dayCharging (car-charging design): the day's charging per 5 minutes, and which intervals the Wall Connector named
 // a car for by measurement rather than by a session's power.
 import type { Client } from "pg";
-import { afterAll, beforeAll, expect, test } from "vitest";
+import { afterAll, beforeAll, expect, test, vi } from "vitest";
 
 import { ownDatabase } from "@/test/true-up";
 
@@ -28,7 +28,10 @@ beforeAll(async () => {
   await owner.query("INSERT INTO charge_session VALUES ($1, 300, 635)", [new Date(at(14, 23, 0))]);
 });
 
-afterAll(() => owner.end());
+afterAll(async () => {
+  await owner.end();
+  vi.unstubAllEnvs();
+});
 
 test("the day's charging, with measured cars named and session cars left to the replay", async () => {
   const { charging, measuredVins, vins, intervals } = await dayCharging("2026-10-14");

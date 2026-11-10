@@ -1,6 +1,6 @@
 // carCharging (car-charging spec): home charging over a range, by source and by measured car.
 import type { Client } from "pg";
-import { afterAll, beforeAll, expect, test } from "vitest";
+import { afterAll, beforeAll, expect, test, vi } from "vitest";
 
 import { ownDatabase } from "@/test/true-up";
 
@@ -42,7 +42,10 @@ beforeAll(async () => {
   for (let t = at(10, 1, 0); t < at(10, 2, 40); t += 300_000) await owner.query("INSERT INTO vehicle_interval VALUES ($1, 500, $2)", [new Date(t), R2D2]);
 });
 
-afterAll(() => owner.end());
+afterAll(async () => {
+  await owner.end();
+  vi.unstubAllEnvs();
+});
 
 test("the spec's Powerwall night: 10 kWh, 60% Powerwall and 40% grid, all of it R2D2's", async () => {
   expect(await carCharging("2026-10-10", "2026-10-10", TODAY)).toEqual({
