@@ -1,11 +1,13 @@
 #!/usr/bin/env bash
 # Deploys a version tag of tesla-next on the production server. The deploy key's authorized_keys entry
-# forces this script, so the only request it takes over SSH is "deploy <tag>". Ported from Myflix's.
+# forces this script, so the only requests it takes over SSH are "deploy <tag>" and "status <tag>". Ported from Myflix's.
 set -euo pipefail
 
 TAG_FORMAT='^v[0-9]+(\.[0-9]+)*$'
 # Compose names the image after the folder (tesla-next) and the service (next).
 IMAGE=tesla-next-next
+# Outside the checkout, so a deploy's own record never makes it dirty.
+STATE="$HOME/.local/state/tesla-next-deploy"
 
 refuse() {
   echo "deploy: $1" >&2
@@ -20,8 +22,14 @@ main() {
   else
     verb="${1:-}" tag="${2:-}" extra="${3:-}"
   fi
-  [[ "$verb" == deploy && -z "$extra" ]] || refuse 'usage: deploy <tag>' 2
+  [[ ("$verb" == deploy || "$verb" == status) && -z "$extra" ]] || refuse 'usage: deploy <tag> | status <tag>' 2
   [[ "$tag" =~ $TAG_FORMAT ]] || refuse "not a version tag: $tag" 2
+  if [[ "$verb" == status ]]; then
+    status "$tag"
+    return 0
+  fi
+
+  keep "$tag"
 
   cd "$(dirname "${BASH_SOURCE[0]}")/.."
   # .env is untracked, so only edits to tracked files stop a deploy.
@@ -66,6 +74,37 @@ main() {
     if ((attempt < tries)); then sleep "$interval"; fi
   done
   refuse "$url answered ${code:-nothing} after $tries tries"
+}
+
+# The deploy's output goes to its log as well as the session, and its exit status to <tag>.result when it ends, so the
+# workflow can still learn the outcome after Cloudflare drops its connection: the session's far end stays open on this
+# side, so the deploy runs on.
+keep() {
+  mkdir -p "$STATE"
+  rm -f "$STATE/$1.result"
+  : > "$STATE/$1.log"
+  KEPT_TAG="$1"
+  trap 'echo "$?" > "$STATE/$KEPT_TAG.result"' EXIT
+  # Should the session's pipe close after all, tee gets a write error and keeps writing the log, instead of dying.
+  trap '' PIPE
+  exec > >(tee -a "$STATE/$1.log") 2> >(tee -a "$STATE/$1.log" >&2)
+}
+
+# Reads what keep() recorded, and nothing else, so it is safe to ask while a deploy runs.
+status() {
+  local log="$STATE/$1.log" result="$STATE/$1.result"
+  if [[ ! -f "$log" ]]; then
+    echo unknown
+    return
+  fi
+  if [[ ! -f "$result" ]]; then
+    echo running
+  elif [[ "$(cat "$result")" == 0 ]]; then
+    echo succeeded
+  else
+    echo "failed $(cat "$result")"
+  fi
+  cat "$log"
 }
 
 trim() {

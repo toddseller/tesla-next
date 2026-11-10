@@ -74,8 +74,10 @@ The `Deploy` workflow then:
 flowchart LR
   R[Release tag v*] --> G{On main, and its<br/>test check passed?}
   G -- no --> F[Fail, server untouched]
-  G -- yes --> S[SSH through Cloudflare Access<br/>ssh-deploy.teslasolar.report]
+  G -- yes --> S[deploy/release: SSH through Cloudflare Access<br/>ssh-deploy.teslasolar.report]
   S --> D[bin/deploy on onyx]
+  S -. connection lost .-> Q[Ask the server for the tag's status<br/>every 10 s, up to 10 minutes]
+  Q -.-> R2[Run passes or fails as the deploy did,<br/>or fails if it hasn't ended]
   D --> M[Fast-forward ~/tesla-next to the tag]
   M --> P[Keep the running image<br/>as tesla-next-next:previous]
   P --> B[Rebuild: audit, tests, build,<br/>then replace the container]
@@ -88,7 +90,9 @@ flowchart LR
 - It waits for a `test` check still running, for about 15 minutes.
 - Only one deploy runs at a time; another waits for it.
 - Each deploy reruns the dependency audit against that day's advisories, so a release that passed its `test` check can still fail on an advisory published since.
-- The deploy key can only run `bin/deploy`, and `bin/deploy` only moves the server forward to a tag on `main`. It refuses a malformed request, a dirty checkout, a moved tag and a tag behind the server.
+- The deploy key can only run `bin/deploy`, which takes two requests: `deploy <tag>` and `status <tag>`. A deploy only moves the server forward to a tag on `main`; it refuses a malformed request, a dirty checkout, a moved tag and a tag behind the server.
+- `bin/deploy` keeps each tag's log and, once it ends, its exit status in `~/.local/state/tesla-next-deploy/` on onyx (`<tag>.log`, `<tag>.result`). `status <tag>` answers `running`, `succeeded`, `failed <status>` or `unknown`, then the log, and changes nothing.
+- Cloudflare sometimes closes the workflow's SSH session mid-deploy while the server carries on. `deploy/release` then asks for the tag's status instead of failing the run, and passes or fails with the deploy's own result and log.
 - A failed run can be retried with "Re-run jobs": deploying the tag the server is already on rebuilds and checks it again.
 - A deploy runs the `bin/deploy` the server had before it, so a release that changes `bin/deploy` and depends on the change is deployed twice.
 

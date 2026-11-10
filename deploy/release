@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+# The Deploy workflow's side of a deploy: asks the server to deploy a tag through the tunnel and passes on the result.
+# Cloudflare can drop the session while the server goes on deploying, so when ssh itself fails (255; bin/deploy never
+# exits 255) it asks the server how that tag's deploy ended, rather than reporting the dropped connection as a failure.
+set -uo pipefail
+
+tag="${1:?usage: deploy/release <tag>}"
+interval="${DEPLOY_STATUS_INTERVAL:-10}"
+tries="${DEPLOY_STATUS_TRIES:-60}"
+
+remote() {
+  ssh -i "$HOME/.ssh/deploy_key" -o IdentitiesOnly=yes -o BatchMode=yes \
+    -o StrictHostKeyChecking=yes -o UserKnownHostsFile="$HOME/.ssh/known_hosts" \
+    -o ProxyCommand='cloudflared access ssh --hostname %h' \
+    "$DEPLOY_SSH_TARGET" "$1"
+}
+
+remote "deploy $tag"
+code=$?
+[[ "$code" == 255 ]] || exit "$code"
+
+echo "::warning::lost the connection to the server; waiting for the deploy of $tag to finish"
+for ((attempt = 1; attempt <= tries; attempt++)); do
+  sleep "$interval"
+  # A poll that can't connect, or an answer from a server that doesn't know "status" yet, just waits for the next.
+  answer="$(remote "status $tag")" || continue
+  first="${answer%%$'\n'*}"
+  case "$first" in
+    succeeded | "failed "[0-9]*)
+      echo "The deploy's log on the server:"
+      printf '%s\n' "${answer#*$'\n'}"
+      [[ "$first" == succeeded ]] && exit 0
+      exit "${first#failed }"
+      ;;
+  esac
+done
+echo "::error::the deploy of $tag didn't finish in time: not ended after $((tries * interval)) seconds"
+exit 1
