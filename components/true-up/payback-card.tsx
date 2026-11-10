@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { duration } from "@/lib/backup-figures";
 import type { Payback } from "@/lib/true-up/payback";
 
 // The timeline runs from PTO through the end of the Powerwalls' 10-year warranty, or a later year it has to show, with a
@@ -109,7 +110,7 @@ export function PaybackCard({ payback, today }: { payback: Payback; today: strin
         </p>
         {powerwalls.wont && (
           <Link href="/impact?backup=all" className="text-[13px] text-muted-foreground hover:text-foreground">
-            {`What they did instead: ${outages.count} outages, ${outages.hours} h off the grid${outages.longest_hours !== null ? `, the longest ${outages.longest_hours} h` : ""}`}
+            {`What they did instead: ${outages.count} outages, ${duration(outages.seconds)} off the grid${outages.longest_seconds !== null ? `, the longest ${duration(outages.longest_seconds)}` : ""}`}
           </Link>
         )}
       </div>

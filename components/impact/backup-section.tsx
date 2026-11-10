@@ -5,7 +5,7 @@ import { Fragment, type ReactNode } from "react";
 
 import { PresetGroup } from "@/components/solar/range-controls";
 import type { BackupHistory, BackupKind } from "@/lib/backup";
-import { stormDays } from "@/lib/backup-figures";
+import { duration, stormDays } from "@/lib/backup-figures";
 import { backupPresets } from "@/lib/backup-years";
 import { siteToday, TIME_ZONE } from "@/lib/scene/replay";
 import { address, monthOf, type Range } from "@/lib/solar/ranges";
@@ -22,14 +22,6 @@ const dayLink = (start: string) => {
   const day = siteToday(Date.parse(start));
   return address(monthOf(day), day);
 };
-
-export function duration(seconds: number) {
-  const s = Math.floor(seconds);
-  if (s < 60) return `${s} s`;
-  if (s < 3600) return `${Math.floor(s / 60)} m ${s % 60} s`;
-  if (s < 86400) return `${Math.floor(s / 3600)} h ${Math.floor((s % 3600) / 60)} m`;
-  return `${Math.floor(s / 86400)} d ${Math.floor((s % 86400) / 3600)} h`;
-}
 
 function Tile({ label, value, children }: { label: string; value: string; children?: ReactNode }) {
   return (

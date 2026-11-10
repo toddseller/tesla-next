@@ -47,7 +47,7 @@ test("with one, only years and markers leave: solar, solar for the whole system,
   expect(answer.solar).toMatchObject({ estimated: true });
   expect(answer.system).toMatchObject({ estimated: true });
   expect(answer.powerwalls).toEqual({ year: null, wont: true });
-  expect(answer.outages).toEqual({ count: 0, hours: 0, longest_hours: null });
+  expect(answer.outages).toEqual({ count: 0, seconds: 0, longest_seconds: null });
   for (const part of [answer.solar, answer.system]) expect(Object.keys(part).sort()).toEqual(["estimated", "projected", "year"]);
   // No cost, net cost or amount left: the placeholder costs' figures never appear in the answer.
   expect(JSON.stringify(answer)).not.toMatch(/25000|20000|3000|19733|15786/);

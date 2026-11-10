@@ -80,7 +80,7 @@ test("the Payback card is served with the page when there are payback years, for
   at("2026-11-08T20:00:00Z");
   mocks.payback.mockResolvedValue({
     solar: { year: 2025, projected: false, estimated: true }, system: { year: 2030, projected: true, estimated: true },
-    powerwalls: { year: null, wont: true }, outages: { count: 35, hours: 156.9, longest_hours: 52.3 },
+    powerwalls: { year: null, wont: true }, outages: { count: 35, seconds: 564_840, longest_seconds: 188_172 },
   });
   expect(await served({ start: "2022-10-01", end: "2023-09-30" })).toContain("Solar paid for itself in 2025");
   mocks.payback.mockResolvedValue(null);

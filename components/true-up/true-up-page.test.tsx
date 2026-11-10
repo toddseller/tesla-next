@@ -46,7 +46,7 @@ const page = (range = THIS_YEAR, cycles = CURRENT, cost = CURRENT_COST, savings:
   <TrueUpPage range={range} years={YEARS} cycles={cycles} cost={cost} savings={savings} payback={payback} today="2026-11-08" />;
 const PAYBACK: Payback = {
   solar: { year: 2025, projected: false, estimated: true }, system: { year: 2030, projected: true, estimated: true },
-  powerwalls: { year: null, wont: true }, outages: { count: 35, hours: 156.9, longest_hours: 52.3 },
+  powerwalls: { year: null, wont: true }, outages: { count: 35, seconds: 564_840, longest_seconds: 188_172 },
 };
 const RELOADS = (range: { start: string; end: string }) =>
   ["cycles", "true-up-cost", "true-up-savings"].map((route) => `/api/${route}?start_date=${range.start}&end_date=${range.end}`);
