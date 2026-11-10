@@ -62,3 +62,14 @@ That a warmed day or year isn't worked out again is the existing cache tests' jo
 ## Migration Plan
 
 Ship as a normal release. After the deploy, wait for `caches warmed in` in `docker logs`, then time the Impact page with All time and the True-Up page, and record both and the warm-up time in this design. Rollback is the previous release; nothing persists.
+
+## Rollout
+
+Released as v2026.11.10.0 on 2026-11-10. The container logged `caches warmed in 3.6s` at boot and no `cache warm-up failed:` line, so both warm-ups ran, the payback one with the real costs file. Once it had logged, the pages on teslasolar.report took, over three loads each:
+
+| Page | First load | Next two |
+|---|---|---|
+| Impact, All time | 0.24s | 0.17s, 0.21s |
+| True-Up | 0.44s | 0.41s, 0.38s |
+
+The 3.6s is about what the first All time visit used to wait through after each deploy; it now lands on the warm-up instead.
