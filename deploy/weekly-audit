@@ -1,6 +1,7 @@
 #!/bin/sh
 # Rerun the dependency audit and tests a deploy's build runs, without deploying, and send a
-# Pushover alert when they fail, so an advisory published between deploys is still caught.
+# Pushover alert when they fail, so an advisory published between deploys is still caught. Then ask
+# the running site for its checks (system-checks spec) and alert on any that fail.
 # Run weekly by deploy/tesla-next-weekly-audit.timer on the server; see README.md, Weekly audit.
 set -u
 APP=$(cd "$(dirname "$0")/.." && pwd)
@@ -22,6 +23,25 @@ else
   failed=1
 fi
 cat "$WORK/out" >> "$LOG"
+
+echo "== checks ($(date))" >> "$LOG"
+# Only the running container can read the database; onyx has no jq, so the checks answer plain ok/FAIL lines.
+if docker compose --project-directory "$APP" exec -T next wget -qO- http://127.0.0.1:3000/api/checks > "$WORK/checks" 2>&1; then
+  cat "$WORK/checks" >> "$LOG"
+  if grep '^FAIL' "$WORK/checks" > "$WORK/failing"; then
+    echo "checks: FAILED"
+    "$APP/deploy/pushover" "Weekly checks failed: tesla-next" "$WORK/failing"
+    failed=1
+  else
+    echo "checks: passed"
+  fi
+else
+  echo "The running site didn't answer /api/checks." >> "$WORK/checks"
+  cat "$WORK/checks" >> "$LOG"
+  echo "checks: couldn't run"
+  "$APP/deploy/pushover" "Weekly checks couldn't run: tesla-next" "$WORK/checks"
+  failed=1
+fi
 
 # The same trim as bin/deploy, so weekly builds don't grow the cache between deploys.
 docker image prune -f > /dev/null
