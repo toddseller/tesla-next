@@ -72,3 +72,5 @@ Release as usual. The next release then runs the new `bin/deploy`; check on onyx
 ## Rollout
 
 Released as v2026.11.10.4 on 2026-11-10. Its run passed, connected throughout (no warning), with the server's previous `bin/deploy`: "Deploying v2026.11.10.4: e8a62be -> 564c578" and teslasolar.report answering 200. Afterwards onyx's checkout held the new `bin/deploy`, whose `status v2026.11.10.4` answered `unknown` (exit 0), since the old script ran that deploy and kept nothing. The next release is the first to keep its log and outcome.
+
+v2026.11.10.5 (forecast-sky), 2026-11-10, was the first release the new `bin/deploy` ran. Its run stayed connected and passed. On onyx, `~/.local/state/tesla-next-deploy/v2026.11.10.5.result` held 0, and `SSH_ORIGINAL_COMMAND="status v2026.11.10.5" bin/deploy` answered `succeeded` (exit 0) followed by the 370-line log, from "Deploying v2026.11.10.5: 564c578 -> fb1a1ec" to the disk check.

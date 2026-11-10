@@ -22,7 +22,7 @@
 ## 5. Rollout
 
 - [x] 5.1 With the owner's go-ahead, release; the run passes (its `bin/deploy` is still the old one)
-- [ ] 5.2 With the owner's go-ahead, the next release runs the new `bin/deploy`: check on onyx that its `<tag>.result` is 0 and that `status <tag>` answers `succeeded` with the log; record both in design.md under Rollout
+- [x] 5.2 With the owner's go-ahead, the next release runs the new `bin/deploy`: check on onyx that its `<tag>.result` is 0 and that `status <tag>` answers `succeeded` with the log; record both in design.md under Rollout
 
 ## Workflow follow-up
 
