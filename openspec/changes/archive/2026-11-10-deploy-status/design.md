@@ -68,3 +68,7 @@ The first release with this change deploys with the old `bin/deploy`, which has 
 ## Migration Plan
 
 Release as usual. The next release then runs the new `bin/deploy`; check on onyx that `~/.local/state/tesla-next-deploy/<tag>.result` holds 0 and that the forced key answers `status <tag>` (from the Mac, through the tunnel with the deploy key, or by running `SSH_ORIGINAL_COMMAND="status <tag>" bin/deploy` on onyx). Record it in this design. Rollback is the previous release.
+
+## Rollout
+
+Released as v2026.11.10.4 on 2026-11-10. Its run passed, connected throughout (no warning), with the server's previous `bin/deploy`: "Deploying v2026.11.10.4: e8a62be -> 564c578" and teslasolar.report answering 200. Afterwards onyx's checkout held the new `bin/deploy`, whose `status v2026.11.10.4` answered `unknown` (exit 0), since the old script ran that deploy and kept nothing. The next release is the first to keep its log and outcome.
