@@ -1,4 +1,5 @@
 import { SolarPage } from "@/components/solar/solar-page";
+import { forecast, forecastCard } from "@/lib/forecast";
 import { dayIntervals } from "@/lib/intervals/intervals";
 import { latest } from "@/lib/live";
 import { rangeTotals } from "@/lib/range";
@@ -12,7 +13,8 @@ export default async function Page({ searchParams }: { searchParams: Promise<Rec
   const range = parseRange(params, monthOf(today));
   const day = parseDay(params.day);
   if (!day) {
-    return <SolarPage range={range} items={await rangeTotals(range.start, range.end)} today={today} initialStatus={latest()} />;
+    const [items, stored] = await Promise.all([rangeTotals(range.start, range.end), forecast(today)]);
+    return <SolarPage range={range} items={items} today={today} initialStatus={latest()} forecast={forecastCard(stored, today, Date.now())} />;
   }
   const strip = stripRange(range, day, today);
   const [data, items] = await Promise.all([dayIntervals(day), rangeTotals(strip.start, strip.end)]);

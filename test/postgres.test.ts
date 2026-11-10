@@ -17,6 +17,6 @@ test("tests get the production tables the intervals read uses", async () => {
   const { rows } = await client.query("SELECT tablename FROM pg_tables WHERE schemaname = 'public' ORDER BY tablename");
   await client.end();
   expect(rows.map((row) => row.tablename)).toEqual(
-    expect.arrayContaining(["battery_sample", "charge_session", "energy_interval", "vehicle", "vehicle_interval", "weather_sample"]),
+    expect.arrayContaining(["battery_sample", "charge_session", "energy_interval", "solar_forecast", "vehicle", "vehicle_interval", "weather_sample"]),
   );
 });

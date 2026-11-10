@@ -75,3 +75,9 @@ A throwaway build of the branch on onyx (2026-11-10; its image's 1,405 tests pas
 ## Migration Plan
 
 A normal release. After the deploy: open `/patterns` on teslasolar.report at 1280 and 375 pixels against the D boards, check `/health` answers a permanent redirect to `/patterns`, and that the top bar still fits one line at 1512 pixels; record it in this design. Rollback is the previous release, which serves `/health` again.
+
+## Rollout
+
+Released as v2026.11.10.2 on 2026-11-10. The Deploy workflow failed, but the deploy did not: the runner's SSH session through Cloudflare was closed at 15:36:08 UTC, right after the image's tests passed and `next build` compiled, with no disconnect logged by onyx's sshd. `bin/deploy` ran on without its client, built the image at 15:36:17 and replaced the container at 15:36:28, so the workflow never saw the end or its health check. Re-running the run (attempt 2) redeployed the same tag at 15:41:50 and passed, health check included.
+
+On teslasolar.report after it: `/patterns` answered in about 0.83s compressed, as a browser asks for it (15 KB; 340 KB and 1.1 to 1.2s uncompressed, the heatmap's 576 cells being most of it), and rendered in about 0.64s inside the container, as on the branch run, with the figures the onyx branch run showed (September 2026 at 1 AM 6.2 kW, September 2025 at 1 PM 3.7 kW, November so far 864 W); `/health` answered 308 to `/patterns`; the page matched the D boards at 1280 and 375 pixels, and the top bar held the name, six links and the live status (LIVE 7:37 AM, PW 99% · CHARGING) on one line at 1512 pixels.

@@ -4,12 +4,13 @@
 --
 --   pg_dump --schema-only --no-owner --no-privileges -t energy_interval -t battery_sample -t vehicle_interval \
 --     -t charge_session -t weather_sample -t vehicle -t data -t meter_day -t meter_read -t rate_revision \
---     -t nsc_rate -t true_up_statement -t true_up_statement_cycle -t vpp_payout -t grid_outage -t site_state \
+--     -t nsc_rate -t true_up_statement -t true_up_statement_cycle -t vpp_payout -t grid_outage -t site_state -t solar_forecast \
 --     "$DATABASE_URL"
 --
 -- run as anton's backup job runs pg_dump (deploy/backup-database there), then drop pg_dump's \restrict and
 -- \unrestrict lines. Dumped 2026-11-08, at anton-tesla-api-ws 86714a1; grid_outage and site_state written by hand from
--- anton's models (api/models/grid.py, ae61e56), as its init_db creates them, until the next dump.
+-- anton's models (api/models/grid.py, ae61e56), as its init_db creates them; solar_forecast copied from production's columns
+-- (`\d solar_forecast`, 2026-11-10, store-solar-forecast), until the next dump.
 --
 -- PostgreSQL database dump
 --
@@ -496,6 +497,21 @@ CREATE TABLE public.site_state (
 
 ALTER TABLE ONLY public.site_state
     ADD CONSTRAINT site_state_pkey PRIMARY KEY (start_at);
+
+
+--
+-- Name: solar_forecast; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.solar_forecast (
+    day date NOT NULL,
+    radiation_mj real NOT NULL,
+    weather_code smallint NOT NULL,
+    fetched_at timestamp with time zone NOT NULL
+);
+
+ALTER TABLE ONLY public.solar_forecast
+    ADD CONSTRAINT solar_forecast_pkey PRIMARY KEY (day);
 
 
 --
