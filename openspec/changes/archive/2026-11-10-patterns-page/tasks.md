@@ -26,8 +26,8 @@
 
 ## 5. Rollout
 
-- [ ] 5.1 With the owner's go-ahead, release; the deploy's health check passes
-- [ ] 5.2 On teslasolar.report: `/patterns` at 1280 and 375 pixels, `/health` redirecting, the top bar on one line at 1512 pixels; record in design.md under Rollout
+- [x] 5.1 With the owner's go-ahead, release; the deploy's health check passes
+- [x] 5.2 On teslasolar.report: `/patterns` at 1280 and 375 pixels, `/health` redirecting, the top bar on one line at 1512 pixels; record in design.md under Rollout
 
 ## Workflow follow-up
 
