@@ -27,8 +27,8 @@
 
 ## 6. Rollout
 
-- [ ] 6.1 With the owner's go-ahead, release; the run passes
-- [ ] 6.2 On teslasolar.report: a span's totals on a past day against its intervals; record in design.md under Rollout
+- [x] 6.1 With the owner's go-ahead, release; the run passes
+- [x] 6.2 On teslasolar.report: a span's totals on a past day against its intervals; record in design.md under Rollout
 
 ## Workflow follow-up
 
