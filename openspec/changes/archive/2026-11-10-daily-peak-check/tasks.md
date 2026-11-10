@@ -20,8 +20,8 @@
 
 ## 4. Rollout
 
-- [ ] 4.1 With the owner's go-ahead, release; the deploy's health check passes
-- [ ] 4.2 On onyx: copy the daily units to `~/.config/systemd/user/`, `daemon-reload`, `enable --now tesla-next-daily-check.timer`; `list-timers` shows it due at 07:00; `systemctl --user start tesla-next-daily-check` prints an `ok solar peak` line and sends nothing; `start tesla-next-weekly-audit`'s checks still run through `deploy/checks`; record in design.md under Rollout
+- [x] 4.1 With the owner's go-ahead, release; the deploy's health check passes
+- [x] 4.2 On onyx: copy the daily units to `~/.config/systemd/user/`, `daemon-reload`, `enable --now tesla-next-daily-check.timer`; `list-timers` shows it due at 07:00; `systemctl --user start tesla-next-daily-check` prints an `ok solar peak` line and sends nothing; `start tesla-next-weekly-audit`'s checks still run through `deploy/checks`; record in design.md under Rollout
 
 ## Workflow follow-up
 
