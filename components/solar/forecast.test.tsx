@@ -9,7 +9,7 @@ import type { ForecastCard as Card } from "@/lib/forecast";
 afterEach(cleanup);
 
 const CARD: Card = {
-  today: { day: "2026-11-10", soFar: 9.6, expected: 31, code: 0 },
+  today: { day: "2026-11-10", soFar: 9.6, expected: 31, code: 0, sky: "forecast" },
   days: [
     { day: "2026-11-11", expected: 33, code: 0 },
     { day: "2026-11-12", expected: 14, code: 45 },
@@ -32,7 +32,7 @@ test("today's expected kWh, its kWh so far as a bar against it, and its sky", ()
 });
 
 test("past the expected kWh today's bar is full", () => {
-  render(<ForecastCard card={{ ...CARD, today: { day: "2026-11-10", soFar: 34.2, expected: 31, code: 0 } }} />);
+  render(<ForecastCard card={{ ...CARD, today: { ...CARD.today, soFar: 34.2 } }} />);
   expect(fill(today().getByRole("img", { name: "34.2 of about 31 kWh so far" }))).toBe("100%");
 });
 
@@ -58,7 +58,7 @@ test("an old forecast says when it is from; a fresh one shows no time", () => {
 });
 
 test("without a forecast the days give way to a message and today shows only its kWh so far", () => {
-  render(<ForecastCard card={{ ...CARD, today: { day: "2026-11-10", soFar: 9.6, expected: null, code: 45 }, days: null }} />);
+  render(<ForecastCard card={{ ...CARD, today: { ...CARD.today, expected: null, code: 45 }, days: null }} />);
   expect(card().getByText("No forecast right now")).toBeTruthy();
   expect(card().queryByRole("list")).toBeNull();
   expect(card().getByRole("group", { name: "Today" }).textContent).toContain("9.6 kWh so far");
@@ -69,4 +69,11 @@ test("without a forecast the days give way to a message and today shows only its
 test("the days are named from the date the card was worked out for", () => {
   render(<ForecastCard card={{ ...CARD, today: { ...CARD.today, day: "2026-11-11" }, days: [{ day: "2026-11-12", expected: 14, code: 45 }] }} />);
   expect(within(card().getByRole("list", { name: "The next three days" })).getByRole("listitem").textContent).toContain("Tomorrow");
+});
+
+test("today's tile shows the sky now while the days ahead keep the forecast's wording", () => {
+  render(<ForecastCard card={{ ...CARD, today: { ...CARD.today, code: 45, sky: "now" } }} />);
+  expect(today().getByText("Fog now")).toBeTruthy();
+  const thursday = within(within(card().getByRole("list", { name: "The next three days" })).getAllByRole("listitem")[1]);
+  expect(thursday.getAllByText("Fog likely").length).toBeGreaterThan(0);
 });

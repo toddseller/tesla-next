@@ -1,5 +1,5 @@
 import { skyOf } from "@/components/solar/sky";
-import type { ForecastCard as Card } from "@/lib/forecast";
+import type { ForecastCard as Card, SkyWhen } from "@/lib/forecast";
 import { shiftDay, TIME_ZONE } from "@/lib/scene/replay";
 
 const clock = new Intl.DateTimeFormat("en-US", { hour: "numeric", minute: "2-digit", timeZone: TIME_ZONE });
@@ -15,8 +15,8 @@ function Bar({ label, part, whole }: { label: string; part: number; whole: numbe
   );
 }
 
-function Sky({ code, className = "" }: { code: number; className?: string }) {
-  const { label, icon: Icon } = skyOf(code);
+function Sky({ code, when, className = "" }: { code: number; when?: SkyWhen; className?: string }) {
+  const { label, icon: Icon } = skyOf(code, when);
   return (
     <span className={`items-center gap-1.5 text-[13px] text-muted-foreground ${className}`}>
       <Icon aria-hidden className="size-4 text-solar" />
@@ -31,7 +31,7 @@ function Today({ today }: { today: Card["today"] }) {
     <div role="group" aria-label="Today" className="flex flex-col gap-2.5 rounded-lg bg-secondary p-3.5 outline outline-1 -outline-offset-1 outline-solar sm:p-4">
       <div className="flex items-baseline justify-between gap-2">
         <span className="text-sm font-medium">Today</span>
-        {today.code !== null && <Sky code={today.code} className="flex" />}
+        {today.code !== null && <Sky code={today.code} when={today.sky} className="flex" />}
       </div>
       {today.expected !== null && (
         <>

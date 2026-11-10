@@ -11,8 +11,10 @@ const TODAY = "2026-11-10";
 const FETCHED = new Date("2026-11-10T17:20:00Z");
 
 const solar = (date: string, kwh: number) => owner.query("INSERT INTO data (date, solar_generated) VALUES ($1, $2)", [date, kwh]);
-const forecastFor = (day: string, mj: number, code = 0) =>
-  owner.query("INSERT INTO solar_forecast VALUES ($1, $2, $3, $4)", [day, mj, code, FETCHED]);
+const forecastFor = (day: string, mj: number, code = 0, daylight: number | null = null) =>
+  owner.query("INSERT INTO solar_forecast VALUES ($1, $2, $3, $4, $5)", [day, mj, code, FETCHED, daylight]);
+const reading = (at: string, code: number) =>
+  owner.query("INSERT INTO weather_sample (sampled_at, weather_code, cloud_cover) VALUES ($1, $2, 0)", [at, code]);
 
 beforeAll(async () => {
   owner = await ownDatabase("tsr_forecast");
@@ -30,10 +32,13 @@ beforeAll(async () => {
   // Today so far, and the forecast for today, the next three days and one more.
   await solar(TODAY, 9.6);
   await forecastFor("2026-11-10", 12.5, 45);
-  await forecastFor("2026-11-11", 13.25, 3);
+  // Fog only overnight: the daylight code stands in for the daily one.
+  await forecastFor("2026-11-11", 13.25, 45, 3);
   await forecastFor("2026-11-12", 9, 51);
   await forecastFor("2026-11-13", 5.25, 81);
   await forecastFor("2026-11-14", 14);
+  await reading("2026-11-10T17:30:00Z", 45);
+  await reading("2026-11-10T17:45:00Z", 0);
 });
 
 afterAll(async () => {
@@ -60,7 +65,14 @@ test("today's and the next three days' forecasts, and today's solar so far", asy
   expect(so_far).toBe(9.6);
 });
 
-test("with nothing stored there is no scale, no forecast and no solar so far", async () => {
-  await owner.query("DELETE FROM data; DELETE FROM solar_forecast");
-  expect(await forecast(TODAY)).toEqual({ scale: { solar_kwh: 0, radiation_mj: 0, days: 0, good_day: null }, rows: [], so_far: null });
+test("the sky now is the newest weather reading", async () => {
+  const { reading } = await forecast(TODAY);
+  expect(reading).toEqual({ code: 0, sampled_at: "2026-11-10T17:45:00.000Z" });
+});
+
+test("with nothing stored there is no scale, no forecast, no solar so far and no reading", async () => {
+  await owner.query("DELETE FROM data; DELETE FROM solar_forecast; DELETE FROM weather_sample");
+  expect(await forecast(TODAY)).toEqual({
+    scale: { solar_kwh: 0, radiation_mj: 0, days: 0, good_day: null }, rows: [], so_far: null, reading: null,
+  });
 });

@@ -121,7 +121,7 @@ test("a new range from the server replaces bars reloaded for the old one", async
   expect(solarOf(container, "Nov 7")).toBeNull();
 });
 
-const CARD: ForecastCard = { today: { day: "2026-11-07", soFar: 9.6, expected: 31, code: 0 }, days: [{ day: "2026-11-08", expected: 33, code: 0 }], goodDay: 37, staleSince: null };
+const CARD: ForecastCard = { today: { day: "2026-11-07", soFar: 9.6, expected: 31, code: 0, sky: "forecast" }, days: [{ day: "2026-11-08", expected: 33, code: 0 }], goodDay: 37, staleSince: null };
 const later = { ...CARD, today: { ...CARD.today, soFar: 12.4 } };
 const soFar = () => screen.getByRole("group", { name: "Today" }).textContent;
 

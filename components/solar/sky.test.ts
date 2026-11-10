@@ -1,5 +1,5 @@
-// A forecast day's sky from its WMO weather code (solar-forecast spec, "The sky").
-import { Cloud, CloudFog, CloudLightning, CloudRain, CloudSnow, CloudSun, Sun } from "lucide-react";
+// A day's sky from its WMO weather code, as forecast or as it is now (solar-forecast spec, "The sky").
+import { Cloud, CloudFog, CloudLightning, CloudMoon, CloudRain, CloudSnow, CloudSun, Moon, Sun } from "lucide-react";
 import { expect, test } from "vitest";
 
 import { skyOf } from "@/components/solar/sky";
@@ -14,4 +14,15 @@ test.each([
   [[95, 96, 99], "Thunderstorms", CloudLightning],
 ])("codes %j read %s", (codes, label, icon) => {
   for (const code of codes) expect(skyOf(code)).toEqual({ label, icon });
+});
+
+test.each([
+  [0, "now", "Sunny now", Sun],
+  [45, "now", "Fog now", CloudFog],
+  [3, "now", "Cloudy now", Cloud],
+  [0, "night", "Clear now", Moon],
+  [2, "night", "Partly cloudy now", CloudMoon],
+  [61, "night", "Rain now", CloudRain],
+] as const)("code %d %s reads %s", (code, when, label, icon) => {
+  expect(skyOf(code, when)).toEqual({ label, icon });
 });
