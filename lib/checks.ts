@@ -72,4 +72,42 @@ export async function outputCheck(today: string) {
     : `ok solar output: ${line}, against ${counted.length} past years' lowest of ${lowest.toFixed(1)} kWh`;
 }
 
+// From the 2021 to 2026 replay: it caught both microinverter faults (2025-08-28, 2026-04-13) and nothing else, and
+// judges 40 to 77% of days in every month. A fixed level judged no day from November to January.
+const BRIGHT_SHARE = 0.6;
+const CLEAR_PERCENTILE = 0.9;
+const CLEAR_SPAN_DAYS = 15;
+const PEAK_SHARE = 0.6;
+const MIN_BRIGHT_DAYS = 5;
+
+// A failing microinverter caps the peak, which a bright day shows at once and a total blurs with the weather.
+// Yesterday is judged: today's day isn't over.
+export async function peakCheck(today: string) {
+  const day = shiftDay(today, -1);
+  const { rows: [{ mj, clear, peak, usual, bright }] } = await db.query<{ mj: number | null; clear: number | null; peak: number | null; usual: number | null; bright: number }>(
+    // Each day's clear-day forecast is taken from every stored year, the distance in days of the year measured both
+    // ways round, so late December and early January share theirs.
+    `WITH sky AS (
+       SELECT d::date AS day, f.radiation_mj::float8 AS mj,
+         (SELECT percentile_disc($3) WITHIN GROUP (ORDER BY c.radiation_mj)::float8 FROM solar_forecast c
+          WHERE least(abs(extract(doy FROM c.day) - extract(doy FROM d)), 365 - abs(extract(doy FROM c.day) - extract(doy FROM d))) <= $4) AS clear,
+         (SELECT max(solar_generated_wh) * 12 FROM energy_interval e WHERE e.day = d::date) AS peak
+       FROM generate_series($1::date - 30, $1::date, interval '1 day') d LEFT JOIN solar_forecast f ON f.day = d::date)
+     SELECT y.mj, y.clear, y.peak, percentile_disc(0.5) WITHIN GROUP (ORDER BY b.peak) AS usual, count(b.peak)::int AS bright
+     FROM sky y LEFT JOIN sky b ON b.day < y.day AND b.peak IS NOT NULL AND b.mj >= $2 * b.clear
+     WHERE y.day = $1 GROUP BY y.mj, y.clear, y.peak`,
+    [day, BRIGHT_SHARE, CLEAR_PERCENTILE, CLEAR_SPAN_DAYS],
+  );
+  const label = datesLabel({ start: day, end: day }, "long");
+  // A lost day would otherwise pass every check unseen.
+  if (peak === null) return `FAIL solar peak: no solar was stored for ${label}`;
+  if (mj === null || clear === null) return `ok solar peak: ${label} has no forecast to judge it by`;
+  if (mj < BRIGHT_SHARE * clear) return `ok solar peak: ${label} was too dull to judge (${mj.toFixed(1)} MJ/m² forecast, ${percent(mj, clear)}% of a clear day's ${clear.toFixed(1)})`;
+  if (bright < MIN_BRIGHT_DAYS) return `ok solar peak: too few bright days before ${label} to judge it (${bright})`;
+  if (!usual) return `FAIL solar peak: no bright day in the 30 before ${label} made any solar`;
+  const kw = (watts: number) => (watts / 1000).toFixed(1);
+  const line = `${label}'s peak was ${percent(peak, usual!)}% of the usual bright-day peak (${kw(peak)} of ${kw(usual!)} kW)`;
+  return peak < usual! * PEAK_SHARE ? `FAIL solar peak: ${line}` : `ok solar peak: ${line}`;
+}
+
 export const allChecks = async (today: string) => Promise.all([meterCheck(), staleCheck(today), outputCheck(today)]);

@@ -1,0 +1,7 @@
+# Installed with deploy/tesla-next-daily-check.timer; see README.md, Weekly audit.
+[Unit]
+Description=Daily solar peak check of the tesla-next dashboard
+
+[Service]
+Type=oneshot
+ExecStart=%h/tesla-next/deploy/checks /api/checks/daily Daily
