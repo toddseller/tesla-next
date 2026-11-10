@@ -8,6 +8,8 @@ const dayIntervals = vi.hoisted(() => vi.fn());
 vi.mock("@/lib/intervals/intervals", () => ({ dayIntervals }));
 vi.mock("@/lib/live", () => ({ latest: () => JSON.stringify({ modified: "2026-11-07T19:47:00Z" }) }));
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn(), replace: vi.fn() }) }));
+const forecast = vi.hoisted(() => vi.fn());
+vi.mock("@/lib/forecast", async (original) => ({ ...(await original<typeof import("@/lib/forecast")>()), forecast }));
 
 const { default: Page } = await import("./page");
 
@@ -16,6 +18,14 @@ const served = async (searchParams: Record<string, string> = {}) => renderToStri
 beforeEach(() => {
   vi.useFakeTimers({ toFake: ["Date"] });
   vi.setSystemTime(Date.parse("2026-11-07T20:00:00Z"));
+  forecast.mockResolvedValue({
+    scale: { solar_kwh: 900, radiation_mj: 360, days: 30, good_day: 37 },
+    rows: [
+      { day: "2026-11-07", radiation_mj: 12.4, weather_code: 0, fetched_at: "2026-11-07T19:30:00Z" },
+      { day: "2026-11-08", radiation_mj: 13.2, weather_code: 45, fetched_at: "2026-11-07T19:30:00Z" },
+    ],
+    so_far: 9.6,
+  });
   rangeTotals.mockResolvedValue([
     { date: "Oct 13", day: "2026-10-13", solar: 41.0, grid: -1.2, house: 31.1 },
     { date: "Oct 14", day: "2026-10-14", solar: 44.4, grid: -8.3, house: 34.0 },
@@ -67,4 +77,16 @@ test("a day outside the range has its own month in the strip", async () => {
   dayIntervals.mockResolvedValue({ date: "2026-11-01", totals: {}, data: [], off_grid: [], storm_watch: [] });
   await Page({ searchParams: Promise.resolve({ start: "2026-10-01", end: "2026-10-31", day: "2026-11-01" }) });
   expect(rangeTotals).toHaveBeenCalledWith("2026-11-01", "2026-11-07");
+});
+
+test("the range view is served with the forecast card above its title; a day's view without it", async () => {
+  const html = await served();
+  expect(forecast).toHaveBeenCalledWith("2026-11-07");
+  expect(html).toContain("Solar forecast");
+  expect(html).toContain("kWh expected");
+  expect(html.indexOf("Solar forecast")).toBeLessThan(html.indexOf("Solar by date range"));
+  forecast.mockClear();
+  dayIntervals.mockResolvedValue({ date: "2026-10-14", vehicle_data: false, totals: { solar_to_home: 12.27 }, data: [], off_grid: [], storm_watch: [] });
+  expect(await served({ start: "2026-10-01", end: "2026-10-31", day: "2026-10-14" })).not.toContain("Solar forecast");
+  expect(forecast).not.toHaveBeenCalled();
 });

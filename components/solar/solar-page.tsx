@@ -4,11 +4,13 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { DayPanel } from "@/components/solar/day-panel";
+import { ForecastCard } from "@/components/solar/forecast";
 import type { Day } from "@/components/solar/day-view";
 import { RangeChart } from "@/components/solar/range-chart";
 import { RangeControls } from "@/components/solar/range-controls";
 import { useReload } from "@/components/solar/use-reload";
 import { useLiveStream } from "@/components/use-live-stream";
+import type { ForecastCard as Card } from "@/lib/forecast";
 import type { RangeItem } from "@/lib/range";
 import { siteToday } from "@/lib/scene/replay";
 import { address, datesLabel, isDaily, presets, type Range, rangeIncludes } from "@/lib/solar/ranges";
@@ -31,19 +33,23 @@ type Props = {
   today: string;
   initialStatus: string | null;
   day?: { data: Day; strip: { range: Range; items: RangeItem[] } } | null;
+  forecast?: Card | null;
 };
 
-export function SolarPage({ range, items, today, initialStatus, day }: Props) {
+export function SolarPage({ range, items, today, initialStatus, day, forecast }: Props) {
   const router = useRouter();
   const [modified, setModified] = useState(() => modifiedOf(initialStatus));
   const [bars, reloadBars] = useReload(address(range), items);
   const [shownDay, reloadDay] = useReload(day?.data.date ?? "", day?.data);
   const [strip, reloadStrip] = useReload(day ? address(day.strip.range) : "", day?.strip.items ?? []);
+  // Keyed like the bars, so a page the server renders anew shows its own figures over an earlier reload.
+  const [card, reloadCard] = useReload(`${address(range)}|${today}`, forecast ?? null);
 
   // Reloads only what the given date can change: the open day, the strip's days, or the range's bars.
   const reloadFor = (date: string) => {
     if (!day) {
       if (rangeIncludes(range, date)) void reloadBars(rangeUrl(range), rangeData);
+      if (forecast && date === siteToday()) void reloadCard("/api/forecast", (body: { data: Card }) => body.data);
       return;
     }
     if (date === day.data.date) void reloadDay(`/api/intervals?date=${date}`, (body: Day) => body);
@@ -65,6 +71,7 @@ export function SolarPage({ range, items, today, initialStatus, day }: Props) {
   }
   return (
     <div className="flex flex-col gap-5">
+      {card && <ForecastCard card={card} />}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-[22px] font-semibold">Solar by date range</h1>
         <RangeControls range={range} presets={presets(today)} onRange={(next) => router.push(address(next))} />
