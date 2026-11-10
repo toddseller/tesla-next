@@ -1,12 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { type PointerEvent, type ReactNode, useRef, useState } from "react";
 import { Area, AreaChart, CartesianGrid, ComposedChart, Line, ReferenceArea, ReferenceLine, XAxis, YAxis } from "recharts";
 
 import { AxisTick } from "@/components/solar/axis-tick";
 import { ChartContainer, ChartTooltip } from "@/components/ui/chart";
 import {
-  chargeLevel, clockTime, daySpans, FLOW_COLORS, hasBatteryHistory, type Interval, type OffGridSpan, outlines, type StormSpan,
+  chargeLevel, clockTime, daySpans, FLOW_COLORS, hasBatteryHistory, type Interval, type OffGridSpan, outlines, spanTotals, type StormSpan,
   TIME_TICKS, timeTick, unitOnTopTick, VIEW_ORDER, viewChart, VIEWS, viewSummary,
 } from "@/lib/solar/day-views";
 
@@ -32,6 +32,13 @@ const shading = (spans: Spans) =>
 // height as a floor and 70% of the window as a ceiling.
 const CHART_BOX = "relative w-full aspect-[4/3] min-h-[18rem] max-h-[70vh]";
 
+// The power chart's value axis, on its right; the plot is the rest of the chart's width.
+const AXIS_WIDTH = 56;
+const STEP = 5;
+
+// A span of the day in minutes: from its first step's start to its last step's end, so the whole day is 0 to 1440.
+type Span = { from: number; to: number };
+
 const timeAxis = (
   <XAxis dataKey="minute" type="number" domain={[0, 1440]} ticks={TIME_TICKS} tickFormatter={timeTick} tickLine={false} axisLine={false} />
 );
@@ -56,7 +63,7 @@ export function DayDetails({ active, label, payload }: {
   );
 }
 
-function PowerChart({ viewKey, day, spans }: { viewKey: string; day: Day; spans: Spans }) {
+function PowerChart({ viewKey, day, spans, span }: { viewKey: string; day: Day; spans: Spans; span: Span | null }) {
   const chart = viewChart(viewKey, day.data, { vehicleData: Boolean(day.vehicle_data) });
   const rows = outlines(chart);
   return (
@@ -66,8 +73,12 @@ function PowerChart({ viewKey, day, spans }: { viewKey: string; day: Day; spans:
         <CartesianGrid vertical={false} />
         {timeAxis}
         <YAxis orientation="right" domain={chart.domain} ticks={chart.ticks}
-          tick={<AxisTick label={chart.tickLabel} anchor="start" />} tickLine={false} axisLine={false} width={56} />
+          tick={<AxisTick label={chart.tickLabel} anchor="start" />} tickLine={false} axisLine={false} width={AXIS_WIDTH} />
         {shading(spans)}
+        {span && <ReferenceArea x1={span.from} x2={span.to} ifOverflow="hidden" stroke="none" fill="var(--color-foreground)" fillOpacity={0.07} />}
+        {span && [span.from, span.to].map((x) => (
+          <ReferenceLine key={x} x={x} stroke="var(--color-foreground)" strokeOpacity={0.6} strokeWidth={1.5} ifOverflow="hidden" />
+        ))}
         <ReferenceLine y={0} className="stroke-muted-foreground/40" />
         <ChartTooltip content={<DayDetails />} />
         {chart.series.map(({ key, label, color, stack }) => (
@@ -80,6 +91,84 @@ function PowerChart({ viewKey, day, spans }: { viewKey: string; day: Day; spans:
         ))}
       </ComposedChart>
     </ChartContainer>
+  );
+}
+
+// The step under a pointer, from where it is across the plot.
+function stepAt(event: PointerEvent<HTMLDivElement>) {
+  const { left, width } = event.currentTarget.getBoundingClientRect();
+  const plot = width - AXIS_WIDTH;
+  const minute = (Math.min(Math.max(event.clientX - left, 0), plot - 0.001) / plot) * 1440;
+  return Math.floor(minute / STEP) * STEP;
+}
+
+// Dragging across the chart selects the steps it covers. A finger drag only does while Select is on, since touching the
+// chart otherwise reads its values; a click, staying on one step, selects nothing.
+function SpanArea({ selecting, onSpan, onPicked, children }: {
+  selecting: boolean; onSpan: (span: Span) => void; onPicked: () => void; children: ReactNode;
+}) {
+  const start = useRef<number | null>(null);
+  const moved = useRef(false);
+  const takes = (event: PointerEvent<HTMLDivElement>) => (event.pointerType === "mouse" ? event.button === 0 : selecting);
+  const extend = (event: PointerEvent<HTMLDivElement>) => {
+    if (start.current === null) return;
+    const step = stepAt(event);
+    if (step === start.current) return;
+    moved.current = true;
+    onSpan({ from: Math.min(start.current, step), to: Math.max(start.current, step) + STEP });
+  };
+  return (
+    <div
+      data-testid="span-area"
+      className={selecting ? "touch-none" : undefined}
+      onPointerDown={(event) => {
+        if (!takes(event)) return;
+        start.current = stepAt(event);
+        moved.current = false;
+        event.currentTarget.setPointerCapture?.(event.pointerId);
+      }}
+      onPointerMove={extend}
+      onPointerUp={(event) => {
+        extend(event);
+        if (start.current !== null && moved.current) onPicked();
+        start.current = null;
+      }}
+      onPointerCancel={() => (start.current = null)}
+    >
+      {children}
+    </div>
+  );
+}
+
+const spanName = ({ from, to }: Span) => `${clockTime(from)} to ${clockTime(to % 1440)}`;
+// "4 PM to 12 AM", or "4:05 PM to …" off the hour: short enough for a headline or a column heading.
+const shortTime = (minute: number) => clockTime(minute % 1440).replace(":00 ", " ");
+const spanLabel = ({ from, to }: Span) => `${shortTime(from)} to ${shortTime(to)}`;
+// With a span, the day's figures show from 640 pixels and the span's alone below; both are in the page.
+const dayOnly = (span: Span | null) => (span ? "max-sm:hidden" : "");
+const kwhText = (kwh: number) => `${kwh.toFixed(1)} kWh`;
+const percentText = (percent: number | null) => (percent === null ? "–" : `${percent}%`);
+
+function SpanControls({ span, selecting, onSelecting, onClear }: {
+  span: Span | null; selecting: boolean; onSelecting: (on: boolean) => void; onClear: () => void;
+}) {
+  return (
+    <div className="flex flex-wrap items-center justify-between gap-2 max-sm:order-first">
+      {span ? (
+        <span className="flex items-center gap-2.5 rounded-full border border-input py-1 pr-1 pl-3 text-[13px]">
+          <span className="max-sm:hidden">Selected</span>
+          <strong className="font-semibold">{spanName(span)}</strong>
+          <button type="button" onClick={onClear} className="min-h-8 rounded-full bg-secondary px-3 hover:text-white">Clear</button>
+        </span>
+      ) : <span />}
+      <span className="text-xs text-muted-foreground pointer-coarse:hidden">
+        {span ? "Drag across the chart to pick another span" : "Drag across the chart to add up part of the day"}
+      </span>
+      <button type="button" aria-pressed={selecting} onClick={() => onSelecting(!selecting)}
+        className={`hidden min-h-11 items-center gap-1.5 rounded-lg border border-input px-3.5 text-[13px] pointer-coarse:flex ${selecting ? "bg-secondary text-white" : ""}`}>
+        Select
+      </button>
+    </div>
   );
 }
 
@@ -113,8 +202,14 @@ function ChargeLevel({ day, spans }: { day: Day; spans: Spans }) {
 
 export function DayView({ day }: { day: Day }) {
   const [viewKey, setViewKey] = useState("solar");
+  // Kept with its day, so a reload of the same day keeps it and another day's view starts without one.
+  const [picked, setPicked] = useState<(Span & { date: string }) | null>(null);
+  const [selecting, setSelecting] = useState(false);
+  const span = picked?.date === day.date ? picked : null;
+  const pick = (next: Span) => setPicked({ ...next, date: day.date });
   const vehicleData = Boolean(day.vehicle_data);
   const summary = viewSummary(viewKey, day.totals, { vehicleData });
+  const spanned = span && viewSummary(viewKey, spanTotals(day, span.from, span.to), { vehicleData });
   const color = FLOW_COLORS[viewKey as keyof typeof FLOW_COLORS];
   const spans = daySpans(day);
   return (
@@ -132,12 +227,23 @@ export function DayView({ day }: { day: Day }) {
       <div className="flex flex-col gap-6 xl:grid xl:grid-cols-[minmax(0,2fr)_minmax(16rem,1fr)] xl:items-start">
         <div data-testid="day-main" className="flex flex-col gap-4 rounded-[10px] border bg-card p-4 sm:p-6">
           <div className="flex flex-wrap gap-x-12 gap-y-2">
-            {summary.headlines.map((headline) => (
+            {summary.headlines.map((headline, i) => (
               <div key={headline.label}>
                 <p className="text-sm text-muted-foreground">{headline.label}</p>
-                <p className="font-mono text-4xl" style={{ color }}>
+                <p className={`font-mono text-4xl ${dayOnly(span)}`} style={{ color }}>
                   <span>{headline.value.toFixed(1)}</span> <span className="text-base text-muted-foreground">kWh</span>
                 </p>
+                {span && spanned && (
+                  <>
+                    <p className="font-mono text-4xl sm:hidden" style={{ color }}>
+                      <span>{spanned.headlines[i].value.toFixed(1)}</span> <span className="text-base text-muted-foreground">kWh</span>
+                    </p>
+                    <p className="flex items-center gap-1.5 text-[13px] text-muted-foreground max-sm:hidden">
+                      <span aria-hidden className="size-2.5 rounded-xs bg-foreground/55" />
+                      <span><span className="font-mono text-foreground">{kwhText(spanned.headlines[i].value)}</span> {spanLabel(span)}</span>
+                    </p>
+                  </>
+                )}
               </div>
             ))}
           </div>
@@ -146,12 +252,25 @@ export function DayView({ day }: { day: Day }) {
           ) : (
             // A fresh chart per set of flows: Recharts stacks areas in the order they were first drawn, so a flow the last
             // chart also had (another view's, or the same view's on a day without the car) would keep its old place.
-            <PowerChart key={`${viewKey}:${vehicleData}`} viewKey={viewKey} day={day} spans={spans} />
+            <>
+              <SpanControls span={span} selecting={selecting} onSelecting={setSelecting} onClear={() => setPicked(null)} />
+              <SpanArea selecting={selecting} onSpan={pick} onPicked={() => setSelecting(false)}>
+                <PowerChart key={`${viewKey}:${vehicleData}`} viewKey={viewKey} day={day} spans={spans} span={span} />
+              </SpanArea>
+            </>
           )}
           {summary.net && (
-            <p className="font-semibold" data-testid="net-grid-usage">
-              Net Grid Usage: {summary.net.value.toFixed(1)} kWh {summary.net.label}
-            </p>
+            <div data-testid="net-grid-usage" className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+              <p className={`font-semibold ${dayOnly(span)}`}>Net Grid Usage: {summary.net.value.toFixed(1)} kWh {summary.net.label}</p>
+              {span && spanned?.net && (
+                <>
+                  <p className="font-semibold sm:hidden">Net Grid Usage: {spanned.net.value.toFixed(1)} kWh {spanned.net.label}</p>
+                  <p className="text-[13px] text-muted-foreground max-sm:hidden">
+                    <span className="font-mono text-foreground">{kwhText(spanned.net.value)}</span> {spanned.net.label}, {spanLabel(span)}
+                  </p>
+                </>
+              )}
+            </div>
           )}
           {viewKey === "powerwall" && <ChargeLevel day={day} spans={spans} />}
           {spans.length > 0 && (
@@ -165,18 +284,34 @@ export function DayView({ day }: { day: Day }) {
           )}
         </div>
         <div data-testid="day-breakdowns" className="flex flex-col gap-6 rounded-[10px] border bg-card p-4 sm:p-6">
-          {summary.sections.map((section) => (
+          {span && <p className="-mb-3 text-xs text-muted-foreground sm:hidden">{spanName(span)}</p>}
+          {summary.sections.map((section, s) => (
             <div key={section.title}>
-              <h2 className="mb-3 text-[13px] font-medium tracking-[0.08em] text-muted-foreground uppercase">{section.title}</h2>
+              <div className="mb-3 flex items-baseline gap-2.5">
+                <h2 className="text-[13px] font-medium tracking-[0.08em] text-muted-foreground uppercase">{section.title}</h2>
+                {span && (
+                  <span className="ml-auto w-[5.5rem] text-right text-xs font-medium whitespace-nowrap max-sm:hidden">{spanLabel(span)}</span>
+                )}
+              </div>
               <ul className="flex flex-col gap-3">
-                {section.items.map((item) => (
-                  <li key={item.label} className="flex items-center gap-2.5 text-sm">
-                    <span className="size-2.5 rounded-full" style={{ background: item.color }} />
-                    {item.label}
-                    <span className="ml-auto font-mono">{item.kwh.toFixed(1)} kWh</span>
-                    <span className="w-11 text-right font-mono text-muted-foreground">{item.percent === null ? "–" : `${item.percent}%`}</span>
-                  </li>
-                ))}
+                {section.items.map((item, i) => {
+                  const spanItem = spanned?.sections[s].items[i];
+                  return (
+                    <li key={item.label} className="flex items-center gap-2.5 text-sm">
+                      <span className="size-2.5 rounded-full" style={{ background: item.color }} />
+                      {item.label}
+                      <span className={`ml-auto font-mono ${dayOnly(span)}`}>{kwhText(item.kwh)}</span>
+                      <span className={`w-11 text-right font-mono text-muted-foreground ${dayOnly(span)}`}>{percentText(item.percent)}</span>
+                      {spanItem && (
+                        <>
+                          <span className="w-[5.5rem] rounded-sm bg-foreground/5 text-right font-mono max-sm:hidden">{kwhText(spanItem.kwh)}</span>
+                          <span className="ml-auto font-mono sm:hidden">{kwhText(spanItem.kwh)}</span>
+                          <span className="w-11 text-right font-mono text-muted-foreground sm:hidden">{percentText(spanItem.percent)}</span>
+                        </>
+                      )}
+                    </li>
+                  );
+                })}
               </ul>
             </div>
           ))}

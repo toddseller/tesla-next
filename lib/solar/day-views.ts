@@ -125,6 +125,15 @@ export const viewSummary = (viewKey: string, totals: Totals, { vehicleData = fal
   return summary;
 };
 
+// A span's kWh per flow from its steps' Wh: summed before dividing, in time order, as the day's totals are, so the whole
+// day comes out exactly equal to them.
+export function spanTotals(day: { data: Interval[]; totals: Totals }, from: number, to: number): Totals {
+  const steps = day.data.filter(({ minute }) => minute >= from && minute < to);
+  return Object.fromEntries(
+    Object.keys(day.totals).map((flow) => [flow, steps.reduce((wh, step) => wh + ((step[`${flow}_wh`] as number | null) ?? 0), 0) / 1000]),
+  );
+}
+
 export const hasBatteryHistory = (data: { battery_percentage?: number | null }[]) => data.some((r) => r.battery_percentage != null);
 
 const TIME_LABELS: Record<number, string> = { 360: "6 AM", 720: "12 PM", 1080: "6 PM" };
