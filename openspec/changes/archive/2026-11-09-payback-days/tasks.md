@@ -24,3 +24,7 @@
 - Run `ponytail:ponytail-review` on the uncommitted diff, report the findings and wait for the owner to pick fixes.
 - Commit the code, then archive the change with its delta synced into `openspec/specs/system-payback/spec.md` as `Archive payback-days`, then open the PR, mentioning the backup-days rollout record it carries.
 - Ask before releasing; after the release, check the live True-Up page and record the rollout on the next change's branch.
+
+## Rollout
+
+Released as v2026.11.09.10 on 2026-11-09; the Deploy workflow passed, its image's 1,371 tests with it, and teslasolar.report answered 200. The live True-Up page's Payback card reads "What they did instead: 35 outages, 6 d 12 h off the grid, the longest 2 d 4 h", linking to `/impact?backup=all`, the same as the Backup section's Off the grid and Longest cards. `/api/payback` serves the record as `{"count": 35, "seconds": 564888, "longest_seconds": 188186}`.
