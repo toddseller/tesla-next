@@ -24,8 +24,8 @@
 
 ## 5. Rollout
 
-- [ ] 5.1 With the owner's go-ahead, release; the run passes
-- [ ] 5.2 On teslasolar.report: the panel's hours against the day's intervals; record in design.md under Rollout
+- [x] 5.1 With the owner's go-ahead, release; the run passes
+- [x] 5.2 On teslasolar.report: the panel's hours against the day's intervals; record in design.md under Rollout
 
 ## Workflow follow-up
 

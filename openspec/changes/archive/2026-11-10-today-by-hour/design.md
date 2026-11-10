@@ -73,3 +73,9 @@ A throwaway branch container on onyx against production, 2026-11-10 at 19:42 UTC
 - Alignment: sunlight and output correlate best at no offset since anton's fix (Migration Plan).
 
 `yarn build && yarn start` against the local preview database, loaded with production's forecast hours and 30 days of intervals (it gave the same hours and figures as onyx): screenshots of the card at 1280 and 375 pixels wide matched mockup B, with nothing scrolling sideways at either width. At 375 the legend wraps, the made-against-expected line takes two lines, and the hour labels thin to every other hour.
+
+## Rollout
+
+Released as v2026.11.10.6 on 2026-11-10. Its Deploy run passed, connected throughout; teslasolar.report answered 200, and onyx kept the result 0. At 11:58 AM the live page served Today by hour, and `/api/forecast` showed 7 AM to 3 PM:
+- **Made, against production's intervals:** each started hour matched, 0.672, 3.32, 4.544, 5.44 and 4.776 kWh, with 11 AM under way. 6 AM's 8 Wh stayed below the 0.05 kWh line.
+- **The line:** 18.8 kWh made by 11:50 AM (the newest interval's end), against 17.4 expected by now. The tile's daily total read 18.8 too.
