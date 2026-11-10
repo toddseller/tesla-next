@@ -2,6 +2,7 @@
 // Distribution page's replay. It answered exactly as anton's /api/v2/intervals did until that was retired, and keeps
 // that code's order of work, including summing the day's intervals in the order the database returns them.
 import { db } from "@/lib/db";
+import { expectedHours } from "@/lib/forecast";
 import { fill, placeSessions, SESSION_HORIZON, STEP } from "./gap-estimates";
 import { shiftDay } from "@/lib/scene/replay";
 import { localIso, localMidnight, pyRound } from "./python";
@@ -152,7 +153,7 @@ export async function dayIntervals(day: string) {
   const start = localMidnight(day);
   const end = localMidnight(shiftDay(day, 1));
   const inDay = inDayOf(start, end);
-  const { cars, vehicleWh, estimatedVehicle, sessionVehicle, charging, vins, intervals } = await dayCharging(day);
+  const [{ cars, vehicleWh, estimatedVehicle, sessionVehicle, charging, vins, intervals }, expected] = await Promise.all([dayCharging(day), expectedHours(day)]);
   const realBattery = new Map(
     (
       await db.query<{ sampled_at: Date; percentage: number }>(
@@ -254,5 +255,6 @@ export async function dayIntervals(day: string) {
     weather,
     off_grid: offGrid.rows.map((r) => ({ start: r.start_at.toISOString(), end: r.end_at.toISOString(), kind: r.kind })),
     storm_watch: storm.rows.map((r) => ({ start: r.start_at.toISOString(), end: r.end_at?.toISOString() ?? null })),
+    expected,
   };
 }

@@ -3,7 +3,7 @@
 // stacking and axis ranges; the estimate tests dropped with the dashes they checked.
 import { describe, expect, test } from "vitest";
 
-import { chargeLevel, clockTime, daySpans, FLOW_COLORS, hasBatteryHistory, outlines, spanTotals, timeTick, unitOnTopTick, viewChart, viewSummary } from "./day-views";
+import { chargeLevel, clockTime, daySpans, expectedRows, FLOW_COLORS, hasBatteryHistory, outlines, spanTotals, timeTick, unitOnTopTick, viewChart, viewSummary } from "./day-views";
 
 // Oct 16, 2026 at watt-hour precision (Tesla app: Total Generated 43.3, Home 12.3 kWh).
 const totals = {
@@ -388,4 +388,22 @@ describe("a span's totals", () => {
     expect(summary.headlines.map((h) => [h.label, Number(h.value.toFixed(5))])).toEqual([["Imported", 0.86225], ["Exported", 0.015]]);
     expect(summary.net!.label).toBe("Imported");
   });
+});
+
+test("each lit hour's expected kW sits at the hour's middle, zero at the lit hours' ends, and each step carries its hour's", () => {
+  // October 16, 2026, PDT: 10 AM expects nothing, 11 AM 6 kWh, noon 8 kWh; the steps at 10:55 and 11:45 are stored.
+  const expected = [
+    { start: "2026-10-16T17:00:00.000Z", kwh: 0 },
+    { start: "2026-10-16T18:00:00.000Z", kwh: 6 },
+    { start: "2026-10-16T19:00:00.000Z", kwh: 8 },
+  ];
+  const rows = expectedRows([{ minute: 655 }, { minute: 705 }], expected, "2026-10-16");
+  expect(rows.map(({ minute, expected: kw, expected_hour }) => [minute, kw, expected_hour])).toEqual([
+    [655, null, 0],
+    [660, 0, 6],
+    [690, 6, 6],
+    [705, null, 6],
+    [750, 8, 8],
+    [780, 0, null],
+  ]);
 });

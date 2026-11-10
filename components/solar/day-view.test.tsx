@@ -384,3 +384,78 @@ describe("selecting a span", () => {
     expect(toggle.getAttribute("aria-pressed")).toBe("false");
   });
 });
+
+describe("the expected line", () => {
+  // 11 AM (18:00 UTC, PDT) expects 9 kWh; the flows peak at 6.4 kW.
+  const expectedDay = { ...day, expected: [{ start: "2026-10-16T17:00:00.000Z", kwh: 0 }, { start: "2026-10-16T18:00:00.000Z", kwh: 9 }] };
+  const expectedLines = (container: HTMLElement) => container.querySelectorAll('[data-testid="day-chart"] .recharts-line-curve[stroke="var(--color-foreground)"]');
+
+  test("the Solar view draws it with its key, and its axis reaches the expected peak", () => {
+    const { container } = render(<DayView day={expectedDay} />);
+    expect(expectedLines(container)).toHaveLength(1);
+    expect(screen.getByText("Expected from the forecast")).toBeTruthy();
+    expect(screen.getByText("10 kW")).toBeTruthy();
+  });
+
+  test("the Home view draws neither the line nor the key", () => {
+    const { container } = render(<DayView day={expectedDay} />);
+    fireEvent.click(screen.getByRole("tab", { name: "Home" }));
+    expect(expectedLines(container)).toHaveLength(0);
+    expect(screen.queryByText("Expected from the forecast")).toBeNull();
+  });
+
+  test("a day without expected hours draws neither, its axis fitting the flows", () => {
+    const { container } = render(<DayView day={{ ...day, expected: [] }} />);
+    expect(expectedLines(container)).toHaveLength(0);
+    expect(screen.queryByText("Expected from the forecast")).toBeNull();
+    expect(screen.getByText("8 kW")).toBeTruthy();
+  });
+});
+
+test("a step's details end with its hour's expected power, and don't list the expected line among the flows", () => {
+  const row = { minute: 705, solar_to_home: 1.2, expected: 7.31, expected_hour: 7.84 };
+  render(<DayDetails active label={705} payload={[
+    { dataKey: "solar_to_home", name: "Home", value: 1.2, color: "var(--color-home)", payload: row },
+    { dataKey: "expected", name: "Expected", value: 7.31, color: "var(--color-foreground)", payload: row },
+  ]} />);
+  expect(screen.getByText("Expected")).toBeTruthy();
+  expect(screen.getByText("7.8 kW")).toBeTruthy();
+  expect(screen.queryByText("7.31 kW")).toBeNull();
+});
+
+describe("the expected total beside Total Generated", () => {
+  const solarDay = (date: string, generated: number, expected: number) => ({
+    ...day, date,
+    totals: { ...day.totals, solar_to_home: generated, solar_to_powerwall: 0, solar_to_grid: 0 },
+    expected: [{ start: `${date}T18:00:00.000Z`, kwh: expected }],
+  });
+
+  test("a past day well short of it shows its percentage in red", () => {
+    render(<DayView day={solarDay("2026-04-16", 25.7, 64.4)} today="2026-11-10" />);
+    expect(screen.getByText("of 64 kWh expected", { exact: false })).toBeTruthy();
+    expect(screen.getByText("(40%)").className).toContain("text-destructive");
+  });
+
+  test("on a phone it takes a line of its own under the kWh, in its own type size", () => {
+    render(<DayView day={solarDay("2026-04-10", 36.4, 43.1)} today="2026-11-10" />);
+    const figure = screen.getByText("of 43 kWh expected", { exact: false });
+    expect(figure.className).toContain("max-sm:block");
+    expect(figure.className).toContain("leading-normal");
+  });
+
+  test("a past day that met it shows its percentage, not in red", () => {
+    render(<DayView day={solarDay("2026-04-03", 63.1, 63.1)} today="2026-11-10" />);
+    expect(screen.getByText("(100%)").className).not.toContain("text-destructive");
+  });
+
+  test("today shows the day's expected total without a percentage", () => {
+    render(<DayView day={solarDay("2026-11-10", 18.8, 34)} today="2026-11-10" />);
+    expect(screen.getByText("of 34 kWh expected", { exact: false })).toBeTruthy();
+    expect(screen.queryByText(/%\)/)).toBeNull();
+  });
+
+  test("a day without expected hours shows no expected total", () => {
+    render(<DayView day={{ ...solarDay("2026-04-16", 25.7, 0), expected: [] }} today="2026-11-10" />);
+    expect(screen.queryByText(/expected/)).toBeNull();
+  });
+});

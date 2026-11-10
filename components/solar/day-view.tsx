@@ -6,7 +6,7 @@ import { Area, AreaChart, CartesianGrid, ComposedChart, Line, ReferenceArea, Ref
 import { AxisTick } from "@/components/solar/axis-tick";
 import { ChartContainer, ChartTooltip } from "@/components/ui/chart";
 import {
-  chargeLevel, clockTime, daySpans, FLOW_COLORS, hasBatteryHistory, type Interval, type OffGridSpan, outlines, spanTotals, type StormSpan,
+  chargeLevel, clockTime, daySpans, expectedRows, type ExpectedHour, FLOW_COLORS, hasBatteryHistory, type Interval, type OffGridSpan, outlines, spanTotals, type StormSpan,
   TIME_TICKS, timeTick, unitOnTopTick, VIEW_ORDER, viewChart, VIEWS, viewSummary,
 } from "@/lib/solar/day-views";
 
@@ -17,6 +17,7 @@ export type Day = {
   data: Interval[];
   off_grid: OffGridSpan[];
   storm_watch: StormSpan[];
+  expected?: ExpectedHour[];
 };
 
 type Spans = ReturnType<typeof daySpans>;
@@ -44,11 +45,13 @@ const timeAxis = (
 );
 
 export function DayDetails({ active, label, payload }: {
-  active?: boolean; label?: string | number; payload?: readonly { dataKey?: unknown; name?: unknown; value?: unknown; unit?: unknown; color?: string }[];
+  active?: boolean; label?: string | number;
+  payload?: readonly { dataKey?: unknown; name?: unknown; value?: unknown; unit?: unknown; color?: string; payload?: { expected_hour?: number | null } }[];
 }) {
   // Recharts 3 lists the outline lines too, whatever their tooltipType.
-  const flows = payload?.filter(({ dataKey }) => !String(dataKey).endsWith("_top"));
+  const flows = payload?.filter(({ dataKey }) => !String(dataKey).endsWith("_top") && dataKey !== "expected");
   if (!active || !flows?.length) return null;
+  const expected = payload?.[0]?.payload?.expected_hour;
   return (
     <div className="flex min-w-40 flex-col gap-1.5 rounded-lg border border-input bg-background px-3.5 py-3 text-sm shadow-xl">
       <span className="font-semibold">{clockTime(Number(label))}</span>
@@ -59,13 +62,22 @@ export function DayDetails({ active, label, payload }: {
           <span className="ml-auto font-mono">{Math.abs(Number(value))}{unit === "%" ? "%" : " kW"}</span>
         </span>
       ))}
+      {typeof expected === "number" && (
+        <span className="flex items-center gap-2">
+          <span className="h-0.5 w-2 bg-foreground/90" />
+          Expected
+          <span className="ml-auto font-mono">{expected.toFixed(1)} kW</span>
+        </span>
+      )}
     </div>
   );
 }
 
 function PowerChart({ viewKey, day, spans, span }: { viewKey: string; day: Day; spans: Spans; span: Span | null }) {
-  const chart = viewChart(viewKey, day.data, { vehicleData: Boolean(day.vehicle_data) });
-  const rows = outlines(chart);
+  const expected = viewKey === "solar" ? (day.expected ?? []) : [];
+  const expectedPeak = Math.max(0, ...expected.map(({ kwh }) => kwh));
+  const chart = viewChart(viewKey, day.data, { vehicleData: Boolean(day.vehicle_data), expectedPeak });
+  const rows = expectedRows(outlines(chart), expected, day.date);
   return (
     <ChartContainer config={{}} className={CHART_BOX} data-testid="day-chart">
       <ComposedChart data={rows} margin={{ top: 8, right: 0, bottom: 0, left: 0 }}>
@@ -89,6 +101,11 @@ function PowerChart({ viewKey, day, spans, span }: { viewKey: string; day: Day; 
           <Line key={`${key}_top`} dataKey={`${key}_top`} type="linear" stroke={color} strokeWidth={1.5} dot={false} activeDot={false}
             isAnimationActive={false} />
         ))}
+        {/* Monotone, so a jagged hour-to-hour forecast gets no peaks or dips between its hours. */}
+        {expectedPeak > 0 && (
+          <Line dataKey="expected" name="Expected" type="monotone" connectNulls stroke="var(--color-foreground)" strokeOpacity={0.9}
+            strokeWidth={1.75} dot={false} activeDot={false} isAnimationActive={false} />
+        )}
       </ComposedChart>
     </ChartContainer>
   );
@@ -200,7 +217,22 @@ function ChargeLevel({ day, spans }: { day: Day; spans: Spans }) {
   );
 }
 
-export function DayView({ day }: { day: Day }) {
+function ExpectedTotal({ generated, expected, past }: { generated: number; expected: number; past: boolean }) {
+  const share = Math.round((100 * generated) / expected);
+  return (
+    // Wrapped inside the 4xl line on a phone, it would leave a 4xl gap; its own line keeps its own size.
+    <span className="text-base leading-normal text-muted-foreground max-sm:block">
+      {" "}of {Math.round(expected)} kWh expected
+      {/* Today's share would compare part of a day with all of it. */}
+      {past && <> <span className={share < SHORT_OF_EXPECTED ? "text-destructive" : undefined}>({share}%)</span></>}
+    </span>
+  );
+}
+
+// Under this share of the expected, the alert's own threshold, a past day's percentage reads red.
+const SHORT_OF_EXPECTED = 60;
+
+export function DayView({ day, today }: { day: Day; today?: string }) {
   const [viewKey, setViewKey] = useState("solar");
   // Kept with its day, so a reload of the same day keeps it and another day's view starts without one.
   const [picked, setPicked] = useState<(Span & { date: string }) | null>(null);
@@ -212,6 +244,7 @@ export function DayView({ day }: { day: Day }) {
   const spanned = span && viewSummary(viewKey, spanTotals(day, span.from, span.to), { vehicleData });
   const color = FLOW_COLORS[viewKey as keyof typeof FLOW_COLORS];
   const spans = daySpans(day);
+  const expectedKwh = viewKey === "solar" ? (day.expected ?? []).reduce((sum, { kwh }) => sum + kwh, 0) : 0;
   return (
     <div className="flex flex-col gap-5">
       <div role="tablist" aria-label="View" className="grid grid-cols-5 gap-0.5 rounded-lg border border-input bg-card p-[3px]">
@@ -232,6 +265,7 @@ export function DayView({ day }: { day: Day }) {
                 <p className="text-sm text-muted-foreground">{headline.label}</p>
                 <p className={`font-mono text-4xl ${dayOnly(span)}`} style={{ color }}>
                   <span>{headline.value.toFixed(1)}</span> <span className="text-base text-muted-foreground">kWh</span>
+                  {expectedKwh > 0 && <ExpectedTotal generated={headline.value} expected={expectedKwh} past={day.date !== today} />}
                 </p>
                 {span && spanned && (
                   <>
@@ -257,6 +291,11 @@ export function DayView({ day }: { day: Day }) {
               <SpanArea selecting={selecting} onSpan={pick} onPicked={() => setSelecting(false)}>
                 <PowerChart key={`${viewKey}:${vehicleData}`} viewKey={viewKey} day={day} spans={spans} span={span} />
               </SpanArea>
+              {viewKey === "solar" && day.expected?.some(({ kwh }) => kwh > 0) && (
+                <p className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <span aria-hidden className="h-0.5 w-4 bg-foreground/90" />Expected from the forecast
+                </p>
+              )}
             </>
           )}
           {summary.net && (

@@ -30,8 +30,44 @@ export type ForecastCard = {
   byHour: ByHour | null;
 };
 
+// Each hour of the day's made Wh and forecast W/m² over the 30 days before the day, and the days with any such hour.
+// Joined on the hour's start, an instant, so the nights the clocks change need nothing of their own.
+const hourScale = (day: string) =>
+  db.query<HourScale & { days: number }>(
+    `WITH made AS (
+       SELECT date_trunc('hour', start_at) AS start_at, min(day) AS day, sum(solar_generated_wh) AS wh
+       FROM energy_interval WHERE day BETWEEN $1::date - 30 AND $1::date - 1 GROUP BY 1),
+     joined AS (
+       SELECT m.day, extract(hour FROM f.start_at AT TIME ZONE $2)::int AS hour, m.wh, f.radiation_wm2
+       FROM made m JOIN solar_forecast_hour f USING (start_at))
+     SELECT hour, sum(wh)::float8 AS wh, sum(radiation_wm2)::float8 AS wm2, (SELECT count(DISTINCT day) FROM joined)::int AS days
+     FROM joined GROUP BY hour ORDER BY hour`,
+    [day, TIME_ZONE],
+  );
+
+// Wh per W/m² for each hour of the day; an hour without sunlight in the scale's days expects nothing.
+const perWm2 = (scale: HourScale[]) => new Map(scale.map(({ hour, wh, wm2 }) => [hour, wm2 > 0 ? wh / wm2 : 0]));
+const expectedKwh = (scales: Map<number, number>, start: string, wm2: number) => (wm2 * (scales.get(wallTime(Date.parse(start)).hour) ?? 0)) / 1000;
+
+export async function expectedHours(day: string): Promise<{ start: string; kwh: number }[]> {
+  const [scale, hours] = await Promise.all([
+    hourScale(day),
+    db.query<{ start_at: Date; wm2: number }>(
+      `SELECT start_at, radiation_wm2::float8 AS wm2 FROM solar_forecast_hour
+       WHERE start_at >= $1::date::timestamp AT TIME ZONE $2 AND start_at < ($1::date + 1)::timestamp AT TIME ZONE $2 ORDER BY start_at`,
+      [day, TIME_ZONE],
+    ),
+  ]);
+  if ((scale.rows[0]?.days ?? 0) < FEWEST_DAYS) return [];
+  const scales = perWm2(scale.rows);
+  return hours.rows.map(({ start_at, wm2 }) => {
+    const start = start_at.toISOString();
+    return { start, kwh: expectedKwh(scales, start, wm2) };
+  });
+}
+
 export async function forecast(today: string): Promise<ForecastData> {
-  const [scale, rows, soFar, reading, hourScale, todayHours, madeUntil] = await Promise.all([
+  const [scale, rows, soFar, reading, hourly, todayHours, madeUntil] = await Promise.all([
     db.query<Scale>(
       `SELECT coalesce(sum(d.solar_generated), 0)::float8 AS solar_kwh, coalesce(sum(f.radiation_mj), 0)::float8 AS radiation_mj,
          count(*)::int AS days, max(d.solar_generated)::float8 AS good_day
@@ -48,18 +84,7 @@ export async function forecast(today: string): Promise<ForecastData> {
     ),
     db.query<{ so_far: number }>("SELECT round(solar_generated::numeric, 2)::float8 AS so_far FROM data WHERE date = $1", [today]),
     db.query<{ code: number; sampled_at: Date }>("SELECT weather_code AS code, sampled_at FROM weather_sample ORDER BY sampled_at DESC LIMIT 1"),
-    // Joined on the hour's start, an instant, so the nights the clocks change need nothing of their own.
-    db.query<HourScale & { days: number }>(
-      `WITH made AS (
-         SELECT date_trunc('hour', start_at) AS start_at, min(day) AS day, sum(solar_generated_wh) AS wh
-         FROM energy_interval WHERE day BETWEEN $1::date - 30 AND $1::date - 1 GROUP BY 1),
-       joined AS (
-         SELECT m.day, extract(hour FROM f.start_at AT TIME ZONE $2)::int AS hour, m.wh, f.radiation_wm2
-         FROM made m JOIN solar_forecast_hour f USING (start_at))
-       SELECT hour, sum(wh)::float8 AS wh, sum(radiation_wm2)::float8 AS wm2, (SELECT count(DISTINCT day) FROM joined)::int AS days
-       FROM joined GROUP BY hour ORDER BY hour`,
-      [today, TIME_ZONE],
-    ),
+    hourScale(today),
     db.query<Omit<TodayHour, "start_at"> & { start_at: Date }>(
       `SELECT f.start_at, round(f.radiation_wm2::numeric, 1)::float8 AS wm2, m.wh::float8 AS made_wh
        FROM solar_forecast_hour f
@@ -78,8 +103,8 @@ export async function forecast(today: string): Promise<ForecastData> {
     so_far: soFar.rows[0]?.so_far ?? null,
     reading: newest ? { code: newest.code, sampled_at: newest.sampled_at.toISOString() } : null,
     hourly: {
-      scale: hourScale.rows.map(({ hour, wh, wm2 }) => ({ hour, wh, wm2 })),
-      days: hourScale.rows[0]?.days ?? 0,
+      scale: hourly.rows.map(({ hour, wh, wm2 }) => ({ hour, wh, wm2 })),
+      days: hourly.rows[0]?.days ?? 0,
       today: todayHours.rows.map((row) => ({ ...row, start_at: row.start_at.toISOString() })),
       made_until: madeUntil.rows[0].made_until?.toISOString() ?? null,
     },
@@ -124,10 +149,10 @@ const MADE_AT_LEAST_KWH = 0.05;
 
 function byHour({ scale, days, today, made_until }: Hourly): ByHour | null {
   if (today.length === 0 || days < FEWEST_DAYS) return null;
-  const perWm2 = new Map(scale.map(({ hour, wh, wm2 }) => [hour, wm2 > 0 ? wh / wm2 : 0]));
+  const scales = perWm2(scale);
   const all = today.map(({ start_at, wm2, made_wh }) => ({
     start: start_at,
-    expected: (wm2 * (perWm2.get(wallTime(Date.parse(start_at)).hour) ?? 0)) / 1000,
+    expected: expectedKwh(scales, start_at, wm2),
     made: made_wh === null ? null : made_wh / 1000,
   }));
   const lit = (h: (typeof all)[number]) => h.expected > 0 || (h.made ?? 0) >= MADE_AT_LEAST_KWH;
