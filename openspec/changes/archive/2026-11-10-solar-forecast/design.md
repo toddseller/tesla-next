@@ -81,3 +81,9 @@ The bars are plain elements in the solar color (`bg-solar`) on the card's track,
 ## Migration Plan
 
 anton's `store-solar-forecast` deploys first and its backfill runs; check `solar_forecast` holds 60 past days and the next four. Then release this change and check the card on teslasolar.report at 1280 and 375 pixels against the mockups, with today's kWh so far matching the range chart's bar for today; record it in this design. Rollback is the previous release; the table stays and is harmless.
+
+## Rollout
+
+Released as v2026.11.10.3 on 2026-11-10. As with v2026.11.10.2, the Deploy workflow failed and the deploy did not: the runner's SSH session through Cloudflare opened at 17:02:40 UTC and was closed by the remote side at 17:02:52, during the image's tests, with nothing in the tunnel's log and no disconnect in onyx's sshd log. `bin/deploy` ran on, built the image at 17:03:17 and replaced the container at 17:03:28.
+
+On teslasolar.report after it: `/` served in 0.14s to 0.25s; the card read today 34 kWh expected with 3.7 kWh so far at 9:05 AM, the same 3.7 kWh as the range chart's bar for today, then tomorrow 32, Thursday 24, Friday 13, a good day of 45 kWh and no stale time; it matched the mockup A boards at 1280 and 375 pixels.

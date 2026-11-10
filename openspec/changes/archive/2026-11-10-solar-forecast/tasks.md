@@ -29,8 +29,8 @@
 
 ## 6. Rollout
 
-- [ ] 6.1 With the owner's go-ahead, release after anton's change is deployed; the deploy's health check passes
-- [ ] 6.2 On teslasolar.report: the card at 1280 and 375 pixels, today's kWh so far matching the range chart's bar for today; record in design.md under Rollout
+- [x] 6.1 With the owner's go-ahead, release after anton's change is deployed; the deploy's health check passes
+- [x] 6.2 On teslasolar.report: the card at 1280 and 375 pixels, today's kWh so far matching the range chart's bar for today; record in design.md under Rollout
 
 ## Workflow follow-up
 
