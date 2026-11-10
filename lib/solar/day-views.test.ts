@@ -3,7 +3,7 @@
 // stacking and axis ranges; the estimate tests dropped with the dashes they checked.
 import { describe, expect, test } from "vitest";
 
-import { chargeLevel, clockTime, daySpans, FLOW_COLORS, hasBatteryHistory, outlines, timeTick, unitOnTopTick, viewChart, viewSummary } from "./day-views";
+import { chargeLevel, clockTime, daySpans, FLOW_COLORS, hasBatteryHistory, outlines, spanTotals, timeTick, unitOnTopTick, viewChart, viewSummary } from "./day-views";
 
 // Oct 16, 2026 at watt-hour precision (Tesla app: Total Generated 43.3, Home 12.3 kWh).
 const totals = {
@@ -358,5 +358,34 @@ describe("off-grid and storm watch spans", () => {
 
   test("a day without spans has none", () => {
     expect(day({})).toEqual([]);
+  });
+});
+
+describe("a span's totals", () => {
+  // Midnight, 4:00 PM, 4:05 PM and 11:55 PM, with a battery-only record at 4:10 PM.
+  const records = [
+    { minute: 0, grid_to_home_wh: 120.5, solar_to_grid_wh: 0 },
+    { minute: 960, grid_to_home_wh: 300, solar_to_grid_wh: 15 },
+    { minute: 965, grid_to_home_wh: 412.25, solar_to_grid_wh: 0 },
+    { minute: 970, grid_to_home_wh: null, solar_to_grid_wh: null, battery_percentage: 80 },
+    { minute: 1435, grid_to_home_wh: 150, solar_to_grid_wh: 0 },
+  ];
+  const day = { data: records, totals: { grid_to_home: (120.5 + 300 + 412.25 + 150) / 1000, solar_to_grid: 15 / 1000 } };
+
+  test("sums each flow's Wh over the steps from its start up to its end, in kWh, skipping steps without energy", () => {
+    const totals = spanTotals(day, 960, 1440);
+    expect(totals.grid_to_home).toBeCloseTo(0.86225, 12);
+    expect(totals.solar_to_grid).toBeCloseTo(0.015, 12);
+    expect(spanTotals(day, 960, 965)).toEqual({ grid_to_home: 0.3, solar_to_grid: 0.015 });
+  });
+
+  test("over the whole day it is the day's totals exactly", () => {
+    expect(spanTotals(day, 0, 1440)).toEqual(day.totals);
+  });
+
+  test("gives the span's headlines and net through the same summary as the day's", () => {
+    const summary = viewSummary("grid", spanTotals(day, 960, 1440));
+    expect(summary.headlines.map((h) => [h.label, Number(h.value.toFixed(5))])).toEqual([["Imported", 0.86225], ["Exported", 0.015]]);
+    expect(summary.net!.label).toBe("Imported");
   });
 });

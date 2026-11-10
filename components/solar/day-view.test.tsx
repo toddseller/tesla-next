@@ -273,3 +273,114 @@ describe("off-grid and storm watch spans", () => {
     expect(screen.queryByRole("list", { name: "Off grid and storm watch" })).toBeNull();
   });
 });
+
+describe("selecting a span", () => {
+  // A plot 1,440 pixels wide beside the 56-pixel axis: one pixel a minute.
+  const area = () => {
+    const box = screen.getByTestId("span-area");
+    vi.spyOn(box, "getBoundingClientRect").mockReturnValue({ left: 0, width: 1496, top: 0, height: 300, right: 1496, bottom: 300, x: 0, y: 0, toJSON: () => ({}) });
+    return box;
+  };
+  const drag = (from: number, to: number, pointerType = "mouse") => {
+    const box = area();
+    fireEvent.pointerDown(box, { clientX: from, pointerType, button: 0, pointerId: 1 });
+    fireEvent.pointerMove(box, { clientX: (from + to) / 2, pointerType, pointerId: 1 });
+    fireEvent.pointerMove(box, { clientX: to, pointerType, pointerId: 1 });
+    fireEvent.pointerUp(box, { clientX: to, pointerType, pointerId: 1 });
+  };
+  // The span's name, in its pill; a phone's breakdowns repeat it.
+  const selected = () => screen.queryAllByText(/^\d+:\d\d [AP]M to \d+:\d\d [AP]M$/)[0]?.textContent ?? null;
+
+  test("a mouse drag selects the steps it covers, to the end of the day, with Clear", () => {
+    render(<DayView day={day} />);
+    drag(962, 1495);
+    expect(selected()).toBe("4:00 PM to 12:00 AM");
+    fireEvent.click(screen.getByRole("button", { name: "Clear" }));
+    expect(selected()).toBeNull();
+  });
+
+  test("dragging leftwards selects the same span", () => {
+    render(<DayView day={day} />);
+    drag(1003, 541);
+    expect(selected()).toBe("9:00 AM to 4:45 PM");
+  });
+
+  test("a click without a drag selects nothing", () => {
+    render(<DayView day={day} />);
+    const box = area();
+    fireEvent.pointerDown(box, { clientX: 750, pointerType: "mouse", button: 0, pointerId: 1 });
+    fireEvent.pointerUp(box, { clientX: 752, pointerType: "mouse", pointerId: 1 });
+    expect(selected()).toBeNull();
+  });
+
+  test("the span stays across views and a reload of the day, and ends when another day opens", () => {
+    const { rerender } = render(<DayView day={day} />);
+    drag(960, 1495);
+    fireEvent.click(screen.getByRole("tab", { name: "Grid" }));
+    expect(selected()).toBe("4:00 PM to 12:00 AM");
+    rerender(<DayView day={{ ...day, data: [...day.data] }} />);
+    expect(selected()).toBe("4:00 PM to 12:00 AM");
+    rerender(<DayView day={{ ...day, date: "2026-10-17" }} />);
+    expect(selected()).toBeNull();
+  });
+
+  // Grid: 0.5 kWh imported and 0.2 kWh exported at 3:00 PM, then 0.3 kWh imported at 4:00 and at 4:40 PM.
+  const gridDay = {
+    ...day,
+    totals: { ...day.totals, solar_to_grid: 0.2, grid_to_home: 1.1, grid_to_powerwall: 0, powerwall_to_grid: 0 },
+    data: [
+      { minute: 900, grid_to_home_wh: 500, solar_to_grid_wh: 200 },
+      { minute: 960, grid_to_home_wh: 300, solar_to_grid_wh: 0 },
+      { minute: 1000, grid_to_home_wh: 300, solar_to_grid_wh: 0 },
+    ],
+  };
+  const inside = (testId: string) => screen.getByTestId(testId);
+  const shown = (el: Element, text: string, classPart: string) =>
+    [...el.querySelectorAll("*")].some((node) => node.textContent === text && String((node as HTMLElement).className).includes(classPart));
+
+  test("from 640 pixels the span's figures sit beside the day's; on a phone they take their place", () => {
+    render(<DayView day={gridDay} />);
+    fireEvent.click(screen.getByRole("tab", { name: "Grid" }));
+    expect(shown(inside("day-main"), "1.1 kWh", "max-sm:hidden")).toBe(false);
+    drag(960, 1495);
+    const main = inside("day-main");
+    // From 640 pixels: the day's Imported 1.1 stays, with the span's 0.6 under it.
+    expect(shown(main, "1.1 kWh", "max-sm:hidden")).toBe(true);
+    expect(shown(main, "0.6 kWh 4 PM to 12 AM", "max-sm:hidden")).toBe(true);
+    // On a phone: the span's 0.6 in its place.
+    expect(shown(main, "0.6 kWh", "sm:hidden")).toBe(true);
+    const net = inside("net-grid-usage");
+    expect(shown(net, "Net Grid Usage: 0.9 kWh Imported", "max-sm:hidden")).toBe(true);
+    expect(shown(net, "0.6 kWh Imported, 4 PM to 12 AM", "max-sm:hidden")).toBe(true);
+    expect(shown(net, "Net Grid Usage: 0.6 kWh Imported", "sm:hidden")).toBe(true);
+    const breakdowns = inside("day-breakdowns");
+    expect(shown(breakdowns, "4 PM to 12 AM", "max-sm:hidden")).toBe(true);
+    const home = [...breakdowns.querySelectorAll("li")].find((li) => li.textContent!.startsWith("Home"))!;
+    expect(shown(home, "1.1 kWh", "max-sm:hidden")).toBe(true);
+    expect(shown(home, "0.6 kWh", "max-sm:hidden")).toBe(true);
+    expect(shown(home, "0.6 kWh", "sm:hidden")).toBe(true);
+    expect(shown(home, "100%", "sm:hidden")).toBe(true);
+  });
+
+  test("without a chart to drag across there is no hint and no Select", () => {
+    render(<DayView day={day} />);
+    fireEvent.click(screen.getByRole("tab", { name: "Vehicle" }));
+    expect(screen.getByText("Vehicle charging data is not available for this day.")).toBeTruthy();
+    expect(screen.queryByText(/^Drag across the chart/)).toBeNull();
+    expect(screen.queryByRole("button", { name: "Select" })).toBeNull();
+  });
+
+  test("a finger drag reads values unless Select is on, which turns off once the span is made", () => {
+    render(<DayView day={day} />);
+    const toggle = screen.getByRole("button", { name: "Select" });
+    expect(toggle.className).toContain("pointer-coarse:flex");
+    drag(960, 1495, "touch");
+    expect(selected()).toBeNull();
+    fireEvent.click(toggle);
+    expect(toggle.getAttribute("aria-pressed")).toBe("true");
+    expect(screen.getByTestId("span-area").className).toContain("touch-none");
+    drag(960, 1495, "touch");
+    expect(selected()).toBe("4:00 PM to 12:00 AM");
+    expect(toggle.getAttribute("aria-pressed")).toBe("false");
+  });
+});

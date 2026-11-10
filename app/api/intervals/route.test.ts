@@ -105,6 +105,18 @@ test("each flow maps to its column", async () => {
     solar_to_home_kw: 0.12, solar_to_powerwall_kw: 0.24, solar_to_grid_kw: 3.0, powerwall_to_home_kw: 0.48,
     powerwall_to_grid_kw: 0.6, grid_to_home_kw: 0.72, grid_to_powerwall_kw: 0.84,
   });
+  expect(Object.fromEntries(FLOWS.map((f) => [`${f}_wh`, record[`${f}_wh`]]))).toEqual({
+    solar_to_home_wh: 10, solar_to_powerwall_wh: 20, solar_to_grid_wh: 250, powerwall_to_home_wh: 40,
+    powerwall_to_grid_wh: 50, grid_to_home_wh: 60, grid_to_powerwall_wh: 70,
+  });
+});
+
+test("each record's Wh, unrounded, adds up to the day's totals", async () => {
+  // 413 Wh is 4.956 kW, sent rounded as 4.96; its Wh stays exact.
+  for (const minute of [0, 5, 10]) await energy(16, 9, minute, { house_from_grid_wh: 413, house_from_solar_wh: 4090 });
+  const { data, totals } = await getDay();
+  expect(data.map((r: Row) => [r.grid_to_home_kw, r.grid_to_home_wh])).toEqual([[4.96, 413], [4.96, 413], [4.96, 413]]);
+  for (const flow of ALL_FLOWS) expect(data.reduce((sum: number, r: Row) => sum + (r[`${flow}_wh`] as number), 0) / 1000).toBe(totals[flow]);
 });
 
 test("daily totals use exact watt-hours", async () => {
@@ -122,6 +134,7 @@ test("a battery sample without energy has null flows", async () => {
   expect(last.minute).toBe(605);
   expect(last.battery_percentage).toBe(81);
   expect(ALL_FLOWS.map((f) => last[`${f}_kw`])).toEqual(ALL_FLOWS.map(() => null));
+  expect(ALL_FLOWS.map((f) => last[`${f}_wh`])).toEqual(ALL_FLOWS.map(() => null));
 });
 
 test("samples from other days are excluded", async () => {
@@ -268,6 +281,7 @@ test("estimated charging is attributed and counted", async () => {
   const record = byTime(body)["03:05"];
   expect(record.powerwall_to_vehicle_kw).toBe(kw(450));
   expect(record.powerwall_to_home_kw).toBe(kw(550));
+  expect([record.powerwall_to_vehicle_wh, record.powerwall_to_home_wh]).toEqual([450, 550]);
   expect(record.vehicle_estimated).toBe(true);
   expect(body.totals.powerwall_to_vehicle).toBeCloseTo(0.45, 12);
   expect(body.vehicle_includes_estimates).toBe(true);

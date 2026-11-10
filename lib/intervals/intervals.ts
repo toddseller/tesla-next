@@ -169,7 +169,7 @@ export async function dayIntervals(day: string) {
   const recordAt = (instant: number) => {
     if (!records.has(instant)) {
       records.set(instant, {
-        ...Object.fromEntries(ALL_FLOWS.map((flow) => [`${flow}_kw`, null])),
+        ...Object.fromEntries(ALL_FLOWS.flatMap((flow) => [[`${flow}_kw`, null], [`${flow}_wh`, null]])),
         battery_percentage: null,
         battery_estimated: false,
         vehicle_estimated: false,
@@ -190,7 +190,8 @@ export async function dayIntervals(day: string) {
     const fromSessions = sessionVehicle.has(instant);
     const wh = intervalWh(interval, charging.get(instant));
     const record = recordAt(instant);
-    for (const [flow, value] of Object.entries(wh)) record[`${flow}_kw`] = pyRound(value * WH_TO_KW, 2);
+    // The Wh unrounded, so a span of records adds up to exactly what the day's totals do.
+    for (const [flow, value] of Object.entries(wh)) Object.assign(record, { [`${flow}_kw`]: pyRound(value * WH_TO_KW, 2), [`${flow}_wh`]: value });
     record.vehicle_estimated = estimated || fromSessions;
     includesEstimates = includesEstimates || (estimated && estimatedVehicle.get(instant)! > 0);
     includesSessionEstimates = includesSessionEstimates || (fromSessions && sessionVehicle.get(instant)! > 0);
