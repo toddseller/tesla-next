@@ -1,7 +1,7 @@
 # system-checks Specification
 
 ## Purpose
-Notices, within a week and without anyone looking, when Tesla's grid figures stop matching PG&E's meter, when PG&E's readings stop arriving, or when solar output falls below its own history, and alerts the owner.
+Notices, without anyone looking, when Tesla's grid figures stop matching PG&E's meter, when PG&E's readings stop arriving, or when solar output falls below its own history, within a week, and when a bright day's solar peak falls well short of the usual, such as a failing microinverter, by the next morning; and alerts the owner.
 
 ## Requirements
 
