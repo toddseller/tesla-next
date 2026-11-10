@@ -34,7 +34,8 @@ const shown = () => {
 test.each([
   ["/", "Solar"],
   ["/true-up", "True-Up"],
-])("on %s, lists the five pages and marks only %s as current", (path, current) => {
+  ["/health", "Health"],
+])("on %s, lists the six pages and marks only %s as current", (path, current) => {
   vi.mocked(usePathname).mockReturnValue(path);
   render(bar());
 
@@ -49,6 +50,7 @@ test.each([
     ["Distribution", "/distribution"],
     ["True-Up", "/true-up"],
     ["Top Ten", "/top"],
+    ["Health", "/health"],
   ]);
   expect(links.filter((link) => link.getAttribute("aria-current") === "page").map((link) => link.textContent)).toEqual([current]);
 });

@@ -13,6 +13,7 @@ const pages = [
   { name: "Distribution", href: "/distribution" },
   { name: "True-Up", href: "/true-up" },
   { name: "Top Ten", href: "/top" },
+  { name: "Health", href: "/health" },
 ];
 
 const PILL_STYLES = {
