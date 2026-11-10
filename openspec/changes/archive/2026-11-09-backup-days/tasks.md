@@ -19,3 +19,7 @@
 - Run `ponytail:ponytail-review` on the uncommitted diff, report the findings and wait for the owner to pick fixes.
 - Commit the code, then archive the change with its delta synced into `openspec/specs/backup-history/spec.md` as `Archive backup-days`, then open the PR, mentioning the faster-tests rollout record it carries.
 - Ask before releasing; after the release, check the live Impact page and record the rollout on the next change's branch.
+
+## Rollout
+
+Released as v2026.11.09.9 on 2026-11-09; the Deploy workflow passed, its image's 1,371 tests with it, and teslasolar.report answered 200. On the live Impact page with All time picked: 35 outages, 6 d 12 h off the grid, the longest 2 d 4 h on Feb 4, 2024, its storm day "3 outages · 2 d 4 h off the grid", and outages under a day still in hours and minutes (15 h 55 m, 2 h 15 m).
