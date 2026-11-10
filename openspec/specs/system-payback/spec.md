@@ -65,7 +65,11 @@ The Powerwalls' payback SHALL count, over the priced years only, what they added
 
 #### Scenario: The outage record
 - **WHEN** the card says they won't pay for themselves
-- **THEN** it gives their outages since PTO, the hours off the grid and the longest, linking to the Backup section
+- **THEN** it gives their outages since PTO, the time off the grid and the longest, each read as the Backup section reads a length of time, linking to the Backup section
+
+#### Scenario: The outage record on 2026-11-09
+- **WHEN** there have been 35 outages since PTO, 156.9 hours in all, the longest 52 hours 16 minutes
+- **THEN** it reads "35 outages, 6 d 12 h off the grid, the longest 2 d 4 h"
 
 ### Requirement: The Payback card
 With a costs file, the True-Up Tracker SHALL show a Payback card for the system's whole life, whatever range is picked, giving solar's year, the year solar pays for the whole system, and the Powerwalls' year side by side, and saying which years are estimated. On wider screens its timeline SHALL run across the card with each marker's dot centred on the line, the line solid up to today and dashed from today to the whole-system year; on a phone it SHALL run down the card as a list of steps joined by a line, solid in solar's colour from PTO through today and grey after it, ending at the last step.
