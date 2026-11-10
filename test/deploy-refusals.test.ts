@@ -30,6 +30,12 @@ describe("a request it does not accept", () => {
     expect(deploy().code).toBe(2);
   });
 
+  it.each([["status"], ["status latest"], ["status v1 extra"]])("refuses the status request %j", (ssh) => {
+    const result = deploy([], { ssh });
+    expect(result.code).toBe(2);
+    expect(result.err).toMatch(/usage: deploy <tag> \| status <tag>|not a version tag/);
+  });
+
   it("refuses a verb other than deploy", () => {
     expect(deploy(["rollback", "v1"]).code).toBe(2);
   });

@@ -93,7 +93,7 @@ afterEach(() => {
 });
 
 type Options = { ssh?: string; status?: number; noImage?: boolean; buildFails?: boolean; pruneFails?: boolean };
-export const deploy = (args: string[] = [], { ssh, status = 200, noImage = false, buildFails = false, pruneFails = false }: Options = {}) => {
+const envFor = ({ ssh, status = 200, noImage = false, buildFails = false, pruneFails = false }: Options) => {
   const env: NodeJS.ProcessEnv = {
     ...isolated(),
     PATH: `${join(root, "fake-bin")}:${process.env.PATH}`,
@@ -105,13 +105,27 @@ export const deploy = (args: string[] = [], { ssh, status = 200, noImage = false
   if (noImage) env.FAKE_NO_IMAGE = "1";
   if (buildFails) env.FAKE_BUILD_FAILS = "1";
   if (pruneFails) env.FAKE_PRUNE_FAILS = "1";
-  const result = spawnSync(join(server(), "bin", "deploy"), args, { env, encoding: "utf8" });
+  return env;
+};
+export const deploy = (args: string[] = [], options: Options = {}) => {
+  const result = spawnSync(join(server(), "bin", "deploy"), args, { env: envFor(options), encoding: "utf8" });
   return { out: result.stdout ?? "", err: result.stderr ?? "", code: result.status };
+};
+// The deploy with its output read by `reader`, a shell command that can stop reading early, as a closed session would.
+export const deployInto = (reader: string, args: string[], options: Options = {}) => {
+  const result = spawnSync("sh", ["-c", `'${join(server(), "bin", "deploy")}' ${args.join(" ")} 2>&1 | ${reader}`], { env: envFor(options), encoding: "utf8" });
+  return { out: result.stdout ?? "", code: result.status };
 };
 export const lines = (file: string) => (existsSync(file) ? readFileSync(file, "utf8").trim().split("\n") : []);
 export const dockerCalls = () => lines(dockerLog());
 export const curlCalls = () => lines(curlLog());
 export const serverHead = () => git(server(), "rev-parse", "HEAD");
+// What bin/deploy keeps for a tag on the server, under the test's HOME: its log and, once it ends, its exit status.
+export const stateDir = () => join(root, ".local/state/tesla-next-deploy");
+export const kept = (tag: string, kind: "log" | "result") => {
+  const file = join(stateDir(), `${tag}.${kind}`);
+  return existsSync(file) ? readFileSync(file, "utf8") : null;
+};
 
 export const KEEP = ["image inspect tesla-next-next:latest", "tag tesla-next-next:latest tesla-next-next:previous"];
 export const BUILD = "compose up -d --build --remove-orphans";
