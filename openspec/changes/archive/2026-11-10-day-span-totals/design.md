@@ -85,3 +85,5 @@ A throwaway branch container on onyx against production, 2026-11-10, with Novemb
 - **Edge lines:** the first build didn't draw them, because a Tailwind `stroke-` class on recharts' `ReferenceLine` didn't apply. An explicit `stroke` did.
 - **A full-page screenshot misleads:** it drops touch emulation while it captures, so it shows the desktop's hint and no toggle. Check touch layouts with a viewport screenshot.
 - **The tooltip:** after the touch drag, recharts' tooltip stayed on the last step, as a tap on the chart already leaves it today.
+
+At the archive, adding the Wh to "Day intervals API" pushed that requirement past strict validation's 500 characters. So the Wh became a requirement of its own, "Each flow's energy", added beside it, and "Day intervals API" is unchanged. The `day-intervals` spec's two other long-requirement warnings predate this change.

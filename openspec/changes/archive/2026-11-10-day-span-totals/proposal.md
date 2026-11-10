@@ -20,7 +20,7 @@ None.
 
 ### Modified Capabilities
 - `solar-day-view`: selecting a span on a day's charts and showing its totals.
-- `day-intervals`: each record also gives each flow's energy in Wh.
+- `day-intervals`: a new requirement, each record's energy per flow in Wh.
 
 ## Impact
 
