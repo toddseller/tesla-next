@@ -1,17 +1,17 @@
-# health-page Specification
+# patterns-page Specification
 
 ## Purpose
 
-The Health page: how the house and the Powerwalls behave over months and years, shown as the house's always-on load and the Powerwalls' use, so a change in either stands out.
+The Patterns page: how the house and the Powerwalls run over the day, the months and the years, shown as the house's always-on load, when in the day it uses power, and the Powerwalls' use, so a change in any of them stands out.
 
 ## Requirements
 
-### Requirement: The Health page
-The site SHALL serve a Health page at `/health`, headed "Health", with an Always-on load section followed by a Powerwall use section. The page SHALL be served with its figures in the first response, worked out when the page is requested; it SHALL NOT update while open.
+### Requirement: The Patterns page
+The site SHALL serve a Patterns page at `/patterns`, headed "Patterns", with an Always-on load section, then a When the house uses power section, then a Powerwall use section. The page SHALL be served with its figures in the first response, worked out when the page is requested; it SHALL NOT update while open.
 
 #### Scenario: Opening the page
-- **WHEN** a viewer opens `/health`
-- **THEN** the response holds the Always-on load section and then the Powerwall use section, with their figures
+- **WHEN** a viewer opens `/patterns`
+- **THEN** the response holds the Always-on load, When the house uses power and Powerwall use sections, in that order, with their figures
 
 #### Scenario: A night passes while the page is open
 - **WHEN** the page stays open past 5 AM
@@ -102,12 +102,59 @@ Above the rows, the Powerwall use section SHALL show this year's cycles with the
 When no night counts, the Always-on load section SHALL say there are no overnight readings yet in place of its figures and charts. When no interval is stored, the Powerwall use section SHALL say there is no Powerwall data yet in place of its figures and rows.
 
 #### Scenario: An empty database
-- **WHEN** `/health` is opened and no interval is stored
+- **WHEN** `/patterns` is opened and no interval is stored
 - **THEN** both sections show their message and the page has no error
 
-### Requirement: The Health page fits a phone
-On a 375-pixel-wide screen the Health page SHALL fit with no horizontal scrolling: the latest month's three figures in one row, the year rows and the 12 bars full width with one-letter month labels, and each Powerwall year as a stacked row of year and kWh, bar, then cycles and round trip.
+### Requirement: The Patterns page fits a phone
+On a 375-pixel-wide screen the Patterns page SHALL fit with no horizontal scrolling: the latest month's three figures in one row, the year rows and the 12 bars full width with one-letter month labels, the two use grids stacked with all 24 hours of each row showing, and each Powerwall year as a stacked row of year and kWh, bar, then cycles and round trip.
 
 #### Scenario: On a phone
 - **WHEN** the page is 375 pixels wide
-- **THEN** every section fits with no horizontal scrolling and the 12 month bars all show
+- **THEN** every section fits with no horizontal scrolling, the 12 month bars all show, and both use grids show every hour
+
+### Requirement: An hour's house use in a month
+An hour's house use in a month SHALL be the average, over the month's stored five-minute intervals starting in that hour of the day, site time, of the house's use from the grid, solar and the Powerwalls, in watts. An hour of a month with no stored interval SHALL have none.
+
+#### Scenario: Midnight in September
+- **WHEN** September's intervals starting from 12:00 to 12:55 AM average 200 Wh of house use
+- **THEN** September's 12 AM house use is 2,400 W, whatever share came from solar, the Powerwalls or the grid
+
+#### Scenario: The first hour of a month
+- **WHEN** it is 12:30 AM on December 1
+- **THEN** December has house use for 12 AM only, and its other 23 hours have none
+
+### Requirement: When the house uses power
+The When the house uses power section SHALL show two grids, "The last 12 months" (this month, site time, and the 11 before it) and "The 12 months before", each a row per month, oldest first, labelled with the month and year, and a square for each hour of the day from 12 AM to 11 PM, with the hours labelled at 12 AM, 6 AM, noon and 6 PM. Both grids SHALL use one scale.
+
+#### Scenario: November 2026
+- **WHEN** it is November 10, 2026
+- **THEN** the first grid's rows run from December 2025 to November 2026 and the second's from December 2024 to November 2025
+
+#### Scenario: The shift shows
+- **WHEN** September 2025's 1 PM house use was 3,731 W and its 1 AM 1,781 W, and September 2026's are 1,852 W and 6,153 W
+- **THEN** September 2025's 1 PM square and September 2026's 1 AM square are the deepest step, and September 2025's 1 AM and September 2026's 1 PM squares are the 1.5 to 2 kW step
+
+### Requirement: The use steps
+Each square SHALL take one of seven steps of one blue, from palest to deepest: under 1 kW, 1 to 1.5 kW, 1.5 to 2 kW, 2 to 2.5 kW, 2.5 to 3 kW, 3 to 3.5 kW, and 3.5 kW and up. A key SHALL show the seven steps in order, labelled 0.5, 1, 1.5, 2, 2.5, 3 and 3.5+ kW. A square without house use SHALL be empty, unlike any step.
+
+#### Scenario: The edges of a step
+- **WHEN** two hours' house use is 999 W and 1,000 W
+- **THEN** the first is the palest step and the second the next
+
+#### Scenario: An hour without readings
+- **WHEN** an hour of a month has no house use
+- **THEN** its square is empty, not the palest step
+
+### Requirement: Each square's value for assistive technology
+Each square's month, hour and house use in kW to one decimal SHALL be available to assistive technology, as a table per grid with the months as row headers and the hours as column headers.
+
+#### Scenario: A screen reader on a square
+- **WHEN** a screen reader reaches October 2026's 12 AM square
+- **THEN** it announces October 2026, 12 AM and 5.5 kW
+
+### Requirement: No house use yet
+When no interval is stored in either grid's months, the When the house uses power section SHALL say there are no readings yet in place of its grids.
+
+#### Scenario: An empty database
+- **WHEN** `/patterns` is opened and no interval is stored
+- **THEN** the section shows its message and the page has no error
