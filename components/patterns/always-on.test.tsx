@@ -1,29 +1,29 @@
 // @vitest-environment jsdom
-// The Always-on load section (health-page spec, mockup C).
+// The Always-on load section (patterns-page spec, mockup C).
 import { cleanup, render, screen, within } from "@testing-library/react";
 import { afterEach, expect, test } from "vitest";
 
-import { AlwaysOnSection } from "@/components/health/always-on";
-import { HEALTH } from "@/components/health/fixtures";
+import { AlwaysOnSection } from "@/components/patterns/always-on";
+import { PATTERNS } from "@/components/patterns/fixtures";
 
 afterEach(cleanup);
 
 const section = () => within(screen.getByRole("region", { name: "Always-on load" }));
 
 test("the latest month, the same month a year earlier and the difference in kWh a day", () => {
-  render(<AlwaysOnSection months={HEALTH.months} today="2026-11-10" />);
+  render(<AlwaysOnSection months={PATTERNS.months} today="2026-11-10" />);
   for (const text of ["November so far", "November 2025", "+14 kWh", "a day"]) expect(section().getByText(text)).toBeTruthy();
   // Each figure is also its year's row below.
   for (const text of ["864 W", "276 W"]) expect(section().getAllByText(text)).toHaveLength(2);
 });
 
 test("the footnote says a charge or spike that doesn't last the whole night doesn't move the figure", () => {
-  render(<AlwaysOnSection months={HEALTH.months} today="2026-11-10" />);
+  render(<AlwaysOnSection months={PATTERNS.months} today="2026-11-10" />);
   expect(section().getByText(/A car charge or spike that doesn.t last the whole night doesn.t move it\./)).toBeTruthy();
 });
 
 test("a row for each year's November, oldest first, only the latest in the home color", () => {
-  render(<AlwaysOnSection months={HEALTH.months} today="2026-11-10" />);
+  render(<AlwaysOnSection months={PATTERNS.months} today="2026-11-10" />);
   const table = within(section().getByRole("table", { name: "November in each year" }));
   const rows = table.getAllByRole("row");
   expect(rows.map((row) => row.textContent)).toEqual(["2021132 W", "2022384 W", "2023264 W", "2024300 W", "2025276 W", "2026864 W"]);
@@ -31,7 +31,7 @@ test("a row for each year's November, oldest first, only the latest in the home 
 });
 
 test("the last 12 months, each told with its year-earlier figure, marked only where there is one", () => {
-  const months = HEALTH.months.filter((m) => m.month !== "2025-10");
+  const months = PATTERNS.months.filter((m) => m.month !== "2025-10");
   render(<AlwaysOnSection months={months} today="2026-11-10" />);
   const items = within(section().getByRole("list", { name: "The last 12 months" })).getAllByRole("listitem");
   expect(items).toHaveLength(12);
@@ -42,7 +42,7 @@ test("the last 12 months, each told with its year-earlier figure, marked only wh
 });
 
 test("a month with no counted nights has no bar", () => {
-  const months = HEALTH.months.filter((m) => m.month !== "2026-10");
+  const months = PATTERNS.months.filter((m) => m.month !== "2026-10");
   render(<AlwaysOnSection months={months} today="2026-11-10" />);
   const october = within(section().getByRole("list", { name: "The last 12 months" })).getAllByRole("listitem")[10];
   expect(october.textContent).toContain("October 2026: no counted nights");

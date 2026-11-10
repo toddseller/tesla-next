@@ -39,6 +39,17 @@
     --color-vehicle: #E8474F;
 }
 
+/* The Patterns page's house use steps, palest to deepest; the fifth is the home color, so the scale reads as the house. */
+@theme {
+    --color-use-1: #D4E1FA;
+    --color-use-2: #AFC6F5;
+    --color-use-3: #89AAEF;
+    --color-use-4: #6189E8;
+    --color-use-5: #3E6AE1;
+    --color-use-6: #2F52B4;
+    --color-use-7: #213C86;
+}
+
 :root {
     --radius: 0.625rem;
     --background: #0E1116;

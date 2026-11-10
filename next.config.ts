@@ -4,7 +4,10 @@ const nextConfig: NextConfig = {
   output: "standalone",
   poweredByHeader: false,
   async redirects() {
-    return [{ source: "/numbers", destination: "/true-up", permanent: true }];
+    return [
+      { source: "/numbers", destination: "/true-up", permanent: true },
+      { source: "/health", destination: "/patterns", permanent: true },
+    ];
   },
   async headers() {
     return [

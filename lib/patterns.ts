@@ -2,13 +2,17 @@ import { db } from "@/lib/db";
 
 export type MonthLoad = { month: string; watts: number };
 export type PowerwallYear = { year: number; out_wh: number; in_wh: number; first_day: string };
-export type Health = { months: MonthLoad[]; years: PowerwallYear[] };
+export type HourLoad = { month: string; hour: number; watts: number };
+export type Patterns = { months: MonthLoad[]; years: PowerwallYear[]; hours: HourLoad[] };
+
+// Months stay "YYYY-MM" and are moved in UTC, so the server's zone never shifts one.
+const shift = (month: string, by: number) => new Date(Date.UTC(+month.slice(0, 4), +month.slice(5, 7) - 1 + by)).toISOString().slice(0, 7);
 
 // The session runs in UTC, so every hour, day and year is taken in site time.
 const SITE = "'America/Los_Angeles'";
 
-export async function health(): Promise<Health> {
-  const [months, years] = await Promise.all([
+export async function patterns(today: string): Promise<Patterns> {
+  const [months, years, hours] = await Promise.all([
     // A night's intervals start 1:00 to 4:55 AM, Wh in 5 minutes x 12 is watts, and percentile_disc takes the lower
     // middle of an even count.
     db.query<MonthLoad>(
@@ -24,12 +28,16 @@ export async function health(): Promise<Health> {
          sum(battery_imported_from_grid_wh + battery_imported_from_solar_wh)::float8 AS in_wh, min(day)::text AS first_day
        FROM energy_interval GROUP BY 1 ORDER BY 1`,
     ),
+    db.query<HourLoad>(
+      `SELECT to_char(day, 'YYYY-MM') AS month, extract(hour FROM start_at AT TIME ZONE ${SITE})::int AS hour,
+         round(avg(house_from_grid_wh + house_from_solar_wh + house_from_battery_wh) * 12)::int AS watts
+       FROM energy_interval WHERE day >= $1 GROUP BY 1, 2 ORDER BY 1, 2`,
+      [`${shift(today.slice(0, 7), -23)}-01`],
+    ),
   ]);
-  return { months: months.rows, years: years.rows };
+  return { months: months.rows, years: years.rows, hours: hours.rows };
 }
 
-// Months stay "YYYY-MM" and are moved in UTC, so the server's zone never shifts one.
-const shift = (month: string, by: number) => new Date(Date.UTC(+month.slice(0, 4), +month.slice(5, 7) - 1 + by)).toISOString().slice(0, 7);
 const monthName = (month: string) => new Date(`${month}-01T00:00:00Z`).toLocaleString("en-US", { month: "long", timeZone: "UTC" });
 const named = (month: string) => `${monthName(month)} ${month.slice(0, 4)}`;
 const wattsIn = (months: MonthLoad[], month: string) => months.find((m) => m.month === month)?.watts ?? null;
@@ -80,3 +88,21 @@ export function powerwallYears(years: PowerwallYear[], today: string) {
   const out = years.reduce((sum, y) => sum + y.out_wh, 0) / 1000;
   return { rows, total: { kwh: Math.round(out), cycles: Math.round(out / CYCLE_KWH) } };
 }
+
+export type HourMonth = { month: string; watts: (number | null)[] };
+
+export function hourGrids(hours: HourLoad[], today: string) {
+  const month = (by: number): HourMonth => {
+    const name = shift(today.slice(0, 7), by);
+    const watts = Array<number | null>(24).fill(null);
+    for (const row of hours) if (row.month === name) watts[row.hour] = row.watts;
+    return { month: name, watts };
+  };
+  return {
+    last: Array.from({ length: 12 }, (_, i) => month(i - 11)),
+    before: Array.from({ length: 12 }, (_, i) => month(i - 23)),
+  };
+}
+
+// Half-kilowatt steps from 1 kW: the house rarely draws under 0.5 kW, so the palest step takes everything below 1.
+export const stepOf = (watts: number) => Math.min(6, Math.max(0, Math.floor((watts - 500) / 500)));

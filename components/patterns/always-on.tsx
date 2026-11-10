@@ -1,8 +1,8 @@
-import { lastTwelve, latestFigures, type MonthLoad, sameMonth } from "@/lib/health";
+import { lastTwelve, latestFigures, type MonthLoad, sameMonth } from "@/lib/patterns";
 
 const watts = (w: number) => `${w.toLocaleString("en-US")} W`;
 const share = (w: number, top: number) => `${(100 * w) / top}%`;
-const monthLabel = (month: string, style: "long" | "short" | "narrow") =>
+export const monthLabel = (month: string, style: "long" | "short" | "narrow") =>
   new Date(`${month}-01T00:00:00Z`).toLocaleString("en-US", { month: style, ...(style === "long" && { year: "numeric" }), timeZone: "UTC" });
 // From zero to at least 1 kW, up to the next quarter kW, so a very high month can't run off the chart.
 const scaleTop = (values: number[]) => Math.max(1000, Math.ceil(Math.max(...values) / 250) * 250);
