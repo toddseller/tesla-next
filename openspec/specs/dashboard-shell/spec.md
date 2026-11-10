@@ -6,8 +6,8 @@ The frame and design system every dashboard page shares: navigation among the fi
 
 ## Requirements
 
-### Requirement: Navigation among the five pages
-Every page SHALL have a top bar with the site's icon and name, "Tesla Solar Report", linking to `/`, and the five pages as links in this order: Solar (`/`), Impact (`/impact`), Distribution (`/distribution`), True-Up (`/true-up`) and Top Ten (`/top`). The current page's link SHALL be marked for sight, with a red underline, and for assistive technology, as the current page.
+### Requirement: Navigation among the pages
+Every page SHALL have a top bar with the site's icon and name, "Tesla Solar Report", linking to `/`, and the six pages as links in this order: Solar (`/`), Impact (`/impact`), Distribution (`/distribution`), True-Up (`/true-up`), Top Ten (`/top`) and Health (`/health`). The current page's link SHALL be marked for sight, with a red underline, and for assistive technology, as the current page.
 
 #### Scenario: Moving between pages
 - **WHEN** a viewer on `/` chooses "Impact" in the top bar
@@ -19,18 +19,18 @@ Every page SHALL have a top bar with the site's icon and name, "Tesla Solar Repo
 
 #### Scenario: A screen reader
 - **WHEN** a screen reader lists the page's navigation
-- **THEN** it finds a navigation landmark with the five links, and announces the current one as the current page
+- **THEN** it finds a navigation landmark with the six links, and announces the current one as the current page
 
 ### Requirement: The frame fits any screen
 At any window width from 320 pixels up, every page's frame SHALL fit the window with no sideways scrolling. The top bar's links and its live status SHALL wrap onto more lines rather than overflow, and each link SHALL be at least 44 pixels tall so it can be tapped.
 
 #### Scenario: A phone
 - **WHEN** a viewer opens the site on a 390 pixel wide screen
-- **THEN** all five links and the live status are visible without scrolling sideways, and each link is at least 44 pixels tall
+- **THEN** all six links and the live status are visible without scrolling sideways, and each link is at least 44 pixels tall
 
 #### Scenario: A wide window
 - **WHEN** a viewer opens the site in a 1512 pixel wide window
-- **THEN** the top bar holds the name, all five links and the live status on one line, and the page's content is centered at no more than 1200 pixels wide
+- **THEN** the top bar holds the name, all six links and the live status on one line, and the page's content is centered at no more than 1200 pixels wide
 
 ### Requirement: The dashboard's design system
 Every page SHALL use one dark design system: a near-black background (`#0E1116`), raised panels (`#151A21`) with a fine border (`#232831`), light text (`#E6E8EB`) and muted gray labels (`#9AA3AD`). Text SHALL be set in IBM Plex Sans and figures in IBM Plex Mono, both served by the site itself. Tesla red (`#E82127`) SHALL mark the current page and indicators, and SHALL NOT be used for text smaller than 24 pixels, because it falls short of 4.5:1 contrast on the background.
