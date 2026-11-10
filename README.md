@@ -123,7 +123,7 @@ Every image build audits what the app ships before it runs the tests, and a know
 
 ### Weekly audit
 
-Advisories published between deploys are caught by `deploy/weekly-audit`. A systemd user timer runs it on onyx every Monday at 06:30 Pacific time, half an hour after anton-tesla-api-ws's, and a run missed while onyx was off happens at its next boot. It builds the image's `test` stage (audit and tests) from the deployed commit without touching the running container. When that fails, it sends a Pushover alert through `deploy/pushover` with the end of the build's output; a passing run sends nothing. Its last output is in `~/tesla-next-weekly-audit.log`.
+Advisories published between deploys are caught by `deploy/weekly-audit`. A systemd user timer runs it on onyx every Monday at 06:30 Pacific time, half an hour after anton-tesla-api-ws's, and a run missed while onyx was off happens at its next boot. It builds the image's `test` stage (audit and tests) from the deployed commit without touching the running container. When that fails, it sends a Pushover alert through `deploy/pushover` with the end of the build's output; a passing run sends nothing. It then asks the running site for its checks (`/api/checks`: Tesla's grid figures against PG&E's meter in `meter_day`, whether that meter is current, and solar output against past years) and sends the failing lines, or an alert when the site doesn't answer; a week where all pass sends nothing. Its last output is in `~/tesla-next-weekly-audit.log`.
 
 Install the units once, and again after changing them:
 

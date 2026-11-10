@@ -23,3 +23,10 @@ None.
 
 - `lib/solar/ranges.ts` (`impactPresets`) and its test; the Impact page's preset test.
 - No new route or data: the range is an ordinary one that `/api/impact`, `/api/car-charging` and the page already accept.
+
+## Rollout
+
+Released as v2026.11.09.6 on 2026-11-09; the Deploy workflow and its health check passed.
+
+- On teslasolar.report at desktop width (1680 pixels, as the browser window wouldn't shrink to 1280), All time ends the preset row in one line; picking it sets `start=2021-10-10&end=2026-11-09`, marks it selected, and shows October 10, 2021 – November 9, 2026 with Home car charging since Oct 20, 2025 (3,215.7 kWh, 58% off the grid). No console errors, no sideways scrolling.
+- At 375 pixels (headless Chromium) the row is two rows of three, with All time selected.
