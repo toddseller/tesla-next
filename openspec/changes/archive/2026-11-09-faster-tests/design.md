@@ -88,3 +88,12 @@ Same Mac, `yarn vitest run` as the pre-commit hook runs it, all 1,370 tests pass
 | `vmThreads` pool | 7.8s in each of 3 runs | about 31s |
 
 The slowest files are now the deploy ones at about 5s each in the full run.
+
+## Rollout
+
+Released as v2026.11.09.8 on 2026-11-09; the Deploy workflow and its health check passed (teslasolar.report answered 200). Vitest's own Duration, all 1,370 tests passing under `vmThreads` each time:
+
+| Where | v2026.11.09.7 | v2026.11.09.8 |
+|---|---|---|
+| onyx's Docker build (Deploy) | 24.2s | 17.0s |
+| GitHub's Tests workflow on `main` | 29.5s | 20.9s |
