@@ -12,7 +12,7 @@ const PAYBACK: Payback = {
   solar: { year: 2025, projected: false, estimated: true },
   system: { year: 2030, projected: true, estimated: true },
   powerwalls: { year: null, wont: true },
-  outages: { count: 35, hours: 156.9, longest_hours: 52.3 },
+  outages: { count: 35, seconds: 564_840, longest_seconds: 188_172 },
 };
 const card = () => within(screen.getByRole("region", { name: "Payback" }));
 
@@ -37,7 +37,7 @@ test("the timeline runs from PTO to the end of the Powerwall warranty, marking s
 test("the Powerwalls won't pay back in dollars: the card says so and links their outage record", () => {
   render(<PaybackCard payback={PAYBACK} today="2026-11-09" />);
   expect(card().getByText("The Powerwalls won't pay for themselves in dollars before their warranty ends.")).toBeTruthy();
-  const link = card().getByRole("link", { name: "What they did instead: 35 outages, 156.9 h off the grid, the longest 52.3 h" });
+  const link = card().getByRole("link", { name: "What they did instead: 35 outages, 6 d 12 h off the grid, the longest 2 d 4 h" });
   expect(link.getAttribute("href")).toBe("/impact?backup=all");
 });
 

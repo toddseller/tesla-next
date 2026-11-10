@@ -3,7 +3,7 @@
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, expect, test, vi } from "vitest";
 
-import { BackupSection, duration } from "@/components/impact/backup-section";
+import { BackupSection } from "@/components/impact/backup-section";
 import type { BackupHistory } from "@/lib/backup";
 
 const TODAY = "2026-11-09";
@@ -152,12 +152,4 @@ test("a storm day is grouped under its first day, count and time off the grid", 
   const heading = document.querySelector('[data-part="storm-day"]')!;
   expect(heading.textContent).toBe("Dec 1, 20232 events · 1 h 0 m off the grid");
   expect(heading.closest("li")!.querySelectorAll('[data-part="event"]')).toHaveLength(2);
-});
-
-test("a length of time reads in days and hours from a day up, and as before under it, each part rounded down", () => {
-  expect(duration(23 * 3600 + 59 * 60 + 59)).toBe("23 h 59 m");
-  expect(duration(24 * 3600)).toBe("1 d 0 h");
-  expect(duration(52 * 3600 + 16 * 60 + 12)).toBe("2 d 4 h");
-  expect(duration(4 * 60 + 30)).toBe("4 m 30 s");
-  expect(duration(42)).toBe("42 s");
 });

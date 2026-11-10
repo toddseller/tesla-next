@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
 
-import { blipsPerYear, outageBattery, stormDays, weatherLabel } from "./backup-figures";
+import { blipsPerYear, duration, outageBattery, stormDays, weatherLabel } from "./backup-figures";
 
 const MIN = 60_000;
 const STEP = 5 * MIN;
@@ -161,4 +161,12 @@ describe("blipsPerYear", () => {
       { label: "'21 - '22", count: 1 }, { label: "'22 - '23", count: 2 }, { label: "'23 - '24", count: 0 },
     ]);
   });
+});
+
+test("a length of time reads in days and hours from a day up, and as before under it, each part rounded down", () => {
+  expect(duration(23 * 3600 + 59 * 60 + 59)).toBe("23 h 59 m");
+  expect(duration(24 * 3600)).toBe("1 d 0 h");
+  expect(duration(52 * 3600 + 16 * 60 + 12)).toBe("2 d 4 h");
+  expect(duration(4 * 60 + 30)).toBe("4 m 30 s");
+  expect(duration(42)).toBe("42 s");
 });

@@ -2,7 +2,6 @@ import { readFileSync } from "node:fs";
 
 import { backupHistory } from "@/lib/backup";
 import { db } from "@/lib/db";
-import { pyRound } from "@/lib/intervals/python";
 import { vppSeason } from "@/lib/true-up/cost";
 import { trueUpYears } from "@/lib/true-up/reads";
 import { trueUpSavings } from "@/lib/true-up/savings";
@@ -151,8 +150,8 @@ export async function payback(today: string) {
     system: yearOf(paybackDate(solarYears, net.solar + net.powerwalls)),
     powerwalls: powerwallsPayback(net.powerwalls, finished, today),
     outages: {
-      count: outages.outages, hours: pyRound(outages.seconds / 3600, 1),
-      longest_hours: outages.longest ? pyRound(outages.longest.seconds / 3600, 1) : null,
+      count: outages.outages, seconds: Math.floor(outages.seconds),
+      longest_seconds: outages.longest ? Math.floor(outages.longest.seconds) : null,
     },
   };
 }
