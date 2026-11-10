@@ -23,9 +23,9 @@
 
 ## 5. Rollout
 
-- [ ] 5.1 With the owner's go-ahead, release after anton's change is deployed; the run passes
-- [ ] 5.2 On teslasolar.report: today's tile reads the sky now and the days ahead their daylight labels; record in design.md under Rollout
-- [ ] 5.3 This is the second release after deploy-status: check on onyx that `~/.local/state/tesla-next-deploy/<tag>.result` is 0 and `status <tag>` answers `succeeded` with the log, and record it in the archived deploy-status design (its task 5.2)
+- [x] 5.1 With the owner's go-ahead, release after anton's change is deployed; the run passes
+- [x] 5.2 On teslasolar.report: today's tile reads the sky now and the days ahead their daylight labels; record in design.md under Rollout
+- [x] 5.3 This is the second release after deploy-status: check on onyx that `~/.local/state/tesla-next-deploy/<tag>.result` is 0 and `status <tag>` answers `succeeded` with the log, and record it in the archived deploy-status design (its task 5.2)
 
 ## Workflow follow-up
 

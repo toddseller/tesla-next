@@ -54,3 +54,7 @@ anton's `store-daylight-weather` was deployed and backfilled on 2026-11-10. Chec
 A throwaway branch container on onyx against production, 2026-11-10 at 19:04 UTC (11:04 AM): `/api/forecast` gave today code 0 with `sky` "now", and the page's today tile read "Sunny now", while today's daily code was 45. Tomorrow and Thursday read Cloudy from their daylight code 3 (Thursday's daily code 51 would have read Rain), and Friday Rain from 81. The first run mounted the password file at the wrong path, so its queries failed; the run above mounted it at `/run/secrets/pgpass`, as `docker-compose.yml` does.
 
 At the archive, strict validation found "The sky" over 500 characters with the sky now in it, so its "now" wording became a requirement of its own, "The sky now", added beside it in the delta and the main spec.
+
+## Rollout
+
+Released as v2026.11.10.5 on 2026-11-10; its Deploy run passed, connected throughout, and teslasolar.report answered 200. At 11:11 AM the live card read "Sunny now" for today (`sky` "now", code 0, while today's daily code was 45), Cloudy for tomorrow and Thursday (daylight code 3) and Rain for Friday (81). The deploy-status check on this release is recorded in that change's design.
