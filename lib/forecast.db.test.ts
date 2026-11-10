@@ -13,6 +13,13 @@ const FETCHED = new Date("2026-11-10T17:20:00Z");
 const solar = (date: string, kwh: number) => owner.query("INSERT INTO data (date, solar_generated) VALUES ($1, $2)", [date, kwh]);
 const forecastFor = (day: string, mj: number, code = 0, daylight: number | null = null) =>
   owner.query("INSERT INTO solar_forecast VALUES ($1, $2, $3, $4, $5)", [day, mj, code, FETCHED, daylight]);
+const sunlight = (startAt: string, wm2: number) =>
+  owner.query("INSERT INTO solar_forecast_hour VALUES ($1, $2, $3)", [startAt, wm2, FETCHED]);
+const made = (startAt: string, day: string, wh: number) =>
+  owner.query(
+    `INSERT INTO energy_interval VALUES ($1, $2, $3, 0, 0, 0, 0, 0, 0, 0, 0, 0)`,
+    [startAt, day, wh],
+  );
 const reading = (at: string, code: number) =>
   owner.query("INSERT INTO weather_sample (sampled_at, weather_code, cloud_cover) VALUES ($1, $2, 0)", [at, code]);
 
@@ -37,6 +44,23 @@ beforeAll(async () => {
   await forecastFor("2026-11-12", 9, 51);
   await forecastFor("2026-11-13", 5.25, 81);
   await forecastFor("2026-11-14", 14);
+  // The 10 AM hours (18:00 UTC, PST) of November 8 and 9: 3,600 Wh under 900 W/m², 9's in two intervals.
+  await sunlight("2026-11-08T18:00:00Z", 500);
+  await made("2026-11-08T18:00:00Z", "2026-11-08", 2000);
+  await sunlight("2026-11-09T18:00:00Z", 400);
+  await made("2026-11-09T18:00:00Z", "2026-11-09", 1000);
+  await made("2026-11-09T18:05:00Z", "2026-11-09", 600);
+  // 11 AM on November 9 has no forecast, and November 7 no intervals, so neither counts; October 1 is too old.
+  await made("2026-11-09T19:00:00Z", "2026-11-09", 900);
+  await sunlight("2026-11-07T18:00:00Z", 450);
+  await sunlight("2026-10-01T17:00:00Z", 600);
+  await made("2026-10-01T17:00:00Z", "2026-10-01", 3000);
+  // Today: 10 AM under way to 10:10, 11 AM ahead, and tomorrow's 10 AM left out.
+  await sunlight("2026-11-10T18:00:00Z", 532.4);
+  await sunlight("2026-11-10T19:00:00Z", 583);
+  await sunlight("2026-11-11T18:00:00Z", 300);
+  await made("2026-11-10T18:00:00Z", TODAY, 250);
+  await made("2026-11-10T18:05:00Z", TODAY, 300);
   await reading("2026-11-10T17:30:00Z", 45);
   await reading("2026-11-10T17:45:00Z", 0);
 });
@@ -70,9 +94,25 @@ test("the sky now is the newest weather reading", async () => {
   expect(reading).toEqual({ code: 0, sampled_at: "2026-11-10T17:45:00.000Z" });
 });
 
-test("with nothing stored there is no scale, no forecast, no solar so far and no reading", async () => {
-  await owner.query("DELETE FROM data; DELETE FROM solar_forecast; DELETE FROM weather_sample");
+test("each hour of the day's scale comes from the 30 days before today's hours with both sunlight and intervals", async () => {
+  const { hourly } = await forecast(TODAY);
+  expect(hourly.scale).toEqual([{ hour: 10, wh: 3600, wm2: 900 }]);
+  expect(hourly.days).toBe(2);
+});
+
+test("today's forecast hours with what each has made so far, and when the newest interval ends", async () => {
+  const { hourly } = await forecast(TODAY);
+  expect(hourly.today).toEqual([
+    { start_at: "2026-11-10T18:00:00.000Z", wm2: 532.4, made_wh: 550 },
+    { start_at: "2026-11-10T19:00:00.000Z", wm2: 583, made_wh: null },
+  ]);
+  expect(hourly.made_until).toBe("2026-11-10T18:10:00.000Z");
+});
+
+test("with nothing stored there is no scale, no forecast, no solar so far, no reading and no hours", async () => {
+  await owner.query("DELETE FROM data; DELETE FROM solar_forecast; DELETE FROM weather_sample; DELETE FROM energy_interval; DELETE FROM solar_forecast_hour");
   expect(await forecast(TODAY)).toEqual({
     scale: { solar_kwh: 0, radiation_mj: 0, days: 0, good_day: null }, rows: [], so_far: null, reading: null,
+    hourly: { scale: [], days: 0, today: [], made_until: null },
   });
 });

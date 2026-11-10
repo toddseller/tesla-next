@@ -3,7 +3,7 @@
 import { cleanup, render, screen, within } from "@testing-library/react";
 import { afterEach, expect, test } from "vitest";
 
-import { ForecastCard } from "@/components/solar/forecast";
+import { ForecastCard, HourDetails } from "@/components/solar/forecast";
 import type { ForecastCard as Card } from "@/lib/forecast";
 
 afterEach(cleanup);
@@ -17,6 +17,7 @@ const CARD: Card = {
   ],
   goodDay: 37,
   staleSince: null,
+  byHour: null,
 };
 const card = () => within(screen.getByRole("region", { name: "Solar forecast" }));
 const today = () => within(card().getByRole("group", { name: "Today" }));
@@ -76,4 +77,56 @@ test("today's tile shows the sky now while the days ahead keep the forecast's wo
   expect(today().getByText("Fog now")).toBeTruthy();
   const thursday = within(within(card().getByRole("list", { name: "The next three days" })).getAllByRole("listitem")[1]);
   expect(thursday.getAllByText("Fog likely").length).toBeGreaterThan(0);
+});
+
+// November 8, 2026 at 1:40 PM: 7 AM to 4 PM, 7 to 10 AM short of their forecast, 11 AM and noon over it, 2 PM on ahead.
+const PST = (hour: number) => new Date(Date.UTC(2026, 10, 10, hour + 8)).toISOString();
+const HOURS: [number, number, number | null][] = [
+  [7, 0.69, 0.34], [8, 3.16, 1.74], [9, 4.34, 2.47], [10, 5.74, 5.0], [11, 5.26, 5.9],
+  [12, 4.57, 5.38], [13, 4.1, 3.1], [14, 3.06, null], [15, 1.59, null], [16, 0.3, null],
+];
+const BY_HOUR: NonNullable<Card["byHour"]> = {
+  hours: HOURS.map(([hour, expected, made]) => ({ start: PST(hour), expected, made })),
+  byNow: { made: 23.93, expected: 26.49, at: "2026-11-10T21:40:00Z", over: false },
+};
+const byHour = () => within(card().getByRole("group", { name: "Today by hour" }));
+const parts = (container: HTMLElement, part: string) =>
+  [...container.querySelectorAll(`[data-part="${part}"]`)].map((el) => (el as HTMLElement).dataset.hour);
+
+test("today by hour: its legend, made against expected by now, and a column for each hour with a tick only where made beat expected", () => {
+  const { container } = render(<ForecastCard card={{ ...CARD, byHour: BY_HOUR }} />);
+  expect(byHour().getByText("Made")).toBeTruthy();
+  expect(byHour().getByText("Expected")).toBeTruthy();
+  expect(card().getByRole("group", { name: "Today by hour" }).textContent).toContain("23.9 kWh made by 1:40 PM, against 26.5 expected by now");
+  expect(parts(container, "expected")).toEqual(HOURS.map(([hour]) => PST(hour)));
+  expect(parts(container, "made")).toEqual(HOURS.filter(([, , made]) => made !== null).map(([hour]) => PST(hour)));
+  expect(parts(container, "tick")).toEqual([PST(11), PST(12)]);
+});
+
+test("before the first hour there is no made-against-expected; after the last it reads for the day", () => {
+  render(<ForecastCard card={{ ...CARD, byHour: { ...BY_HOUR, byNow: null } }} />);
+  expect(card().getByRole("group", { name: "Today by hour" }).textContent).not.toContain("kWh made");
+  cleanup();
+  render(<ForecastCard card={{ ...CARD, byHour: { ...BY_HOUR, byNow: { made: 31.2, expected: 32.81, at: "2026-11-11T01:30:00Z", over: true } } }} />);
+  expect(card().getByRole("group", { name: "Today by hour" }).textContent).toContain("31.2 kWh made today, against 32.8 expected");
+});
+
+test("without hourly figures the card has no Today by hour", () => {
+  render(<ForecastCard card={CARD} />);
+  expect(card().queryByRole("group", { name: "Today by hour" })).toBeNull();
+});
+
+const details = (hour: number, expected: number, made: number | null) =>
+  render(<HourDetails active payload={[{ payload: { start: PST(hour), expected, made } }]} />).container.textContent;
+
+test("an hour's details: the hour, what it made and what was expected, to one decimal", () => {
+  expect(details(9, 4.34, 2.47)).toBe("9–10 AMMade2.5 kWhExpected4.3 kWh");
+  cleanup();
+  expect(details(11, 5.26, 5.9)).toBe("11 AM–12 PMMade5.9 kWhExpected5.3 kWh");
+  cleanup();
+  expect(details(12, 4.57, 5.38)).toBe("12–1 PMMade5.4 kWhExpected4.6 kWh");
+});
+
+test("an hour not yet started shows only what is expected", () => {
+  expect(details(14, 3.06, null)).toBe("2–3 PMExpected3.1 kWh");
 });

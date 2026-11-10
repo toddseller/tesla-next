@@ -10,7 +10,8 @@
 -- run as anton's backup job runs pg_dump (deploy/backup-database there), then drop pg_dump's \restrict and
 -- \unrestrict lines. Dumped 2026-11-08, at anton-tesla-api-ws 86714a1; grid_outage and site_state written by hand from
 -- anton's models (api/models/grid.py, ae61e56), as its init_db creates them; solar_forecast copied from production's columns
--- (`\d solar_forecast`, 2026-11-10, store-solar-forecast and store-daylight-weather), until the next dump.
+-- (`\d solar_forecast`, 2026-11-10, store-solar-forecast and store-daylight-weather) and solar_forecast_hour
+-- likewise (store-daylight-weather), until the next dump.
 --
 -- PostgreSQL database dump
 --
@@ -513,6 +514,15 @@ CREATE TABLE public.solar_forecast (
 
 ALTER TABLE ONLY public.solar_forecast
     ADD CONSTRAINT solar_forecast_pkey PRIMARY KEY (day);
+
+CREATE TABLE public.solar_forecast_hour (
+    start_at timestamp with time zone NOT NULL,
+    radiation_wm2 real NOT NULL,
+    fetched_at timestamp with time zone NOT NULL
+);
+
+ALTER TABLE ONLY public.solar_forecast_hour
+    ADD CONSTRAINT solar_forecast_hour_pkey PRIMARY KEY (start_at);
 
 
 --

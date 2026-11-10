@@ -25,6 +25,11 @@ beforeEach(() => {
       { day: "2026-11-08", radiation_mj: 13.2, weather_code: 45, fetched_at: "2026-11-07T19:30:00Z" },
     ],
     so_far: 9.6,
+    reading: null,
+    hourly: {
+      scale: [{ hour: 11, wh: 9000, wm2: 1000 }], days: 30, made_until: "2026-11-07T19:55:00Z",
+      today: [{ start_at: "2026-11-07T19:00:00Z", wm2: 500, made_wh: 3800 }],
+    },
   });
   rangeTotals.mockResolvedValue([
     { date: "Oct 13", day: "2026-10-13", solar: 41.0, grid: -1.2, house: 31.1 },
@@ -85,6 +90,7 @@ test("the range view is served with the forecast card above its title; a day's v
   expect(html).toContain("Solar forecast");
   expect(html).toContain("kWh expected");
   expect(html.indexOf("Solar forecast")).toBeLessThan(html.indexOf("Solar by date range"));
+  expect(html).toContain("Today by hour");
   forecast.mockClear();
   dayIntervals.mockResolvedValue({ date: "2026-10-14", vehicle_data: false, totals: { solar_to_home: 12.27 }, data: [], off_grid: [], storm_watch: [] });
   expect(await served({ start: "2026-10-01", end: "2026-10-31", day: "2026-10-14" })).not.toContain("Solar forecast");

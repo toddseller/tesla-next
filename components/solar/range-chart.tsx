@@ -27,7 +27,7 @@ const withPeriods = (items: RangeItem[], range: Range): Row[] => {
   return items.map((item, i) => ({ ...toRow(item), ...(spans[i] && item.solar !== null && { period: { start: spans[i][0], end: spans[i][1] } }) }));
 };
 
-const kwh = (value: number) => `${value.toLocaleString("en-US", { minimumFractionDigits: 1, maximumFractionDigits: 1 })} kWh`;
+export const kwh = (value: number) => `${value.toLocaleString("en-US", { minimumFractionDigits: 1, maximumFractionDigits: 1 })} kWh`;
 
 const RADIUS = 4;
 
