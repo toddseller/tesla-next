@@ -1,6 +1,6 @@
 // The weekly checks (system-checks spec), against a database of their own.
 import type { Client } from "pg";
-import { afterAll, beforeAll, beforeEach, expect, test } from "vitest";
+import { afterAll, beforeAll, beforeEach, expect, test, vi } from "vitest";
 
 import { ownDatabase } from "@/test/true-up";
 
@@ -25,7 +25,10 @@ beforeAll(async () => {
 
 beforeEach(() => owner.query("DELETE FROM meter_day; DELETE FROM data"));
 
-afterAll(() => owner.end());
+afterAll(async () => {
+  await owner.end();
+  vi.unstubAllEnvs();
+});
 
 test("a healthy week passes, the Powerwalls' exports counted with solar's", async () => {
   await week("2026-11-01", { in: 120, out: 60 }, { in: 119, solarOut: 45, powerwallOut: 14 });
