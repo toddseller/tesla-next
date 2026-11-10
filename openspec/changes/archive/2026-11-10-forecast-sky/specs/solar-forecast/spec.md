@@ -1,5 +1,18 @@
 # Spec Delta
 
+## ADDED Requirements
+
+### Requirement: The sky now
+Today's sky now SHALL use the sky's groups with "now" after them, and Fog for 45 and 48. Between sunset and sunrise it SHALL read Clear for 0 and Partly cloudy for 1 and 2, with moon icons.
+
+#### Scenario: Fog now
+- **WHEN** the latest reading, in daylight, is code 45
+- **THEN** today's tile reads Fog now
+
+#### Scenario: A clear night
+- **WHEN** the latest reading is code 0 at 9 PM
+- **THEN** today's tile reads Clear now with the moon icon
+
 ## MODIFIED Requirements
 
 ### Requirement: Today's tile
@@ -22,7 +35,7 @@ Today's tile SHALL show today's expected kWh, today's solar so far in kWh to one
 - **THEN** today's tile shows the forecast's sky, without "now"
 
 ### Requirement: The sky
-A forecast day's sky SHALL follow its daylight weather code, the most severe weather between sunrise and sunset, or its daily code when it has none: 0 Sunny, 1 and 2 Partly cloudy, 3 Cloudy, 45 and 48 Fog likely, 51 to 67 and 80 to 82 Rain, 71 to 77, 85 and 86 Snow, 95 to 99 Thunderstorms, each with its own icon. A code outside these SHALL show Cloudy. The sky now SHALL use the same groups with "now" after them, Fog for 45 and 48, and, between sunset and sunrise, Clear for 0 and Partly cloudy for 1 and 2 with moon icons.
+A forecast day's sky SHALL follow its daylight weather code, the most severe weather between sunrise and sunset, or its daily code when it has none: 0 Sunny, 1 and 2 Partly cloudy, 3 Cloudy, 45 and 48 Fog likely, 51 to 67 and 80 to 82 Rain, 71 to 77, 85 and 86 Snow, 95 to 99 Thunderstorms, each with its own icon. A code outside these SHALL show Cloudy.
 
 #### Scenario: Morning fog
 - **WHEN** Thursday's daylight weather code is 45
@@ -35,7 +48,3 @@ A forecast day's sky SHALL follow its daylight weather code, the most severe wea
 #### Scenario: A day stored before the daylight code
 - **WHEN** a day has a daily code of 3 and no daylight code
 - **THEN** it reads Cloudy
-
-#### Scenario: A clear night
-- **WHEN** the latest reading is code 0 at 9 PM
-- **THEN** today's tile reads Clear now with the moon icon
