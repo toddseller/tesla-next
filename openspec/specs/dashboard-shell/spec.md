@@ -2,7 +2,7 @@
 
 ## Purpose
 
-The frame and design system every dashboard page shares: navigation among the five pages, how the frame fits any screen, the colors and type, and the footer.
+The frame and design system every dashboard page shares: navigation among the pages, how the frame fits any screen, the colors and type, and the footer.
 
 ## Requirements
 
