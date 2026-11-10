@@ -6,6 +6,7 @@ import { ownDatabase } from "@/test/true-up";
 
 let owner: Client;
 let forecast: typeof import("./forecast").forecast;
+let expectedHours: typeof import("./forecast").expectedHours;
 
 const TODAY = "2026-11-10";
 const FETCHED = new Date("2026-11-10T17:20:00Z");
@@ -25,7 +26,7 @@ const reading = (at: string, code: number) =>
 
 beforeAll(async () => {
   owner = await ownDatabase("tsr_forecast");
-  ({ forecast } = await import("./forecast"));
+  ({ forecast, expectedHours } = await import("./forecast"));
   // October 11 to November 9: 30 kWh a day under 12 MJ/m², November 1 the best at 37 kWh.
   for (let n = 1; n <= 30; n++) {
     const day = new Date(Date.UTC(2026, 10, 10 - n)).toISOString().slice(0, 10);
@@ -107,6 +108,31 @@ test("today's forecast hours with what each has made so far, and when the newest
     { start_at: "2026-11-10T19:00:00.000Z", wm2: 583, made_wh: null },
   ]);
   expect(hourly.made_until).toBe("2026-11-10T18:10:00.000Z");
+});
+
+// April 2026, PDT: the 10 AM hours (17:00 UTC) of April 8 to 15 made 4,000 Wh each under 500 W/m², 8 Wh per W/m²,
+// twice November's 4.
+async function april() {
+  for (let date = 8; date <= 15; date++) {
+    const day = `2026-04-${String(date).padStart(2, "0")}`;
+    await sunlight(`${day}T17:00:00Z`, 500);
+    await made(`${day}T17:00:00Z`, day, 4000);
+  }
+  await sunlight("2026-04-16T17:00:00Z", 600);
+  await sunlight("2026-04-16T18:00:00Z", 300);
+}
+
+test("a past day's hours are scaled by the 30 days before that day, an hour of the day without a scale expecting 0", async () => {
+  await april();
+  expect(await expectedHours("2026-04-16")).toEqual([
+    { start: "2026-04-16T17:00:00.000Z", kwh: 4.8 },
+    { start: "2026-04-16T18:00:00.000Z", kwh: 0 },
+  ]);
+});
+
+test("a day with fewer than 7 scale days, or without forecast hours, has no expected hours", async () => {
+  expect(await expectedHours(TODAY)).toEqual([]);
+  expect(await expectedHours("2026-04-20")).toEqual([]);
 });
 
 test("with nothing stored there is no scale, no forecast, no solar so far, no reading and no hours", async () => {

@@ -1,7 +1,7 @@
 # system-checks Specification
 
 ## Purpose
-Notices, within a week and without anyone looking, when Tesla's grid figures stop matching PG&E's meter, when PG&E's readings stop arriving, or when solar output falls below its own history, and alerts the owner.
+Notices, without anyone looking, when Tesla's grid figures stop matching PG&E's meter, when PG&E's readings stop arriving, or when solar output falls below its own history, within a week, and when a bright day's solar peak falls well short of the usual, such as a failing microinverter, by the next morning; and alerts the owner.
 
 ## Requirements
 
@@ -114,3 +114,14 @@ A daily run on the server, every morning after the previous day is finished, SHA
 #### Scenario: The site down
 - **WHEN** the daily run can't reach the running site
 - **THEN** the owner receives a notification saying the daily checks couldn't run
+
+### Requirement: The failing peak line links to its day
+When the solar peak check fails for a day it judged, its line SHALL end with that day's address on the site, `https://teslasolar.report/?day=YYYY-MM-DD`, after the comparison, so the alert opens the day's view.
+
+#### Scenario: The fault's first bright day
+- **WHEN** the check fails for April 13, 2026
+- **THEN** its line reads `FAIL solar peak: April 13, 2026's peak was 52% of the usual bright-day peak (4.4 of 8.4 kW) https://teslasolar.report/?day=2026-04-13`
+
+#### Scenario: A day with no solar stored
+- **WHEN** the check fails because no solar was stored for yesterday
+- **THEN** its line ends with yesterday's address too

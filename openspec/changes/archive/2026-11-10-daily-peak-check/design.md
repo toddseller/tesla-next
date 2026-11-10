@@ -81,3 +81,11 @@ A throwaway branch container on onyx against production, read-only, 2026-11-10:
 - **The seasonal rule:** over every day from 2021-10-11 to 2026-11-10, it fails on 8 days, the replay's: August 28, 2025 (27% of the usual bright-day peak, 2.5 of 9.2 kW) and April 13, 16 to 19, 22 and 23, 2026 (49 to 55%, 4.1 to 4.6 of 8.4 kW). April 10, 2026 passes at 124%. 1,107 days were judged, against 643 under 15 MJ/m²; 735 were too dull, 7 had too few bright days before them (the history's first weeks), and none lacked intervals.
 - **Winter:** every December 15 and January 15 from 2022 is judged except two dull ones (December 15, 2021 at 33% of a clear day's 10.7 MJ/m², January 15, 2023 at 44%), reading 88 to 116% of the usual peak of about 5.5 kW.
 - **The route:** `/api/checks/daily` answered 200 `text/plain` in 0.11 s: `ok solar peak: November 9, 2026's peak was 89% of the usual bright-day peak (6.0 of 6.7 kW)`, a November day the 15 MJ/m² rule couldn't have judged. The query takes 46 ms.
+
+## Rollout
+
+Released as v2026.11.10.8 on 2026-11-10. Its Deploy run passed, connected throughout; onyx kept the result 0 and runs the merge commit, and teslasolar.report answered 200. Then on onyx:
+
+- **The route:** `/api/checks/daily` from the running container: `ok solar peak: November 9, 2026's peak was 89% of the usual bright-day peak (6.0 of 6.7 kW)`.
+- **The timer:** `tesla-next-daily-check.timer` enabled from the deployed clone's units; `list-timers` shows it due at 07:00 Pacific (15:00 UTC), beside the Monday audit. Started once by hand, the service exited 0, logged the same `ok solar peak` line and sent nothing. The line is logged under the script's name, so `journalctl --user -t checks` shows it and `-u tesla-next-daily-check` shows only systemd's start and finish; README.md now says so.
+- **The weekly run:** `tesla-next-weekly-audit` started by hand took 23 s; the dashboard audit and all three weekly checks passed through `deploy/checks`, its log keeping their lines, and nothing was sent.

@@ -120,7 +120,7 @@ test("the microinverter fault's first bright day fails at 52% of the usual brigh
   await clearDays("2025-02-01", 120, 25);
   await peakWindow("2026-04-13", Array(25).fill(8448));
   await sunDay("2026-04-13", 24.4, 4416);
-  expect(await checks.peakCheck("2026-04-14")).toBe("FAIL solar peak: April 13, 2026's peak was 52% of the usual bright-day peak (4.4 of 8.4 kW)");
+  expect(await checks.peakCheck("2026-04-14")).toBe("FAIL solar peak: April 13, 2026's peak was 52% of the usual bright-day peak (4.4 of 8.4 kW) https://teslasolar.report/?day=2026-04-13");
 });
 
 test("a foggy summer morning that still peaks as usual passes", async () => {
@@ -128,6 +128,7 @@ test("a foggy summer morning that still peaks as usual passes", async () => {
   await peakWindow("2022-08-02", Array(10).fill(10080));
   await sunDay("2022-08-02", 22.6, 10440);
   expect(await checks.peakCheck("2022-08-03")).toMatch(/^ok solar peak: August 2, 2022's peak was 104% /);
+  expect(await checks.peakCheck("2022-08-03")).not.toContain("https://");
 });
 
 test("a dull day passes unjudged, saying why", async () => {
@@ -153,7 +154,7 @@ test("fewer than 5 bright days in the 30 before pass unjudged, saying why", asyn
 test("a day with no interval stored fails", async () => {
   await peakWindow("2026-04-12", Array(25).fill(8448));
   await owner.query("INSERT INTO solar_forecast (day, radiation_mj, weather_code, fetched_at) VALUES ('2026-04-12', 8, 0, now())");
-  expect(await checks.peakCheck("2026-04-13")).toBe("FAIL solar peak: no solar was stored for April 12, 2026");
+  expect(await checks.peakCheck("2026-04-13")).toBe("FAIL solar peak: no solar was stored for April 12, 2026 https://teslasolar.report/?day=2026-04-12");
 });
 
 test("an even number of bright days takes the lower middle peak", async () => {
@@ -168,7 +169,7 @@ test("a failing microinverter in December fails, though no December day reaches 
   await clearDays("2025-10-15", 90, 10.6);
   await peakWindow("2026-12-15", Array(15).fill(6000), 9, 3);
   await sunDay("2026-12-15", 9.8, 3000);
-  expect(await checks.peakCheck("2026-12-16")).toBe("FAIL solar peak: December 15, 2026's peak was 50% of the usual bright-day peak (3.0 of 6.0 kW)");
+  expect(await checks.peakCheck("2026-12-16")).toBe("FAIL solar peak: December 15, 2026's peak was 50% of the usual bright-day peak (3.0 of 6.0 kW) https://teslasolar.report/?day=2026-12-15");
 });
 
 test("a date's clear-day forecast counts the days across the new year", async () => {
@@ -183,5 +184,5 @@ test("a window whose bright days made nothing fails rather than reading 0 of 0 k
   await clearDays("2025-02-01", 120, 25);
   await peakWindow("2026-04-12", Array(20).fill(0));
   await sunDay("2026-04-12", 20, 0);
-  expect(await checks.peakCheck("2026-04-13")).toBe("FAIL solar peak: no bright day in the 30 before April 12, 2026 made any solar");
+  expect(await checks.peakCheck("2026-04-13")).toBe("FAIL solar peak: no bright day in the 30 before April 12, 2026 made any solar https://teslasolar.report/?day=2026-04-12");
 });

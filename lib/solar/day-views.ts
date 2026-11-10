@@ -173,7 +173,7 @@ export function niceAxis(low: number, high: number) {
 // own stack, so a flow idle at zero never sits on top of the other side's. The Powerwall's axis is centered on zero and
 // sized to the larger side, with magnitudes on both sides as in the Tesla app; others use at least 1 kW (±1 kW for Grid)
 // so a few watts of metering noise read as flat.
-export function viewChart(viewKey: string, data: Interval[], { vehicleData = false }: Options = {}) {
+export function viewChart(viewKey: string, data: Interval[], { vehicleData = false, expectedPeak = 0 }: Options & { expectedPeak?: number } = {}) {
   const series = sectionsFor(viewKey, vehicleData)
     .flatMap((s) => s.flows)
     .map((f) => ({ key: f.key, label: f.label, color: f.color, stack: f.sign > 0 ? ("above" as const) : ("below" as const) }));
@@ -198,7 +198,7 @@ export function viewChart(viewKey: string, data: Interval[], { vehicleData = fal
   }
   return {
     series, rows,
-    ...niceAxis(Math.min(viewKey === "grid" ? -1 : 0, low), Math.max(1, high)),
+    ...niceAxis(Math.min(viewKey === "grid" ? -1 : 0, low), Math.max(1, high, expectedPeak)),
     tickLabel: unitOnTopTick(" kW"),
   };
 }
@@ -235,7 +235,7 @@ export type StormSpan = { start: string; end: string | null };
 type SpanDay = { date: string; data: Interval[]; off_grid: OffGridSpan[]; storm_watch: StormSpan[] };
 
 // A time's minute in the shown day, with seconds as a fraction, 0 or 1440 when it falls before or after it.
-function dayMinute(iso: string, date: string) {
+export function dayMinute(iso: string, date: string) {
   const ms = Date.parse(iso);
   const wall = wallTime(ms);
   if (wall.date !== date) return wall.date < date ? 0 : 1440;
@@ -261,4 +261,24 @@ export function daySpans({ date, data, off_grid, storm_watch }: SpanDay) {
       return { kind: "storm" as const, ...span, text: `Storm watch ${edge(start, date)} to ${edge(end, date)}, ${fromGrid(span.from, span.to).toFixed(1)} kWh charged from the grid` };
     }),
   ];
+}
+
+export type ExpectedHour = { start: string; kwh: number };
+
+// The expected line's points, each lit hour's kWh as average kW at its middle and zero at the lit hours' two ends, and
+// each step's own hour's expected kW for the details; a point's minute without a step gets a row of its own.
+export function expectedRows<T extends { minute: number }>(
+  rows: T[], expected: ExpectedHour[], date: string,
+): (T & { expected?: number | null; expected_hour?: number | null })[] {
+  const hours = expected.map(({ start, kwh }) => ({ from: dayMinute(start, date), kw: kwh }));
+  const lit = hours.filter(({ kw }) => kw > 0);
+  if (!lit.length) return rows;
+  const points = new Map([[lit[0].from, 0], ...lit.map(({ from, kw }) => [from + 30, kw] as const), [lit.at(-1)!.from + 60, 0]]);
+  const byMinute = new Map<number, T>(rows.map((row) => [row.minute, row]));
+  for (const minute of points.keys()) if (!byMinute.has(minute)) byMinute.set(minute, { minute } as T);
+  return [...byMinute.values()].sort((a, b) => a.minute - b.minute).map((row) => ({
+    ...row,
+    expected: points.get(row.minute) ?? null,
+    expected_hour: hours.find(({ from }) => row.minute >= from && row.minute < from + 60)?.kw ?? null,
+  }));
 }

@@ -74,6 +74,7 @@ export async function outputCheck(today: string) {
 
 // From the 2021 to 2026 replay: it caught both microinverter faults (2025-08-28, 2026-04-13) and nothing else, and
 // judges 40 to 77% of days in every month. A fixed level judged no day from November to January.
+const SITE = "https://teslasolar.report";
 const BRIGHT_SHARE = 0.6;
 const CLEAR_PERCENTILE = 0.9;
 const CLEAR_SPAN_DAYS = 15;
@@ -99,15 +100,17 @@ export async function peakCheck(today: string) {
     [day, BRIGHT_SHARE, CLEAR_PERCENTILE, CLEAR_SPAN_DAYS],
   );
   const label = datesLabel({ start: day, end: day }, "long");
+  // The alert's link opens the day's chart, its expected line beside what was made.
+  const link = `${SITE}/?day=${day}`;
   // A lost day would otherwise pass every check unseen.
-  if (peak === null) return `FAIL solar peak: no solar was stored for ${label}`;
+  if (peak === null) return `FAIL solar peak: no solar was stored for ${label} ${link}`;
   if (mj === null || clear === null) return `ok solar peak: ${label} has no forecast to judge it by`;
   if (mj < BRIGHT_SHARE * clear) return `ok solar peak: ${label} was too dull to judge (${mj.toFixed(1)} MJ/m² forecast, ${percent(mj, clear)}% of a clear day's ${clear.toFixed(1)})`;
   if (bright < MIN_BRIGHT_DAYS) return `ok solar peak: too few bright days before ${label} to judge it (${bright})`;
-  if (!usual) return `FAIL solar peak: no bright day in the 30 before ${label} made any solar`;
+  if (!usual) return `FAIL solar peak: no bright day in the 30 before ${label} made any solar ${link}`;
   const kw = (watts: number) => (watts / 1000).toFixed(1);
   const line = `${label}'s peak was ${percent(peak, usual!)}% of the usual bright-day peak (${kw(peak)} of ${kw(usual!)} kW)`;
-  return peak < usual! * PEAK_SHARE ? `FAIL solar peak: ${line}` : `ok solar peak: ${line}`;
+  return peak < usual! * PEAK_SHARE ? `FAIL solar peak: ${line} ${link}` : `ok solar peak: ${line}`;
 }
 
 export const allChecks = async (today: string) => Promise.all([meterCheck(), staleCheck(today), outputCheck(today)]);

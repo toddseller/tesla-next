@@ -76,6 +76,7 @@ beforeEach(async () => {
   await owner.query("DELETE FROM battery_sample; DELETE FROM vehicle_interval; DELETE FROM charge_session; DELETE FROM weather_sample");
   await owner.query("DELETE FROM vehicle WHERE vin LIKE '%TEST000%'");
   await owner.query("DELETE FROM grid_outage WHERE start_at BETWEEN '2026-09-28' AND '2026-10-19'; DELETE FROM site_state WHERE start_at BETWEEN '2026-09-28' AND '2026-10-19'");
+  await owner.query("DELETE FROM solar_forecast_hour WHERE start_at BETWEEN '2026-09-28' AND '2026-10-19'");
 });
 
 afterAll(async () => {
@@ -227,7 +228,7 @@ test("a day without weather has an empty list", async () => {
   await energy(16, 12, 0, { house_from_solar_wh: 100 });
   const body = await getDay();
   expect(body.weather).toEqual([]);
-  expect(Object.keys(body).sort()).toEqual(["data", "date", "off_grid", "storm_watch", "totals", "vehicle_data", "vehicle_includes_estimates", "vehicle_includes_session_estimates", "weather"]);
+  expect(Object.keys(body).sort()).toEqual(["data", "date", "expected", "off_grid", "storm_watch", "totals", "vehicle_data", "vehicle_includes_estimates", "vehicle_includes_session_estimates", "weather"]);
 });
 
 // test_intervals_estimates.py
@@ -586,4 +587,26 @@ test("a storm watch stretch still open is listed with no end; stretches without 
 test("a day without either has empty lists", async () => {
   const body = await getDay(16);
   expect([body.off_grid, body.storm_watch]).toEqual([[], []]);
+});
+
+const sunlight = (instant: number, wm2: number) =>
+  owner.query("INSERT INTO solar_forecast_hour VALUES ($1, $2, now())", [new Date(instant), wm2]);
+
+test("the day's forecast hours with their expected kWh, scaled by the 30 days before it", async () => {
+  // October 9 to 15's 10 AM hours made 4,000 Wh under 500 W/m², 8 Wh per W/m².
+  for (let day = 9; day <= 15; day++) {
+    await sunlight(at(day, 10, 0), 500);
+    await energy(day, 10, 0, { solar_generated_wh: 4000 });
+  }
+  await sunlight(at(16, 11, 0), 300);
+  await sunlight(at(16, 10, 0), 600);
+  expect((await getDay()).expected).toEqual([
+    { start: new Date(at(16, 10, 0)).toISOString(), kwh: 4.8 },
+    { start: new Date(at(16, 11, 0)).toISOString(), kwh: 0 },
+  ]);
+});
+
+test("a day without enough history before it has no expected hours", async () => {
+  await sunlight(at(16, 10, 0), 600);
+  expect((await getDay()).expected).toEqual([]);
 });

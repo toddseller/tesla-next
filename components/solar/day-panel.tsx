@@ -83,7 +83,7 @@ export function DayPanel({ range, day, strip, today, modified, onDay }: Props) {
         </span>
       </div>
       <DaysStrip items={strip} shown={date} onDay={onDay} />
-      <DayView day={day} />
+      <DayView day={day} today={today} />
     </div>
   );
 }
