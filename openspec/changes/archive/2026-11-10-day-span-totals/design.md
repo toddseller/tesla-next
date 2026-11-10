@@ -87,3 +87,10 @@ A throwaway branch container on onyx against production, 2026-11-10, with Novemb
 - **The tooltip:** after the touch drag, recharts' tooltip stayed on the last step, as a tap on the chart already leaves it today.
 
 At the archive, adding the Wh to "Day intervals API" pushed that requirement past strict validation's 500 characters. So the Wh became a requirement of its own, "Each flow's energy", added beside it, and "Day intervals API" is unchanged. The `day-intervals` spec's two other long-requirement warnings predate this change.
+
+## Rollout
+
+Released as v2026.11.10.7 on 2026-11-10. Its Deploy run passed, connected throughout; teslasolar.report answered 200, and onyx kept the result 0. On the live site, November 9's Grid view, driven in headless Chrome:
+- **1280 wide, mouse:** a drag from 4:00 PM past the end of the day selected "4:00 PM to 12:00 AM". Imported read 22.2 kWh with "8.7 kWh 4 PM to 12 AM" under it, and Home's row 22.2 kWh, 100%, with 8.7 kWh in the span column. Production's intervals give 8.669 kWh for those hours, of 22.187 for the day.
+- **375 wide, touch emulation:** a finger drag with Select off selected nothing. With Select on, it selected the span and Select turned off. The toggle showed and the hint didn't.
+- Nothing scrolled sideways at either width.

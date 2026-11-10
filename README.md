@@ -34,7 +34,7 @@ Settings live in `.env` at the repository root, never committed; `.env.example` 
 | `DATABASE_URL` | required | the site's database, as the API's login `tsr_app`: `postgresql://tsr_app@192.168.40.5:5432/tsr`. Leave the password out when `PGPASS_FILE` is set. |
 | `PGPASS_FILE` | optional | host path of a libpq password file (mode 600) holding the database's password. Compose mounts it read-only and the app reads the password from it. Without it, put the password in `DATABASE_URL`. |
 | `SYSTEM_COSTS_FILE` | optional | host path of a JSON file (mode 600, outside the repository) holding what the system cost: `{"solar": …, "powerwalls": …, "sales_tax": …, "credit_rate": …}`, the two prices and the tax in dollars and the federal credit as a fraction. Compose mounts it read-only. The True-Up Tracker's Payback card shows only years worked out from it; without it there is no card. Never commit it or print its figures: the repository and the site are public. |
-| `PUSHOVER_USER` | optional | Pushover user key; with `PUSHOVER_TOKEN`, the weekly audit alerts when it fails |
+| `PUSHOVER_USER` | optional | Pushover user key; with `PUSHOVER_TOKEN`, the weekly audit and daily check alert when they fail |
 | `PUSHOVER_TOKEN` | optional | Pushover application API token; without both, nothing is sent |
 
 Every session the app opens is read-only and in UTC, so nothing here can change the data the API writes. The database accepts `tsr_app` only from onyx, so a local `next dev` can't read production; pages that need the database work on onyx.
@@ -127,17 +127,19 @@ Every image build audits what the app ships before it runs the tests, and a know
 
 ### Weekly audit
 
-Advisories published between deploys are caught by `deploy/weekly-audit`. A systemd user timer runs it on onyx every Monday at 06:30 Pacific time, half an hour after anton-tesla-api-ws's, and a run missed while onyx was off happens at its next boot. It builds the image's `test` stage (audit and tests) from the deployed commit without touching the running container. When that fails, it sends a Pushover alert through `deploy/pushover` with the end of the build's output; a passing run sends nothing. It then asks the running site for its checks (`/api/checks`: Tesla's grid figures against PG&E's meter in `meter_day`, whether that meter is current, and solar output against past years) and sends the failing lines, or an alert when the site doesn't answer; a week where all pass sends nothing. Its last output is in `~/tesla-next-weekly-audit.log`.
+Advisories published between deploys are caught by `deploy/weekly-audit`. A systemd user timer runs it on onyx every Monday at 06:30 Pacific time, half an hour after anton-tesla-api-ws's, and a run missed while onyx was off happens at its next boot. It builds the image's `test` stage (audit and tests) from the deployed commit without touching the running container. When that fails, it sends a Pushover alert through `deploy/pushover` with the end of the build's output; a passing run sends nothing. It then asks the running site for its checks through `deploy/checks` (`/api/checks`: Tesla's grid figures against PG&E's meter in `meter_day`, whether that meter is current, and solar output against past years) and sends the failing lines, or an alert when the site doesn't answer; a week where all pass sends nothing. Its last output is in `~/tesla-next-weekly-audit.log`.
+
+A second timer runs `deploy/checks /api/checks/daily Daily` every day at 07:00 Pacific: yesterday's highest 5-minute solar output, on a bright day (forecast at least 60% of a clear day's for that date, from every stored year's forecasts), against the usual peak of the bright days in the 30 before it, so a failing microinverter alerts the next morning in any season. A day with no solar stored fails too. Its output is in the user journal (`journalctl --user -u tesla-next-daily-check`).
 
 Install the units once, and again after changing them:
 
 ```sh
 ssh onyx@192.168.40.63 mkdir -p .config/systemd/user
-scp deploy/tesla-next-weekly-audit.service deploy/tesla-next-weekly-audit.timer onyx@192.168.40.63:.config/systemd/user/
-ssh onyx@192.168.40.63 'systemctl --user daemon-reload && systemctl --user enable --now tesla-next-weekly-audit.timer'
+scp deploy/tesla-next-weekly-audit.* deploy/tesla-next-daily-check.* onyx@192.168.40.63:.config/systemd/user/
+ssh onyx@192.168.40.63 'systemctl --user daemon-reload && systemctl --user enable --now tesla-next-weekly-audit.timer tesla-next-daily-check.timer'
 ```
 
-Check it with `ssh onyx@192.168.40.63 systemctl --user list-timers tesla-next-weekly-audit.timer`, and run it at once with `systemctl --user start tesla-next-weekly-audit` there.
+Check them with `ssh onyx@192.168.40.63 systemctl --user list-timers 'tesla-next-*'`, and run one at once with `systemctl --user start tesla-next-weekly-audit` (or `tesla-next-daily-check`) there.
 
 To check without building:
 

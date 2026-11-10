@@ -2,6 +2,7 @@
 import type { Client } from "pg";
 import { afterAll, beforeAll, beforeEach, expect, test, vi } from "vitest";
 
+import { shiftDay } from "@/lib/scene/replay";
 import { ownDatabase } from "@/test/true-up";
 
 let owner: Client;
@@ -23,7 +24,7 @@ beforeAll(async () => {
   checks = await import("./checks");
 });
 
-beforeEach(() => owner.query("DELETE FROM meter_day; DELETE FROM data"));
+beforeEach(() => owner.query("DELETE FROM meter_day; DELETE FROM data; DELETE FROM solar_forecast; DELETE FROM energy_interval"));
 
 afterAll(async () => {
   await owner.end();
@@ -95,4 +96,92 @@ test("a day Tesla's figures are missing, or a day without exports, is left out o
   await owner.query("DELETE FROM data WHERE date = '2026-11-07'");
   await owner.query("UPDATE data SET to_grid = NULL WHERE date = '2026-11-03'");
   expect(await checks.meterCheck()).toMatch(/^ok meter: Nov 1 – 6, 2026, 5 days both have/);
+});
+
+// A day's forecast and one interval holding its peak, in watts: a multiple of 12, as an interval holds whole Wh.
+async function sunDay(day: string, mj: number, peakW: number | null) {
+  await owner.query("INSERT INTO solar_forecast (day, radiation_mj, weather_code, fetched_at) VALUES ($1, $2, 0, now())", [day, mj]);
+  if (peakW !== null) {
+    await owner.query("INSERT INTO energy_interval VALUES ($1::date + time '12:00' AT TIME ZONE 'America/Los_Angeles', $1, $2, 0, 0, 0, 0, 0, 0, 0, 0, 0)", [day, peakW / 12]);
+  }
+}
+
+// The 30 days before a judged day: bright days at the given peaks, the rest dull.
+async function peakWindow(judged: string, peaks: number[], brightMj = 20, dullMj = 8) {
+  for (const [i, day] of days(shiftDay(judged, -30), 30).entries()) await sunDay(day, i < peaks.length ? brightMj : dullMj, peaks[i] ?? 3000);
+}
+
+// Another year's forecasts, without intervals, to set a season's clear-day forecast.
+async function clearDays(first: string, count: number, mj: number) {
+  for (const day of days(first, count)) await sunDay(day, mj, null);
+}
+
+test("the microinverter fault's first bright day fails at 52% of the usual bright-day peak", async () => {
+  await clearDays("2025-02-01", 120, 25);
+  await peakWindow("2026-04-13", Array(25).fill(8448));
+  await sunDay("2026-04-13", 24.4, 4416);
+  expect(await checks.peakCheck("2026-04-14")).toBe("FAIL solar peak: April 13, 2026's peak was 52% of the usual bright-day peak (4.4 of 8.4 kW)");
+});
+
+test("a foggy summer morning that still peaks as usual passes", async () => {
+  await clearDays("2021-06-01", 120, 25);
+  await peakWindow("2022-08-02", Array(10).fill(10080));
+  await sunDay("2022-08-02", 22.6, 10440);
+  expect(await checks.peakCheck("2022-08-03")).toMatch(/^ok solar peak: August 2, 2022's peak was 104% /);
+});
+
+test("a dull day passes unjudged, saying why", async () => {
+  await clearDays("2025-02-01", 120, 25);
+  await peakWindow("2026-04-12", Array(25).fill(8448));
+  await sunDay("2026-04-12", 10.3, 4320);
+  expect(await checks.peakCheck("2026-04-13")).toBe("ok solar peak: April 12, 2026 was too dull to judge (10.3 MJ/m² forecast, 41% of a clear day's 25.0)");
+});
+
+test("a day without a forecast passes unjudged, saying why", async () => {
+  await peakWindow("2026-04-12", Array(25).fill(8448));
+  await owner.query("INSERT INTO energy_interval VALUES ('2026-04-12 19:00Z', '2026-04-12', 300, 0, 0, 0, 0, 0, 0, 0, 0, 0)");
+  expect(await checks.peakCheck("2026-04-13")).toBe("ok solar peak: April 12, 2026 has no forecast to judge it by");
+});
+
+test("fewer than 5 bright days in the 30 before pass unjudged, saying why", async () => {
+  await clearDays("2024-11-01", 120, 25);
+  await peakWindow("2026-01-10", Array(4).fill(6000));
+  await sunDay("2026-01-10", 16, 2004);
+  expect(await checks.peakCheck("2026-01-11")).toBe("ok solar peak: too few bright days before January 10, 2026 to judge it (4)");
+});
+
+test("a day with no interval stored fails", async () => {
+  await peakWindow("2026-04-12", Array(25).fill(8448));
+  await owner.query("INSERT INTO solar_forecast (day, radiation_mj, weather_code, fetched_at) VALUES ('2026-04-12', 8, 0, now())");
+  expect(await checks.peakCheck("2026-04-13")).toBe("FAIL solar peak: no solar was stored for April 12, 2026");
+});
+
+test("an even number of bright days takes the lower middle peak", async () => {
+  // The upper middle (9 kW) or the average of the two (7 kW) would fail 4 kW.
+  await clearDays("2025-02-01", 120, 25);
+  await peakWindow("2026-04-12", [5004, 5004, 5004, 9000, 9000, 9000]);
+  await sunDay("2026-04-12", 20, 4008);
+  expect(await checks.peakCheck("2026-04-13")).toMatch(/^ok solar peak: .* 80% .*\(4\.0 of 5\.0 kW\)$/);
+});
+
+test("a failing microinverter in December fails, though no December day reaches a summer day's sunlight", async () => {
+  await clearDays("2025-10-15", 90, 10.6);
+  await peakWindow("2026-12-15", Array(15).fill(6000), 9, 3);
+  await sunDay("2026-12-15", 9.8, 3000);
+  expect(await checks.peakCheck("2026-12-16")).toBe("FAIL solar peak: December 15, 2026's peak was 50% of the usual bright-day peak (3.0 of 6.0 kW)");
+});
+
+test("a date's clear-day forecast counts the days across the new year", async () => {
+  // Without January 1 to 12, December 28's clear day would be the window's 20 MJ/m², and 16 MJ/m² bright.
+  await clearDays("2026-01-01", 12, 40);
+  await peakWindow("2026-12-28", Array(15).fill(6000));
+  await sunDay("2026-12-28", 16, 3000);
+  expect(await checks.peakCheck("2026-12-29")).toBe("ok solar peak: December 28, 2026 was too dull to judge (16.0 MJ/m² forecast, 40% of a clear day's 40.0)");
+});
+
+test("a window whose bright days made nothing fails rather than reading 0 of 0 kW", async () => {
+  await clearDays("2025-02-01", 120, 25);
+  await peakWindow("2026-04-12", Array(20).fill(0));
+  await sunDay("2026-04-12", 20, 0);
+  expect(await checks.peakCheck("2026-04-13")).toBe("FAIL solar peak: no bright day in the 30 before April 12, 2026 made any solar");
 });

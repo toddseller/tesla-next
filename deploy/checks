@@ -1,0 +1,20 @@
+#!/bin/sh
+# Ask the running site for its checks (system-checks spec) and send a Pushover alert with the failing lines, or when
+# the site doesn't answer: deploy/checks ROUTE NAME, as "deploy/checks /api/checks/daily Daily". Prints the answer.
+# Run by deploy/weekly-audit and deploy/tesla-next-daily-check.service; see README.md, Weekly audit.
+set -u
+APP=$(cd "$(dirname "$0")/.." && pwd)
+WORK=$(mktemp -d)
+trap 'rm -rf "$WORK"' EXIT
+
+# Only the running container can read the database; onyx has no jq, so the checks answer plain ok/FAIL lines.
+if docker compose --project-directory "$APP" exec -T next wget -qO- "http://127.0.0.1:3000$1" > "$WORK/checks" 2>&1; then
+  cat "$WORK/checks"
+  grep '^FAIL' "$WORK/checks" > "$WORK/failing" || exit 0
+  "$APP/deploy/pushover" "$2 checks failed: tesla-next" "$WORK/failing"
+else
+  echo "The running site didn't answer $1." >> "$WORK/checks"
+  cat "$WORK/checks"
+  "$APP/deploy/pushover" "$2 checks couldn't run: tesla-next" "$WORK/checks"
+fi
+exit 1
