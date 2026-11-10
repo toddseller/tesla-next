@@ -39,3 +39,10 @@ A throwaway build of the branch on onyx (2026-11-09; its image's 1,370 tests pas
 - The meter query on fault weeks fails as it should: March 1 – 7, 2025 at 48% (imports) and 51% (exports); September 1 – 7, 2025 at 47% and 48%.
 - `data.powerwall_to_grid` carries the Powerwalls' exports: within 1% of `energy_interval`'s battery exports for August to October 2026 (79.1 against 79.8, 52.8 against 53.3, 52.3 against 52.9 kWh).
 - Review finding fixed before commit: only days both PG&E and Tesla have are compared, so a day anton missed can't read as Tesla running short.
+
+## Rollout
+
+Released as v2026.11.09.7 on 2026-11-09; the Deploy workflow and its health check passed, and onyx's checkout has the new `deploy/weekly-audit`.
+
+- `https://teslasolar.report/api/checks` answers three `ok` lines: Nov 1 – 7, 2026 imports 99% and exports 98% of PG&E's meter; readings to November 7; solar 43.5 kWh against a lowest past year of 40.3.
+- `systemctl --user start tesla-next-weekly-audit` on onyx ran to `success`: "dashboard: passed", "checks: passed", the three lines in `~/tesla-next-weekly-audit.log`, and no Pushover message sent.

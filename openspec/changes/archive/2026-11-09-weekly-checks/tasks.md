@@ -17,8 +17,8 @@
 
 ## 4. Rollout
 
-- [ ] 4.1 With the owner's go-ahead, release; the deploy's health check passes
-- [ ] 4.2 On onyx: `systemctl --user start tesla-next-weekly-audit` runs the checks, all pass and nothing is sent; record in design.md under Rollout
+- [x] 4.1 With the owner's go-ahead, release; the deploy's health check passes
+- [x] 4.2 On onyx: `systemctl --user start tesla-next-weekly-audit` runs the checks, all pass and nothing is sent; record in design.md under Rollout
 
 ## Workflow follow-up
 
