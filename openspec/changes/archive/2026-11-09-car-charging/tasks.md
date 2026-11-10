@@ -31,8 +31,8 @@
 
 ## 6. Rollout
 
-- [ ] 6.1 With the owner's go-ahead, release; the deploy's health check passes
-- [ ] 6.2 On teslasolar.report: the section at 1280 and 375 pixels for This month and All time, its day totals matching the Distribution replay for one day; record in design.md under Rollout
+- [x] 6.1 With the owner's go-ahead, release; the deploy's health check passes
+- [x] 6.2 On teslasolar.report: the section at 1280 and 375 pixels for This month and All time, its day totals matching the Distribution replay for one day; record in design.md under Rollout
 
 ## Workflow follow-up
 

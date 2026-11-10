@@ -47,3 +47,11 @@ After the new placement (best stretch of the session's duration within 24 hours,
 - All time: 3,215.7 kWh, 35% solar, 23% Powerwall, 42% grid; 2,574 ms cold, 21 ms warm.
 - Day totals still match `/api/intervals` exactly (2025-12-05, 2026-07-21, 2026-10-24, 2026-09-15, 2026-11-09).
 - What stays unplaced is mostly load the home's meter never shows: 2025-12-09's 20:29 session records 27.1 kWh at 9.3 kW while the home's load shows about 5 kW, and 2025-12-02's load comes before its session's start. No rule over the home's load can place that.
+
+## Rollout
+
+Released as v2026.11.09.5 on 2026-11-09; the Deploy workflow and its health check passed.
+
+- `/api/car-charging` on teslasolar.report matches the onyx run: All time 3,215.7 kWh, 35% solar, 23% Powerwall, 42% grid, Tesla T.I.E. Fighter 139.6 kWh and R2D2 53.3 kWh measured from Oct 17, 2026; 0.93 s on the first request after the deploy, 0.16 s after, with no VIN in the answer.
+- Day totals match the Distribution replay: 16.7 kWh on 2026-10-24 and 22.2 kWh on 2026-07-21.
+- At desktop width (1680 pixels, as the browser window wouldn't shrink to 1280) the section sits between the energy section and Backup for Today and All time, with no console errors and no sideways scrolling. At 375 pixels (headless Chromium) All time and November 2026 (11.4 kWh, 99% grid, R2D2 only) stack in one column.

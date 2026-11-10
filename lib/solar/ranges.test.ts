@@ -45,13 +45,17 @@ describe("presets", () => {
 describe("impactPresets", () => {
   const byLabel = (today: string) => Object.fromEntries(impactPresets(today).map(({ label, range }) => [label, range]));
 
-  test("today, the week from Sunday to Saturday, then the Solar page's three, in that order", () => {
-    expect(impactPresets("2026-11-08").map(({ label }) => label)).toEqual(["Today", "This week", "This month", "This year", "True-up year"]);
+  test("today, the week from Sunday to Saturday, the Solar page's three, then all time, in that order", () => {
+    expect(impactPresets("2026-11-08").map(({ label }) => label)).toEqual(["Today", "This week", "This month", "This year", "True-up year", "All time"]);
     expect(byLabel("2026-11-08")).toMatchObject({
       Today: { start: "2026-11-08", end: "2026-11-08" },
       "This week": { start: "2026-11-08", end: "2026-11-14" },
       "True-up year": { start: "2026-10-01", end: "2027-09-30" },
     });
+  });
+
+  test("all time runs from the site's first day of service to today", () => {
+    expect(byLabel("2026-11-09")["All time"]).toEqual({ start: "2021-10-10", end: "2026-11-09" });
   });
 
   test("a Wednesday's week starts the Sunday before", () => {

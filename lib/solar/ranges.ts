@@ -58,6 +58,7 @@ export const impactPresets = (today: string): Preset[] => {
     { label: "Today", range: { start: today, end: today } },
     { label: "This week", range: { start: sunday, end: shiftDay(sunday, 6) } },
     ...presets(today),
+    { label: "All time", range: { start: FIRST_DAY, end: today } },
   ];
 };
 

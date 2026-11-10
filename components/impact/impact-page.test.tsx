@@ -64,7 +64,7 @@ test("today is marked, and each preset pushes its address", () => {
   render(<ImpactPage range={today} figures={figures(95)} today="2026-11-08" backup={NO_BACKUP} charging={CHARGING} backupYear={THIS_YEAR} />);
   expect(screen.getByRole("heading", { level: 1 }).textContent).toBe("Impact");
   expect(screen.getByRole("heading", { level: 2, name: "November 8, 2026" })).toBeTruthy();
-  expect(["Today", "This week", "This month", "This year", "True-up year"].map(pressed)).toEqual(["true", "false", "false", "false", "false"]);
+  expect(["Today", "This week", "This month", "This year", "True-up year", "All time"].map(pressed)).toEqual(["true", "false", "false", "false", "false", "false"]);
   fireEvent.click(ranges().getByRole("button", { name: "This week" }));
   expect(router.push).toHaveBeenCalledWith("/impact?start=2026-11-08&end=2026-11-14");
 });
@@ -169,4 +169,13 @@ test("totals for a day in the range reload the car charging too, and a failed re
   FakeStream.opened[0].send({ date: "2026-11-08" }, "totals");
   await settle();
   expect(offGrid()).toContain("70%");
+});
+
+test("All time, last in the row, pushes the site's first day of service to today and is marked on that range", () => {
+  const { rerender } = render(<ImpactPage range={today} figures={figures(95)} today="2026-11-08" backup={NO_BACKUP} charging={CHARGING} backupYear={THIS_YEAR} />);
+  expect(ranges().getAllByRole("button").at(-1)!.textContent).toBe("All time");
+  fireEvent.click(ranges().getByRole("button", { name: "All time" }));
+  expect(router.push).toHaveBeenCalledWith("/impact?start=2021-10-10&end=2026-11-08");
+  rerender(<ImpactPage range={{ start: "2021-10-10", end: "2026-11-08" }} figures={figures(95)} today="2026-11-08" backup={NO_BACKUP} charging={CHARGING} backupYear={THIS_YEAR} />);
+  expect(pressed("All time")).toBe("true");
 });
