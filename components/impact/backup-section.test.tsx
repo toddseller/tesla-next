@@ -3,7 +3,7 @@
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, expect, test, vi } from "vitest";
 
-import { BackupSection } from "@/components/impact/backup-section";
+import { BackupSection, duration } from "@/components/impact/backup-section";
 import type { BackupHistory } from "@/lib/backup";
 
 const TODAY = "2026-11-09";
@@ -54,8 +54,8 @@ test("the summary gives the outages' number, time, longest with its day, and the
   render(<BackupSection history={HISTORY} year={YEAR_23_24} today={TODAY} onYear={() => {}} />);
   const summary = within(screen.getByRole("group", { name: "Outages" }));
   expect(summary.getByText("2")).toBeTruthy();
-  expect(summary.getByText("53.3 h")).toBeTruthy();
-  expect(summary.getByText("52 h 16 m")).toBeTruthy();
+  expect(summary.getByText("2 d 5 h")).toBeTruthy();
+  expect(summary.getByText("2 d 4 h")).toBeTruthy();
   expect(summary.getByRole("link", { name: "Feb 4, 2024" }).getAttribute("href")).toBe("/?start=2024-02-01&end=2024-02-29&day=2024-02-04");
   expect(summary.getByText("269.5 kWh")).toBeTruthy();
   expect(summary.getByText("Powerwalls 154.2 · Solar 114.6")).toBeTruthy();
@@ -66,7 +66,7 @@ test("every event is listed newest first with its start, duration and kind, each
   const rows = eventRows();
   expect(rows.map((row) => row.textContent)).toEqual([
     "Mar 1, 2024, 10:00 AM1 m 4 sTest",
-    "Feb 4, 2024, 2:51 PM52 h 16 mOutage",
+    "Feb 4, 2024, 2:51 PM2 d 4 hOutage",
     // A storm day's rows give only their time, under its heading.
     "12:00 PM18 sBlip",
     "9:00 AM1 h 0 mOutage",
@@ -152,4 +152,12 @@ test("a storm day is grouped under its first day, count and time off the grid", 
   const heading = document.querySelector('[data-part="storm-day"]')!;
   expect(heading.textContent).toBe("Dec 1, 20232 events · 1 h 0 m off the grid");
   expect(heading.closest("li")!.querySelectorAll('[data-part="event"]')).toHaveLength(2);
+});
+
+test("a length of time reads in days and hours from a day up, and as before under it, each part rounded down", () => {
+  expect(duration(23 * 3600 + 59 * 60 + 59)).toBe("23 h 59 m");
+  expect(duration(24 * 3600)).toBe("1 d 0 h");
+  expect(duration(52 * 3600 + 16 * 60 + 12)).toBe("2 d 4 h");
+  expect(duration(4 * 60 + 30)).toBe("4 m 30 s");
+  expect(duration(42)).toBe("42 s");
 });

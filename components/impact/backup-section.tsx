@@ -27,7 +27,8 @@ export function duration(seconds: number) {
   const s = Math.floor(seconds);
   if (s < 60) return `${s} s`;
   if (s < 3600) return `${Math.floor(s / 60)} m ${s % 60} s`;
-  return `${Math.floor(s / 3600)} h ${Math.floor((s % 3600) / 60)} m`;
+  if (s < 86400) return `${Math.floor(s / 3600)} h ${Math.floor((s % 3600) / 60)} m`;
+  return `${Math.floor(s / 86400)} d ${Math.floor((s % 86400) / 3600)} h`;
 }
 
 function Tile({ label, value, children }: { label: string; value: string; children?: ReactNode }) {
@@ -100,7 +101,7 @@ export function BackupSection({ history: { summary, events }, year, today, onYea
         <div className="flex flex-col gap-3">
           <div role="group" aria-label="Outages" className="grid grid-cols-2 gap-2 lg:grid-cols-5 lg:gap-3">
             <Tile label="Outages" value={String(summary.outages)}>a minute or longer</Tile>
-            <Tile label="Off the grid" value={`${kwh(summary.seconds / 3600)} h`} />
+            <Tile label="Off the grid" value={duration(summary.seconds)} />
             <Tile label="Longest" value={duration(summary.longest.seconds)}>
               <Link href={dayLink(summary.longest.start)} className="text-foreground hover:text-white">{dayDate.format(new Date(summary.longest.start))}</Link>
             </Tile>
