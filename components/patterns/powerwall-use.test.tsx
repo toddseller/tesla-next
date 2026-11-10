@@ -1,24 +1,24 @@
 // @vitest-environment jsdom
-// The Powerwall use section (health-page spec, mockup C).
+// The Powerwall use section (patterns-page spec, mockup C).
 import { cleanup, render, screen, within } from "@testing-library/react";
 import { afterEach, expect, test } from "vitest";
 
-import { HEALTH } from "@/components/health/fixtures";
-import { PowerwallSection } from "@/components/health/powerwall-use";
+import { PATTERNS } from "@/components/patterns/fixtures";
+import { PowerwallSection } from "@/components/patterns/powerwall-use";
 
 afterEach(cleanup);
 
 const section = () => within(screen.getByRole("region", { name: "Powerwall use" }));
 
 test("this year's cycles, round trip and energy out, with totals since the first year", () => {
-  render(<PowerwallSection years={HEALTH.years} today="2026-11-10" />);
+  render(<PowerwallSection years={PATTERNS.years} today="2026-11-10" />);
   for (const text of ["Cycles in 2026", "109", "511 since 2021", "Round trip in 2026", "86%", "Out of the Powerwalls in 2026", "4,416 kWh", "20,715 kWh since 2021"])
     expect(section().getAllByText(text).length).toBeGreaterThan(0);
   expect(section().getByText(/A cycle is 40.5 kWh out/)).toBeTruthy();
 });
 
 test("a row per year with its note, kWh, cycles and round trip", () => {
-  render(<PowerwallSection years={HEALTH.years} today="2026-11-10" />);
+  render(<PowerwallSection years={PATTERNS.years} today="2026-11-10" />);
   const rows = within(section().getByRole("table", { name: "Powerwall use by year" })).getAllByRole("row").slice(1);
   expect(rows).toHaveLength(6);
   const cells = (row: HTMLElement) => [within(row).getByRole("rowheader"), ...within(row).getAllByRole("cell")].map((cell) => cell.textContent);

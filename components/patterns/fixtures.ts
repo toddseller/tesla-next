@@ -1,7 +1,7 @@
-import type { Health } from "@/lib/health";
+import type { Patterns } from "@/lib/patterns";
 
 // The spike's figures from production, November 10, 2026.
-export const HEALTH: Health = {
+export const PATTERNS: Patterns = {
   months: [
     ["2021-11", 132], ["2022-11", 384], ["2023-11", 264], ["2024-11", 300],
     ["2024-12", 336], ["2025-01", 300], ["2025-02", 300], ["2025-03", 336], ["2025-04", 792], ["2025-05", 780],
@@ -17,4 +17,5 @@ export const HEALTH: Health = {
     { year: 2025, out_wh: 3_030_000, in_wh: 3_662_000, first_day: "2025-01-01" },
     { year: 2026, out_wh: 4_416_000, in_wh: 5_127_000, first_day: "2026-01-01" },
   ],
+  hours: [],
 };

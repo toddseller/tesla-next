@@ -1,11 +1,12 @@
-// health() (health-page spec): the always-on load by month and the Powerwalls' energy by year, against a database of its own.
+// patterns() (patterns-page spec): the always-on load by month, the Powerwalls' energy by year and the house's use by month and hour, against a database of its own.
 import type { Client } from "pg";
 import { afterAll, beforeAll, expect, test, vi } from "vitest";
 
 import { ownDatabase, putInterval } from "@/test/true-up";
 
 let owner: Client;
-let health: typeof import("./health").health;
+let patterns: typeof import("./patterns").patterns;
+const TODAY = "2026-11-10";
 
 // `count` intervals from 1:00 AM site time on `date`, the house using `wh` in each but `lowest` at 3:00 AM.
 async function night(date: string, lowest: number, { count = 48, wh = 100 } = {}) {
@@ -23,8 +24,8 @@ async function night(date: string, lowest: number, { count = 48, wh = 100 } = {}
 }
 
 beforeAll(async () => {
-  owner = await ownDatabase("tsr_health");
-  ({ health } = await import("./health"));
+  owner = await ownDatabase("tsr_patterns");
+  ({ patterns } = await import("./patterns"));
 });
 
 afterAll(async () => {
@@ -49,7 +50,7 @@ test("a month's always-on load is the lower middle of its counted nights' lowest
   await night("2026-10-01", 50, { count: 40 });
   await night("2026-08-05", 10, { count: 36 });
 
-  expect((await health()).months).toEqual([
+  expect((await patterns(TODAY)).months).toEqual([
     { month: "2026-09", watts: 840 },
     { month: "2026-10", watts: 600 },
   ]);
@@ -60,13 +61,30 @@ test("each calendar year gives the energy out of and into the Powerwalls, and it
   await putInterval(owner, "2025-12-31 23:55", { battery_exported_wh: 30 });
   await putInterval(owner, "2026-02-01 18:00", { battery_exported_wh: 4416 });
 
-  expect((await health()).years).toEqual([
+  expect((await patterns(TODAY)).years).toEqual([
     { year: 2025, out_wh: 3030, in_wh: 3662, first_day: "2025-01-03" },
     { year: 2026, out_wh: 4416, in_wh: 0, first_day: "2026-02-01" },
   ]);
 });
 
-test("an empty table gives no months and no years", async () => {
+test("each month's house use by site-time hour, from every source, over this month and the 23 before", async () => {
   await owner.query("DELETE FROM energy_interval");
-  expect(await health()).toEqual({ months: [], years: [] });
+  // Before the first of the month 23 months back, so left out.
+  await putInterval(owner, "2024-11-30 23:00", { house_from_grid_wh: 500 });
+  await putInterval(owner, "2024-12-01 00:10", { house_from_grid_wh: 50 });
+  // 100 and 300 Wh in September's midnight hour average 200 Wh, 2,400 W, whatever the source.
+  await putInterval(owner, "2026-09-01 00:00", { house_from_grid_wh: 100 });
+  await putInterval(owner, "2026-09-02 00:55", { house_from_solar_wh: 300 });
+  await putInterval(owner, "2026-09-01 13:00", { house_from_battery_wh: 150 });
+
+  expect((await patterns(TODAY)).hours).toEqual([
+    { month: "2024-12", hour: 0, watts: 600 },
+    { month: "2026-09", hour: 0, watts: 2400 },
+    { month: "2026-09", hour: 13, watts: 1800 },
+  ]);
+});
+
+test("an empty table gives no months, no years and no hours", async () => {
+  await owner.query("DELETE FROM energy_interval");
+  expect(await patterns(TODAY)).toEqual({ months: [], years: [], hours: [] });
 });

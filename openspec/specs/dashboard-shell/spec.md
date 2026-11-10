@@ -2,12 +2,12 @@
 
 ## Purpose
 
-The frame and design system every dashboard page shares: navigation among the five pages, how the frame fits any screen, the colors and type, and the footer.
+The frame and design system every dashboard page shares: navigation among the pages, how the frame fits any screen, the colors and type, and the footer.
 
 ## Requirements
 
 ### Requirement: Navigation among the pages
-Every page SHALL have a top bar with the site's icon and name, "Tesla Solar Report", linking to `/`, and the six pages as links in this order: Solar (`/`), Impact (`/impact`), Distribution (`/distribution`), True-Up (`/true-up`), Top Ten (`/top`) and Health (`/health`). The current page's link SHALL be marked for sight, with a red underline, and for assistive technology, as the current page.
+Every page SHALL have a top bar with the site's icon and name, "Tesla Solar Report", linking to `/`, and the six pages as links in this order: Solar (`/`), Impact (`/impact`), Distribution (`/distribution`), True-Up (`/true-up`), Top Ten (`/top`) and Patterns (`/patterns`). The current page's link SHALL be marked for sight, with a red underline, and for assistive technology, as the current page.
 
 #### Scenario: Moving between pages
 - **WHEN** a viewer on `/` chooses "Impact" in the top bar
@@ -78,6 +78,13 @@ Every page SHALL end with a footer reading "© <current year> teslasolar.report"
 #### Scenario: An old bookmark
 - **WHEN** a viewer opens `/numbers`
 - **THEN** the response is a permanent redirect to `/true-up`, and the True-Up Tracker opens with "True-Up" marked as the current page
+
+### Requirement: The Patterns page's old address
+`/health`, the Patterns page's address before it was renamed, SHALL redirect permanently to `/patterns`, so old bookmarks open the Patterns page.
+
+#### Scenario: An old bookmark
+- **WHEN** a viewer opens `/health`
+- **THEN** the response is a permanent redirect to `/patterns`, and the Patterns page opens with "Patterns" marked as the current page
 
 ### Requirement: Live status in the top bar
 Every page's top bar SHALL end with the live status: a dot, "LIVE" and the time of the latest live status in the site's time zone, like "9:59 AM", and a pill reading "PW", the Powerwalls' charge and their state as anton reports it, like "PW 92% · CHARGING". It SHALL update with each live status, about every 10 seconds, without reloading the page.

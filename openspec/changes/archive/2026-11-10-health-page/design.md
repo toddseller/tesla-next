@@ -92,3 +92,7 @@ A throwaway build of the branch on onyx (2026-11-10; its image's 1,395 tests pas
 ## Migration Plan
 
 A normal release. After the deploy, open `/health` on teslasolar.report and compare the figures with the spike's (November 2026 864 W, November 2025 276 W, 2025's 3,030 kWh, 75 cycles, 83%), check it at 375 px and the top bar at 1512 px, and record the result in this design. Rollback is the previous release; nothing is stored.
+
+## Rollout
+
+Released as v2026.11.10.1 on 2026-11-10; the Deploy workflow and its health check passed. On teslasolar.report, `/health` served in 0.49s, 0.47s and 0.49s over three loads and showed the figures the onyx branch run did (November so far 864 W against 276 W, +14 kWh a day; 2025 at 3,030 kWh, 75 cycles and 83%; 512 cycles and 20,716 kWh since 2021). It matched the mockup C boards at 1280 and 375 pixels with no sideways scrolling, and the top bar held the name, six links and the live status (LIVE 6:25 AM, PW 99% · STANDBY) on one line at 1512 pixels.

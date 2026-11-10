@@ -27,8 +27,8 @@
 
 ## 5. Rollout
 
-- [ ] 5.1 With the owner's go-ahead, release; the deploy's health check passes
-- [ ] 5.2 On teslasolar.report: `/health` at 1280 and 375 pixels with the figures matching 4.3's, and the top bar on one line at 1512 pixels; record in design.md under Rollout
+- [x] 5.1 With the owner's go-ahead, release; the deploy's health check passes
+- [x] 5.2 On teslasolar.report: `/health` at 1280 and 375 pixels with the figures matching 4.3's, and the top bar on one line at 1512 pixels; record in design.md under Rollout
 
 ## Workflow follow-up
 

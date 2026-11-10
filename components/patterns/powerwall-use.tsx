@@ -1,4 +1,4 @@
-import { powerwallYears, type PowerwallYear } from "@/lib/health";
+import { powerwallYears, type PowerwallYear } from "@/lib/patterns";
 
 const kwh = (value: number) => `${value.toLocaleString("en-US")} kWh`;
 const percent = (value: number | null) => (value === null ? "–" : `${value}%`);
