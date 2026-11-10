@@ -11,8 +11,8 @@
 
 ## 3. Rollout
 
-- [ ] 3.1 With the owner's go-ahead, release; the deploy's health check passes
-- [ ] 3.2 On teslasolar.report: All time in the row at 1280 and 375 pixels, the page and Home car charging loading for it; record under a Rollout heading in proposal.md (this change has no design.md)
+- [x] 3.1 With the owner's go-ahead, release; the deploy's health check passes
+- [x] 3.2 On teslasolar.report: All time in the row at 1280 and 375 pixels, the page and Home car charging loading for it; record under a Rollout heading in proposal.md (this change has no design.md)
 
 ## Workflow follow-up
 
