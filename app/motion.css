@@ -66,6 +66,11 @@
 ::view-transition-new(.slide-previous) { animation: 250ms var(--motion-ease) both motion-in-left; }
 ::view-transition-old(root),
 ::view-transition-new(root) { animation: none; }
+/* A tab change: the highlight glides from the old tab to the new one in the page's own 250 ms. */
+::view-transition-group(nav-highlight) {
+  animation-duration: 250ms;
+  animation-timing-function: var(--motion-ease);
+}
 
 @keyframes motion-out-left { to { opacity: 0; transform: translateX(-24px); } }
 @keyframes motion-out-right { to { opacity: 0; transform: translateX(24px); } }

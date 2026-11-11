@@ -28,3 +28,8 @@ test("reduced motion turns every motion class and every view transition off", ()
   for (const name of classes) expect(reduced).toContain(name);
   expect(reduced).toMatch(/::view-transition-group\(\*\)/);
 });
+
+// dashboard-shell, "The highlight and the page move together": the highlight glides in the page's 250 ms.
+test("the tab highlight glides in 250 ms, easing out", () => {
+  expect(css).toMatch(/::view-transition-group\(nav-highlight\)\s*{[^}]*animation-duration: 250ms;[^}]*animation-timing-function: var\(--motion-ease\)/);
+});
