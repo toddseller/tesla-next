@@ -19,7 +19,7 @@ test("a valid range answers with its items", async () => {
     status: 200,
     body: { data: [{ date: "Oct 14", day: "2026-10-14", solar: 44.4, grid: -8.3, house: 34.0 }] },
   });
-  expect(rangeTotals).toHaveBeenCalledWith("2026-10-01", "2026-10-31");
+  expect(rangeTotals).toHaveBeenCalledWith("2026-10-01", "2026-10-31", "corrected");
 });
 
 test.each([
@@ -47,4 +47,12 @@ test("the last day served is 732 days after today; the next is refused", async (
   const { status, body } = await get(`?start_date=2026-10-01&end_date=${shiftDay(last, 1)}`);
   expect(status).toBe(400);
   expect(body.message).toContain(last);
+});
+
+// meter-correction: readings=tesla answers with Tesla's figures; anything else corrected.
+test("readings=tesla asks for Tesla's figures", async () => {
+  await get("?start_date=2026-10-01&end_date=2026-10-31&readings=tesla");
+  expect(rangeTotals).toHaveBeenLastCalledWith("2026-10-01", "2026-10-31", "tesla");
+  await get("?start_date=2026-10-01&end_date=2026-10-31&readings=other");
+  expect(rangeTotals).toHaveBeenLastCalledWith("2026-10-01", "2026-10-31", "corrected");
 });

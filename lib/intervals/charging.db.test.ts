@@ -34,7 +34,7 @@ afterAll(async () => {
 });
 
 test("the day's charging, with measured cars named and session cars left to the replay", async () => {
-  const { charging, measuredVins, vins, intervals } = await dayCharging("2026-10-14");
+  const { charging, measuredVins, vins, intervals } = await dayCharging("2026-10-14", "corrected");
   expect(charging.get(at(14, 1, 0))).toBe(640);
   expect(charging.get(at(14, 23, 0))).toBe(635);
   expect(measuredVins.get(at(14, 1, 0))).toBe(R2D2);

@@ -3,6 +3,8 @@
 // that code's order of work, including summing the day's intervals in the order the database returns them.
 import { db } from "@/lib/db";
 import { expectedHours } from "@/lib/forecast";
+import { energySteps } from "@/lib/intervals/steps";
+import type { Readings } from "@/lib/meter";
 import { fill, placeSessions, SESSION_HORIZON, STEP } from "./gap-estimates";
 import { shiftDay } from "@/lib/scene/replay";
 import { localIso, localMidnight, pyRound } from "./python";
@@ -116,7 +118,7 @@ const inDayOf = (start: number, end: number) => <V>(values: Map<number, V>) => n
 // The day's charging per 5 minutes, measured, gap-filled or placed from charge sessions, with the day's energy
 // intervals it is split across. measuredVins names only the cars the Wall Connector measured, alone or on both sides of
 // a gap; vins adds the cars sessions are credited to by their power, for the replay.
-export async function dayCharging(day: string) {
+export async function dayCharging(day: string, readings: Readings) {
   const start = localMidnight(day);
   const end = localMidnight(shiftDay(day, 1));
   const inDay = inDayOf(start, end);
@@ -143,17 +145,17 @@ export async function dayCharging(day: string) {
   const measuredVins = new Map<number, string | null>([...inDay(gapVins(measuredVin, estimatedVehicle)), ...inDay(measuredVin)]);
   const vins = new Map<number, string | null>([...sessions.cars, ...measuredVins]);
   const intervals = await db.query<EnergyRow>(
-    `SELECT start_at, solar_generated_wh, ${Object.values(FLOWS).join(", ")} FROM energy_interval WHERE day = $1`,
+    `SELECT start_at, solar_generated_wh, ${Object.values(FLOWS).join(", ")} FROM ${energySteps(readings, "day = $1")} AS steps`,
     [day],
   );
   return { cars, vehicleWh, estimatedVehicle, sessionVehicle, charging, measuredVins, vins, intervals: intervals.rows };
 }
 
-export async function dayIntervals(day: string) {
+export async function dayIntervals(day: string, gridReadings: Readings) {
   const start = localMidnight(day);
   const end = localMidnight(shiftDay(day, 1));
   const inDay = inDayOf(start, end);
-  const [{ cars, vehicleWh, estimatedVehicle, sessionVehicle, charging, vins, intervals }, expected] = await Promise.all([dayCharging(day), expectedHours(day)]);
+  const [{ cars, vehicleWh, estimatedVehicle, sessionVehicle, charging, vins, intervals }, expected] = await Promise.all([dayCharging(day, gridReadings), expectedHours(day)]);
   const realBattery = new Map(
     (
       await db.query<{ sampled_at: Date; percentage: number }>(

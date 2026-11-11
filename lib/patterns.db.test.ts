@@ -53,7 +53,7 @@ test("a month's always-on load is the lower middle of its counted nights' lowest
   await night("2026-10-01", 50, { count: 40 });
   await night("2026-08-05", 10, { count: 36 });
 
-  expect((await patterns(TODAY)).months).toEqual([
+  expect((await patterns(TODAY, "corrected")).months).toEqual([
     { month: "2026-09", watts: 840 },
     { month: "2026-10", watts: 600 },
   ]);
@@ -64,7 +64,7 @@ test("each calendar year gives the energy out of and into the Powerwalls, and it
   await putInterval(owner, "2025-12-31 23:55", { battery_exported_wh: 30 });
   await putInterval(owner, "2026-02-01 18:00", { battery_exported_wh: 4416 });
 
-  expect((await patterns(TODAY)).years).toEqual([
+  expect((await patterns(TODAY, "corrected")).years).toEqual([
     { year: 2025, out_wh: 3030, in_wh: 3662, first_day: "2025-01-03" },
     { year: 2026, out_wh: 4416, in_wh: 0, first_day: "2026-02-01" },
   ]);
@@ -80,7 +80,7 @@ test("each month's house use by site-time hour, from every source, over this mon
   await putInterval(owner, "2026-09-02 00:55", { house_from_solar_wh: 300 });
   await putInterval(owner, "2026-09-01 13:00", { house_from_battery_wh: 150 });
 
-  expect((await patterns(TODAY)).hours).toEqual([
+  expect((await patterns(TODAY, "corrected")).hours).toEqual([
     { month: "2024-12", hour: 0, watts: 600 },
     { month: "2026-09", hour: 0, watts: 2400 },
     { month: "2026-09", hour: 13, watts: 1800 },
@@ -97,7 +97,7 @@ test("figures on both sides of the split come out as one history, the split year
   await putInterval(owner, "2026-10-15 18:00", { battery_exported_wh: 2000, battery_imported_from_grid_wh: 300 });
   await putInterval(owner, "2026-11-05 18:00", { battery_exported_wh: 500, battery_imported_from_solar_wh: 700, house_from_grid_wh: 50 });
 
-  const { months, years, hours } = await patterns(TODAY);
+  const { months, years, hours } = await patterns(TODAY, "corrected");
   expect(months).toEqual([{ month: "2026-10", watts: 720 }, { month: "2026-11", watts: 960 }]);
   expect(years).toEqual([{ year: 2026, out_wh: 3500, in_wh: 2200, first_day: "2026-02-01" }]);
   expect(hours).toContainEqual({ month: "2026-11", hour: 18, watts: 600 });
@@ -107,37 +107,50 @@ test("figures on both sides of the split come out as one history, the split year
 test("on the 1st, the month just ended is still worked out with its last day", async () => {
   await owner.query("DELETE FROM energy_interval");
   await night("2026-10-31", 70);
-  await patterns("2026-11-01");
+  await patterns("2026-11-01", "corrected");
   // anton finishes October 31 after midnight: its lowest interval moves.
   await owner.query("UPDATE energy_interval SET house_from_grid_wh = 10, house_from_battery_wh = 0 WHERE day = '2026-10-31' AND house_from_battery_wh > 0");
-  expect((await patterns("2026-11-01")).months).toEqual([{ month: "2026-10", watts: 120 }]);
+  expect((await patterns("2026-11-01", "corrected")).months).toEqual([{ month: "2026-10", watts: 120 }]);
 });
 
 test("finished months are kept, so a later change to one shows only once they're forgotten, while this month's always does", async () => {
   await owner.query("DELETE FROM energy_interval");
   await night("2026-10-30", 60);
   await night("2026-11-02", 80);
-  await patterns(TODAY);
+  await patterns(TODAY, "corrected");
   await owner.query("UPDATE energy_interval SET house_from_battery_wh = 0, house_from_grid_wh = 5 WHERE house_from_battery_wh > 0");
-  expect((await patterns(TODAY)).months).toEqual([{ month: "2026-10", watts: 720 }, { month: "2026-11", watts: 60 }]);
+  expect((await patterns(TODAY, "corrected")).months).toEqual([{ month: "2026-10", watts: 720 }, { month: "2026-11", watts: 60 }]);
   globalThis.patternsMonths!.clear();
-  expect((await patterns(TODAY)).months).toEqual([{ month: "2026-10", watts: 60 }, { month: "2026-11", watts: 60 }]);
+  expect((await patterns(TODAY, "corrected")).months).toEqual([{ month: "2026-10", watts: 60 }, { month: "2026-11", watts: 60 }]);
 });
 
 test("a new month's split replaces the kept months rather than adding to them", async () => {
-  await patterns(TODAY);
-  await patterns("2026-12-10");
-  expect([...globalThis.patternsMonths!.keys()]).toEqual(["2025-01-01..2026-12-01"]);
+  await patterns(TODAY, "corrected");
+  await patterns("2026-12-10", "corrected");
+  expect([...globalThis.patternsMonths!.keys()]).toEqual(["corrected:2025-01-01..2026-12-01"]);
 });
 
 test("on the 1st the hour grid's window moves on though the split doesn't, so the kept months don't carry its oldest month", async () => {
   await owner.query("DELETE FROM energy_interval");
   await putInterval(owner, "2024-12-15 12:00", { house_from_grid_wh: 100 });
-  await patterns("2026-11-30");
-  expect((await patterns("2026-12-01")).hours.map((h) => h.month)).not.toContain("2024-12");
+  await patterns("2026-11-30", "corrected");
+  expect((await patterns("2026-12-01", "corrected")).hours.map((h) => h.month)).not.toContain("2024-12");
 });
 
 test("an empty table gives no months, no years and no hours", async () => {
   await owner.query("DELETE FROM energy_interval");
-  expect(await patterns(TODAY)).toEqual({ months: [], years: [], hours: [] });
+  expect(await patterns(TODAY, "corrected")).toEqual({ months: [], years: [], hours: [] });
+});
+
+// meter-correction: a night on a day PG&E read draws its share of the import Tesla missed.
+test("a corrected night reads with PG&E's import, Tesla's readings as stored, each kept on its own", async () => {
+  await owner.query("DELETE FROM energy_interval; DELETE FROM meter_day");
+  // 47 steps of 100 Wh from the grid and one of 12 from the grid and 12 from the Powerwall at 3 AM: 4,712 Wh from the
+  // grid. PG&E read twice that, all of it missed, so each step's grid draw triples and the Powerwall's 12 stays.
+  await night("2025-11-05", 24);
+  await owner.query("INSERT INTO meter_day VALUES ('2025-11-05', 9424, 0, 0, 0)");
+  expect((await patterns(TODAY, "corrected")).months).toEqual([{ month: "2025-11", watts: 576 }]);
+  expect((await patterns(TODAY, "tesla")).months).toEqual([{ month: "2025-11", watts: 288 }]);
+  expect([...globalThis.patternsMonths!.keys()].sort()).toEqual(["corrected:2024-12-01..2026-11-01", "tesla:2024-12-01..2026-11-01"]);
+  await owner.query("DELETE FROM meter_day");
 });

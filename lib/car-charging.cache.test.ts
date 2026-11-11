@@ -9,10 +9,20 @@ vi.mock("@/lib/db", () => ({ db: { query: async () => ({ rows: [{ first: "2026-1
 // Yesterday too: a session plugged in yesterday can charge today, past what today's data holds so far.
 test("a second call works out only yesterday and today again", async () => {
   const { carCharging } = await import("./car-charging");
-  await carCharging("2026-11-07", "2026-11-09", "2026-11-09");
-  await carCharging("2026-11-07", "2026-11-09", "2026-11-09");
+  await carCharging("2026-11-07", "2026-11-09", "2026-11-09", "corrected");
+  await carCharging("2026-11-07", "2026-11-09", "2026-11-09", "corrected");
   const days = dayCharging.mock.calls.map((call: unknown[]) => call[0]);
   expect(days.filter((day) => day === "2026-11-07")).toHaveLength(1);
   expect(days.filter((day) => day === "2026-11-08")).toHaveLength(2);
   expect(days.filter((day) => day === "2026-11-09")).toHaveLength(2);
+});
+
+// meter-correction: each choice of readings keeps its own finished days, and asks for its own steps.
+test("Tesla's readings keep their own finished days", async () => {
+  dayCharging.mockClear();
+  const { carCharging } = await import("./car-charging");
+  await carCharging("2026-11-01", "2026-11-01", "2026-11-09", "corrected");
+  await carCharging("2026-11-01", "2026-11-01", "2026-11-09", "tesla");
+  await carCharging("2026-11-01", "2026-11-01", "2026-11-09", "tesla");
+  expect(dayCharging.mock.calls).toEqual([["2026-11-01", "corrected"], ["2026-11-01", "tesla"]]);
 });

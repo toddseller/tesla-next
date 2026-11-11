@@ -13,7 +13,7 @@ export async function register() {
     const started = Date.now();
     // A failed warm-up only leaves the first visit cold, as before; it mustn't take the server down.
     const warm = (cache: Promise<unknown>) => cache.catch((error) => console.error("cache warm-up failed:", error.message));
-    Promise.all([warm(carCharging(FIRST_DAY, today, today)), warm(payback(today)), warm(patterns(today))])
+    Promise.all([warm(carCharging(FIRST_DAY, today, today, "corrected")), warm(payback(today)), warm(patterns(today, "corrected"))])
       .then(() => console.log(`caches warmed in ${((Date.now() - started) / 1000).toFixed(1)}s`));
   };
   warmAll();

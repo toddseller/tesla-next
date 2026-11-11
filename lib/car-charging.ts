@@ -2,6 +2,7 @@ import { db } from "@/lib/db";
 import { dayCharging, intervalWh } from "@/lib/intervals/intervals";
 import { pyRound, SITE_ZONE } from "@/lib/intervals/python";
 import { carName, loadCars } from "@/lib/intervals/vehicles";
+import type { Readings } from "@/lib/meter";
 import { shiftDay } from "@/lib/scene/replay";
 
 // Home charging over a range (car-charging spec): the Wall Connector's charging split by where the home's power came
@@ -24,8 +25,8 @@ declare global {
 // which also takes in corrections anton makes to past days.
 const finishedDays = (globalThis.chargingDays ??= new Map());
 
-async function chargingOn(day: string): Promise<Day> {
-  const { charging, measuredVins, intervals } = await dayCharging(day);
+async function chargingOn(day: string, readings: Readings): Promise<Day> {
+  const { charging, measuredVins, intervals } = await dayCharging(day, readings);
   const result: Day = { home: none(), cars: new Map() };
   for (const interval of intervals) {
     const instant = interval.start_at.getTime();
@@ -42,11 +43,12 @@ async function chargingOn(day: string): Promise<Day> {
   return result;
 }
 
-async function dayOf(day: string, today: string) {
+async function dayOf(day: string, today: string, readings: Readings) {
   // A session plugged in yesterday can charge today, so yesterday isn't finished until today is.
-  if (day >= shiftDay(today, -1)) return chargingOn(day);
-  if (!finishedDays.has(day)) finishedDays.set(day, await chargingOn(day));
-  return finishedDays.get(day)!;
+  if (day >= shiftDay(today, -1)) return chargingOn(day, readings);
+  const key = `${readings}:${day}`;
+  if (!finishedDays.has(key)) finishedDays.set(key, await chargingOn(day, readings));
+  return finishedDays.get(key)!;
 }
 
 const shares = ({ solar, powerwall, grid }: Sources) => {
@@ -57,7 +59,7 @@ const shares = ({ solar, powerwall, grid }: Sources) => {
 const kwh = (wh: number) => pyRound(wh / 1000, 1);
 
 // Null when the database holds no charging at all; a range before it counts nothing and says from when there is some.
-export async function carCharging(start: string, end: string, today: string) {
+export async function carCharging(start: string, end: string, today: string, readings: Readings) {
   const { rows: [coverage] } = await db.query<{ first: string | null; cars: string | null }>(
     `SELECT (least((SELECT min(start_at) FROM charge_session), (SELECT min(start_at) FROM vehicle_interval)) AT TIME ZONE $1)::date::text AS first,
        ((SELECT min(start_at) FROM vehicle_interval) AT TIME ZONE $1)::date::text AS cars`,
@@ -68,7 +70,7 @@ export async function carCharging(start: string, end: string, today: string) {
   const home = none();
   const byCar = new Map<string, Sources>();
   for (let day = start < coverage.first ? coverage.first : start; day <= end && day <= today; day = shiftDay(day, 1)) {
-    const charged = await dayOf(day, today);
+    const charged = await dayOf(day, today, readings);
     add(home, charged.home);
     for (const [vin, wh] of charged.cars) {
       if (!byCar.has(vin)) byCar.set(vin, none());

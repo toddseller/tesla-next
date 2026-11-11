@@ -4,10 +4,12 @@ import { CalendarDays, ChevronLeft, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useRef, useState, ViewTransition } from "react";
 
+import { ReadingsNote, ReadingsSwitch } from "@/components/readings-switch";
 import { type Day, DayView } from "@/components/solar/day-view";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { toDate, toDay } from "@/lib/calendar-dates";
+import { type Readings, withReadings } from "@/lib/meter";
 import type { RangeItem } from "@/lib/range";
 import { FIRST_DAY, shiftDay, TIME_ZONE } from "@/lib/scene/replay";
 import { address, type Range, rangeLabel } from "@/lib/solar/ranges";
@@ -27,9 +29,12 @@ type Props = {
   today: string;
   modified: string | null;
   onDay: (day: string) => void;
+  readings?: Readings;
+  // The day's two addresses when its strip reaches a corrected day, so the choice of readings shows.
+  readingsAt?: Record<Readings, string> | null;
 };
 
-export function DayPanel({ range, day, strip, today, modified, onDay }: Props) {
+export function DayPanel({ range, day, strip, today, modified, onDay, readings = "corrected", readingsAt = null }: Props) {
   const date = day.date;
   const previous = date > FIRST_DAY ? shiftDay(date, -1) : null;
   const next = date < today ? shiftDay(date, 1) : null;
@@ -49,7 +54,7 @@ export function DayPanel({ range, day, strip, today, modified, onDay }: Props) {
   return (
     <div className="flex flex-col gap-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <Link href={address(range)} className="flex min-h-11 items-center gap-1.5 rounded-md pr-2.5 text-sm text-[#C4CAD1] hover:text-foreground">
+        <Link href={withReadings(address(range), readings)} className="flex min-h-11 items-center gap-1.5 rounded-md pr-2.5 text-sm text-[#C4CAD1] hover:text-foreground">
           <ChevronLeft size={18} aria-hidden />
           {rangeLabel(range)}
         </Link>
@@ -78,6 +83,7 @@ export function DayPanel({ range, day, strip, today, modified, onDay }: Props) {
             <ChevronRight size={18} aria-hidden />
           </button>
         </div>
+        {readingsAt && <ReadingsSwitch readings={readings} addresses={readingsAt} />}
         <span className="min-h-4 text-xs text-muted-foreground">
           {date === today && modified ? `Last updated at ${clock.format(new Date(modified))}` : ""}
         </span>
@@ -87,6 +93,7 @@ export function DayPanel({ range, day, strip, today, modified, onDay }: Props) {
       <ViewTransition default="none" update={{ "day-next": "slide-next", "day-previous": "slide-previous", default: "none" }}>
         <DayView day={day} today={today} />
       </ViewTransition>
+      {readingsAt && <ReadingsNote readings={readings} />}
     </div>
   );
 }

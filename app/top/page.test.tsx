@@ -5,7 +5,8 @@ import { afterEach, expect, test, vi } from "vitest";
 import { TOP_TEN, WITHOUT_VPP } from "@/components/top-ten/fixtures";
 
 vi.mock("next/navigation", () => ({ useRouter: () => ({}) }));
-vi.mock("@/lib/top-ten", () => ({ topTen: async (withVpp: boolean) => (withVpp ? TOP_TEN : WITHOUT_VPP) }));
+const asked = vi.hoisted(() => [] as unknown[][]);
+vi.mock("@/lib/top-ten", () => ({ topTen: async (...args: [boolean, string]) => (asked.push(args), args[0] ? TOP_TEN : WITHOUT_VPP) }));
 const { default: Page } = await import("./page");
 const served = async (vpp?: string) => renderToString(await Page({ searchParams: Promise.resolve(vpp ? { vpp } : {}) }));
 
@@ -26,4 +27,10 @@ test("/top and an unknown vpp are served without VPP days, vpp=with with them", 
     expect(html).toContain("Wednesday, May 21, 2025");
   }
   expect(await served("with")).toContain("Thursday, May 30, 2024");
+});
+
+// meter-correction: the address's readings reach the rankings.
+test("readings=tesla in the address ranks by Tesla's figures", async () => {
+  await Page({ searchParams: Promise.resolve({ vpp: "with", readings: "tesla" }) });
+  expect(asked.at(-1)).toEqual([true, "tesla"]);
 });

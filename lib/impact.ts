@@ -1,6 +1,7 @@
 import { db } from "@/lib/db";
 import { pyRound } from "@/lib/intervals/python";
-import { house, houseGrid, houseSolar } from "@/lib/range";
+import type { Readings } from "@/lib/meter";
+import { dailySql } from "@/lib/range";
 
 export type ImpactFigures = {
   from_solar_percentage: number; from_powerwall_percentage: number; from_grid_percentage: number;
@@ -11,7 +12,8 @@ export type ImpactFigures = {
 type Sums = { total_solar: number | null; from_powerwall: number | null; from_solar: number | null; from_grid: number | null; total_house: number | null };
 
 // Ported from anton-tesla-api-ws's get_impact_data (models/data.py).
-export async function impactFigures(start: string, end: string): Promise<ImpactFigures> {
+export async function impactFigures(start: string, end: string, readings: Readings): Promise<ImpactFigures> {
+  const { house, houseGrid, houseSolar } = dailySql(readings);
   const { rows: [sums] } = await db.query<Sums>(
     `SELECT sum(data.solar_generated) AS total_solar, sum(data.house_from_powerwall) AS from_powerwall,
        sum(${houseSolar}) AS from_solar, sum(${houseGrid}) AS from_grid, sum(${house}) AS total_house

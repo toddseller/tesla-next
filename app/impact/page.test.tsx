@@ -34,7 +34,7 @@ afterEach(() => {
 
 test("the range in the address is served with its figures", async () => {
   const html = await served({ start: "2026-10-18", end: "2026-10-18" });
-  expect(impactFigures).toHaveBeenCalledWith("2026-10-18", "2026-10-18");
+  expect(impactFigures).toHaveBeenCalledWith("2026-10-18", "2026-10-18", "corrected");
   expect(html).toContain("October 18, 2026");
   expect(html).toContain("<span>95%</span>");
   expect(html).toContain("45.6 kWh");
@@ -47,7 +47,7 @@ test.each([
   [{ start: "2026-10-31", end: "2026-10-01" }],
 ])("%j is served as today in the site's time zone", async (params) => {
   const html = await served(params);
-  expect(impactFigures).toHaveBeenCalledWith("2026-11-08", "2026-11-08");
+  expect(impactFigures).toHaveBeenCalledWith("2026-11-08", "2026-11-08", "corrected");
   expect(html).toContain("November 8, 2026");
 });
 
@@ -60,7 +60,13 @@ test("the Backup section is served for the year in the address, this true-up yea
 
 test("the range's car charging is served with the page, counted up to today at the site", async () => {
   const html = await served({ start: "2026-10-18", end: "2026-10-18" });
-  expect(carCharging).toHaveBeenCalledWith("2026-10-18", "2026-10-18", "2026-11-08");
+  expect(carCharging).toHaveBeenCalledWith("2026-10-18", "2026-10-18", "2026-11-08", "corrected");
   expect(html).toContain("Home car charging");
   expect(html).toContain("kWh into the cars");
+});
+
+// meter-correction: the address's readings reach the figures.
+test("readings=tesla in the address asks for Tesla's figures", async () => {
+  await served({ start: "2025-10-01", end: "2025-10-31", readings: "tesla" });
+  expect(impactFigures).toHaveBeenLastCalledWith("2025-10-01", "2025-10-31", "tesla");
 });

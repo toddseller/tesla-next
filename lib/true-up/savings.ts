@@ -3,8 +3,9 @@ import { cache } from "react";
 import { EVENTS } from "@/lib/backup";
 import { db } from "@/lib/db";
 import { pyRound } from "@/lib/intervals/python";
+import { METER_FIX_DATE } from "@/lib/meter";
 import { isTrueUpYear, loadPricing } from "@/lib/true-up/cost";
-import { cycleGrids, METER_FIX_DATE } from "@/lib/true-up/grid";
+import { cycleGrids } from "@/lib/true-up/grid";
 import { type DayGrid, inEffect, minimumDelivery, newestFirst, priceDays } from "@/lib/true-up/pricing";
 import { generationCharges, westlightIn } from "@/lib/true-up/westlight";
 

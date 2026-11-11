@@ -1,6 +1,7 @@
 // Ported from anton-tesla-api-ws tests/test_reports_top_ten.py and test_meter_corrections.py's top-ten test, with the
 // tie rule and NULL handling of the top-ten spec, against a database of its own.
 import type { Client } from "pg";
+import type { Readings } from "./meter";
 import { afterAll, beforeAll, beforeEach, expect, expectTypeOf, test, vi } from "vitest";
 
 import { ownDatabase } from "@/test/true-up";
@@ -25,7 +26,7 @@ const storeMeter = (day: string, importedKwh: number, exportedKwh: number) =>
   owner.query("INSERT INTO meter_day VALUES ($1, $2, $3, 0, 0)", [day, importedKwh * 1000, exportedKwh * 1000]);
 
 async function rankings() {
-  const [{ solar }, { net_grid }, { to_grid_months }] = await topTen(true);
+  const [{ solar }, { net_grid }, { to_grid_months }] = await topTen(true, "corrected");
   return { solar, days: net_grid, months: to_grid_months };
 }
 
@@ -47,12 +48,12 @@ afterAll(async () => {
   vi.unstubAllEnvs();
 });
 
-test("every caller says whether VPP days count, since the route's and the page's defaults are without them", () => {
-  expectTypeOf(topTen).parameters.toEqualTypeOf<[withVpp: boolean]>();
+test("every caller says whether VPP days count and which readings, since the route's and the page's defaults are without VPP and corrected", () => {
+  expectTypeOf(topTen).parameters.toEqualTypeOf<[withVpp: boolean, readings: Readings]>();
 });
 
 test("an empty database gives four empty rankings", async () => {
-  expect(await topTen(true)).toEqual([{ solar: [] }, { net_grid: [] }, { to_grid_months: [] }, { outages: [] }]);
+  expect(await topTen(true, "corrected")).toEqual([{ solar: [] }, { net_grid: [] }, { to_grid_months: [] }, { outages: [] }]);
 });
 
 test("the longest outages by hours, with the day they began in the site's time; other kinds aren't ranked", async () => {
@@ -63,7 +64,7 @@ test("the longest outages by hours, with the day they began in the site's time; 
   await storeOutage("2025-01-05 10:00:00", 0.005);
   await storeOutage("2026-11-09 08:36:41", 2);
   await owner.query("INSERT INTO site_state VALUES ('2026-11-09 08:36:00-08', '2026-11-09 10:40:00-08', 'off_grid_intentional', false)");
-  expect((await topTen(false))[3].outages).toEqual([
+  expect((await topTen(false, "corrected"))[3].outages).toEqual([
     { date: "Feb 4, 2024", hours: 52.3, day: "2024-02-04" },
     { date: "Dec 14, 2024", hours: 35.4, day: "2024-12-14" },
     { date: "Dec 31, 2024", hours: 2, day: "2024-12-31" },
@@ -74,7 +75,7 @@ test("outages that read the same to a tenth of an hour rank the newer first, and
   for (let d = 1; d <= 9; d++) await storeOutage(`2023-01-0${d} 08:00:00`, 10 + d);
   await storeOutage("2023-02-01 08:00:00", 7.24);
   await storeOutage("2025-02-01 08:00:00", 7.16);
-  const outages = (await topTen(false))[3].outages;
+  const outages = (await topTen(false, "corrected"))[3].outages;
   expect(outages).toHaveLength(10);
   expect(outages.at(-1)!.day).toBe("2025-02-01");
 });
@@ -82,7 +83,7 @@ test("outages that read the same to a tenth of an hour rank the newer first, and
 test("VPP events don't change the outage ranking", async () => {
   await storeOutage("2024-02-04 14:51:38", 52.27);
   await seed("2024-02-04", { is_vpp: true });
-  expect((await topTen(true))[3]).toEqual((await topTen(false))[3]);
+  expect((await topTen(true, "corrected"))[3]).toEqual((await topTen(false, "corrected"))[3]);
 });
 
 test("solar days by the stored figure, ten of them, with their labels and each row's day", async () => {
@@ -118,6 +119,14 @@ test("a day before April 27, 2026 with PG&E's readings ranks by them; a day from
   const { days, months } = await rankings();
   expect(days.map((d) => [d.day, d.net_grid])).toEqual([["2026-04-20", -38.0], ["2026-05-10", -20.0]]);
   expect(months.map((m) => [m.date, m.net_grid])).toEqual([["Apr 2026", -38.0], ["May 2026", -20.0]]);
+});
+
+test("Tesla's readings rank a corrected day by its stored figures", async () => {
+  await seed("2026-04-20", { from_grid: 0, to_grid: 10 });
+  await storeMeter("2026-04-20", 2, 40);
+  const [, { net_grid: days }, { to_grid_months: months }] = await topTen(true, "tesla");
+  expect(days.map((d) => [d.day, d.net_grid])).toEqual([["2026-04-20", -10.0]]);
+  expect(months.map((m) => [m.date, m.net_grid])).toEqual([["Apr 2026", -10.0]]);
 });
 
 test("a VPP day leaves out the Powerwall's exports; other days count them", async () => {
@@ -179,7 +188,7 @@ test("without VPP days, the export days rank and take 10th place from the other 
   for (let d = 1; d <= 9; d++) await seed(`2023-06-0${d}`, { from_grid: 0, to_grid: 50 + d });
   await seed("2023-07-01", { from_grid: 0, to_grid: 42.14 });
   await seed("2026-07-01", { from_grid: 0, to_grid: 42.06 });
-  const [[{ solar: withSolar }, { net_grid: withDays }], [{ solar }, { net_grid: days }]] = await Promise.all([topTen(true), topTen(false)]);
+  const [[{ solar: withSolar }, { net_grid: withDays }], [{ solar }, { net_grid: days }]] = await Promise.all([topTen(true, "corrected"), topTen(false, "corrected")]);
   expect(withDays[0].day).toBe("2024-05-30");
   expect(days[0].day).toBe("2023-06-09");
   expect(days.map((d) => d.day)).not.toContain("2024-05-30");
@@ -192,7 +201,7 @@ test("without VPP days, a month sums its other days, and a month of VPP days onl
   await seed("2024-05-01", { from_grid: 1, to_grid: 31 });
   await seed("2024-05-30", { from_grid: 1, to_grid: 61, is_vpp: true });
   await seed("2024-07-23", { from_grid: 1, to_grid: 50.6, is_vpp: true });
-  const months = async (withVpp: boolean) => (await topTen(withVpp))[2].to_grid_months.map((m) => [m.month, m.net_grid]);
+  const months = async (withVpp: boolean) => (await topTen(withVpp, "corrected"))[2].to_grid_months.map((m) => [m.month, m.net_grid]);
   expect(await months(true)).toEqual([["2024-05", -90], ["2024-07", -49.6]]);
   expect(await months(false)).toEqual([["2024-05", -30]]);
 });

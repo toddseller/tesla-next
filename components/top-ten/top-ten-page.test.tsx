@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 // The Top Ten page staying current, from the top-ten spec.
-import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 
 import { EXPORT_DAYS, TOP_TEN, WITHOUT_VPP } from "@/components/top-ten/fixtures";
@@ -74,7 +74,9 @@ test("a failed reload keeps the rankings shown", async () => {
   expect(exportRecord()).toContain("Thursday, May 30, 2024");
 });
 
-const pressed = () => screen.getAllByRole("button").filter((b) => b.getAttribute("aria-pressed") === "true").map((b) => b.textContent);
+const pressed = () =>
+  within(screen.getByRole("group", { name: "VPP event days in the export rankings" })).getAllByRole("button")
+    .filter((b) => b.getAttribute("aria-pressed") === "true").map((b) => b.textContent);
 
 test("without VPP events, the switch, the footnote and a reload say so", async () => {
   render(<TopTenPage topTen={WITHOUT_VPP} withVpp={false} today="2026-11-08" />);
@@ -102,4 +104,18 @@ test("the longest outages come last, and an outages event reloads the rankings",
   FakeStream.opened[0].send({}, "outages");
   await settle();
   expect(fetches).toEqual(["/api/top-ten"]);
+});
+
+// meter-correction: Top Ten's rankings span every year, so the readings sit beside the VPP choice, each keeping the other.
+test("the readings sit beside the VPP choice, each keeping the other, and a reload asks for both", async () => {
+  render(<TopTenPage topTen={TOP_TEN} withVpp today="2026-11-08" readings="tesla" />);
+  expect(screen.getByRole("button", { name: "As Tesla reported" }).getAttribute("aria-pressed")).toBe("true");
+  expect(screen.getByText(/Grid figures are as Tesla reported them/)).toBeTruthy();
+  fireEvent.click(screen.getByRole("button", { name: "Corrected" }));
+  expect(router.replace).toHaveBeenLastCalledWith("/top?vpp=with", { scroll: false });
+  fireEvent.click(screen.getByRole("button", { name: "Without VPP events" }));
+  expect(router.replace).toHaveBeenLastCalledWith("/top?readings=tesla");
+  FakeStream.opened[0].send({ date: "2026-11-08" }, "totals");
+  await act(() => new Promise((resolve) => setTimeout(resolve, 0)));
+  expect(fetches.at(-1)).toBe("/api/top-ten?vpp=with&readings=tesla");
 });

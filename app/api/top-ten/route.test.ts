@@ -12,7 +12,8 @@ const WITHOUT_VPP = [
   { to_grid_months: [{ date: "May 2024", net_grid: -450.1, month: "2024-05" }] },
   TOP_TEN[3],
 ];
-vi.mock("@/lib/top-ten", () => ({ topTen: async (withVpp: boolean) => (withVpp ? TOP_TEN : WITHOUT_VPP) }));
+const asked = vi.hoisted(() => [] as unknown[][]);
+vi.mock("@/lib/top-ten", () => ({ topTen: async (...args: [boolean, string]) => (asked.push(args), args[0] ? TOP_TEN : WITHOUT_VPP) }));
 const { GET } = await import("./route");
 
 test("leaves VPP days out of the export rankings by default, as the page does", async () => {
@@ -27,4 +28,12 @@ test("?vpp=with includes VPP days", async () => {
 
 test("?vpp=without answers as no parameter does", async () => {
   expect(await (await GET(new Request("http://next/api/top-ten?vpp=without"))).json()).toEqual({ data: WITHOUT_VPP });
+});
+
+// meter-correction: readings=tesla ranks by Tesla's figures, beside the VPP choice.
+test("readings=tesla asks for Tesla's figures, keeping the VPP choice", async () => {
+  await GET(new Request("http://next/api/top-ten?vpp=with&readings=tesla"));
+  expect(asked.at(-1)).toEqual([true, "tesla"]);
+  await GET(new Request("http://next/api/top-ten"));
+  expect(asked.at(-1)).toEqual([false, "corrected"]);
 });

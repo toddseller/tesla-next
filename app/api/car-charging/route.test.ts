@@ -23,7 +23,7 @@ afterEach(() => carCharging.mockReset());
 test("a valid range answers with its figures, counted up to today", async () => {
   carCharging.mockResolvedValue(FIGURES);
   expect(await get("?start_date=2026-11-01&end_date=2026-11-09")).toEqual({ status: 200, body: { data: FIGURES } });
-  expect(carCharging).toHaveBeenCalledWith("2026-11-01", "2026-11-09", siteToday());
+  expect(carCharging).toHaveBeenCalledWith("2026-11-01", "2026-11-09", siteToday(), "corrected");
 });
 
 test("with no charging stored at all, it answers null", async () => {
