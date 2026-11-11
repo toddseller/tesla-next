@@ -2,9 +2,10 @@ import { readFileSync } from "node:fs";
 
 import { backupHistory } from "@/lib/backup";
 import { db } from "@/lib/db";
+import { type Kept, keptFor, refreshKept } from "@/lib/kept";
 import { vppSeason } from "@/lib/true-up/cost";
 import { trueUpYears } from "@/lib/true-up/reads";
-import { trueUpSavings } from "@/lib/true-up/savings";
+import { refreshSavings, trueUpSavings } from "@/lib/true-up/savings";
 
 // Whether the solar and the Powerwalls have paid for themselves. What they cost is private: it is read from a file on
 // the server (SYSTEM_COSTS_FILE), never kept in this public repository, and only years leave the server.
@@ -98,21 +99,10 @@ export function earlyYears(first: { saving: number; solarKwh: number }, kwh: (en
   });
 }
 
-type Priced = { savings: Awaited<ReturnType<typeof trueUpSavings>>; vpp: number };
-declare global {
-  var paybackYears: Map<string, Priced> | undefined;
-}
-// A finished year's savings don't change, so each is priced once per server process; a deploy starts afresh, which also
-// takes in corrections anton makes to past days.
-const finishedYears = (globalThis.paybackYears ??= new Map());
-
-async function priceYear(start: string, end: string, current: boolean): Promise<Priced> {
-  const kept = current ? undefined : finishedYears.get(start);
-  if (kept) return kept;
+// The savings are kept (savings.ts), a settled year's until a rewrite; the VPP season is one small query.
+async function priceYear(start: string, end: string) {
   const [savings, season] = await Promise.all([trueUpSavings(start, end), vppSeason(Number(end.slice(0, 4)))]);
-  const priced = { savings, vpp: season ? season.payout ?? season.estimate : 0 };
-  if (!current) finishedYears.set(start, priced);
-  return priced;
+  return { savings, vpp: season ? season.payout ?? season.estimate : 0 };
 }
 
 const yearOf = (payback: ReturnType<typeof paybackDate>) => ({
@@ -120,7 +110,7 @@ const yearOf = (payback: ReturnType<typeof paybackDate>) => ({
 });
 
 // The Payback card's years, or null without the costs file. Only years, estimate markers and the outage record leave.
-export async function payback(today: string) {
+async function workOut(today: string) {
   const costs = readCosts();
   if (!costs) return null;
   const net = netCosts(costs);
@@ -131,7 +121,7 @@ export async function payback(today: string) {
       "SELECT extract(year FROM date::date + interval '3 months')::int AS end_year, sum(solar_generated) AS kwh FROM data WHERE date >= $1 GROUP BY 1",
       [PTO],
     ),
-    Promise.all(years.filter((y) => y.start_date >= FIRST_PRICED).map(async (y) => ({ ...y, ...(await priceYear(y.start_date, y.end_date, y.current)) }))),
+    Promise.all(years.filter((y) => y.start_date >= FIRST_PRICED).map(async (y) => ({ ...y, ...(await priceYear(y.start_date, y.end_date)) }))),
     backupHistory({ start: "2021-10-01", end: today }),
   ]);
   const kwh = (endYear: number) => Number(output.find((row) => row.end_year === endYear)?.kwh ?? 0);
@@ -154,6 +144,21 @@ export async function payback(today: string) {
       longest_seconds: outages.longest ? Math.floor(outages.longest.seconds) : null,
     },
   };
+}
+
+declare global {
+  var paybackKept: Kept<Awaited<ReturnType<typeof workOut>>> | undefined;
+}
+const kept = () => (globalThis.paybackKept ??= new Map());
+
+// Only today's or yesterday's totals and a rewrite change the answer: instrumentation refreshes it on the one and empties
+// it on the other, so a visit almost never waits for it.
+export const payback = (today: string) => keptFor(kept(), "payback", today, () => workOut(today));
+
+export function refreshPayback(today: string) {
+  // The unsettled years' savings first, or the payback would be worked out from the kept ones.
+  void refreshSavings(today);
+  return refreshKept(kept(), "payback", today, () => workOut(today), "payback");
 }
 
 export type Payback = NonNullable<Awaited<ReturnType<typeof payback>>>;
