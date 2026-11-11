@@ -21,8 +21,12 @@ const made = (startAt: string, day: string, wh: number) =>
     `INSERT INTO energy_interval VALUES ($1, $2, $3, 0, 0, 0, 0, 0, 0, 0, 0, 0)`,
     [startAt, day, wh],
   );
-const reading = (at: string, code: number) =>
-  owner.query("INSERT INTO weather_sample (sampled_at, weather_code, cloud_cover) VALUES ($1, $2, 0)", [at, code]);
+const reading = (at: string, code: number, low = 0, airport: number | null = null) =>
+  owner.query(
+    `INSERT INTO weather_sample (sampled_at, weather_code, cloud_cover, cloud_cover_low, cloud_cover_mid, cloud_cover_high, airport_low, airport_mid)
+     VALUES ($1, $2, $3, $3, 0, 0, $4, $5)`,
+    [at, code, low, airport, airport === null ? null : 0],
+  );
 
 beforeAll(async () => {
   owner = await ownDatabase("tsr_forecast");
@@ -63,7 +67,7 @@ beforeAll(async () => {
   await made("2026-11-10T18:00:00Z", TODAY, 250);
   await made("2026-11-10T18:05:00Z", TODAY, 300);
   await reading("2026-11-10T17:30:00Z", 45);
-  await reading("2026-11-10T17:45:00Z", 0);
+  await reading("2026-11-10T17:45:00Z", 1, 21, 0);
 });
 
 afterAll(async () => {
@@ -90,9 +94,12 @@ test("today's and the next three days' forecasts, and today's solar so far", asy
   expect(so_far).toBe(9.6);
 });
 
-test("the sky now is the newest weather reading", async () => {
+test("the sky now is the newest weather reading, with its cloud and the airport's", async () => {
   const { reading } = await forecast(TODAY);
-  expect(reading).toEqual({ code: 0, sampled_at: "2026-11-10T17:45:00.000Z" });
+  expect(reading).toEqual({
+    code: 1, cloud_cover: 21, cloud_cover_low: 21, cloud_cover_mid: 0, cloud_cover_high: 0, airport_low: 0, airport_mid: 0,
+    sampled_at: "2026-11-10T17:45:00.000Z",
+  });
 });
 
 test("each hour of the day's scale comes from the 30 days before today's hours with both sunlight and intervals", async () => {

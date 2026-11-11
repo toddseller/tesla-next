@@ -1,11 +1,12 @@
 import { db } from "@/lib/db";
+import { FIRST_PRECIPITATION_CODE, skyFrom } from "@/lib/intervals/weather";
 import { shiftDay, TIME_ZONE, wallTime } from "@/lib/scene/replay";
 import { skyAt } from "@/lib/scene/sun";
 
 export type ForecastRow = { day: string; radiation_mj: number; weather_code: number; fetched_at: string };
 // The 30 days before today with both a solar total and a forecast: their kWh, forecast MJ/m², count and best day.
 export type Scale = { solar_kwh: number; radiation_mj: number; days: number; good_day: number | null };
-export type Reading = { code: number; sampled_at: string };
+export type Reading = Sample & { sampled_at: string };
 // Each hour of the day's Wh and forecast W/m² over the same 30 days, and the days with any such hour.
 export type HourScale = { hour: number; wh: number; wm2: number };
 export type TodayHour = { start_at: string; wm2: number; made_wh: number | null };
@@ -83,7 +84,10 @@ export async function forecast(today: string): Promise<ForecastData> {
       [today],
     ),
     db.query<{ so_far: number }>("SELECT round(solar_generated::numeric, 2)::float8 AS so_far FROM data WHERE date = $1", [today]),
-    db.query<{ code: number; sampled_at: Date }>("SELECT weather_code AS code, sampled_at FROM weather_sample ORDER BY sampled_at DESC LIMIT 1"),
+    db.query<Sample & { sampled_at: Date }>(
+      `SELECT weather_code AS code, cloud_cover, cloud_cover_low, cloud_cover_mid, cloud_cover_high, airport_low, airport_mid, sampled_at
+       FROM weather_sample ORDER BY sampled_at DESC LIMIT 1`,
+    ),
     hourScale(today),
     db.query<Omit<TodayHour, "start_at"> & { start_at: Date }>(
       `SELECT f.start_at, round(f.radiation_wm2::numeric, 1)::float8 AS wm2, m.wh::float8 AS made_wh
@@ -101,7 +105,7 @@ export async function forecast(today: string): Promise<ForecastData> {
     scale: scale.rows[0],
     rows: rows.rows.map((row) => ({ ...row, fetched_at: row.fetched_at.toISOString() })),
     so_far: soFar.rows[0]?.so_far ?? null,
-    reading: newest ? { code: newest.code, sampled_at: newest.sampled_at.toISOString() } : null,
+    reading: newest ? { ...newest, sampled_at: newest.sampled_at.toISOString() } : null,
     hourly: {
       scale: hourly.rows.map(({ hour, wh, wm2 }) => ({ hour, wh, wm2 })),
       days: hourly.rows[0]?.days ?? 0,
@@ -115,6 +119,21 @@ const HOUR = 3_600_000;
 // Several missed hourly fetches; a day without one means anton has stopped, and the days ahead are guesses.
 const STALE_AFTER = 6 * HOUR;
 const GONE_AFTER = 24 * HOUR;
+// A weather reading's code and cloud in percent, with the airport's low and mid cloud when its report was fresh.
+export type Sample = {
+  code: number; cloud_cover: number; cloud_cover_low: number | null; cloud_cover_mid: number | null; cloud_cover_high: number | null;
+  airport_low: number | null; airport_mid: number | null;
+};
+
+// The sky the Distribution scene draws, as a code the card labels: the model's few clouds under the airport's clear
+// sky read sunny, as the scene shows. The steps fall between the airport's few (19%), scattered (44%) and broken (75%).
+export function observedCode(r: Sample): number {
+  if (r.code >= FIRST_PRECIPITATION_CODE) return r.code;
+  const { cover } = skyFrom(r.code, r.cloud_cover, r.cloud_cover_low, r.cloud_cover_mid, r.cloud_cover_high, r.airport_low, r.airport_mid);
+  if ((r.code === 45 || r.code === 48) && cover >= 1) return r.code;
+  return cover < 0.25 ? 0 : cover < 0.75 ? 2 : 3;
+}
+
 const FEWEST_DAYS = 7;
 // As the scene treats a reading: older than this, it no longer stands for the sky.
 const READING_FOR = 3 * HOUR;
@@ -134,7 +153,7 @@ export function forecastCard({ scale, rows, so_far, reading, hourly }: ForecastD
       day: today,
       soFar: so_far,
       expected: usable && todays ? expected(todays) : null,
-      code: current?.code ?? todays?.weather_code ?? null,
+      code: current ? observedCode(current) : (todays?.weather_code ?? null),
       sky,
     },
     days: usable ? ahead.map((r) => ({ day: r.day, expected: expected(r), code: r.weather_code })) : null,

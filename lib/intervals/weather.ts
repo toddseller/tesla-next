@@ -7,7 +7,7 @@ type Percent = number | null;
 // WMO codes from fog (45) up are fog, drizzle, rain, snow and thunderstorms: all overcast.
 const FIRST_OVERCAST_CODE = 45;
 // From drizzle (51) up: what still makes the sky overcast when the airport has reported its fog.
-const FIRST_PRECIPITATION_CODE = 51;
+export const FIRST_PRECIPITATION_CODE = 51;
 
 // The share of the sky under one layer of cloud, 0 to 1; null without the split, or when the code makes it overcast.
 export function shareFrom(code: number, percent: Percent, overcastFrom = FIRST_OVERCAST_CODE): number | null {
