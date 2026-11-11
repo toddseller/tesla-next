@@ -3,11 +3,11 @@
 ## MODIFIED Requirements
 
 ### Requirement: Live status in the top bar
-Every page's top bar SHALL end with the live status: a dot, "LIVE" and the time of the latest live status in the site's time zone, like "9:59 AM", and the live pill. The pill SHALL read the solar power, the home power, and "PW" with the Powerwalls' charge and their state as anton reports it, like "SOLAR 6.2 kW · HOME 1.4 kW · PW 92% · CHARGING". Each power SHALL follow a square in its flow color, in the light text color itself. It SHALL update with each live status, about every 10 seconds, without reloading the page.
+Every page's top bar SHALL end with the live status: a dot, "LIVE" and the time of the latest live status in the site's time zone, like "9:59 AM", and the live pill. The pill SHALL read the solar power, the home power, and "PW" with the Powerwalls' charge and their state as anton reports it, like "SOLAR 6.2 kW · HOME 1.4 kW · PW 92% · CHARGING". It SHALL update with each live status, about every 10 seconds, without reloading the page.
 
 #### Scenario: Charging at midday
 - **WHEN** the latest live status, from 9:59 AM, reports 6.2 kW of solar, 1.4 kW of home use and the Powerwalls at 92% and Charging
-- **THEN** the top bar on every page reads LIVE 9:59 AM and SOLAR 6.2 kW · HOME 1.4 kW · PW 92% · CHARGING, with the dot in the Powerwall color, an amber square before SOLAR and a blue one before HOME
+- **THEN** the top bar on every page reads LIVE 9:59 AM and SOLAR 6.2 kW · HOME 1.4 kW · PW 92% · CHARGING, with the dot in the Powerwall color, an amber square before SOLAR and a blue one before HOME, and the figures in the light text color
 
 #### Scenario: A new status arrives
 - **WHEN** a status from 10:00 AM reports 6.5 kW of solar, 1.2 kW of home use, 93% and Charging while a viewer is on the Top Ten page
