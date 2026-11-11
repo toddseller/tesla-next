@@ -101,7 +101,7 @@ export const staleWarning = (modifiedAt: number | Date, now: number | Date) => {
 
 // Like the Tesla app: magnitudes only (direction is shown by the wire's motion),
 // one decimal, and a plain "0 kW" when idle.
-const kw = (value: unknown) => {
+export const kw = (value: unknown) => {
   const magnitude = Math.abs(Number(value) || 0);
   return magnitude < 0.05 ? "0 kW" : `${magnitude.toFixed(1)} kW`;
 };
