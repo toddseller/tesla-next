@@ -3,7 +3,7 @@
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 
-import { RangeControls } from "@/components/solar/range-controls";
+import { PresetGroup, RangeControls } from "@/components/solar/range-controls";
 import { presets } from "@/lib/solar/ranges";
 
 const october = { start: "2026-10-01", end: "2026-10-31" };
@@ -65,7 +65,7 @@ test("the picker offers nothing before the first day of service or after two yea
 const year = (end: number) => ({ label: `'${String(end - 1).slice(2)} - '${String(end).slice(2)}`, range: { start: `${end - 1}-10-01`, end: `${end}-09-30` } });
 const yearPresets = [{ label: "This year", range: year(2027).range }, year(2026), year(2025), { label: "All time", range: { start: "2021-10-01", end: "2027-09-30" } }];
 const earlier = [year(2024), year(2023), year(2022)];
-const earlierButton = () => screen.getByRole("button", { name: /earlier|'2\d - '2\d/i, expanded: false });
+const earlierButton = () => screen.getByRole("button", { name: /^(earlier|'2\d - '2\d)$/i, expanded: false });
 
 test("the Earlier menu sits before the last preset and lists the older years in order", () => {
   render(<RangeControls range={year(2027).range} presets={yearPresets} earlier={earlier} onRange={() => {}} />);
@@ -97,4 +97,42 @@ test("an earlier year that holds the shown range names the button, which is mark
 test("without earlier years there is no menu", () => {
   render(<RangeControls range={october} presets={presets("2026-11-07")} onRange={() => {}} />);
   expect(screen.queryByRole("button", { name: /earlier/i })).toBeNull();
+});
+
+// dashboard-shell, "Range presets on a phone": below 640 px the group is one menu; CSS picks which shows.
+const phoneButton = (name: string) => screen.getByRole("button", { name: `Preset ranges: ${name}` });
+
+test("on a phone the presets are one menu naming the preset shown, and on a wide screen a row of buttons", () => {
+  render(<RangeControls range={{ start: "2026-11-01", end: "2026-11-30" }} presets={presets("2026-11-07")} onRange={() => {}} />);
+  expect(screen.getByRole("group", { name: "Preset ranges" }).className).toContain("max-sm:hidden");
+  expect(phoneButton("This month").className).toContain("sm:hidden");
+  act(() => fireEvent.click(phoneButton("This month")));
+  const items = screen.getAllByRole("menuitemradio");
+  expect(items.map((item) => [item.textContent, item.getAttribute("aria-checked")])).toEqual([["This month", "true"], ["This year", "false"], ["True-up year", "false"]]);
+});
+
+test("choosing from the phone menu sets the range and closes it", () => {
+  const onRange = vi.fn();
+  render(<RangeControls range={{ start: "2026-11-01", end: "2026-11-30" }} presets={presets("2026-11-07")} onRange={onRange} />);
+  act(() => fireEvent.click(phoneButton("This month")));
+  act(() => fireEvent.click(screen.getByRole("menuitemradio", { name: "This year" })));
+  expect(onRange).toHaveBeenCalledWith({ start: "2026-01-01", end: "2026-12-31" });
+  expect(screen.queryByRole("menu")).toBeNull();
+});
+
+test("a range no preset gives names the phone menu Custom, with nothing checked", () => {
+  render(<RangeControls range={october} presets={presets("2026-11-07")} onRange={() => {}} />);
+  act(() => fireEvent.click(phoneButton("Custom")));
+  expect(screen.getAllByRole("menuitemradio").every((item) => item.getAttribute("aria-checked") === "false")).toBe(true);
+});
+
+test("on a phone the earlier years join the menu before All time", () => {
+  render(<RangeControls range={year(2023).range} presets={yearPresets} earlier={earlier} onRange={() => {}} />);
+  act(() => fireEvent.click(phoneButton("'22 - '23")));
+  expect(screen.getAllByRole("menuitemradio").map((item) => item.textContent)).toEqual(["This year", "'25 - '26", "'24 - '25", "'23 - '24", "'22 - '23", "'21 - '22", "All time"]);
+});
+
+test("the Backup group's phone menu carries its own name", () => {
+  render(<PresetGroup label="Backup years" range={year(2027).range} presets={yearPresets} earlier={earlier} onRange={() => {}} />);
+  expect(screen.getByRole("button", { name: "Backup years: This year" })).not.toBeNull();
 });

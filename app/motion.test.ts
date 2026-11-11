@@ -33,3 +33,15 @@ test("reduced motion turns every motion class and every view transition off", ()
 test("the tab highlight glides in 250 ms, easing out", () => {
   expect(css).toMatch(/::view-transition-group\(nav-highlight\)\s*{[^}]*animation-duration: 250ms;[^}]*animation-timing-function: var\(--motion-ease\)/);
 });
+
+// dashboard-shell, "The menus' motion": the Pages button's bars cross into an X while its menu is open.
+test("the Pages bars turn in 200 ms, easing out, into an X while the menu is open", () => {
+  expect(css).toMatch(/\.motion-burger\s*{[^}]*transition: transform 200ms var\(--motion-ease\), opacity 200ms var\(--motion-ease\)/);
+  expect(css).toMatch(/\[data-state="open"\] > \.motion-burger:nth-child\(1\)\s*{\s*transform: rotate\(45deg\)/);
+  expect(css).toMatch(/\[data-state="open"\] > \.motion-burger:nth-child\(2\)\s*{\s*opacity: 0;/);
+  expect(css).toMatch(/\[data-state="open"\] > \.motion-burger:nth-child\(3\)\s*{\s*transform: rotate\(-45deg\)/);
+});
+
+test("reduced motion turns the menus' fade and grow off", () => {
+  expect(reduced).toMatch(/\[data-slot="popover-content"\]/);
+});
