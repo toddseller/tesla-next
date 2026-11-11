@@ -1,3 +1,5 @@
+import type { CSSProperties } from "react";
+
 import { lastTwelve, latestFigures, type MonthLoad, sameMonth } from "@/lib/patterns";
 
 const watts = (w: number) => `${w.toLocaleString("en-US")} W`;
@@ -48,7 +50,8 @@ function SameMonth({ months }: { months: MonthLoad[] }) {
             <div role="row" key={row.year} className={`grid min-h-7 grid-cols-[52px_minmax(0,1fr)_64px] items-center gap-2.5 text-sm sm:grid-cols-[110px_minmax(0,1fr)_80px] sm:gap-3.5 ${latest ? "" : "text-muted-foreground"}`}>
               <span role="rowheader">{row.year}</span>
               <span aria-hidden className="h-3 overflow-hidden rounded bg-secondary sm:h-3.5">
-                <span className={`block h-full rounded ${latest ? "bg-home" : "bg-muted-foreground/40"}`} style={{ width: share(row.watts, top) }} />
+                <span className={`motion-uncover block h-full rounded ${latest ? "bg-home" : "bg-muted-foreground/40"}`}
+                  style={{ width: share(row.watts, top), "--i": i } as CSSProperties} />
               </span>
               <span role="cell" className="text-right font-mono">{watts(row.watts)}</span>
             </div>
@@ -80,15 +83,19 @@ function LastTwelve({ months: all }: { months: MonthLoad[] }) {
           <span aria-hidden className="absolute inset-x-0 top-[85px] border-t border-dashed border-input sm:top-[100px]" />
           <span aria-hidden className="absolute inset-x-0 top-[170px] border-t border-input sm:top-[200px]" />
           <ol aria-labelledby="last-twelve" className="flex gap-1.5 sm:gap-3.5">
-            {months.map(({ month, watts: now, before }) => (
+            {months.map(({ month, watts: now, before }, i) => (
               <li key={month} className="flex min-w-0 flex-1 flex-col gap-1.5">
                 <span className="sr-only">
                   {`${monthLabel(month, "long")}: ${now === null ? "no counted nights" : watts(now)}, ${before === null ? "no figure a year earlier" : `a year earlier ${watts(before)}`}`}
                 </span>
                 <span aria-hidden className="relative flex h-[170px] items-end sm:h-[200px]">
-                  {now !== null && <span data-part="bar" className="block w-full rounded-t-[3px] bg-home sm:rounded-t" style={{ height: share(now, top) }} />}
+                  {now !== null && (
+                    <span data-part="bar" className="motion-rise block w-full origin-bottom rounded-t-[3px] bg-home sm:rounded-t"
+                      style={{ height: share(now, top), "--i": i } as CSSProperties} />
+                  )}
                   {before !== null && (
-                    <span data-part="year-earlier" className="absolute -inset-x-0.5 h-[3px] rounded-sm bg-foreground sm:-inset-x-1" style={{ bottom: share(before, top) }} />
+                    <span data-part="year-earlier" className="motion-pop absolute -inset-x-0.5 h-[3px] rounded-sm bg-foreground sm:-inset-x-1"
+                      style={{ bottom: share(before, top), "--i": i } as CSSProperties} />
                   )}
                 </span>
                 <span aria-hidden className="text-center font-mono text-[11px] text-muted-foreground sm:text-xs">

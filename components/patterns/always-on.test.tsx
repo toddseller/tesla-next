@@ -59,3 +59,16 @@ test("with no counted nights the section says so", () => {
   expect(section().getByText("No overnight readings yet")).toBeTruthy();
   expect(section().queryByRole("table")).toBeNull();
 });
+
+// site-motion, "Charts draw in when the view changes".
+test("each year's bar uncovers from the left and each month's column rises, one after another", () => {
+  const { container } = render(<AlwaysOnSection months={PATTERNS.months} today="2026-11-10" />);
+  const rows = [...container.querySelectorAll<HTMLElement>('[role="table"] [role="row"] span[aria-hidden] > span')];
+  expect(rows.length).toBeGreaterThan(1);
+  expect(rows.every((bar) => bar.classList.contains("motion-uncover"))).toBe(true);
+  expect(rows.map((bar) => bar.style.getPropertyValue("--i"))).toEqual(rows.map((_, i) => String(i)));
+  const columns = [...container.querySelectorAll<HTMLElement>('[data-part="bar"]')];
+  expect(columns.every((bar) => bar.classList.contains("motion-rise") && bar.classList.contains("origin-bottom"))).toBe(true);
+  expect(columns[1].style.getPropertyValue("--i")).toBe("1");
+  expect([...container.querySelectorAll('[data-part="year-earlier"]')].every((mark) => mark.classList.contains("motion-pop"))).toBe(true);
+});

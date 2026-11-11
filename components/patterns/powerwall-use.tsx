@@ -1,3 +1,5 @@
+import type { CSSProperties } from "react";
+
 import { powerwallYears, type PowerwallYear } from "@/lib/patterns";
 
 const kwh = (value: number) => `${value.toLocaleString("en-US")} kWh`;
@@ -42,7 +44,7 @@ export function PowerwallSection({ years, today }: { years: PowerwallYear[]; tod
               <span role="columnheader" className="sm:text-right">Cycles</span>
               <span role="columnheader" className="sm:text-right">Round trip</span>
             </div>
-            {rows.map((row) => (
+            {rows.map((row, i) => (
               <div role="row" key={row.year} className={`${ROW} border-t py-2.5`}>
                 <span role="rowheader" className="flex-1 sm:order-1">
                   {row.year}
@@ -50,7 +52,7 @@ export function PowerwallSection({ years, today }: { years: PowerwallYear[]; tod
                 </span>
                 <span role="cell" className="text-right font-mono sm:order-3">{kwh(row.kwh)}</span>
                 <span aria-hidden className="h-2 basis-full overflow-hidden rounded bg-secondary sm:order-2 sm:h-2.5">
-                  <span className="block h-full rounded bg-powerwall" style={{ width: `${(100 * row.kwh) / largest}%` }} />
+                  <span className="motion-uncover block h-full rounded bg-powerwall" style={{ width: `${(100 * row.kwh) / largest}%`, "--i": i } as CSSProperties} />
                 </span>
                 <span role="cell" className="font-mono text-xs text-muted-foreground sm:order-4 sm:text-right sm:text-sm sm:text-foreground">
                   {row.cycles}<span className="sm:hidden"> cycles</span>

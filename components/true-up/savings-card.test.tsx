@@ -57,3 +57,10 @@ test("the current year reads so far", () => {
 
   expect(screen.getByRole("region", { name: "What the system saved" }).textContent).toContain("$411estimate so far, of $545");
 });
+
+// site-motion: the split bar uncovers as one piece.
+test("the savings bar uncovers from the left as one piece", () => {
+  render(<SavingsCard savings={SAVINGS_25_26} season={COST_25_26.vpp} current={false} />);
+  expect(screen.getByRole("img").classList.contains("motion-uncover")).toBe(true);
+  expect(screen.getByRole("img").querySelector(".motion-uncover")).toBeNull();
+});

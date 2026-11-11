@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 // Ported from anton-tesla-api-ws components/DayView.test.jsx with its values; it mocked Chart.js, these draw with
 // Recharts. The estimate note tests are dropped with the notes (solar-day-view, "Flows drawn without estimate markings").
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, test, vi } from "vitest";
 
 import { DayDetails, DayView } from "@/components/solar/day-view";
@@ -421,6 +421,57 @@ test("a step's details end with its hour's expected power, and don't list the ex
   expect(screen.getByText("Expected")).toBeTruthy();
   expect(screen.getByText("7.8 kW")).toBeTruthy();
   expect(screen.queryByText("7.31 kW")).toBeNull();
+});
+
+// site-motion, "The estimate draws before what happened".
+describe("drawing in", () => {
+  const expectedDay = { ...day, expected: [{ start: "2026-10-16T17:00:00.000Z", kwh: 0 }, { start: "2026-10-16T18:00:00.000Z", kwh: 9 }] };
+  const chart = (container: HTMLElement) => container.querySelector('[data-testid="day-chart"]')!;
+  const reveal = (container: HTMLElement, id: string) => chart(container).querySelector(`clipPath#${id} rect`)?.getAttribute("class");
+  const clipped = (container: HTMLElement, name: string) => chart(container).querySelectorAll(`.motion-clip-${name}`).length;
+
+  test("the expected line draws first at an even pace, and the flows start halfway through it", () => {
+    vi.useFakeTimers();
+    const { container } = render(<DayView day={expectedDay} />);
+    expect(reveal(container, "motion-expected")).toBe("motion-draw-estimate");
+    expect(reveal(container, "motion-flows")).toBe("motion-draw-actual");
+    expect(clipped(container, "expected")).toBe(1);
+    expect(clipped(container, "flows")).toBe(areas(container).length * 2);
+    vi.useRealTimers();
+  });
+
+  test("a day without an expected line draws its flows with no wait", () => {
+    vi.useFakeTimers();
+    const { container } = render(<DayView day={day} />);
+    expect(reveal(container, "motion-expected")).toBeUndefined();
+    expect(reveal(container, "motion-flows")).toBe("motion-draw-only");
+    vi.useRealTimers();
+  });
+
+  test("once drawn, the chart holds still through a reload, and another day draws in again", () => {
+    vi.useFakeTimers();
+    const { container, rerender } = render(<DayView day={expectedDay} />);
+    act(() => vi.advanceTimersByTime(900));
+    rerender(<DayView day={{ ...expectedDay }} />);
+    expect(reveal(container, "motion-flows")).toBeUndefined();
+    expect(clipped(container, "flows")).toBe(0);
+    rerender(<DayView day={{ ...expectedDay, date: "2026-10-17" }} />);
+    expect(reveal(container, "motion-flows")).toBe("motion-draw-actual");
+    vi.useRealTimers();
+  });
+});
+
+// site-motion, "A day step slides the day": Total Generated rolls to the new day's figure.
+test("stepping to another day rolls Total Generated, with the new figure for screen readers at once", () => {
+  vi.useFakeTimers({ toFake: ["requestAnimationFrame", "cancelAnimationFrame", "performance", "setTimeout", "clearTimeout"] });
+  const { container, rerender } = render(<DayView day={day} />);
+  rerender(<DayView day={{ ...day, date: "2026-10-17", totals: { ...day.totals, solar_to_home: 2.27 } }} />);
+  const headline = container.querySelector('[data-testid="day-main"] .font-mono.text-4xl')!;
+  expect(headline.querySelector(".sr-only")!.textContent).toBe("33.3");
+  expect(headline.querySelector("[aria-hidden=true]")!.textContent).toBe("43.3");
+  act(() => vi.advanceTimersByTime(450));
+  expect(headline.querySelector(".sr-only")).toBeNull();
+  vi.useRealTimers();
 });
 
 describe("the expected total beside Total Generated", () => {

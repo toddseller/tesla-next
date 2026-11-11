@@ -54,3 +54,11 @@ test("the timeline is described in words", () => {
   expect(label).toMatch(/^Top ten solar days: #1 80\.9 kWh Jun 13, 2022; #2 80\.2 kWh Jun 21, 2025;/);
   expect(label.split("; ")).toHaveLength(10);
 });
+
+// site-motion, "Charts draw in when the view changes": the dots fade and grow in, the record first.
+test("each dot fades and grows in, in rank order", () => {
+  solar();
+  expect(dot(1).classList.contains("motion-pop")).toBe(true);
+  expect(dot(1).style.getPropertyValue("--i")).toBe("0");
+  expect(dot(10).style.getPropertyValue("--i")).toBe("9");
+});

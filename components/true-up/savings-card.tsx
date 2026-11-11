@@ -33,7 +33,7 @@ export function SavingsCard({ savings, season, current }: { savings: Savings; se
         </div>
         <p className="max-w-[460px] text-[13px] text-muted-foreground">{text.estimates}</p>
       </div>
-      <div role="img" aria-label={text.bar.label} className="flex h-7 gap-0.5 overflow-hidden rounded-md">
+      <div role="img" aria-label={text.bar.label} className="motion-uncover flex h-7 gap-0.5 overflow-hidden rounded-md">
         {text.bar.parts.map(([part, dollars]) => <div key={part} className={COLORS[part]} style={{ flexGrow: dollars, flexBasis: 0 }} />)}
       </div>
       <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:gap-x-10">

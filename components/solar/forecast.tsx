@@ -1,9 +1,11 @@
+import type { CSSProperties } from "react";
 import { Bar as Column, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
 
 import { AxisTick } from "@/components/solar/axis-tick";
 import { kwh, roundedRect } from "@/components/solar/range-chart";
 import { skyOf } from "@/components/solar/sky";
 import { ChartContainer, ChartTooltip } from "@/components/ui/chart";
+import { ENTER_MS, useEntering } from "@/components/use-entering";
 import type { ByHour as Hourly, ForecastCard as Card, SkyWhen } from "@/lib/forecast";
 import { shiftDay, TIME_ZONE } from "@/lib/scene/replay";
 import { niceAxis, unitOnTopTick } from "@/lib/solar/day-views";
@@ -12,12 +14,17 @@ const clock = new Intl.DateTimeFormat("en-US", { hour: "numeric", minute: "2-dig
 const hourOf = new Intl.DateTimeFormat("en-US", { hour: "numeric", timeZone: TIME_ZONE });
 const onDay = (day: string, options: Intl.DateTimeFormatOptions) =>
   new Date(`${day}T12:00:00Z`).toLocaleString("en-US", { ...options, timeZone: "UTC" });
-const percent = (part: number, whole: number) => `${Math.round(Math.min(1, part / whole) * 1000) / 10}%`;
+// The share of the track the fill leaves covered, so the fill moves by its clip and nothing around it shifts.
+const hidden = (part: number, whole: number | null) => (whole ? `${Math.round((1 - Math.min(1, part / whole)) * 1000) / 10}%` : "100%");
 
-function Bar({ label, part, whole }: { label: string; part: number; whole: number | null }) {
+// `estimate`: the track is what was expected, so it draws first and the fill grows into it from halfway.
+function Bar({ label, part, whole, estimate = false }: { label: string; part: number; whole: number | null; estimate?: boolean }) {
+  const entering = useEntering(ENTER_MS);
+  const track = entering && estimate ? "motion-uncover motion-even" : "";
+  const fill = entering ? (estimate ? "motion-uncover motion-second" : "motion-uncover") : "";
   return (
-    <div role="img" aria-label={label} className="h-2 overflow-hidden rounded bg-border">
-      <div className="h-full rounded bg-solar" style={{ width: whole ? percent(part, whole) : "0%" }} />
+    <div role="img" aria-label={label} className={`h-2 overflow-hidden rounded bg-border ${track}`}>
+      <div className={`motion-tween h-full rounded bg-solar ${fill}`} style={{ clipPath: `inset(0 ${hidden(part, whole)} 0 0 round 4px)` }} />
     </div>
   );
 }
@@ -46,7 +53,7 @@ function Today({ today }: { today: Card["today"] }) {
             <span className="font-mono text-[26px] font-semibold sm:text-[28px]">{today.expected}</span>
             <span className="text-sm text-muted-foreground">kWh expected</span>
           </p>
-          <Bar label={`${soFar.toFixed(1)} of about ${today.expected} kWh so far`} part={soFar} whole={today.expected} />
+          <Bar label={`${soFar.toFixed(1)} of about ${today.expected} kWh so far`} part={soFar} whole={today.expected} estimate />
         </>
       )}
       <span className="text-[13px] text-muted-foreground">
@@ -57,18 +64,23 @@ function Today({ today }: { today: Card["today"] }) {
 }
 
 type HourRow = Hourly["hours"][number] & { label: string; top: number };
-type HourShape = { x?: number; y?: number; width?: number; height?: number; payload?: HourRow };
+type HourShape = { x?: number; y?: number; width?: number; height?: number; payload?: HourRow; index?: number; entering?: boolean };
 
 // One drawn column: the expected kWh faded, the made kWh solid in front, and a tick where made passed expected.
-function HourColumn({ x = 0, y = 0, width = 0, height = 0, payload }: HourShape) {
+function HourColumn({ x = 0, y = 0, width = 0, height = 0, payload, index = 0, entering = false }: HourShape) {
   if (!payload) return <g />;
   const { start, expected, made, top } = payload;
   const bottom = y + height;
   const tall = (kwh: number) => (top > 0 ? (kwh / top) * height : 0);
+  const rise = { transformOrigin: `0px ${bottom}px`, "--i": index } as CSSProperties;
   return (
     <g>
-      <path data-part="expected" data-hour={start} d={roundedRect(x, bottom - tall(expected), width, tall(expected), true, false)} className="fill-solar/25" />
-      {made !== null && <path data-part="made" data-hour={start} d={roundedRect(x, bottom - tall(made), width, tall(made), true, false)} className="fill-solar" />}
+      <path data-part="expected" data-hour={start} d={roundedRect(x, bottom - tall(expected), width, tall(expected), true, false)}
+        className={`fill-solar/25 ${entering ? "motion-rise motion-even" : ""}`} style={rise} />
+      {made !== null && (
+        <path data-part="made" data-hour={start} d={roundedRect(x, bottom - tall(made), width, tall(made), true, false)}
+          className={`fill-solar ${entering ? "motion-rise motion-second" : ""}`} style={rise} />
+      )}
       {made !== null && made > expected && (
         <rect data-part="tick" data-hour={start} x={x - 3} y={bottom - tall(expected) - 1.5} width={width + 6} height={3} rx={1.5} className="fill-foreground" />
       )}
@@ -119,6 +131,7 @@ function ByNow({ byNow }: { byNow: NonNullable<Hourly["byNow"]> }) {
 function TodayByHour({ byHour }: { byHour: Hourly }) {
   const rows: HourRow[] = byHour.hours.map((hour) => ({ ...hour, label: hourOf.format(new Date(hour.start)), top: Math.max(hour.expected, hour.made ?? 0) }));
   const axis = niceAxis(0, Math.max(1, ...rows.map((row) => row.top)));
+  const entering = useEntering(ENTER_MS);
   return (
     <div role="group" aria-label="Today by hour" className="flex flex-col gap-3 rounded-lg bg-secondary p-3.5 sm:p-4">
       <div className="flex flex-wrap items-baseline justify-between gap-x-5 gap-y-2">
@@ -138,7 +151,7 @@ function TodayByHour({ byHour }: { byHour: Hourly }) {
           <XAxis dataKey="label" tickLine={false} axisLine={false} minTickGap={8} />
           <YAxis tick={<AxisTick label={(value, index, count) => unitOnTopTick(" kWh")(value, index, count)} />} domain={axis.domain} ticks={axis.ticks} tickLine={false} axisLine={false} width={56} />
           <ChartTooltip cursor={{ className: "fill-white/5" }} content={<HourDetails />} />
-          <Column dataKey="top" isAnimationActive={false} shape={HourColumn} />
+          <Column dataKey="top" isAnimationActive={false} shape={<HourColumn entering={entering} />} />
         </BarChart>
       </ChartContainer>
       <p className="text-xs text-muted-foreground">

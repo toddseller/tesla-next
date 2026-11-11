@@ -1,3 +1,5 @@
+import type { CSSProperties } from "react";
+
 import { type Entry, FLOW_DOT, type Flow } from "@/components/top-ten/entries";
 import { niceAxis } from "@/lib/solar/day-views";
 
@@ -35,8 +37,8 @@ export function Timeline({ label, entries, flow, today }: { label: string; entri
           <span
             key={e.rank}
             title={`#${e.rank}: ${e.value} ${e.unit}, ${e.date}`}
-            className={`absolute flex -translate-1/2 items-center justify-center rounded-full text-[11px] font-semibold text-background ${FLOW_DOT[flow]} ${dotSize(e.rank)} ${e.rank === 1 ? "ring-2 ring-primary ring-offset-[3px] ring-offset-card" : "ring-2 ring-card"}`}
-            style={{ left: left(e.when), top: top(e.figure) }}
+            className={`motion-pop absolute flex -translate-1/2 items-center justify-center rounded-full text-[11px] font-semibold text-background ${FLOW_DOT[flow]} ${dotSize(e.rank)} ${e.rank === 1 ? "ring-2 ring-primary ring-offset-[3px] ring-offset-card" : "ring-2 ring-card"}`}
+            style={{ left: left(e.when), top: top(e.figure), "--i": e.rank - 1 } as CSSProperties}
           >
             {e.rank === 2 || e.rank === 3 ? e.rank : ""}
           </span>

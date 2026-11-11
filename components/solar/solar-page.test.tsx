@@ -184,3 +184,17 @@ test("a new range served with fresher forecast figures shows them over an earlie
   rerender(<SolarPage range={march} items={[]} today="2026-11-07" initialStatus={null} forecast={{ ...CARD, today: { ...CARD.today, soFar: 15 } }} />);
   expect(soFar()).toContain("15.0 kWh so far");
 });
+
+// site-motion: a new range is a new chart, which draws in; the same range reloaded is not.
+test("another range draws its chart in, while the same range re-rendered later does not", () => {
+  vi.useFakeTimers({ toFake: ["Date", "setTimeout", "clearTimeout"] });
+  vi.setSystemTime(Date.parse("2026-11-07T20:00:00Z"));
+  const page = (range: { start: string; end: string }) => <SolarPage range={range} items={[item("2026-11-07", 12.1)]} today="2026-11-07" initialStatus={null} />;
+  const { container, rerender } = render(page(november));
+  expect(solarOf(container, "Nov 7")!.classList.contains("motion-rise")).toBe(true);
+  act(() => vi.advanceTimersByTime(650));
+  rerender(page(november));
+  expect(solarOf(container, "Nov 7")!.classList.contains("motion-rise")).toBe(false);
+  rerender(page({ start: "2026-11-01", end: "2026-11-07" }));
+  expect(solarOf(container, "Nov 7")!.classList.contains("motion-rise")).toBe(true);
+});

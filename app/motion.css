@@ -1,0 +1,95 @@
+/* site-motion. Drawing in is an animation on mount: a reload keeps the same elements, so it never replays.
+   Only transform, opacity, clip-path and SVG stroke move, so nothing around a mark shifts. */
+:root {
+  --motion-enter: 450ms;
+  --motion-tween: 400ms;
+  --motion-ease: cubic-bezier(.2, .7, .2, 1);
+  --motion-stagger: min(calc(var(--i, 0) * 15ms), 200ms);
+}
+
+.motion-rise,
+.motion-uncover,
+.motion-pop,
+.motion-sweep {
+  animation-duration: var(--motion-enter);
+  animation-timing-function: var(--motion-ease);
+  animation-fill-mode: both;
+  animation-delay: var(--motion-stagger);
+}
+
+/* An SVG segment scales about the line its shape names (the chart's zero line), so a stacked column grows whole. */
+.motion-rise {
+  animation-name: motion-rise;
+  transform-box: view-box;
+}
+.motion-uncover { animation-name: motion-uncover; }
+.motion-pop { animation-name: motion-pop; }
+.motion-sweep { animation-name: motion-sweep; }
+
+/* The estimate draws at an even pace; what happened starts when it is halfway. */
+.motion-even { animation-timing-function: linear; }
+.motion-second { animation-delay: calc(var(--motion-stagger) + var(--motion-enter) / 2); }
+
+/* The day chart's two reveals, rects in its own clip paths: the estimate at an even pace, then what happened from its
+   halfway point. */
+.motion-clip-expected { clip-path: url(#motion-expected); }
+.motion-clip-flows { clip-path: url(#motion-flows); }
+.motion-draw-estimate { animation: motion-draw 600ms linear both; }
+.motion-draw-actual { animation: motion-draw 600ms var(--motion-ease) 300ms both; }
+.motion-draw-only { animation: motion-draw 600ms var(--motion-ease) both; }
+
+.motion-tween {
+  transition: clip-path var(--motion-tween) var(--motion-ease), stroke-dasharray var(--motion-tween) var(--motion-ease),
+    stroke-dashoffset var(--motion-tween) var(--motion-ease);
+}
+
+/* Invisible unless it plays, so without motion the dot shows no ring at all. */
+.motion-ring {
+  opacity: 0;
+  animation: motion-ring 700ms ease-out;
+}
+
+@keyframes motion-rise { from { transform: scaleY(0); } }
+@keyframes motion-draw { from { transform: scaleX(0); } }
+@keyframes motion-uncover { from { clip-path: inset(0 100% 0 0 round 4px); } }
+@keyframes motion-pop { from { opacity: 0; scale: .6; } }
+@keyframes motion-sweep { from { stroke-dasharray: 0 var(--whole); stroke-dashoffset: 0; } }
+@keyframes motion-ring {
+  from { opacity: .7; transform: scale(1); }
+  to { opacity: 0; transform: scale(2.6); }
+}
+
+/* A day step: the content leaves against the step and the new day comes in from the far side. */
+::view-transition-old(.slide-next) { animation: 150ms ease-in both motion-out-left; }
+::view-transition-new(.slide-next) { animation: 250ms var(--motion-ease) both motion-in-right; }
+::view-transition-old(.slide-previous) { animation: 150ms ease-in both motion-out-right; }
+::view-transition-new(.slide-previous) { animation: 250ms var(--motion-ease) both motion-in-left; }
+::view-transition-old(root),
+::view-transition-new(root) { animation: none; }
+
+@keyframes motion-out-left { to { opacity: 0; transform: translateX(-24px); } }
+@keyframes motion-out-right { to { opacity: 0; transform: translateX(24px); } }
+@keyframes motion-in-right { from { opacity: 0; transform: translateX(24px); } }
+@keyframes motion-in-left { from { opacity: 0; transform: translateX(-24px); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .motion-rise,
+  .motion-uncover,
+  .motion-pop,
+  .motion-sweep,
+  .motion-even,
+  .motion-second,
+  .motion-tween,
+  .motion-ring,
+  .motion-clip-expected,
+  .motion-clip-flows,
+  .motion-draw-estimate,
+  .motion-draw-actual,
+  .motion-draw-only {
+    animation: none;
+    transition: none;
+  }
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) { animation: none !important; }
+}

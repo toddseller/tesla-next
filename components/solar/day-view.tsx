@@ -4,7 +4,9 @@ import { type PointerEvent, type ReactNode, useRef, useState } from "react";
 import { Area, AreaChart, CartesianGrid, ComposedChart, Line, ReferenceArea, ReferenceLine, XAxis, YAxis } from "recharts";
 
 import { AxisTick } from "@/components/solar/axis-tick";
+import { Rolling } from "@/components/rolling";
 import { ChartContainer, ChartTooltip } from "@/components/ui/chart";
+import { useEntering } from "@/components/use-entering";
 import {
   chargeLevel, clockTime, daySpans, expectedRows, type ExpectedHour, FLOW_COLORS, hasBatteryHistory, type Interval, type OffGridSpan, outlines, spanTotals, type StormSpan,
   TIME_TICKS, timeTick, unitOnTopTick, VIEW_ORDER, viewChart, VIEWS, viewSummary,
@@ -35,6 +37,8 @@ const CHART_BOX = "relative w-full aspect-[4/3] min-h-[18rem] max-h-[70vh]";
 
 // The power chart's value axis, on its right; the plot is the rest of the chart's width.
 const AXIS_WIDTH = 56;
+// The expected line's 600 ms, then the flows' 600 ms from its halfway point.
+const DRAW_MS = 900;
 const STEP = 5;
 
 // A span of the day in minutes: from its first step's start to its last step's end, so the whole day is 0 to 1440.
@@ -78,6 +82,8 @@ function PowerChart({ viewKey, day, spans, span }: { viewKey: string; day: Day; 
   const expectedPeak = Math.max(0, ...expected.map(({ kwh }) => kwh));
   const chart = viewChart(viewKey, day.data, { vehicleData: Boolean(day.vehicle_data), expectedPeak });
   const rows = expectedRows(outlines(chart), expected, day.date);
+  const drawing = useEntering(DRAW_MS);
+  const flows = drawing ? "motion-clip-flows" : undefined;
   return (
     <ChartContainer config={{}} className={CHART_BOX} data-testid="day-chart">
       <ComposedChart data={rows} margin={{ top: 8, right: 0, bottom: 0, left: 0 }}>
@@ -92,19 +98,27 @@ function PowerChart({ viewKey, day, spans, span }: { viewKey: string; day: Day; 
           <ReferenceLine key={x} x={x} stroke="var(--color-foreground)" strokeOpacity={0.6} strokeWidth={1.5} ifOverflow="hidden" />
         ))}
         <ReferenceLine y={0} className="stroke-muted-foreground/40" />
+        {/* One reveal for every flow and one for the expected line, growing across the whole chart, so the flows start
+            when the line is halfway across. shortcut: fixed ids, fine while a page shows one day chart. */}
+        {drawing && (
+          <defs>
+            {expectedPeak > 0 && <clipPath id="motion-expected"><rect width="100%" height="100%" className="motion-draw-estimate" /></clipPath>}
+            <clipPath id="motion-flows"><rect width="100%" height="100%" className={expectedPeak > 0 ? "motion-draw-actual" : "motion-draw-only"} /></clipPath>
+          </defs>
+        )}
         <ChartTooltip content={<DayDetails />} />
         {chart.series.map(({ key, label, color, stack }) => (
           <Area key={key} dataKey={key} name={label} stackId={stack} type="linear" fill={color} fillOpacity={0.33} stroke="none"
-            isAnimationActive={false} activeDot={false} />
+            isAnimationActive={false} activeDot={false} className={flows} />
         ))}
         {chart.series.map(({ key, color }) => (
           <Line key={`${key}_top`} dataKey={`${key}_top`} type="linear" stroke={color} strokeWidth={1.5} dot={false} activeDot={false}
-            isAnimationActive={false} />
+            isAnimationActive={false} className={flows} />
         ))}
         {/* Monotone, so a jagged hour-to-hour forecast gets no peaks or dips between its hours. */}
         {expectedPeak > 0 && (
           <Line dataKey="expected" name="Expected" type="monotone" connectNulls stroke="var(--color-foreground)" strokeOpacity={0.9}
-            strokeWidth={1.75} dot={false} activeDot={false} isAnimationActive={false} />
+            strokeWidth={1.75} dot={false} activeDot={false} isAnimationActive={false} className={drawing ? "motion-clip-expected" : undefined} />
         )}
       </ComposedChart>
     </ChartContainer>
@@ -264,7 +278,7 @@ export function DayView({ day, today }: { day: Day; today?: string }) {
               <div key={headline.label}>
                 <p className="text-sm text-muted-foreground">{headline.label}</p>
                 <p className={`font-mono text-4xl ${dayOnly(span)}`} style={{ color }}>
-                  <span>{headline.value.toFixed(1)}</span> <span className="text-base text-muted-foreground">kWh</span>
+                  <Rolling value={headline.value} format={(kwh) => kwh.toFixed(1)} /> <span className="text-base text-muted-foreground">kWh</span>
                   {expectedKwh > 0 && <ExpectedTotal generated={headline.value} expected={expectedKwh} past={day.date !== today} />}
                 </p>
                 {span && spanned && (
@@ -289,7 +303,7 @@ export function DayView({ day, today }: { day: Day; today?: string }) {
             <>
               <SpanControls span={span} selecting={selecting} onSelecting={setSelecting} onClear={() => setPicked(null)} />
               <SpanArea selecting={selecting} onSpan={pick} onPicked={() => setSelecting(false)}>
-                <PowerChart key={`${viewKey}:${vehicleData}`} viewKey={viewKey} day={day} spans={spans} span={span} />
+                <PowerChart key={`${day.date}:${viewKey}:${vehicleData}`} viewKey={viewKey} day={day} spans={spans} span={span} />
               </SpanArea>
               {viewKey === "solar" && day.expected?.some(({ kwh }) => kwh > 0) && (
                 <p className="flex items-center gap-2 text-xs text-muted-foreground">

@@ -26,10 +26,14 @@ afterEach(() => {
 });
 
 const bar = (status: object | null = STATUS) => <TopBar initialStatus={status && JSON.stringify(status)} initialSite={null} renderedAt={RENDERED_AT} />;
+// What a screen reader gets: the final figures, not the ones rolling on screen.
+const spoken = (node: Node): string =>
+  node instanceof Element && node.getAttribute("aria-hidden") === "true" ? "" : node.nodeType === Node.TEXT_NODE ? node.textContent! : [...node.childNodes].map(spoken).join("");
 const shown = () => {
   const status = document.querySelector('[data-part="live-status"]')!;
-  return { text: status.textContent, live: status.querySelector('[data-part="dot"]')!.className.includes("bg-powerwall") };
+  return { text: spoken(status), live: status.querySelector('[data-part="dot"]')!.className.includes("bg-powerwall") };
 };
+const rings = () => document.querySelectorAll('[data-part="dot-ring"]');
 
 test.each([
   ["/", "Solar"],
@@ -115,4 +119,28 @@ test("a stale status keeps its OFF GRID pill beside LAST", () => {
   render(<TopBar initialStatus={JSON.stringify(OUTAGE)} initialSite={null} renderedAt={RENDERED_AT} />);
   act(() => vi.advanceTimersByTime(3 * 60_000));
   expect(shown()).toEqual({ text: "LAST 9:59 AMOFF GRIDPW 92% · DISCHARGING", live: false });
+});
+
+// site-motion, "The live dot rings with each status" and "Changed values move from their old figure".
+test("each status from the stream sends one ring from the dot, and none shows before one arrives", () => {
+  render(bar());
+  expect(rings()).toHaveLength(0);
+  FakeStream.opened[0].send({ ...STATUS, modified: "2026-11-08T10:00:00-08:00" });
+  const first = rings()[0];
+  expect(rings()).toHaveLength(1);
+  expect(first.className).toContain("motion-ring");
+  FakeStream.opened[0].send({ ...STATUS, modified: "2026-11-08T10:00:10-08:00" });
+  expect(rings()).toHaveLength(1);
+  expect(rings()[0]).not.toBe(first);
+});
+
+test("the charge rolls on screen while a screen reader gets the new figure at once", async () => {
+  render(bar());
+  FakeStream.opened[0].send({ ...STATUS, battery_percentage: 100, modified: "2026-11-08T10:00:20-08:00" });
+  const pillOf = () => document.querySelector('[data-part="pill"]')!;
+  expect(pillOf().querySelector('[aria-hidden="true"]')!.textContent).toBe("PW 92% · CHARGING");
+  expect(shown().text).toContain("PW 100% · CHARGING");
+  await act(() => new Promise((resolve) => setTimeout(resolve, 500)));
+  expect(pillOf().querySelector('[aria-hidden="true"]')).toBeNull();
+  expect(pillOf().textContent).toBe("PW 100% · CHARGING");
 });

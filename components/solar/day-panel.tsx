@@ -2,7 +2,7 @@
 
 import { CalendarDays, ChevronLeft, ChevronRight } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, ViewTransition } from "react";
 
 import { type Day, DayView } from "@/components/solar/day-view";
 import { Calendar } from "@/components/ui/calendar";
@@ -83,7 +83,10 @@ export function DayPanel({ range, day, strip, today, modified, onDay }: Props) {
         </span>
       </div>
       <DaysStrip items={strip} shown={date} onDay={onDay} />
-      <DayView day={day} today={today} />
+      {/* Only a day step slides it; the stepper, the back link and the strip above hold still. */}
+      <ViewTransition default="none" update={{ "day-next": "slide-next", "day-previous": "slide-previous", default: "none" }}>
+        <DayView day={day} today={today} />
+      </ViewTransition>
     </div>
   );
 }

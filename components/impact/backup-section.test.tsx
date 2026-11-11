@@ -77,6 +77,10 @@ test("every event is listed newest first with its start, duration and kind, each
 test("each event's bar is its length against the year's longest event", () => {
   render(<BackupSection history={HISTORY} year={YEAR_23_24} today={TODAY} onYear={() => {}} />);
   const widths = [...document.querySelectorAll<HTMLElement>('[data-part="duration-bar"]')].map((bar) => bar.style.width);
+  // site-motion: each event's bar uncovers from the left, staggered down the list.
+  const bars = [...document.querySelectorAll<HTMLElement>('[data-part="duration-bar"]')];
+  expect(bars.every((bar) => bar.classList.contains("motion-uncover"))).toBe(true);
+  expect(bars.map((bar) => bar.style.getPropertyValue("--i"))).toEqual(bars.map((_, i) => String(i)));
   expect(widths[1]).toBe("100%");
   expect(parseFloat(widths[3])).toBeCloseTo((3600 / 188_172) * 100, 3);
 });

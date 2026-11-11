@@ -1,3 +1,5 @@
+import type { CSSProperties } from "react";
+
 import { Legend, Ring, sourceShares } from "@/components/impact/sections";
 import type { CarCharging } from "@/lib/car-charging";
 import { datesLabel, type Range } from "@/lib/solar/ranges";
@@ -53,7 +55,7 @@ export function CarChargingSection({ charging, range }: { charging: CarCharging;
                     <span className="font-mono">{kwh(car.kwh)} kWh</span>
                   </div>
                   <div role="img" aria-label={`${car.name}: ${split.map(({ label, share }) => `${share}% ${label}`).join(", ")}`}
-                    className="flex h-3 gap-0.5 overflow-hidden rounded">
+                    className="motion-uncover flex h-3 gap-0.5 overflow-hidden rounded" style={{ "--i": i } as CSSProperties}>
                     {split.map(({ key, share, fill }) => share > 0 && <span key={key} className={fill} style={{ width: `${share}%` }} />)}
                   </div>
                 </div>

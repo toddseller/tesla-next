@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import { useLiveStream } from "@/components/use-live-stream";
+import { Rolling } from "@/components/rolling";
 import { gridPill, type LiveStatus, liveStatus, type SiteState } from "@/lib/live-status";
 
 const pages = [
@@ -31,7 +32,14 @@ function Status({ initialStatus, initialSite, renderedAt }: Props) {
   const [status, setStatus] = useState<LiveStatus | null>(() => initialStatus && JSON.parse(initialStatus));
   const [site, setSite] = useState<SiteState | null>(() => initialSite && JSON.parse(initialSite));
   const [now, setNow] = useState(() => new Date(renderedAt));
-  useLiveStream({ onStatus: setStatus, onSiteState: setSite });
+  const [received, setReceived] = useState(0);
+  useLiveStream({
+    onStatus: (next) => {
+      setStatus(next);
+      setReceived((count) => count + 1);
+    },
+    onSiteState: setSite,
+  });
   useEffect(() => {
     setNow(new Date());
     const timer = setInterval(() => setNow(new Date()), 1000);
@@ -41,7 +49,11 @@ function Status({ initialStatus, initialSite, renderedAt }: Props) {
   const grid = gridPill(status, site);
   return (
     <p data-part="live-status" className="order-2 flex w-full flex-wrap items-center gap-2.5 font-mono text-[13px] whitespace-nowrap text-muted-foreground sm:order-3 sm:w-auto">
-      <span data-part="dot" aria-hidden className={`size-2 rounded-full ${live ? "bg-powerwall" : "bg-muted-foreground"}`} />
+      <span aria-hidden className="relative size-2">
+        <span data-part="dot" className={`absolute inset-0 rounded-full ${live ? "bg-powerwall" : "bg-muted-foreground"}`} />
+        {/* Keyed by the count, so each status mounts a new ring that plays once. */}
+        {received > 0 && <span key={received} data-part="dot-ring" className={`motion-ring absolute inset-0 rounded-full ${live ? "bg-powerwall" : "bg-muted-foreground"}`} />}
+      </span>
       <span>{word} {time}</span>
       {grid && (
         <span data-part="grid-pill" className={`flex items-center gap-1.5 rounded-full border px-2.5 py-1 ${PILL_STYLES[grid.kind]}`}>
@@ -49,7 +61,11 @@ function Status({ initialStatus, initialSite, renderedAt }: Props) {
           {grid.text}
         </span>
       )}
-      <span className="rounded-full border border-input px-2.5 py-1 text-foreground">{pill}</span>
+      <span data-part="pill" className="rounded-full border border-input px-2.5 py-1 text-foreground">
+        {status?.battery_percentage == null ? pill : (
+          <Rolling value={status.battery_percentage} format={(charge) => liveStatus({ ...status, battery_percentage: Math.round(charge) }, now).pill} />
+        )}
+      </span>
     </p>
   );
 }

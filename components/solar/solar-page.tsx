@@ -66,7 +66,7 @@ export function SolarPage({ range, items, today, initialStatus, day, forecast }:
   if (day && shownDay) {
     return (
       <DayPanel range={range} day={shownDay} strip={strip} today={today} modified={modified}
-        onDay={(next) => router.replace(address(range, next))} />
+        onDay={(next) => router.replace(address(range, next), { transitionTypes: [next > shownDay.date ? "day-next" : "day-previous"] })} />
     );
   }
   return (
@@ -83,7 +83,7 @@ export function SolarPage({ range, items, today, initialStatus, day, forecast }:
             {isDaily(range) ? "Daily · select a day for its 5-minute detail" : "Monthly · select a month for its days"}
           </span>
         </div>
-        <RangeChart items={bars} range={range} onOpenDay={(next) => router.push(address(range, next))} onOpenRange={(next) => router.push(address(next))} />
+        <RangeChart key={address(range)} items={bars} range={range} onOpenDay={(next) => router.push(address(range, next))} onOpenRange={(next) => router.push(address(next))} />
       </section>
     </div>
   );

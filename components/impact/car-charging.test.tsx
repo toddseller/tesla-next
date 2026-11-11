@@ -62,3 +62,12 @@ test("a range before the data says there is none before it starts", () => {
   render(<CarChargingSection charging={{ ...IDLE, since: "2025-10-20" }} range={{ start: "2024-03-01", end: "2024-03-31" }} />);
   expect(section().getByText("No charging data before Oct 20, 2025")).toBeTruthy();
 });
+
+// site-motion: each car's split uncovers as one piece, so its shares never look other than they are.
+test("each car's split bar uncovers as one piece, one car after the other", () => {
+  render(<CarChargingSection charging={CHARGING} range={ALL_TIME} />);
+  const splits = [section().getByRole("img", { name: /^Tesla T\.I\.E\. Fighter:/ }), section().getByRole("img", { name: /^R2D2:/ })];
+  expect(splits.every((split) => split.classList.contains("motion-uncover"))).toBe(true);
+  expect(splits.map((split) => split.style.getPropertyValue("--i"))).toEqual(["0", "1"]);
+  expect(splits[0].querySelector(".motion-uncover")).toBeNull();
+});
