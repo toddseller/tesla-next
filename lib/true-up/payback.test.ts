@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, test, vi } from "vitest";
 
-import { earlyEstimate, earlyYears, netCosts, paybackDate, powerwallsPayback, readCosts } from "./payback";
+import { earlyEstimate, earlyYears, monthOf, netCosts, paybackDate, powerwallsPayback, readCosts } from "./payback";
 
 const COSTS = { solar: 25_000, powerwalls: 20_000, sales_tax: 3_000, credit_rate: 0.26 };
 
@@ -126,5 +126,14 @@ describe("readCosts", () => {
     vi.stubEnv("SYSTEM_COSTS_FILE", file('{"solar": 12345, "powerwalls": "lots"}'));
     expect(readCosts()).toBeNull();
     expect(error.mock.calls.flat().join(" ")).not.toContain("12345");
+  });
+});
+
+// system-payback, "Payback data": the month solar paid back leaves the server; a projected one gives its year alone.
+describe("monthOf", () => {
+  test("a payback that has happened gives its month; a projected or unknown one gives none", () => {
+    expect(monthOf({ date: "2025-06-14", projected: false, estimated: true })).toBe("2025-06");
+    expect(monthOf({ date: "2027-03-02", projected: true, estimated: true })).toBeNull();
+    expect(monthOf({ date: null, projected: true, estimated: true })).toBeNull();
   });
 });

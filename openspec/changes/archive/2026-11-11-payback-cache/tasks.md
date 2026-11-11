@@ -45,7 +45,7 @@
 
 ## 4. Rollout
 
-- [ ] 4.1 Release (ask first); the deploy's health check passes, and `/api/payback` and `/true-up` on teslasolar.report are timed against the Context table; record in design.md under Rollout
+- [x] 4.1 Release (ask first); the deploy's health check passes, and `/api/payback` and `/true-up` on teslasolar.report are timed against the Context table; record in design.md under Rollout
 
 ## Workflow follow-up
 

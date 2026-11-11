@@ -16,6 +16,9 @@ const zero: ImpactFigures = Object.fromEntries(Object.keys(day).map((key) => [ke
 afterEach(cleanup);
 
 const section = (name: string) => screen.getByRole("region", { name });
+// How much of its track a bar shows: what its clip leaves uncovered.
+const shown = (meter: HTMLElement) =>
+  100 - Number((meter.firstChild as HTMLElement).style.clipPath.match(/^inset\(0(?:px)? ([\d.e-]+)% 0(?:px)? 0(?:px)? round 8px\)$/)?.[1]);
 
 test("Self Powered explains itself and shows the self-powered share in the ring and each source in the legend", () => {
   render(<SelfPowered figures={day} />);
@@ -48,7 +51,8 @@ test("Solar Offset explains itself and shows the offset and labeled bars on one 
   expect(offset.textContent).toContain("77%energy offset");
   const bars = within(offset).getAllByRole("meter");
   expect(bars.map((bar) => [bar.getAttribute("aria-label"), bar.getAttribute("aria-valuetext")])).toEqual([["Solar", "23.8 kWh"], ["Home", "30.8 kWh"]]);
-  expect(bars.map((bar) => (bar.firstChild as HTMLElement).style.width)).toEqual(["77.2727%", "100%"]);
+  expect(shown(bars[0])).toBeCloseTo(77.3, 5);
+  expect(shown(bars[1])).toBe(100);
 });
 
 test("totals of 1,000 kWh or more are shown in MWh, and whole numbers keep their decimal", () => {
@@ -62,7 +66,7 @@ test("totals of 1,000 kWh or more are shown in MWh, and whole numbers keep their
 test("a range without saved days shows zeros and empty bars", () => {
   render(<><SelfPowered figures={zero} /><SolarOffset figures={zero} /></>);
   expect(document.querySelectorAll("circle[data-share]")).toHaveLength(0);
-  expect(screen.getAllByRole("meter").map((bar) => (bar.firstChild as HTMLElement).style.width)).toEqual(["0%", "0%"]);
+  expect(screen.getAllByRole("meter").map(shown)).toEqual([0, 0]);
   expect(section("Self powered").textContent).toContain("0%");
 });
 
@@ -92,9 +96,31 @@ test("new shares roll the ring's middle and the legend, with the new figures for
   vi.useRealTimers();
 });
 
-test("Solar offset's bars uncover from the left, one after the other", () => {
+test("Solar offset's bars uncover from the left, one after the other, to the share each shows", () => {
   render(<SolarOffset figures={day} />);
   const fills = screen.getAllByRole("meter").map((bar) => bar.firstChild as HTMLElement);
   expect(fills.every((fill) => fill.classList.contains("motion-uncover"))).toBe(true);
+  // Rounded as the track is, so its left end matches the track's while the uncover's clip rounds less.
+  expect(fills.every((fill) => fill.classList.contains("rounded-md"))).toBe(true);
   expect(fills.map((fill) => fill.style.getPropertyValue("--i"))).toEqual(["0", "1"]);
+  expect(fills.every((fill) => fill.style.clipPath.includes(` ${fill.style.getPropertyValue("--hidden")} `))).toBe(true);
+});
+
+test("new figures move Solar offset's bars from their old length, and roll its figures", () => {
+  vi.useFakeTimers({ toFake: ["requestAnimationFrame", "cancelAnimationFrame", "performance", "setTimeout", "clearTimeout"] });
+  const { rerender } = render(<SolarOffset figures={day} />);
+  act(() => vi.advanceTimersByTime(650));
+  const fill = screen.getAllByRole("meter")[0].firstChild as HTMLElement;
+  expect(fill.classList.contains("motion-uncover")).toBe(false);
+  expect(fill.classList.contains("motion-tween")).toBe(true);
+  rerender(<SolarOffset figures={{ ...day, total_solar_percentage: 50, total_solar: 15.4 }} />);
+  expect(screen.getAllByRole("meter")[0].firstChild).toBe(fill);
+  expect(shown(screen.getAllByRole("meter")[0])).toBeCloseTo(50, 3);
+  const offset = section("Solar offset");
+  expect(offset.querySelector("p span[aria-hidden=true]")!.textContent).toBe("77%");
+  expect(offset.querySelector("p .sr-only")!.textContent).toBe("50%");
+  act(() => vi.advanceTimersByTime(450));
+  expect(offset.textContent).toContain("50%energy offset");
+  expect(offset.textContent).toContain("15.4 kWh");
+  vi.useRealTimers();
 });

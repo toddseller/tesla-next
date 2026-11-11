@@ -64,11 +64,11 @@ export function ImpactPage({ range, figures, today, backup, backupYear, charging
         </div>
         <div className="grid grid-cols-1 gap-10 lg:grid-cols-2">
           <SelfPowered figures={shown} />
-          <SolarOffset key={address(range)} figures={shown} />
+          <SolarOffset figures={shown} />
         </div>
         {corrected && <ReadingsNote readings={readings} />}
       </section>
-      {shownCharging && <CarChargingSection key={address(range)} charging={shownCharging} range={range} />}
+      {shownCharging && <CarChargingSection charging={shownCharging} range={range} />}
       <BackupSection history={shownBackup} year={backupYear} today={today} onYear={(year) => router.replace(address(range, year), { scroll: false })} />
     </div>
   );

@@ -105,6 +105,9 @@ async function priceYear(start: string, end: string) {
   return { savings, vpp: season ? season.payout ?? season.estimate : 0 };
 }
 
+// The month solar paid back, the one finer figure the owner chose to show; a projected month would be false precision.
+export const monthOf = (payback: ReturnType<typeof paybackDate>) => (payback.projected || !payback.date ? null : payback.date.slice(0, 7));
+
 const yearOf = (payback: ReturnType<typeof paybackDate>) => ({
   year: payback.date ? Number(payback.date.slice(0, 4)) : null, projected: payback.projected, estimated: payback.estimated,
 });
@@ -135,8 +138,9 @@ async function workOut(today: string) {
     ...counted.map((y) => ({ start: y.start_date, end: y.current ? y.savings!.through : y.end_date, saving: y.savings!.solar_saved, priced: true })),
   ];
   const finished = counted.filter((y) => !y.current).map((y) => ({ added: y.savings!.powerwalls_added, vpp: y.vpp }));
+  const solarPaid = paybackDate(solarYears, net.solar);
   return {
-    solar: yearOf(paybackDate(solarYears, net.solar)),
+    solar: { ...yearOf(solarPaid), month: monthOf(solarPaid) },
     system: yearOf(paybackDate(solarYears, net.solar + net.powerwalls)),
     powerwalls: powerwallsPayback(net.powerwalls, finished, today),
     outages: {

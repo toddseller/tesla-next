@@ -1,12 +1,18 @@
 // @vitest-environment jsdom
 // The savings card, from the true-up-tracker spec.
-import { cleanup, render, screen, within } from "@testing-library/react";
-import { afterEach, expect, test } from "vitest";
+import { cleanup, render, screen } from "@testing-library/react";
+import { afterEach, beforeEach, expect, test, vi } from "vitest";
 
 import { COST_25_26, CURRENT_SAVINGS, SAVINGS_25_26 } from "@/components/true-up/fixtures";
 import { SavingsCard } from "@/components/true-up/savings-card";
 
-afterEach(cleanup);
+// These tests read what the figures say; the count-up's own tests turn reduced motion off.
+const reduced = () => vi.stubGlobal("matchMedia", (query: string) => ({ matches: query.includes("reduce") }));
+beforeEach(reduced);
+afterEach(() => {
+  cleanup();
+  vi.unstubAllGlobals();
+});
 
 const parts = () => [...screen.getByRole("img").children].map((part) => [part.className, (part as HTMLElement).style.flexGrow]);
 
@@ -28,7 +34,8 @@ test("'25 - '26: the Powerwalls' row splits their cost, and the what-if sits in 
   const row = screen.getByRole("group", { name: "Powerwalls" }).textContent;
   for (const text of ["$151 cost on the bill", "$368 VPP credit, an estimate for the 2026 season.", "Keeping charge, 129 days", "$83 cost", "Storing solar, 232 days", "$110 cost", "VPP events, 6 days", "$43 saved"])
     expect(row).toContain(text);
-  const whatIf = within(screen.getByRole("group", { name: "What if (simulation)" })).getByText("About $133 less").parentElement!.textContent;
+  const whatIf = screen.getByRole("group", { name: "What if (simulation)" }).textContent;
+  expect(whatIf).toContain("About $133 less");
   expect(whatIf).toContain("Covering only 4 to 9 p.m. on those 232 days.");
   expect(whatIf).toContain("Under NEM2, exporting solar earns about what importing it later costs");
 });
@@ -63,4 +70,13 @@ test("the savings bar uncovers from the left as one piece", () => {
   render(<SavingsCard savings={SAVINGS_25_26} season={COST_25_26.vpp} current={false} />);
   expect(screen.getByRole("img").classList.contains("motion-uncover")).toBe(true);
   expect(screen.getByRole("img").querySelector(".motion-uncover")).toBeNull();
+});
+
+// site-motion, "True-Up's figures count up when first seen".
+test("the card's figures count up from zero when the page is first seen", () => {
+  vi.unstubAllGlobals();
+  render(<SavingsCard savings={SAVINGS_25_26} season={COST_25_26.vpp} current={false} />);
+  const finals = [...document.querySelectorAll("[data-part=final]")].map((figure) => figure.textContent);
+  expect(finals.length).toBeGreaterThanOrEqual(4);
+  for (const counting of document.querySelectorAll("[data-part=counting]")) expect(counting.textContent).toMatch(/0/);
 });

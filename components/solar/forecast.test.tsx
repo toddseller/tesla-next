@@ -27,6 +27,14 @@ const fill = (bar: HTMLElement) => {
   return `${Math.round((100 - hidden) * 10) / 10}%`;
 };
 
+// site-motion: its reveal ends at the share it shows, or it would show all of itself, then slide back.
+test("a fill uncovers to the share it shows, not to the whole track", () => {
+  render(<ForecastCard card={CARD} />);
+  const bar = today().getByRole("img").firstElementChild as HTMLElement;
+  expect(bar.style.getPropertyValue("--hidden")).toMatch(/^[\d.]+%$/);
+  expect(bar.style.clipPath).toContain(` ${bar.style.getPropertyValue("--hidden")} `);
+});
+
 test("today's expected kWh, its kWh so far as a bar against it, and its sky", () => {
   render(<ForecastCard card={CARD} />);
   expect(today().getByText("31")).toBeTruthy();

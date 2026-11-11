@@ -33,7 +33,7 @@ Settings live in `.env` at the repository root, never committed; `.env.example` 
 |---|---|---|
 | `DATABASE_URL` | required | the site's database, as the API's login `tsr_app`: `postgresql://tsr_app@192.168.40.5:5432/tsr`. Leave the password out when `PGPASS_FILE` is set. |
 | `PGPASS_FILE` | optional | host path of a libpq password file (mode 600) holding the database's password. Compose mounts it read-only and the app reads the password from it. Without it, put the password in `DATABASE_URL`. |
-| `SYSTEM_COSTS_FILE` | optional | host path of a JSON file (mode 600, outside the repository) holding what the system cost: `{"solar": …, "powerwalls": …, "sales_tax": …, "credit_rate": …}`, the two prices and the tax in dollars and the federal credit as a fraction. Compose mounts it read-only. The True-Up Tracker's Payback card shows only years worked out from it; without it there is no card. Never commit it or print its figures: the repository and the site are public. |
+| `SYSTEM_COSTS_FILE` | optional | host path of a JSON file (mode 600, outside the repository) holding what the system cost: `{"solar": …, "powerwalls": …, "sales_tax": …, "credit_rate": …}`, the two prices and the tax in dollars and the federal credit as a fraction. Compose mounts it read-only. The True-Up Tracker's Payback card shows only years worked out from it, and the month solar paid back; without it there is no card. Never commit it or print its figures: the repository and the site are public. |
 | `PUSHOVER_USER` | optional | Pushover user key; with `PUSHOVER_TOKEN`, the weekly audit and daily check alert when they fail |
 | `PUSHOVER_TOKEN` | optional | Pushover application API token; without both, nothing is sent |
 

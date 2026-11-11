@@ -180,15 +180,17 @@ test("All time, last in the row, pushes the site's first day of service to today
   expect(pressed("All time")).toBe("true");
 });
 
-// site-motion: another range draws the bars in again, while the ring stays and moves its slices to the new shares.
-test("another range redraws the bars but keeps the ring", () => {
+// site-motion: another range keeps the rings and the bars, moving them to the new figures.
+test("another range keeps the rings and the bars", () => {
   const page = (range: typeof today) => <ImpactPage range={range} figures={figures(95)} today="2026-11-08" backup={NO_BACKUP} charging={CHARGING} backupYear={THIS_YEAR} />;
   const { container, rerender } = render(page(today));
   const arc = container.querySelector("circle[data-share]");
   const bar = screen.getAllByRole("meter")[0].firstChild;
+  const carRing = screen.getByRole("img", { name: /^Car charging:/ });
   rerender(page(march));
+  expect(screen.getByRole("img", { name: /^Car charging:/ })).toBe(carRing);
   expect(container.querySelector("circle[data-share]")).toBe(arc);
-  expect(screen.getAllByRole("meter")[0].firstChild).not.toBe(bar);
+  expect(screen.getAllByRole("meter")[0].firstChild).toBe(bar);
 });
 
 // meter-correction, "A choice of readings on each affected page".

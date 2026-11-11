@@ -26,6 +26,32 @@
 .motion-pop { animation-name: motion-pop; }
 .motion-sweep { animation-name: motion-sweep; }
 
+/* The Payback card's story: its delays and durations are set on each piece from the card's dates. */
+.motion-stretch,
+.motion-drop,
+.motion-raise,
+.motion-land,
+.motion-grow,
+.motion-fade { animation-fill-mode: both; animation-timing-function: var(--motion-ease); }
+.motion-stretch { animation-name: motion-stretch; animation-timing-function: linear; }
+.motion-drop { animation-name: motion-drop; animation-timing-function: linear; }
+.motion-raise { animation-name: motion-raise; transform-origin: bottom; }
+.motion-land { animation-name: motion-land; }
+.motion-grow { animation-name: motion-grow; }
+.motion-fade { animation-name: motion-fade; }
+/* Solar's connector draws up to its label, then shrinks from it to --shrink as the month comes in above it. */
+.motion-raise-shrink {
+  animation-name: motion-raise, motion-shrink;
+  animation-fill-mode: both, forwards;
+  animation-timing-function: var(--motion-ease);
+  transform-origin: bottom;
+}
+/* Hidden until the card is in view; shown when no script will ever start the story. */
+.motion-waiting { opacity: 0; }
+@media (scripting: none) {
+  .motion-waiting { opacity: 1; }
+}
+
 /* The estimate draws at an even pace; what happened starts when it is halfway. */
 .motion-even { animation-timing-function: linear; }
 .motion-second { animation-delay: calc(var(--motion-stagger) + var(--motion-enter) / 2); }
@@ -51,8 +77,33 @@
 
 @keyframes motion-rise { from { transform: scaleY(0); } }
 @keyframes motion-draw { from { transform: scaleX(0); } }
-@keyframes motion-uncover { from { clip-path: inset(0 100% 0 0 round 4px); } }
+@keyframes motion-uncover {
+  from { clip-path: inset(0 100% 0 0 round 4px); }
+  to { clip-path: inset(0 var(--hidden, 0%) 0 0 round 4px); }
+}
 @keyframes motion-pop { from { opacity: 0; scale: .6; } }
+/* Each ends at a shape, not "none", which a clip-path can't be blended into: the line would show nothing for half its
+   time and then all of it at once. */
+@keyframes motion-stretch {
+  from { clip-path: inset(0 100% 0 0); }
+  to { clip-path: inset(0 0 0 0); }
+}
+@keyframes motion-drop {
+  from { clip-path: inset(0 0 100% 0); }
+  to { clip-path: inset(0 0 0 0); }
+}
+@keyframes motion-raise { from { transform: scaleY(0); } }
+@keyframes motion-fade { from { opacity: 0; } }
+@keyframes motion-shrink { to { transform: scaleY(var(--shrink)); } }
+@keyframes motion-land {
+  from { opacity: 0; scale: .3; }
+  60% { opacity: 1; scale: 1.12; }
+}
+@keyframes motion-grow {
+  from { opacity: 0; scale: .85; }
+  40% { opacity: 1; }
+  55% { scale: var(--peak); }
+}
 @keyframes motion-sweep { from { stroke-dasharray: 0 var(--whole); stroke-dashoffset: 0; } }
 @keyframes motion-ring {
   from { opacity: .7; transform: scale(1); }
@@ -86,6 +137,14 @@
 @keyframes motion-in-left { from { opacity: 0; transform: translateX(-24px); } }
 
 @media (prefers-reduced-motion: reduce) {
+  .motion-stretch,
+  .motion-drop,
+  .motion-raise,
+  .motion-land,
+  .motion-grow,
+  .motion-fade,
+  .motion-raise-shrink,
+  .motion-waiting,
   .motion-rise,
   .motion-uncover,
   .motion-pop,
@@ -104,6 +163,8 @@
     animation: none;
     transition: none;
   }
+  .motion-waiting { opacity: 1; }
+  .motion-raise-shrink { transform: scaleY(var(--shrink)); }
   ::view-transition-group(*),
   ::view-transition-old(*),
   ::view-transition-new(*) { animation: none !important; }
