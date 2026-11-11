@@ -21,8 +21,8 @@
 
 ## 5. Rollout
 
-- [ ] 5.1 With the owner's go-ahead, release; the deploy's health check passes, and teslasolar.report's Patterns page answers in about the other pages' time
-- [ ] 5.2 After anton's next rewrite notice, the server log on onyx shows the refill, and the Patterns, Impact and True-Up pages answer as before; record in design.md under Rollout
+- [x] 5.1 With the owner's go-ahead, release; the deploy's health check passes, and teslasolar.report's Patterns page answers in about the other pages' time
+- [x] 5.2 After anton's next rewrite notice, the server log on onyx shows the refill, and the Patterns, Impact and True-Up pages answer as before; record in design.md under Rollout
 
 ## Workflow follow-up
 

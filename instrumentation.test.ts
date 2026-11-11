@@ -66,11 +66,12 @@ test("a rewrite empties every kept figure and warms them again without waiting, 
   globalThis.chargingDays = new Map([["2026-04-01", {} as never]]);
   globalThis.paybackYears = new Map([["2025-04-01", {} as never]]);
   globalThis.patternsMonths = new Map([["2025-01-01..2026-11-01", {} as never]]);
+  globalThis.trueUpGrids = new Map([["2024-10-01..2025-09-30", []]]);
   patterns.mockRejectedValue(new Error("connection refused"));
   carCharging.mockImplementation(pending);
   payback.mockImplementation(pending);
   hook();
-  expect([globalThis.chargingDays.size, globalThis.paybackYears.size, globalThis.patternsMonths.size]).toEqual([0, 0, 0]);
+  expect([globalThis.chargingDays.size, globalThis.paybackYears.size, globalThis.patternsMonths.size, globalThis.trueUpGrids.size]).toEqual([0, 0, 0, 0]);
   const today = siteToday();
   expect(carCharging).toHaveBeenCalledWith(FIRST_DAY, today, today);
   expect(payback).toHaveBeenCalledWith(today);

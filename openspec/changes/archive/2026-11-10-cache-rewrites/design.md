@@ -62,3 +62,10 @@ A throwaway branch container on onyx against production, read-only, 2026-11-10:
 - **Server time:** the Patterns page, fetched with `Accept-Encoding: gzip` inside each container, took 103 to 125 ms on the branch and 642 to 650 ms on the live release.
 - **A rewrite:** anton's one-day `backfill_solar_forecast` (2026-11-01, every row kept) sent `data_rewritten`; the branch logged "stored data rewritten; warming the caches again", then "caches warmed in 2.8s", and Patterns then took 113 to 138 ms. The live release, which doesn't listen on the channel, was untouched. The reconnect path is covered by `lib/live.test.ts`, which kills the listener's connection; it wasn't repeated on onyx.
 - Not measured on onyx: the Impact and True-Up pages after the refill (a quoting slip in the timing command); their code is unchanged and their memories refill as at boot.
+
+## Rollout
+
+Released as v2026.11.10.10 on 2026-11-10. Its Deploy run passed, connected throughout; onyx kept the result 0 and runs the merge commit, and the server logged "caches warmed in 3.9s" at start.
+
+- **Speed:** the Patterns page took 123 to 164 ms inside the container, and its first byte came in 0.20 s through Cloudflare from the Mac, against about 0.73 s before; Solar answered in 0.23 s, Impact in 0.20 s and True-Up in 0.43 s.
+- **A rewrite:** anton's one-day `backfill_solar_forecast` (2026-11-01, every row kept) sent `data_rewritten`; the live server logged "stored data rewritten; warming the caches again" and "caches warmed in 3.9s", and then Patterns answered in 121 ms, Impact in 98 ms and True-Up in 308 ms, all 200.

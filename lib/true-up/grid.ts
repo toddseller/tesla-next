@@ -2,7 +2,7 @@ import { cache } from "react";
 
 import { db } from "@/lib/db";
 import { pyRound } from "@/lib/intervals/python";
-import { shiftDay } from "@/lib/scene/replay";
+import { shiftDay, siteToday } from "@/lib/scene/replay";
 import type { DayGrid } from "@/lib/true-up/pricing";
 import { billingCycles, endYearOf, OCTOBER, readsFor, trueUpLabel } from "@/lib/true-up/reads";
 
@@ -69,9 +69,9 @@ export function cycleRow(first: string, last: string, trueUp: string, { days, me
 
 export type CycleRow = ReturnType<typeof cycleRow>;
 
-// One row per PG&E billing cycle starting in the range, with each cycle's days for pricing it. The True-Up Tracker's
-// cycles, cost and savings each ask for the same year, so one page render shares one load.
-export const cycleGrids = cache(async (start: string, end: string) => {
+type CycleGrid = { grid: Grid; row: CycleRow };
+
+async function loadGrids(start: string, end: string): Promise<CycleGrid[]> {
   const spans = await billingCycles(start, end);
   if (!spans.length) return [];
   const all = await dailyGrid(spans[0][0], spans.at(-1)![1]);
@@ -82,6 +82,30 @@ export const cycleGrids = cache(async (start: string, end: string) => {
     const grid = within(all, first, last);
     return { grid, row: cycleRow(first, last, trueUpLabel(endYearOf(last, october.get(Number(last.slice(0, 4)))!)), grid) };
   });
+}
+
+// By a month after a range ends, PG&E's October read is in and the meter days anton's scheduler adds a day and a half
+// late (with no rewrite notice) have arrived.
+const KEPT_AFTER_DAYS = 31;
+
+declare global {
+  var trueUpGrids: Map<string, CycleGrid[]> | undefined;
+}
+// A finished range's days change only when anton rewrites stored data, which empties this (instrumentation.ts).
+const keptRanges = (globalThis.trueUpGrids ??= new Map<string, CycleGrid[]>());
+
+// One row per PG&E billing cycle starting in the range, with each cycle's days for pricing it. The True-Up Tracker's
+// cycles, cost and savings each ask for the same year, so one page render shares one load.
+export const cycleGrids = cache(async (start: string, end: string) => {
+  const key = `${start}..${end}`;
+  const kept = keptRanges.get(key);
+  if (kept) return kept;
+  const grids = await loadGrids(start, end);
+  // Only whole true-up years, as the cost comparison and Payback ask for: a range from an address could be anything, and
+  // keeping each would let anyone grow the memory without end. (cost.ts' isTrueUpYear can't be imported here: it imports this.)
+  const trueUpYear = start.slice(5) === "10-01" && end === `${Number(start.slice(0, 4)) + 1}-09-30`;
+  if (trueUpYear && end < shiftDay(siteToday(), -KEPT_AFTER_DAYS)) keptRanges.set(key, grids);
+  return grids;
 });
 
 export const cycles = async (start: string, end: string) => (await cycleGrids(start, end)).map(({ row }) => row);

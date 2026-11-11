@@ -1,6 +1,7 @@
 // Ported from anton-tesla-api-ws tests/test_reports_sheet.py, against the tests' throwaway PostgreSQL.
 import type { Client } from "pg";
 import { afterAll, beforeAll, beforeEach, expect, test, vi } from "vitest";
+import { shiftDay, siteToday } from "@/lib/scene/replay";
 import { ownDatabase, publishedReads, putInterval, seedIntervals, storeMeterDays, storeReads } from "@/test/true-up";
 
 let owner: Client;
@@ -13,6 +14,8 @@ beforeAll(async () => {
 
 beforeEach(async () => {
   await owner.query("DELETE FROM meter_read; DELETE FROM energy_interval; DELETE FROM meter_day");
+  // Each test stores its own days; another test's kept years would otherwise stand in for them.
+  globalThis.trueUpGrids?.clear();
 });
 
 afterAll(async () => {
@@ -115,4 +118,34 @@ test("a partly corrected cycle counts the rest", async () => {
 
 test("a range without data has null totals", async () => {
   expect((await grid.cycles("2022-10-23", "2023-10-22")).every((c) => c.net === null)).toBe(true);
+});
+
+const imported = async (start: string, end: string) => (await grid.cycles(start, end)).reduce((sum, cycle) => sum + (cycle.imported ?? 0), 0);
+
+test("a true-up year ending more than 31 days ago is loaded once, until the kept years are forgotten", async () => {
+  await published(2024, 2025);
+  await putInterval(owner, "2025-06-10 12:00", { grid_imported_wh: 1000 });
+  const first = await grid.cycles("2024-10-01", "2025-09-30");
+  await putInterval(owner, "2025-06-11 12:00", { grid_imported_wh: 1000 });
+  expect(await grid.cycles("2024-10-01", "2025-09-30")).toEqual(first);
+  globalThis.trueUpGrids!.clear();
+  expect(await imported("2024-10-01", "2025-09-30")).toBe(2);
+});
+
+test("any other past range, as an address can ask for, is loaded on every call and never kept", async () => {
+  await published(2026);
+  await putInterval(owner, "2026-06-10 12:00", { grid_imported_wh: 1000 });
+  await imported("2026-06-05", "2026-06-05");
+  await putInterval(owner, "2026-06-11 12:00", { grid_imported_wh: 1000 });
+  expect(await imported("2026-06-05", "2026-06-05")).toBe(2);
+  expect(globalThis.trueUpGrids!.size).toBe(0);
+});
+
+test("a range ending within 31 days is loaded on every call", async () => {
+  // Cycles that start in the range; 40 days hold at least one start, and the range ends 5 days ago.
+  const [start, end] = [shiftDay(siteToday(), -40), shiftDay(siteToday(), -5)];
+  await putInterval(owner, `${end} 12:00`, { grid_imported_wh: 1000 });
+  const first = await imported(start, end);
+  await putInterval(owner, `${end} 12:05`, { grid_imported_wh: 1000 });
+  expect([first, await imported(start, end)]).toEqual([1, 2]);
 });

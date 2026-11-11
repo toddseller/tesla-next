@@ -1,3 +1,5 @@
+import { cache } from "react";
+
 import { EVENTS } from "@/lib/backup";
 import { db } from "@/lib/db";
 import { pyRound } from "@/lib/intervals/python";
@@ -99,7 +101,8 @@ const FIRST_YEAR = "2023-10-01";
 // A true-up year's cost to the house so far in three cases, each PG&E's NEM charges plus WestLight's generation, all
 // calculated from the same days so their differences come from the energy alone: actual, solar with no Powerwalls, and
 // no system. Null for any other range, or before a day with data.
-export async function trueUpSavings(start: string, end: string) {
+// The savings card and the Payback card each ask for the current year; one page render works it out once.
+export const trueUpSavings = cache(async (start: string, end: string) => {
   if (!isTrueUpYear(start, end) || start < FIRST_YEAR) return null;
   const [cycles, { revisions }] = await Promise.all([cycleGrids(start, end), loadPricing()]);
   const started = cycles.filter(({ row }) => row.through !== null);
@@ -173,6 +176,6 @@ export async function trueUpSavings(start: string, end: string) {
     // The estimated revisions come before the known ones, so a year's first day says whether any were used.
     estimated_rates: Boolean(westlightIn(first)?.estimated),
   };
-}
+});
 
 export type Savings = NonNullable<Awaited<ReturnType<typeof trueUpSavings>>>;

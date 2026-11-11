@@ -23,6 +23,7 @@ export async function register() {
     globalThis.chargingDays?.clear();
     globalThis.paybackYears?.clear();
     globalThis.patternsMonths?.clear();
+    globalThis.trueUpGrids?.clear();
     warmAll();
   });
 }

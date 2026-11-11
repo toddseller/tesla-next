@@ -20,6 +20,8 @@ beforeEach(async () => {
   await owner.query(`DELETE FROM meter_read; DELETE FROM energy_interval; DELETE FROM meter_day; DELETE FROM rate_revision;
     DELETE FROM true_up_statement; DELETE FROM true_up_statement_cycle; DELETE FROM nsc_rate; DELETE FROM vpp_payout; DELETE FROM data`);
   for (const year of [2024, 2025, 2026]) await storeReads(owner, year);
+  // Each test stores its own days; another test's kept years would otherwise stand in for them.
+  globalThis.trueUpGrids?.clear();
 });
 
 afterAll(async () => {
@@ -157,6 +159,8 @@ test("a true-up month without a rate gives the kWh only", async () => {
 async function seedEachCycle(start: string, end: string, wh: number, skip: number[] = []) {
   for (const [i, cycle] of (await grid.cycles(start, end)).entries())
     if (!skip.includes(i)) await seedIntervals(owner, cycle.first_day, cycle.first_day, { grid_imported_wh: wh });
+  // Finding the cycles kept the year before its days were stored; a backfill's rewrite notice empties it the same way.
+  globalThis.trueUpGrids?.clear();
 }
 
 async function comparableYears() {
