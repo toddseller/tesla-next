@@ -46,26 +46,26 @@ afterEach(() => {
 // Recharts draws once the page mounts; the bars' data comes with the page, so drawing them needs no further request.
 test("the range in the address is served with its data", async () => {
   const page = await Page({ searchParams: Promise.resolve({ start: "2026-10-01", end: "2026-10-31" }) });
-  expect(rangeTotals).toHaveBeenCalledWith("2026-10-01", "2026-10-31");
+  expect(rangeTotals).toHaveBeenCalledWith("2026-10-01", "2026-10-31", "corrected");
   expect(page.props.items).toEqual(await rangeTotals.mock.results[0].value);
   expect(renderToString(page)).toMatch(/October 1\s–\s31, 2026/);
 });
 
 test("without a range, the current month is served", async () => {
   const html = await served();
-  expect(rangeTotals).toHaveBeenCalledWith("2026-11-01", "2026-11-30");
+  expect(rangeTotals).toHaveBeenCalledWith("2026-11-01", "2026-11-30", "corrected");
   expect(html).toMatch(/November 1\s–\s30, 2026/);
 });
 
 test("a malformed range is served as the current month, with no error", async () => {
   await served({ start: "nope", end: "2026-10-31" });
-  expect(rangeTotals).toHaveBeenCalledWith("2026-11-01", "2026-11-30");
+  expect(rangeTotals).toHaveBeenCalledWith("2026-11-01", "2026-11-30", "corrected");
 });
 
 test("an open day is served with its data, its strip's bars and the latest live update", async () => {
   dayIntervals.mockResolvedValue({ date: "2026-10-14", vehicle_data: false, totals: { solar_to_home: 12.27 }, data: [], off_grid: [], storm_watch: [] });
   const page = await Page({ searchParams: Promise.resolve({ start: "2026-10-01", end: "2026-10-31", day: "2026-10-14" }) });
-  expect(dayIntervals).toHaveBeenCalledWith("2026-10-14");
+  expect(dayIntervals).toHaveBeenCalledWith("2026-10-14", "corrected");
   expect(page.props.day.data.date).toBe("2026-10-14");
   expect(page.props.day.strip.range).toEqual({ start: "2026-10-01", end: "2026-10-31" });
   expect(page.props.initialStatus).toContain("2026-11-07T19:47:00Z");
@@ -81,7 +81,7 @@ test("a day after today is ignored, and the range is served", async () => {
 test("a day outside the range has its own month in the strip", async () => {
   dayIntervals.mockResolvedValue({ date: "2026-11-01", totals: {}, data: [], off_grid: [], storm_watch: [] });
   await Page({ searchParams: Promise.resolve({ start: "2026-10-01", end: "2026-10-31", day: "2026-11-01" }) });
-  expect(rangeTotals).toHaveBeenCalledWith("2026-11-01", "2026-11-07");
+  expect(rangeTotals).toHaveBeenCalledWith("2026-11-01", "2026-11-07", "corrected");
 });
 
 test("the range view is served with the forecast card above its title; a day's view without it", async () => {
@@ -95,4 +95,10 @@ test("the range view is served with the forecast card above its title; a day's v
   dayIntervals.mockResolvedValue({ date: "2026-10-14", vehicle_data: false, totals: { solar_to_home: 12.27 }, data: [], off_grid: [], storm_watch: [] });
   expect(await served({ start: "2026-10-01", end: "2026-10-31", day: "2026-10-14" })).not.toContain("Solar forecast");
   expect(forecast).not.toHaveBeenCalled();
+});
+
+// meter-correction: the address's readings reach the range's and the strip's figures.
+test("readings=tesla in the address asks for Tesla's figures", async () => {
+  await Page({ searchParams: Promise.resolve({ start: "2025-10-01", end: "2025-10-31", readings: "tesla" }) });
+  expect(rangeTotals).toHaveBeenLastCalledWith("2025-10-01", "2025-10-31", "tesla");
 });

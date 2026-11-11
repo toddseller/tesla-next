@@ -27,7 +27,7 @@ test("starts the listener and warms All time charging and the payback years with
   await register();
   const today = siteToday();
   expect(startListening).toHaveBeenCalledOnce();
-  expect(carCharging).toHaveBeenCalledWith(FIRST_DAY, today, today);
+  expect(carCharging).toHaveBeenCalledWith(FIRST_DAY, today, today, "corrected");
   expect(payback).toHaveBeenCalledWith(today);
 });
 
@@ -50,7 +50,7 @@ test("also warms the Patterns page's kept months", async () => {
   patterns.mockImplementation(pending);
   const { register } = await import("./instrumentation");
   await register();
-  expect(patterns).toHaveBeenCalledWith(siteToday());
+  expect(patterns).toHaveBeenCalledWith(siteToday(), "corrected");
 });
 
 test("a rewrite empties every kept figure and warms them again without waiting, a failed warm-up logged", async () => {
@@ -73,7 +73,7 @@ test("a rewrite empties every kept figure and warms them again without waiting, 
   hook();
   expect([globalThis.chargingDays.size, globalThis.paybackYears.size, globalThis.patternsMonths.size, globalThis.trueUpGrids.size]).toEqual([0, 0, 0, 0]);
   const today = siteToday();
-  expect(carCharging).toHaveBeenCalledWith(FIRST_DAY, today, today);
+  expect(carCharging).toHaveBeenCalledWith(FIRST_DAY, today, today, "corrected");
   expect(payback).toHaveBeenCalledWith(today);
   await vi.waitFor(() => expect(error).toHaveBeenCalledWith("cache warm-up failed:", "connection refused"));
 });

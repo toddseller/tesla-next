@@ -2,13 +2,10 @@ import { cache } from "react";
 
 import { db } from "@/lib/db";
 import { pyRound } from "@/lib/intervals/python";
+import { METER_FIX_DATE } from "@/lib/meter";
 import { shiftDay, siteToday } from "@/lib/scene/replay";
 import type { DayGrid } from "@/lib/true-up/pricing";
 import { billingCycles, endYearOf, OCTOBER, readsFor, trueUpLabel } from "@/lib/true-up/reads";
-
-// Until a Tesla service visit on this day, Tesla's grid readings were about half of PG&E's meter; earlier days with
-// PG&E's readings take their grid figures from it.
-export const METER_FIX_DATE = "2026-04-27";
 
 export type Grid = { days: Record<string, DayGrid>; meter: Set<string> };
 

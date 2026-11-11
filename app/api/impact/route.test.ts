@@ -22,7 +22,7 @@ afterEach(() => impactFigures.mockReset());
 
 test("a valid range answers with its figures", async () => {
   expect(await get("?start_date=2026-10-18&end_date=2026-10-18")).toEqual({ status: 200, body: { data: OCTOBER_18 } });
-  expect(impactFigures).toHaveBeenCalledWith("2026-10-18", "2026-10-18");
+  expect(impactFigures).toHaveBeenCalledWith("2026-10-18", "2026-10-18", "corrected");
 });
 
 test.each([
@@ -50,4 +50,10 @@ test("the last day served is 732 days after today; the next is refused", async (
   const { status, body } = await get(`?start_date=2026-10-01&end_date=${shiftDay(last, 1)}`);
   expect(status).toBe(400);
   expect(body.message).toContain(last);
+});
+
+// meter-correction: readings=tesla answers with Tesla's figures.
+test("readings=tesla asks for Tesla's figures", async () => {
+  await get("?start_date=2025-10-01&end_date=2025-10-31&readings=tesla");
+  expect(impactFigures).toHaveBeenLastCalledWith("2025-10-01", "2025-10-31", "tesla");
 });

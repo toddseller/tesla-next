@@ -27,7 +27,7 @@
 
 ## 5. Rollout
 
-- [ ] 5.1 Release (ask first); the deploy's health check passes, and moving between teslasolar.report's tabs glides and slides as in 4.2; record in design.md under Rollout
+- [x] 5.1 Release (ask first); the deploy's health check passes, and moving between teslasolar.report's tabs glides and slides as in 4.2; record in design.md under Rollout
 
 ## Workflow follow-up
 

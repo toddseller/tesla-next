@@ -1,4 +1,5 @@
 import { carCharging } from "@/lib/car-charging";
+import { readingsOf } from "@/lib/meter";
 import { dateError } from "@/lib/request-dates";
 import { siteToday } from "@/lib/scene/replay";
 
@@ -9,5 +10,5 @@ export async function GET(request: Request) {
   const [start, end] = [params.get("start_date"), params.get("end_date")];
   const error = dateError("start_date", start) ?? dateError("end_date", end);
   if (error) return Response.json({ message: error }, { status: 400 });
-  return Response.json({ data: await carCharging(start!, end!, siteToday()) });
+  return Response.json({ data: await carCharging(start!, end!, siteToday(), readingsOf(params.get("readings"))) });
 }

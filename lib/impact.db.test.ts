@@ -43,7 +43,7 @@ afterAll(async () => {
 test("a range of saved days sums each figure and takes each share of the house", async () => {
   await seedDay("2026-03-01");
   await seedDay("2026-03-02");
-  expect(await impactFigures("2026-03-01", "2026-03-31")).toEqual({
+  expect(await impactFigures("2026-03-01", "2026-03-31", "corrected")).toEqual({
     total_solar: 41.8, total_house: 34.0, from_grid: 19.8, from_solar: 8.6, from_powerwall: 5.6,
     from_grid_percentage: 58, from_solar_percentage: 25, from_powerwall_percentage: 16,
     self_powered_percentage: 41, total_solar_percentage: 123,
@@ -51,19 +51,26 @@ test("a range of saved days sums each figure and takes each share of the house",
 });
 
 test("a range without saved days is all zeros", async () => {
-  expect(Object.values(await impactFigures("2026-10-17", "2026-10-17"))).toEqual(Array(10).fill(0));
+  expect(Object.values(await impactFigures("2026-10-17", "2026-10-17", "corrected"))).toEqual(Array(10).fill(0));
 });
 
 test("shares come from the meter-corrected house before the fix", async () => {
   await seedDay("2025-12-10", TESLA_WINTER);
   await owner.query("INSERT INTO meter_day VALUES ($1, $2, $3, 0, 0)", ["2025-12-10", 40_000, 8_000]);
-  const impact = await impactFigures("2025-12-10", "2025-12-10");
+  const impact = await impactFigures("2025-12-10", "2025-12-10", "corrected");
   expect([impact.total_house, impact.from_grid, impact.from_solar, impact.from_powerwall]).toEqual([46.0, 30.0, 11.0, 5.0]);
   expect([impact.from_grid_percentage, impact.from_solar_percentage, impact.from_powerwall_percentage]).toEqual([65, 24, 11]);
 });
 
+test("Tesla's readings take the shares from the house as stored", async () => {
+  await seedDay("2025-12-10", TESLA_WINTER);
+  await owner.query("INSERT INTO meter_day VALUES ($1, $2, $3, 0, 0)", ["2025-12-10", 40_000, 8_000]);
+  const impact = await impactFigures("2025-12-10", "2025-12-10", "tesla");
+  expect([impact.total_house, impact.from_grid, impact.from_solar, impact.from_powerwall]).toEqual([30.0, 10.0, 15.0, 5.0]);
+});
+
 test("a share on an exact half rounds to even, as Python's round does", async () => {
   await seedDay("2026-03-03", { house_from_grid: 7, house_from_solar: 1, house_from_powerwall: 0, total_house_usage: 8 });
-  const impact = await impactFigures("2026-03-03", "2026-03-03");
+  const impact = await impactFigures("2026-03-03", "2026-03-03", "corrected");
   expect([impact.from_solar_percentage, impact.from_grid_percentage]).toEqual([12, 88]);
 });

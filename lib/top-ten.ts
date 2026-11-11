@@ -1,7 +1,8 @@
 import { EVENTS } from "@/lib/backup";
 import { db } from "@/lib/db";
 import { pyRound } from "@/lib/intervals/python";
-import { dailyItem, dayColumns, type DayRow, gridIn, gridOut } from "@/lib/range";
+import type { Readings } from "@/lib/meter";
+import { dailyItem, dailySql, dayColumns, type DayRow } from "@/lib/range";
 
 export type SolarDay = { date: string; solar: number; day: string };
 export type GridDay = { date: string; net_grid: number; day: string };
@@ -20,9 +21,9 @@ const monthLabel = (month: string) =>
 const ten = <T>(rows: T[], shown: (row: T) => number, date: (row: T) => string) =>
   rows.sort((a, b) => shown(a) - shown(b) || date(b).localeCompare(date(a))).slice(0, 10);
 
-const net = `coalesce(${gridIn}, 0::integer) - ${gridOut}`;
-
-export async function topTen(withVpp: boolean): Promise<TopTen> {
+export async function topTen(withVpp: boolean, readings: Readings): Promise<TopTen> {
+  const { gridIn, gridOut } = dailySql(readings);
+  const net = `coalesce(${gridIn}, 0::integer) - ${gridOut}`;
   const kept = withVpp ? "true" : "NOT data.is_vpp";
   const [solar, days, months, outages] = await Promise.all([
     db.query<{ date: string; solar_generated: number }>(
@@ -44,7 +45,7 @@ export async function topTen(withVpp: boolean): Promise<TopTen> {
   ]);
   return [
     { solar: ten(solar.rows.map((r) => ({ date: dayLabel(r.date), solar: r.solar_generated, day: r.date })), (r) => -pyRound(r.solar, 1), (r) => r.day) },
-    { net_grid: ten(days.rows.map((r) => ({ date: dayLabel(r.date), net_grid: dailyItem(r).grid!, day: r.date })), (r) => r.net_grid, (r) => r.day) },
+    { net_grid: ten(days.rows.map((r) => ({ date: dayLabel(r.date), net_grid: dailyItem(r, readings).grid!, day: r.date })), (r) => r.net_grid, (r) => r.day) },
     { to_grid_months: ten(months.rows.map((r) => ({ date: monthLabel(r.month), net_grid: pyRound(r.net, 1), month: r.month })), (r) => r.net_grid, (r) => r.month) },
     { outages: ten(outages.rows.map((r) => ({ date: dayLabel(r.day), hours: pyRound(r.hours, 1), day: r.day })), (r) => -r.hours, (r) => r.day) },
   ];

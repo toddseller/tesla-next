@@ -1,4 +1,6 @@
 import { db } from "@/lib/db";
+import { energySteps } from "@/lib/intervals/steps";
+import type { Readings } from "@/lib/meter";
 import { shiftDay } from "@/lib/scene/replay";
 
 export type MonthLoad = { month: string; watts: number };
@@ -13,15 +15,15 @@ const shift = (month: string, by: number) => new Date(Date.UTC(+month.slice(0, 4
 const SITE = "'America/Los_Angeles'";
 
 // The three figures from days `from` up to `to`; the hour grid only from `hoursFrom`.
-async function between(from: string, to: string, hoursFrom: string): Promise<Patterns> {
+async function between(from: string, to: string, hoursFrom: string, readings: Readings): Promise<Patterns> {
   const [months, years, hours] = await Promise.all([
     // A night's intervals start 1:00 to 4:55 AM, Wh in 5 minutes x 12 is watts, and percentile_disc takes the lower
     // middle of an even count.
     db.query<MonthLoad>(
       `SELECT to_char(day, 'YYYY-MM') AS month, percentile_disc(0.5) WITHIN GROUP (ORDER BY watts) AS watts
-       FROM (SELECT day, min(house_from_grid_wh + house_from_solar_wh + house_from_battery_wh) * 12 AS watts
-             FROM energy_interval
-             WHERE day >= $1 AND day < $2 AND extract(hour FROM start_at AT TIME ZONE ${SITE}) BETWEEN 1 AND 4
+       FROM (SELECT day, round(min(house_from_grid_wh + house_from_solar_wh + house_from_battery_wh) * 12)::int AS watts
+             FROM ${energySteps(readings, "day >= $1 AND day < $2")} AS steps
+             WHERE extract(hour FROM start_at AT TIME ZONE ${SITE}) BETWEEN 1 AND 4
              GROUP BY day HAVING count(*) >= 40) nights
        GROUP BY 1 ORDER BY 1`,
       [from, to],
@@ -35,7 +37,7 @@ async function between(from: string, to: string, hoursFrom: string): Promise<Pat
     db.query<HourLoad>(
       `SELECT to_char(day, 'YYYY-MM') AS month, extract(hour FROM start_at AT TIME ZONE ${SITE})::int AS hour,
          round(avg(house_from_grid_wh + house_from_solar_wh + house_from_battery_wh) * 12)::int AS watts
-       FROM energy_interval WHERE day >= $1 AND day < $2 GROUP BY 1, 2 ORDER BY 1, 2`,
+       FROM ${energySteps(readings, "day >= $1 AND day < $2")} AS steps GROUP BY 1, 2 ORDER BY 1, 2`,
       [hoursFrom, to],
     ),
   ]);
@@ -60,22 +62,24 @@ declare global {
 // A finished month's figures change only when anton rewrites stored days, which empties this (instrumentation.ts).
 const keptMonths = (globalThis.patternsMonths ??= new Map());
 
-// Keyed by the hour grid's window too: on the 1st the window moves on a month while the split stays.
-async function keptBefore(split: string, window: string) {
-  const key = `${window}..${split}`;
+// Keyed by the hour grid's window too: on the 1st the window moves on a month while the split stays. Each choice of
+// readings keeps its own, and a new window or split forgets the old ones.
+async function keptBefore(split: string, window: string, readings: Readings) {
+  const span = `${window}..${split}`;
+  const key = `${readings}:${span}`;
   const kept = keptMonths.get(key);
   if (kept) return kept;
-  const worked = await between(EVER, split, window);
-  keptMonths.clear();
+  const worked = await between(EVER, split, window, readings);
+  for (const old of keptMonths.keys()) if (!old.endsWith(`:${span}`)) keptMonths.delete(old);
   keptMonths.set(key, worked);
   return worked;
 }
 
-export async function patterns(today: string): Promise<Patterns> {
+export async function patterns(today: string, readings: Readings): Promise<Patterns> {
   // Months before the one holding yesterday are finished; yesterday's last intervals arrive after midnight.
   const split = `${shiftDay(today, -1).slice(0, 7)}-01`;
   const window = `${shift(today.slice(0, 7), -23)}-01`;
-  const [kept, live] = await Promise.all([keptBefore(split, window), between(split, NEVER, split > window ? split : window)]);
+  const [kept, live] = await Promise.all([keptBefore(split, window, readings), between(split, NEVER, split > window ? split : window, readings)]);
   return { months: [...kept.months, ...live.months], years: joinYears(kept.years, live.years), hours: [...kept.hours, ...live.hours] };
 }
 

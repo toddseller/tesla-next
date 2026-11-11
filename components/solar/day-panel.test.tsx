@@ -184,3 +184,35 @@ test("a later day from the strip slides in as a step forward", () => {
   fireEvent.click(screen.getByRole("button", { name: /^Oct 20,/ }));
   expect(router.replace).toHaveBeenCalledWith("/?start=2026-10-01&end=2026-10-31&day=2026-10-20", NEXT);
 });
+
+// meter-correction: a day in the corrected years offers the readings beside its stepper, and keeps the view as it steps.
+test("a corrected day offers the readings, and Tesla's view keeps itself in its steps and its way back", () => {
+  render(<SolarPage range={{ start: "2025-10-01", end: "2025-10-31" }} items={stripItems} today="2026-11-07" initialStatus={null} readings="tesla"
+    day={{ data: dayOf("2025-10-14"), strip: { range: { start: "2025-10-01", end: "2025-10-31" }, items: stripItems } }} />);
+  expect(screen.getByRole("group", { name: "Readings" })).toBeTruthy();
+  expect(screen.getByText(/Grid figures are as Tesla reported them/)).toBeTruthy();
+  fireEvent.click(button("Next day"));
+  expect(router.replace).toHaveBeenLastCalledWith("/?start=2025-10-01&end=2025-10-31&day=2025-10-15&readings=tesla", NEXT);
+  expect(screen.getByRole("link", { name: "October 2025" }).getAttribute("href")).toBe("/?start=2025-10-01&end=2025-10-31&readings=tesla");
+});
+
+test("a day after the fix offers no readings", () => {
+  render(page("2026-10-14"));
+  expect(screen.queryByRole("group", { name: "Readings" })).toBeNull();
+});
+
+// meter-correction: a day reloaded in one view gives way to the day the server sends for the other.
+test("after a day reloads, switching the readings shows the server's day in the new view", async () => {
+  const october25 = { start: "2025-10-01", end: "2025-10-31" };
+  const shown = (readings: "corrected" | "tesla", solarToHome: number) => (
+    <SolarPage range={october25} items={stripItems} today="2026-11-07" initialStatus={null} readings={readings}
+      day={{ data: { ...dayOf("2025-10-14"), totals: { solar_to_home: solarToHome } }, strip: { range: october25, items: stripItems } }} />
+  );
+  const generated = () => screen.getByText("Total Generated").parentElement!.querySelector(".font-mono")!.textContent;
+  const { rerender } = render(shown("corrected", 30));
+  FakeStream.opened[0].send({ date: "2025-10-14" }, "totals");
+  await settle();
+  expect(generated()).toContain("12.3");
+  rerender(shown("tesla", 5));
+  expect(generated()).toContain("5.0");
+});

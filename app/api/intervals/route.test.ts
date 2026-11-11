@@ -610,3 +610,18 @@ test("a day without enough history before it has no expected hours", async () =>
   await sunlight(at(16, 10, 0), 600);
   expect((await getDay()).expected).toEqual([]);
 });
+
+// day-intervals, "Corrected grid flows in the day's records".
+test("a day before the fix with PG&E's reading gets its grid import, unless readings=tesla", async () => {
+  const step = (time: string, wh: Record<string, number>) =>
+    owner.query(
+      `INSERT INTO energy_interval (start_at, day, ${ENERGY_COLUMNS.join(", ")}) VALUES ($1::timestamp AT TIME ZONE 'America/Los_Angeles', '2025-12-10', ${ENERGY_COLUMNS.map((_, i) => `$${i + 2}`).join(", ")})`,
+      [`2025-12-10 ${time}`, ...ENERGY_COLUMNS.map((column) => wh[column] ?? 0)],
+    );
+  await step("01:00", { grid_imported_wh: 100, house_from_grid_wh: 100 });
+  await step("02:00", { battery_exported_wh: 100, house_from_battery_wh: 100 });
+  await owner.query("INSERT INTO meter_day VALUES ('2025-12-10', 400, 0, 0, 0)");
+  expect((await get("?date=2025-12-10")).body.totals.grid_to_home).toBe(0.4);
+  expect((await get("?date=2025-12-10&readings=tesla")).body.totals.grid_to_home).toBe(0.1);
+  await owner.query("DELETE FROM meter_day");
+});

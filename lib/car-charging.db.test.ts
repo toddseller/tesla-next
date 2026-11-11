@@ -48,7 +48,7 @@ afterAll(async () => {
 });
 
 test("the spec's Powerwall night: 10 kWh, 60% Powerwall and 40% grid, all of it R2D2's", async () => {
-  expect(await carCharging("2026-10-10", "2026-10-10", TODAY)).toEqual({
+  expect(await carCharging("2026-10-10", "2026-10-10", TODAY, "corrected")).toEqual({
     since: null, cars_since: null,
     total_kwh: 10, solar_kwh: 0, powerwall_kwh: 6, grid_kwh: 4,
     solar_percentage: 0, powerwall_percentage: 60, grid_percentage: 40, off_grid_percentage: 60,
@@ -57,23 +57,23 @@ test("the spec's Powerwall night: 10 kWh, 60% Powerwall and 40% grid, all of it 
 });
 
 test("a range from before the first session counts from it, and the session counts toward the household only", async () => {
-  const answer = (await carCharging("2026-10-01", "2026-10-10", TODAY))!;
+  const answer = (await carCharging("2026-10-01", "2026-10-10", TODAY, "corrected"))!;
   expect(answer).toMatchObject({ since: "2026-10-05", cars_since: "2026-10-10", total_kwh: 13.8, grid_kwh: 7.8, powerwall_kwh: 6 });
   expect(answer.cars).toEqual([{ name: "R2D2", kwh: 10, solar_percentage: 0, powerwall_percentage: 60, grid_percentage: 40 }]);
 });
 
 test("a range before any charging data counts nothing and says from when there is some", async () => {
-  expect(await carCharging("2026-09-01", "2026-09-30", TODAY)).toMatchObject({ since: "2026-10-05", total_kwh: 0, cars: [] });
+  expect(await carCharging("2026-09-01", "2026-09-30", TODAY, "corrected")).toMatchObject({ since: "2026-10-05", total_kwh: 0, cars: [] });
 });
 
 test("an idle day in the covered period is 0 kWh, with no shares and no cars", async () => {
-  expect(await carCharging("2026-10-08", "2026-10-08", TODAY)).toMatchObject({
+  expect(await carCharging("2026-10-08", "2026-10-08", TODAY, "corrected")).toMatchObject({
     total_kwh: 0, solar_percentage: 0, powerwall_percentage: 0, grid_percentage: 0, off_grid_percentage: 0, cars: [],
   });
 });
 
 test("no VIN leaves", async () => {
-  const text = JSON.stringify(await carCharging("2026-10-01", TODAY, TODAY));
+  const text = JSON.stringify(await carCharging("2026-10-01", TODAY, TODAY, "corrected"));
   expect(text).not.toContain(R2D2);
   expect(text).not.toContain(TIE);
 });

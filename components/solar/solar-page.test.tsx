@@ -198,3 +198,25 @@ test("another range draws its chart in, while the same range re-rendered later d
   rerender(page({ start: "2026-11-01", end: "2026-11-07" }));
   expect(solarOf(container, "Nov 7")!.classList.contains("motion-rise")).toBe(true);
 });
+
+// meter-correction, "A choice of readings on each affected page".
+const october25 = { start: "2025-10-01", end: "2025-10-31" };
+const readingsGroup = () => screen.queryByRole("group", { name: "Readings" });
+
+test("a range in the corrected years offers the readings, and Tesla's view keeps itself across a preset and a reload", async () => {
+  render(<SolarPage range={october25} items={[item("2025-10-07", 24.7)]} today="2026-11-07" initialStatus={null} readings="tesla" />);
+  expect(readingsGroup()).not.toBeNull();
+  expect(screen.getByRole("button", { name: "As Tesla reported" }).getAttribute("aria-pressed")).toBe("true");
+  expect(screen.getByText(/Grid figures are as Tesla reported them/)).toBeTruthy();
+  fireEvent.click(screen.getByRole("button", { name: "This year" }));
+  expect(router.push).toHaveBeenLastCalledWith("/?start=2026-01-01&end=2026-12-31&readings=tesla");
+  FakeStream.opened[0].send({ date: "2025-10-07" }, "totals");
+  await settle();
+  expect(fetches.at(-1)).toBe("/api/range?start_date=2025-10-01&end_date=2025-10-31&readings=tesla");
+});
+
+test("a range after the fix offers no readings", () => {
+  render(<SolarPage range={{ start: "2026-05-01", end: "2026-05-31" }} items={[]} today="2026-11-07" initialStatus={null} />);
+  expect(readingsGroup()).toBeNull();
+  expect(screen.queryByText(/Grid figures/)).toBeNull();
+});

@@ -190,3 +190,24 @@ test("another range redraws the bars but keeps the ring", () => {
   expect(container.querySelector("circle[data-share]")).toBe(arc);
   expect(screen.getAllByRole("meter")[0].firstChild).not.toBe(bar);
 });
+
+// meter-correction, "A choice of readings on each affected page".
+test("a range in the corrected years offers the readings, and Tesla's view keeps itself across a preset and a reload", async () => {
+  const october = { start: "2025-10-01", end: "2025-10-31" };
+  render(<ImpactPage range={october} figures={figures(69)} today="2026-11-08" backup={NO_BACKUP} charging={CHARGING} backupYear={THIS_YEAR} readings="tesla" />);
+  expect(screen.getByRole("button", { name: "As Tesla reported" }).getAttribute("aria-pressed")).toBe("true");
+  expect(screen.getByText(/Grid figures are as Tesla reported them/)).toBeTruthy();
+  fireEvent.click(ranges().getByRole("button", { name: "This week" }));
+  expect(router.push).toHaveBeenLastCalledWith("/impact?start=2026-11-08&end=2026-11-14&readings=tesla");
+  FakeStream.opened[0].send({ date: "2025-10-07" }, "totals");
+  await settle();
+  expect(fetches).toEqual([
+    "/api/impact?start_date=2025-10-01&end_date=2025-10-31&readings=tesla",
+    "/api/car-charging?start_date=2025-10-01&end_date=2025-10-31&readings=tesla",
+  ]);
+});
+
+test("a range after the fix offers no readings", () => {
+  render(<ImpactPage range={today} figures={figures(95)} today="2026-11-08" backup={NO_BACKUP} charging={CHARGING} backupYear={THIS_YEAR} />);
+  expect(screen.queryByRole("group", { name: "Readings" })).toBeNull();
+});
