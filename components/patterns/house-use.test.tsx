@@ -62,3 +62,9 @@ test("with no readings the section says so", () => {
   expect(section().getByText("No readings yet")).toBeTruthy();
   expect(section().queryByRole("table")).toBeNull();
 });
+
+// site-motion: the heat grid holds still.
+test("the grid has no motion", () => {
+  const { container } = render(<HouseUseSection hours={HOURS} today="2026-11-10" />);
+  expect(container.querySelector('[class*="motion-"]')).toBeNull();
+});

@@ -1,8 +1,10 @@
 "use client";
 
+import type { CSSProperties } from "react";
 import { Bar, BarChart, CartesianGrid, ReferenceLine, XAxis, YAxis } from "recharts";
 
 import { AxisTick } from "@/components/solar/axis-tick";
+import { ENTER_MS, useEntering } from "@/components/use-entering";
 import { ChartContainer, ChartTooltip } from "@/components/ui/chart";
 import type { RangeItem } from "@/lib/range";
 import { type Bar as Totals, SERIES, stackEnds } from "@/lib/solar/bars";
@@ -39,28 +41,37 @@ export function roundedRect(x: number, top: number, width: number, height: numbe
   return `M${x},${top + t} Q${x},${top} ${x + t},${top} H${x + width - t} Q${x + width},${top} ${x + width},${top + t} V${bottom - b} Q${x + width},${bottom} ${x + width - b},${bottom} H${x + b} Q${x},${bottom} ${x},${bottom - b} Z`;
 }
 
-type ShapeProps = { x?: number; y?: number; width?: number; height?: number; fill?: string; payload?: Row };
+type ShapeProps = {
+  x?: number; y?: number; width?: number; height?: number; fill?: string; payload?: Row; index?: number;
+  background?: { y: number; height: number };
+};
+
+// A column's segments all scale about the chart's zero line, so a stack rises whole; `--i` staggers the columns.
+export function riseFrom(background: { y: number; height: number } | undefined, [low, high]: [number, number], index: number) {
+  const zero = background ? background.y + (background.height * high) / (high - low) : 0;
+  return { transformOrigin: `0px ${zero}px`, "--i": index } as CSSProperties;
+}
 
 type Open = { onOpenDay: (day: string) => void; onOpenRange: (range: Range) => void };
 
-function section(key: (typeof SERIES)[number], { onOpenDay, onOpenRange }: Open) {
-  return function Section({ x = 0, y = 0, width = 0, height = 0, fill, payload }: ShapeProps) {
-    if (!payload) return <g />;
-    const ends = stackEnds(payload)[key];
-    const { day, period } = payload;
-    const open = day ? () => onOpenDay(day) : period ? () => onOpenRange(period) : undefined;
-    return (
-      <path
-        d={roundedRect(x, Math.min(y, y + height), width, Math.abs(height), ends.top, ends.bottom)}
-        fill={fill}
-        data-series={key}
-        data-label={payload.label}
-        data-ends={[ends.top && "top", ends.bottom && "bottom"].filter(Boolean).join(" ")}
-        className={open ? "cursor-pointer" : undefined}
-        onClick={open}
-      />
-    );
-  };
+function Section({ series, domain, entering, onOpenDay, onOpenRange, x = 0, y = 0, width = 0, height = 0, fill, payload, index = 0, background }:
+  ShapeProps & Open & { series: (typeof SERIES)[number]; domain: [number, number]; entering: boolean }) {
+  if (!payload) return <g />;
+  const ends = stackEnds(payload)[series];
+  const { day, period } = payload;
+  const open = day ? () => onOpenDay(day) : period ? () => onOpenRange(period) : undefined;
+  return (
+    <path
+      d={roundedRect(x, Math.min(y, y + height), width, Math.abs(height), ends.top, ends.bottom)}
+      fill={fill}
+      data-series={series}
+      data-label={payload.label}
+      data-ends={[ends.top && "top", ends.bottom && "bottom"].filter(Boolean).join(" ")}
+      className={[entering && "motion-rise", open && "cursor-pointer"].filter(Boolean).join(" ") || undefined}
+      style={riseFrom(background, domain, index)}
+      onClick={open}
+    />
+  );
 }
 
 export function BarDetails({ active, label, payload }: { active?: boolean; label?: string | number; payload?: readonly { payload?: Row }[] }) {
@@ -87,6 +98,9 @@ export function BarDetails({ active, label, payload }: { active?: boolean; label
 
 export function RangeChart({ items, range, ...open }: { items: RangeItem[]; range: Range } & Open) {
   const rows = withPeriods(items, range);
+  // Columns rise by CSS while the chart enters; after that recharts moves only what a reload changed. "auto", not true:
+  // only "auto" leaves it still for a viewer who asked for reduced motion.
+  const entering = useEntering(ENTER_MS);
   const axis = niceAxis(
     Math.min(0, ...rows.map((row) => row.grid ?? 0)),
     Math.max(1, ...rows.map((row) => (row.solar ?? 0) + Math.max(0, row.grid ?? 0) + (row.house ?? 0))),
@@ -101,7 +115,8 @@ export function RangeChart({ items, range, ...open }: { items: RangeItem[]; rang
           <ReferenceLine y={0} className="stroke-muted-foreground/40" />
           <ChartTooltip cursor={{ className: "fill-white/5" }} content={<BarDetails />} />
           {FLOWS.map(({ key, color }) => (
-            <Bar key={key} dataKey={key} stackId="range" fill={color} maxBarSize={100} isAnimationActive={false} shape={section(key, open)} />
+            <Bar key={key} dataKey={key} stackId="range" fill={color} maxBarSize={100} isAnimationActive={entering ? false : "auto"} animationDuration={400}
+              animationEasing="ease-out" shape={<Section series={key} domain={axis.domain} entering={entering} {...open} />} />
           ))}
         </BarChart>
       </ChartContainer>

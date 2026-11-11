@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 // The Solar forecast card (solar-forecast spec, mockup A).
-import { cleanup, render, screen, within } from "@testing-library/react";
-import { afterEach, expect, test } from "vitest";
+import { act, cleanup, render, screen, within } from "@testing-library/react";
+import { afterEach, expect, test, vi } from "vitest";
 
 import { ForecastCard, HourDetails } from "@/components/solar/forecast";
 import type { ForecastCard as Card } from "@/lib/forecast";
@@ -21,7 +21,11 @@ const CARD: Card = {
 };
 const card = () => within(screen.getByRole("region", { name: "Solar forecast" }));
 const today = () => within(card().getByRole("group", { name: "Today" }));
-const fill = (bar: HTMLElement) => (bar.firstElementChild as HTMLElement).style.width;
+// How much of its track a bar's fill shows: what its clip leaves uncovered.
+const fill = (bar: HTMLElement) => {
+  const hidden = Number((bar.firstElementChild as HTMLElement).style.clipPath.match(/^inset\(0(?:px)? ([\d.]+)% 0(?:px)? 0(?:px)? round 4px\)$/)?.[1]);
+  return `${Math.round((100 - hidden) * 10) / 10}%`;
+};
 
 test("today's expected kWh, its kWh so far as a bar against it, and its sky", () => {
   render(<ForecastCard card={CARD} />);
@@ -129,4 +133,32 @@ test("an hour's details: the hour, what it made and what was expected, to one de
 
 test("an hour not yet started shows only what is expected", () => {
   expect(details(14, 3.06, null)).toBe("2–3 PMExpected3.1 kWh");
+});
+
+// site-motion, "The estimate draws before what happened".
+test("today's bar: the expected track uncovers at an even pace, then what was made grows into it from halfway", () => {
+  vi.useFakeTimers();
+  render(<ForecastCard card={CARD} />);
+  const bar = today().getByRole("img", { name: "9.6 of about 31 kWh so far" });
+  const made = bar.firstElementChild!;
+  expect([...bar.classList]).toEqual(expect.arrayContaining(["motion-uncover", "motion-even"]));
+  expect([...made.classList]).toEqual(expect.arrayContaining(["motion-uncover", "motion-second", "motion-tween"]));
+  act(() => vi.advanceTimersByTime(650));
+  expect(bar.classList.contains("motion-uncover")).toBe(false);
+  expect(made.classList.contains("motion-uncover")).toBe(false);
+  expect(made.classList.contains("motion-tween")).toBe(true);
+  vi.useRealTimers();
+});
+
+test("today by hour: each hour's expected column rises at an even pace, and its made column from halfway", () => {
+  vi.useFakeTimers();
+  const { container } = render(<ForecastCard card={{ ...CARD, byHour: BY_HOUR }} />);
+  const expected = [...container.querySelectorAll('[data-part="expected"]')] as SVGElement[];
+  const made = [...container.querySelectorAll('[data-part="made"]')] as SVGElement[];
+  expect(expected.every((path) => path.classList.contains("motion-rise") && path.classList.contains("motion-even"))).toBe(true);
+  expect(made.every((path) => path.classList.contains("motion-rise") && path.classList.contains("motion-second"))).toBe(true);
+  expect(expected.map((path) => path.style.getPropertyValue("--i"))).toEqual(expected.map((_, i) => String(i)));
+  act(() => vi.advanceTimersByTime(650));
+  expect(container.querySelectorAll('[data-part].motion-rise')).toHaveLength(0);
+  vi.useRealTimers();
 });

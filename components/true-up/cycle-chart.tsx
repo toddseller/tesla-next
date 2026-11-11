@@ -3,7 +3,8 @@
 import { Area, Bar, CartesianGrid, ComposedChart, Line, ReferenceLine, XAxis, YAxis } from "recharts";
 
 import { AxisTick } from "@/components/solar/axis-tick";
-import { roundedRect } from "@/components/solar/range-chart";
+import { riseFrom, roundedRect } from "@/components/solar/range-chart";
+import { ENTER_MS, useEntering } from "@/components/use-entering";
 import { ChartContainer, ChartTooltip } from "@/components/ui/chart";
 import { niceAxis, unitOnTopTick } from "@/lib/solar/day-views";
 import { type Cost, type Cycle, kwh, runningNet, startedCycles, yearName } from "@/lib/true-up/text";
@@ -29,15 +30,20 @@ export function chartRows(cycles: Cycle[], cost: Cost | null, oneYear: boolean):
   }));
 }
 
-type ShapeProps = { x?: number; y?: number; width?: number; height?: number; fill?: string };
+type ShapeProps = {
+  x?: number; y?: number; width?: number; height?: number; fill?: string; index?: number; background?: { y: number; height: number };
+  series: "imported" | "exported"; domain: [number, number]; entering: boolean;
+};
 
 // Imports and exports share one stack, square where they meet at zero.
-const flow = (series: "imported" | "exported") =>
-  function Flow({ x = 0, y = 0, width = 0, height = 0, fill }: ShapeProps) {
-    if (!height) return <g />;
-    const top = series === "imported";
-    return <path d={roundedRect(x, Math.min(y, y + height), width, Math.abs(height), top, !top)} fill={fill} data-series={series} data-ends={top ? "top" : "bottom"} />;
-  };
+function Flow({ x = 0, y = 0, width = 0, height = 0, fill, index = 0, background, series, domain, entering }: ShapeProps) {
+  if (!height) return <g />;
+  const top = series === "imported";
+  return (
+    <path d={roundedRect(x, Math.min(y, y + height), width, Math.abs(height), top, !top)} fill={fill} data-series={series} data-ends={top ? "top" : "bottom"}
+      className={entering ? "motion-rise" : undefined} style={riseFrom(background, domain, index)} />
+  );
+}
 
 function CycleDetails({ active, label, payload }: { active?: boolean; label?: string | number; payload?: readonly { payload?: Row }[] }) {
   const row = payload?.[0]?.payload;
@@ -64,6 +70,9 @@ export function CycleChart({ cycles, cost, oneYear }: { cycles: Cycle[]; cost: C
   const banded = rows.some((row) => row.band);
   const values = rows.flatMap((row) => [row.imported, row.exported, row.running, row.lastYear, ...(row.band ?? [])]).filter((v) => v !== null);
   const axis = niceAxis(Math.min(0, ...values), Math.max(1, ...values));
+  // Recharts rebuilds its marks on every render, so they carry their entrance only while the chart first draws.
+  const entering = useEntering(ENTER_MS);
+  const lines = entering ? "motion-clip-flows" : undefined;
   return (
     <div className="flex flex-col gap-4">
       <ul className="flex flex-wrap gap-x-[18px] gap-y-1.5 text-[13px] text-muted-foreground">
@@ -80,11 +89,15 @@ export function CycleChart({ cycles, cost, oneYear }: { cycles: Cycle[]; cost: C
           <YAxis tick={<AxisTick label={(value, index, count) => unitOnTopTick(" kWh")(value.toLocaleString("en-US"), index, count)} />} domain={axis.domain} ticks={axis.ticks} tickLine={false} axisLine={false} width={64} />
           <ReferenceLine y={0} className="stroke-muted-foreground/40" />
           <ChartTooltip cursor={{ className: "fill-white/5" }} content={<CycleDetails />} />
-          {banded && <Area dataKey="band" stroke="none" fill="var(--primary)" fillOpacity={0.18} isAnimationActive={false} activeDot={false} />}
-          <Bar dataKey="imported" stackId="flows" fill="var(--color-grid)" maxBarSize={48} isAnimationActive={false} shape={flow("imported")} />
-          <Bar dataKey="exported" stackId="flows" fill="var(--color-solar)" maxBarSize={48} isAnimationActive={false} shape={flow("exported")} />
-          {lastYear && <Line dataKey="lastYear" stroke="var(--muted-foreground)" strokeWidth={2} strokeDasharray="6 5" dot={false} isAnimationActive={false} connectNulls={false} />}
-          <Line dataKey="running" stroke="var(--primary)" strokeWidth={3} dot={{ r: 3.5, fill: "var(--primary)" }} isAnimationActive={false} />
+          {/* The day chart's reveal, from the left as the columns rise. */}
+          {entering && <defs><clipPath id="motion-flows"><rect width="100%" height="100%" className="motion-draw-only" /></clipPath></defs>}
+          {banded && <Area dataKey="band" stroke="none" fill="var(--primary)" fillOpacity={0.18} isAnimationActive={false} activeDot={false} className={lines} />}
+          <Bar dataKey="imported" stackId="flows" fill="var(--color-grid)" maxBarSize={48} isAnimationActive={false}
+            shape={<Flow series="imported" domain={axis.domain} entering={entering} />} />
+          <Bar dataKey="exported" stackId="flows" fill="var(--color-solar)" maxBarSize={48} isAnimationActive={false}
+            shape={<Flow series="exported" domain={axis.domain} entering={entering} />} />
+          {lastYear && <Line dataKey="lastYear" stroke="var(--muted-foreground)" strokeWidth={2} strokeDasharray="6 5" dot={false} isAnimationActive={false} connectNulls={false} className={lines} />}
+          <Line dataKey="running" stroke="var(--primary)" strokeWidth={3} dot={{ r: 3.5, fill: "var(--primary)" }} isAnimationActive={false} className={lines} />
         </ComposedChart>
       </ChartContainer>
       <p className="text-[13px] text-muted-foreground">kWh. Bars are each cycle&apos;s imports above zero and exports below; the lines are the net since October 1.</p>

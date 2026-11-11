@@ -37,3 +37,12 @@ test("with no intervals the section says so", () => {
   expect(section().getByText("No Powerwall data yet")).toBeTruthy();
   expect(section().queryByRole("table")).toBeNull();
 });
+
+// site-motion, "Charts draw in when the view changes".
+test("each year's bar uncovers from the left, one after another", () => {
+  const { container } = render(<PowerwallSection years={PATTERNS.years} today="2026-11-10" />);
+  const bars = [...container.querySelectorAll<HTMLElement>(".bg-powerwall.block")];
+  expect(bars.length).toBeGreaterThan(1);
+  expect(bars.every((bar) => bar.classList.contains("motion-uncover"))).toBe(true);
+  expect(bars.map((bar) => bar.style.getPropertyValue("--i"))).toEqual(bars.map((_, i) => String(i)));
+});

@@ -179,3 +179,14 @@ test("All time, last in the row, pushes the site's first day of service to today
   rerender(<ImpactPage range={{ start: "2021-10-10", end: "2026-11-08" }} figures={figures(95)} today="2026-11-08" backup={NO_BACKUP} charging={CHARGING} backupYear={THIS_YEAR} />);
   expect(pressed("All time")).toBe("true");
 });
+
+// site-motion: another range draws the bars in again, while the ring stays and moves its slices to the new shares.
+test("another range redraws the bars but keeps the ring", () => {
+  const page = (range: typeof today) => <ImpactPage range={range} figures={figures(95)} today="2026-11-08" backup={NO_BACKUP} charging={CHARGING} backupYear={THIS_YEAR} />;
+  const { container, rerender } = render(page(today));
+  const arc = container.querySelector("circle[data-share]");
+  const bar = screen.getAllByRole("meter")[0].firstChild;
+  rerender(page(march));
+  expect(container.querySelector("circle[data-share]")).toBe(arc);
+  expect(screen.getAllByRole("meter")[0].firstChild).not.toBe(bar);
+});

@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 // The Self Powered and Solar Offset sections of the impact-report spec, ported from anton-tesla-api-ws Impact.test.jsx.
-import { cleanup, render, screen, within } from "@testing-library/react";
-import { afterEach, expect, test } from "vitest";
+import { act, cleanup, render, screen, within } from "@testing-library/react";
+import { afterEach, expect, test, vi } from "vitest";
 
 import { SelfPowered, SolarOffset } from "@/components/impact/sections";
 import type { ImpactFigures } from "@/lib/impact";
@@ -64,4 +64,37 @@ test("a range without saved days shows zeros and empty bars", () => {
   expect(document.querySelectorAll("circle[data-share]")).toHaveLength(0);
   expect(screen.getAllByRole("meter").map((bar) => (bar.firstChild as HTMLElement).style.width)).toEqual(["0%", "0%"]);
   expect(section("Self powered").textContent).toContain("0%");
+});
+
+// site-motion: the ring sweeps round on first view and moves to new shares; the figures roll; the bars uncover.
+test("on first view the ring sweeps round, and later shares move by transition", () => {
+  vi.useFakeTimers();
+  const { container } = render(<SelfPowered figures={day} />);
+  const arcs = [...container.querySelectorAll<SVGElement>("circle[data-share]")];
+  expect(arcs.every((arc) => arc.classList.contains("motion-sweep") && arc.classList.contains("motion-tween"))).toBe(true);
+  expect(arcs[0].style.getPropertyValue("--whole")).toBe("100");
+  act(() => vi.advanceTimersByTime(650));
+  expect(arcs.some((arc) => arc.classList.contains("motion-sweep"))).toBe(false);
+  expect(arcs.every((arc) => arc.classList.contains("motion-tween"))).toBe(true);
+  vi.useRealTimers();
+});
+
+test("new shares roll the ring's middle and the legend, with the new figures for screen readers at once", () => {
+  vi.useFakeTimers({ toFake: ["requestAnimationFrame", "cancelAnimationFrame", "performance", "setTimeout", "clearTimeout"] });
+  const { rerender } = render(<SelfPowered figures={day} />);
+  rerender(<SelfPowered figures={{ ...day, self_powered_percentage: 70, from_solar_percentage: 39, from_powerwall_percentage: 31, from_grid_percentage: 30 }} />);
+  const ring = within(section("Self powered")).getByRole("img");
+  expect(ring.querySelector("span[aria-hidden=true]")!.textContent).toBe("100%");
+  expect(ring.querySelector(".sr-only")!.textContent).toBe("70%");
+  expect(within(section("Self powered")).getAllByRole("listitem")[0].querySelector(".sr-only")!.textContent).toBe("39%");
+  act(() => vi.advanceTimersByTime(450));
+  expect(within(section("Self powered")).getAllByRole("listitem").map((li) => li.textContent)).toEqual(["39%Solar", "31%Powerwall", "30%Grid"]);
+  vi.useRealTimers();
+});
+
+test("Solar offset's bars uncover from the left, one after the other", () => {
+  render(<SolarOffset figures={day} />);
+  const fills = screen.getAllByRole("meter").map((bar) => bar.firstChild as HTMLElement);
+  expect(fills.every((fill) => fill.classList.contains("motion-uncover"))).toBe(true);
+  expect(fills.map((fill) => fill.style.getPropertyValue("--i"))).toEqual(["0", "1"]);
 });

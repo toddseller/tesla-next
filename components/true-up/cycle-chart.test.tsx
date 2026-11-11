@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 // The true-up-tracker spec's cycle chart.
-import { cleanup, render, screen } from "@testing-library/react";
-import { afterEach, expect, test } from "vitest";
+import { act, cleanup, render, screen } from "@testing-library/react";
+import { afterEach, expect, test, vi } from "vitest";
 
 import { chartRows, CycleChart } from "@/components/true-up/cycle-chart";
 import { COST_25_26, CURRENT, CURRENT_COST, NO_COST, YEAR_25_26 } from "@/components/true-up/fixtures";
@@ -64,4 +64,19 @@ test("other ranges have neither, and only the started cycles", () => {
 
   render(<CycleChart cycles={CURRENT} cost={CURRENT_COST} oneYear={false} />);
   expect(legend()).toEqual(["Imported", "Exported", "Running net"]);
+});
+
+// site-motion, "Charts draw in when the view changes".
+test("on first view each cycle's column rises from zero and the lines draw in; after that nothing moves on a re-render", () => {
+  vi.useFakeTimers();
+  const { container, rerender } = render(<CycleChart cycles={YEAR_25_26} cost={COST_25_26} oneYear />);
+  const segments = [...bars(container, "imported"), ...bars(container, "exported")] as unknown as SVGElement[];
+  expect(segments.every((bar) => bar.classList.contains("motion-rise"))).toBe(true);
+  expect(new Set(segments.map((bar) => bar.style.transformOrigin)).size).toBe(1);
+  expect(container.querySelector("clipPath#motion-flows rect")!.getAttribute("class")).toBe("motion-draw-only");
+  expect(container.querySelectorAll(".motion-clip-flows").length).toBeGreaterThan(0);
+  act(() => vi.advanceTimersByTime(650));
+  rerender(<CycleChart cycles={YEAR_25_26} cost={COST_25_26} oneYear />);
+  expect(container.querySelectorAll(".motion-rise, .motion-clip-flows, clipPath#motion-flows")).toHaveLength(0);
+  vi.useRealTimers();
 });

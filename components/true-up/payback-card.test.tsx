@@ -114,3 +114,9 @@ test("on a phone a rail joins the steps, solar up to today and grey after, with 
   expect(rails.map((rail) => rail && (rail.includes("bg-solar") ? "solar" : "grey"))).toEqual(["solar", "solar", "grey", "grey", null]);
   expect(steps[2].querySelector('[data-part="dot"]')!.className).toContain("border-muted-foreground");
 });
+
+// site-motion: the payback track is a timeline, not a quantity, so it holds still.
+test("the payback track has no motion", () => {
+  const { container } = render(<PaybackCard payback={PAYBACK} today="2026-11-09" />);
+  expect(container.querySelector('[class*="motion-"]')).toBeNull();
+});

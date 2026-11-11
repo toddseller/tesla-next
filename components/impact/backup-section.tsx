@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Fragment, type ReactNode } from "react";
+import { type CSSProperties, Fragment, type ReactNode } from "react";
 
 import { PresetGroup } from "@/components/solar/range-controls";
 import type { BackupHistory, BackupKind } from "@/lib/backup";
@@ -50,7 +50,7 @@ function detail({ weather, battery }: Event) {
   return line ? line[0].toUpperCase() + line.slice(1) : null;
 }
 
-function EventRow({ event, length, longest, grouped }: { event: Event; length: number; longest: number; grouped: boolean }) {
+function EventRow({ event, length, longest, grouped, order }: { event: Event; length: number; longest: number; grouped: boolean; order: number }) {
   const { start, kind } = event;
   const line = detail(event);
   return (
@@ -58,8 +58,8 @@ function EventRow({ event, length, longest, grouped }: { event: Event; length: n
       <div className="grid grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-x-4 gap-y-1.5 sm:grid-cols-[13rem_minmax(0,1fr)_7rem_8rem]">
         <Link href={dayLink(start)} className="col-span-3 hover:text-white sm:col-span-1">{(grouped ? timeOnly : dayTime).format(new Date(start))}</Link>
         <span aria-hidden className="h-2 sm:h-2.5">
-          <span data-part="duration-bar" className={`block h-full min-w-0.5 rounded-xs ${kind === "outage" ? "bg-powerwall" : "bg-grid/60"}`}
-            style={{ width: `${(length / longest) * 100}%` }} />
+          <span data-part="duration-bar" className={`motion-uncover block h-full min-w-0.5 rounded-xs ${kind === "outage" ? "bg-powerwall" : "bg-grid/60"}`}
+            style={{ width: `${(length / longest) * 100}%`, "--i": order } as CSSProperties} />
         </span>
         <span className="text-right font-mono">{duration(length)}</span>
         <span className={`text-[13px] ${kind === "outage" ? "text-powerwall" : "text-muted-foreground"}`}>{KINDS[kind]}</span>
@@ -79,7 +79,9 @@ export function BackupSection({ history: { summary, events }, year, today, onYea
   const { presets, earlier } = backupPresets(today);
   const lengths = new Map(events.map((e) => [e.start, (Date.parse(e.end) - Date.parse(e.start)) / 1000]));
   const longestEvent = Math.max(...lengths.values());
-  const row = (event: Event, grouped: boolean) => <EventRow event={event} length={lengths.get(event.start)!} longest={longestEvent} grouped={grouped} />;
+  const row = (event: Event, grouped: boolean) => (
+    <EventRow event={event} length={lengths.get(event.start)!} longest={longestEvent} grouped={grouped} order={events.indexOf(event)} />
+  );
   return (
     <section aria-labelledby="backup" className="flex flex-col gap-5 rounded-[10px] border bg-card p-4 sm:p-6">
       <div className="flex flex-wrap items-center justify-between gap-3">

@@ -10,6 +10,15 @@ import { FakeStream } from "@/test/fake-event-source";
 
 const router = vi.hoisted(() => ({ push: vi.fn(), replace: vi.fn() }));
 vi.mock("next/navigation", () => ({ useRouter: () => router }));
+// site-motion, "A day step slides the day": the stand-in shows which slide the day's content gets for each type.
+vi.mock("react", async (original) => ({
+  ...(await original<typeof import("react")>()),
+  ViewTransition: ({ update, children }: { update: Record<string, string>; children: React.ReactNode }) => (
+    <div data-testid="day-transition" data-update={JSON.stringify(update)}>{children}</div>
+  ),
+}));
+const NEXT = { transitionTypes: ["day-next"] };
+const PREVIOUS = { transitionTypes: ["day-previous"] };
 vi.mock("next/link", () => ({ default: ({ href, children, ...rest }: { href: string; children: React.ReactNode }) => <a href={href} {...rest}>{children}</a> }));
 
 const october = { start: "2026-10-01", end: "2026-10-31" };
@@ -60,16 +69,16 @@ test("the day is shown with its date, and the range's link returns to it", () =>
 test("previous and next replace the day in the address, keeping the range", () => {
   render(page("2026-10-14"));
   fireEvent.click(button("Next day"));
-  expect(router.replace).toHaveBeenCalledWith("/?start=2026-10-01&end=2026-10-31&day=2026-10-15");
+  expect(router.replace).toHaveBeenCalledWith("/?start=2026-10-01&end=2026-10-31&day=2026-10-15", NEXT);
   fireEvent.click(button("Previous day"));
-  expect(router.replace).toHaveBeenLastCalledWith("/?start=2026-10-01&end=2026-10-31&day=2026-10-13");
+  expect(router.replace).toHaveBeenLastCalledWith("/?start=2026-10-01&end=2026-10-31&day=2026-10-13", PREVIOUS);
   expect(router.push).not.toHaveBeenCalled();
 });
 
 test("stepping past the range keeps going, with the range unchanged", () => {
   render(page("2026-10-31"));
   fireEvent.click(button("Next day"));
-  expect(router.replace).toHaveBeenCalledWith("/?start=2026-10-01&end=2026-10-31&day=2026-11-01");
+  expect(router.replace).toHaveBeenCalledWith("/?start=2026-10-01&end=2026-10-31&day=2026-11-01", NEXT);
 });
 
 test("there is no next day after today and no previous day before the first day of service", () => {
@@ -87,7 +96,7 @@ test("there is no next day after today and no previous day before the first day 
 test("the arrow keys step a day, unless a modifier is held or a field has focus", () => {
   render(page("2026-10-14"));
   fireEvent.keyDown(window, { key: "ArrowLeft" });
-  expect(router.replace).toHaveBeenCalledWith("/?start=2026-10-01&end=2026-10-31&day=2026-10-13");
+  expect(router.replace).toHaveBeenCalledWith("/?start=2026-10-01&end=2026-10-31&day=2026-10-13", PREVIOUS);
   fireEvent.keyDown(window, { key: "ArrowRight", altKey: true });
   fireEvent.keyDown(window, { key: "ArrowRight", metaKey: true });
   const field = document.body.appendChild(document.createElement("input"));
@@ -103,7 +112,7 @@ test("the calendar opens a day, and arrow keys inside it move the calendar, not 
   fireEvent.keyDown(button(/October 3rd, 2026/), { key: "ArrowRight" });
   expect(router.replace).not.toHaveBeenCalled();
   fireEvent.click(button(/October 3rd, 2026/));
-  expect(router.replace).toHaveBeenCalledWith("/?start=2026-10-01&end=2026-10-31&day=2026-10-03");
+  expect(router.replace).toHaveBeenCalledWith("/?start=2026-10-01&end=2026-10-31&day=2026-10-03", PREVIOUS);
 });
 
 test("the strip shows the range's days with the shown day marked, and opens any of them", () => {
@@ -114,7 +123,7 @@ test("the strip shows the range's days with the shown day marked, and opens any 
   expect(days[13].getAttribute("aria-current")).toBe("date");
   expect(days[13].getAttribute("aria-label")).toBe("Oct 14, 43 kWh solar");
   fireEvent.click(days[2]);
-  expect(router.replace).toHaveBeenCalledWith("/?start=2026-10-01&end=2026-10-31&day=2026-10-03");
+  expect(router.replace).toHaveBeenCalledWith("/?start=2026-10-01&end=2026-10-31&day=2026-10-03", PREVIOUS);
 });
 
 test("today's day view shows the latest live update's time; other days don't", () => {
@@ -159,4 +168,19 @@ test("on a narrow screen the strip opens scrolled to the shown day", () => {
     Object.defineProperty(HTMLElement.prototype, "offsetLeft", offset!);
     delete (HTMLElement.prototype as { clientWidth?: number }).clientWidth;
   }
+});
+
+test("the day's content slides the way the step went, and only for a day step", () => {
+  render(page("2026-10-14"));
+  const transition = screen.getByTestId("day-transition");
+  expect(JSON.parse(transition.dataset.update!)).toEqual({ "day-next": "slide-next", "day-previous": "slide-previous", default: "none" });
+  expect(transition.querySelector('[role="tablist"]')).not.toBeNull();
+  expect(transition.contains(button("Next day"))).toBe(false);
+  expect(transition.contains(screen.getByRole("navigation", { name: "Days" }))).toBe(false);
+});
+
+test("a later day from the strip slides in as a step forward", () => {
+  render(page("2026-10-14"));
+  fireEvent.click(screen.getByRole("button", { name: /^Oct 20,/ }));
+  expect(router.replace).toHaveBeenCalledWith("/?start=2026-10-01&end=2026-10-31&day=2026-10-20", NEXT);
 });

@@ -1,4 +1,10 @@
+import type { CSSProperties } from "react";
+
+import { Rolling } from "@/components/rolling";
+import { ENTER_MS, useEntering } from "@/components/use-entering";
 import type { ImpactFigures } from "@/lib/impact";
+
+const percentOf = (share: number) => `${Math.round(share)}%`;
 
 const energy = (kwh: number) => (kwh >= 1000 ? `${(kwh / 1000).toFixed(1)} MWh` : `${kwh.toFixed(1)} kWh`);
 
@@ -23,18 +29,21 @@ export function Ring({ name, shares, middle, caption }: { name: string; shares: 
   const starts = shares.map((_, i) => shares.slice(0, i).reduce((sum, { share }) => sum + share, 0));
   // Each share is rounded on its own, so they can add up to 99 or 101; drawing them out of their sum closes the ring.
   const whole = starts[2] + shares[2].share;
+  // Sweeps round as it first shows; after that a slice moves from its old size to its new one.
+  const entering = useEntering(ENTER_MS);
   return (
     <div role="img" aria-label={`${name}: ${shares.map(({ label, share }) => `${share}% ${label}`).join(", ")}`}
       className="relative size-[220px] shrink-0">
       <svg viewBox="0 0 200 200" className="size-full -rotate-90" aria-hidden>
         <circle cx="100" cy="100" r="80" fill="none" strokeWidth="14" className="stroke-border" />
         {shares.map(({ key, share, stroke }, i) => share > 0 && (
-          <circle key={key} data-share={key} cx="100" cy="100" r="80" fill="none" strokeWidth="14" className={stroke}
+          <circle key={key} data-share={key} cx="100" cy="100" r="80" fill="none" strokeWidth="14"
+            className={`${stroke} motion-tween ${entering ? "motion-sweep" : ""}`} style={{ "--whole": whole } as CSSProperties}
             pathLength={whole} strokeDasharray={`${share} ${whole}`} strokeDashoffset={-starts[i]} />
         ))}
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="font-mono text-[52px] font-semibold">{middle}%</span>
+        <span className="font-mono text-[52px] font-semibold"><Rolling value={middle} format={percentOf} /></span>
         <span className="text-[13px] text-muted-foreground">{caption}</span>
       </div>
     </div>
@@ -47,7 +56,7 @@ export function Legend({ shares }: { shares: Share[] }) {
       {shares.map(({ key, label, share, fill }) => (
         <li key={key} className="flex items-center gap-3">
           <span className={`size-2.5 rounded-full ${fill}`} aria-hidden />
-          <span className="min-w-11 font-mono">{share}%</span>
+          <span className="min-w-11 font-mono"><Rolling value={share} format={percentOf} /></span>
           {label}
         </li>
       ))}
@@ -82,7 +91,7 @@ export function SolarOffset({ figures }: { figures: ImpactFigures }) {
         <span className="text-muted-foreground">energy offset</span>
       </p>
       <div className="flex flex-col gap-4">
-        {bars.map(({ label, kwh, fill }) => (
+        {bars.map(({ label, kwh, fill }, i) => (
           <div key={label} className="flex flex-col gap-1.5">
             <div className="flex justify-between text-sm" aria-hidden>
               <span>{label}</span>
@@ -90,7 +99,7 @@ export function SolarOffset({ figures }: { figures: ImpactFigures }) {
             </div>
             <div role="meter" aria-label={label} aria-valuenow={kwh} aria-valuemin={0} aria-valuemax={scale} aria-valuetext={energy(kwh)}
               className="h-7 rounded-md bg-secondary">
-              <div className={`h-full rounded-md ${fill}`} style={{ width: `${scale ? (kwh / scale) * 100 : 0}%` }} />
+              <div className={`motion-uncover h-full rounded-md ${fill}`} style={{ width: `${scale ? (kwh / scale) * 100 : 0}%`, "--i": i } as CSSProperties} />
             </div>
           </div>
         ))}

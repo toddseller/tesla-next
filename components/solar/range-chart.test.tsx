@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 // The range chart of the solar-range-chart spec, with October 2026 and the 2025 to 2026 true-up year as /api/range answers
 // for them.
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, expect, test, vi } from "vitest";
 
 import { BarDetails, RangeChart } from "@/components/solar/range-chart";
@@ -109,4 +109,45 @@ test("the value axis steps by round numbers", () => {
   const { container } = render(<RangeChart items={TRUE_UP_YEAR} range={YEAR_RANGE} onOpenDay={() => {}} onOpenRange={() => {}} />);
   const labels = [...container.querySelectorAll("svg.recharts-surface text")].map((text) => text.textContent).filter((text) => /^-?[\d,]+( kWh)?$/.test(text!));
   expect(labels).toEqual(["-1,000", "0", "1,000", "2,000", "3,000", "4,000 kWh"]);
+});
+
+// site-motion, "Charts draw in when the view changes".
+const topOf = (path: Element) => Number(path.getAttribute("d")!.match(/^M[\d.]+,([\d.]+)/)![1]);
+const originY = (path: Element) => Number((path as SVGElement).style.transformOrigin.match(/^0px ([\d.]+)px$/)?.[1]);
+
+test("every segment rises from the chart's zero line, staggered by its column", () => {
+  const { container } = render(<RangeChart items={OCTOBER} range={OCTOBER_RANGE} onOpenDay={() => {}} onOpenRange={() => {}} />);
+  const segments = [...container.querySelectorAll("[data-series]")];
+  expect(segments.every((path) => path.classList.contains("motion-rise"))).toBe(true);
+  // Oct 14 sent more to the grid than it took, so its grid segment hangs from the zero line with a square top.
+  const zero = topOf(section(container, "grid", "Oct 14"));
+  expect(segments.every((path) => originY(path) === zero)).toBe(true);
+  expect((section(container, "solar", "Oct 1") as unknown as SVGElement).style.getPropertyValue("--i")).toBe("0");
+  expect((section(container, "house", "Oct 14") as unknown as SVGElement).style.getPropertyValue("--i")).toBe("13");
+});
+
+test("once the chart has entered, a reload's re-render rises nothing again", () => {
+  vi.useFakeTimers();
+  const { container, rerender } = render(<RangeChart items={OCTOBER} range={OCTOBER_RANGE} onOpenDay={() => {}} onOpenRange={() => {}} />);
+  act(() => vi.advanceTimersByTime(650));
+  rerender(<RangeChart items={OCTOBER.map((item) => ({ ...item }))} range={OCTOBER_RANGE} onOpenDay={() => {}} onOpenRange={() => {}} />);
+  expect(container.querySelectorAll(".motion-rise")).toHaveLength(0);
+  vi.useRealTimers();
+});
+
+// site-motion, "Reduced motion turns it off": a reload's new total lands at once.
+test("under reduced motion, a reload moves today's column straight to its new height", () => {
+  vi.stubGlobal("matchMedia", (query: string) => ({ matches: query === "(prefers-reduced-motion: reduce)", addEventListener() {}, removeEventListener() {} }));
+  vi.useFakeTimers();
+  const grown = OCTOBER.map((item, i) => (i === 30 ? { ...item, solar: 60 } : item));
+  const chart = (items: RangeItem[]) => <RangeChart items={items} range={OCTOBER_RANGE} onOpenDay={() => {}} onOpenRange={() => {}} />;
+  const settled = render(chart(grown));
+  const target = section(settled.container, "solar", "Oct 31").getAttribute("d");
+  settled.unmount();
+  const { container, rerender } = render(chart(OCTOBER));
+  act(() => vi.advanceTimersByTime(650));
+  rerender(chart(grown));
+  expect(section(container, "solar", "Oct 31").getAttribute("d")).toBe(target);
+  vi.useRealTimers();
+  vi.unstubAllGlobals();
 });

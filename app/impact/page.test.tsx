@@ -36,7 +36,7 @@ test("the range in the address is served with its figures", async () => {
   const html = await served({ start: "2026-10-18", end: "2026-10-18" });
   expect(impactFigures).toHaveBeenCalledWith("2026-10-18", "2026-10-18");
   expect(html).toContain("October 18, 2026");
-  expect(html).toMatch(/95<!-- -->%/);
+  expect(html).toContain("<span>95%</span>");
   expect(html).toContain("45.6 kWh");
 });
 
