@@ -169,6 +169,52 @@ test("the charge rolls on screen while a screen reader gets the new figure at on
   expect(pillOf().textContent).toBe("PW 100% · CHARGING");
 });
 
+// dashboard-shell, "Live status in the top bar" with solar and home, and "Solar in the live pill follows the sun".
+const FLOWING = { ...STATUS, solar_power: 6.2, home_power: 1.4 };
+const flows = () => [...document.querySelectorAll('[data-part="flow"]')];
+
+test("the live pill reads solar and home before the Powerwall, each after its color's square", () => {
+  render(bar(FLOWING));
+  expect(shown().text).toBe("LIVE 9:59 AMSOLAR 6.2 kW · HOME 1.4 kW · PW 92% · CHARGING");
+  expect(flows().map((flow) => flow.querySelector('[aria-hidden="true"]')!.className)).toEqual([
+    expect.stringContaining("bg-solar"),
+    expect.stringContaining("bg-home"),
+  ]);
+});
+
+test("below 1360 px the flows are left out", () => {
+  render(bar(FLOWING));
+  expect(flows()).toHaveLength(2);
+  for (const flow of flows()) expect(flow.className).toContain("max-[1360px]:hidden");
+});
+
+test("solar and home roll to a new status while a screen reader gets the new figures at once", async () => {
+  render(bar(FLOWING));
+  FakeStream.opened[0].send({ ...FLOWING, solar_power: 5.8, home_power: 2.1, modified: "2026-11-08T10:00:20-08:00" });
+  expect(flows().map((flow) => flow.querySelector('span[aria-hidden="true"]:not([data-part="swatch"])')!.textContent)).toEqual(["6.2 kW", "1.4 kW"]);
+  expect(shown().text).toContain("SOLAR 5.8 kW · HOME 2.1 kW · PW 92% · CHARGING");
+  await act(() => new Promise((resolve) => setTimeout(resolve, 500)));
+  expect(flows().map((flow) => flow.textContent)).toEqual(["SOLAR 5.8 kW · ", "HOME 2.1 kW · "]);
+});
+
+test("a stale status leaves the Powerwall alone in the pill", () => {
+  render(bar(FLOWING));
+  act(() => vi.advanceTimersByTime(80_000));
+  expect(shown()).toEqual({ text: "LAST 9:59 AMPW 92% · CHARGING", live: false });
+});
+
+test("after sunset the pill holds home and the Powerwall, no solar", () => {
+  const evening = Date.parse("2026-11-08T17:30:00-08:00");
+  vi.setSystemTime(evening);
+  render(<TopBar initialStatus={JSON.stringify({ ...FLOWING, solar_power: 0, modified: "2026-11-08T17:29:50-08:00" })} initialSite={null} renderedAt={evening} />);
+  expect(shown().text).toBe("LIVE 5:29 PMHOME 1.4 kW · PW 92% · CHARGING");
+});
+
+test("the OFF GRID pill still comes before the live pill", () => {
+  render(<TopBar initialStatus={JSON.stringify({ ...OUTAGE, solar_power: 6.2, home_power: 1.4 })} initialSite={null} renderedAt={RENDERED_AT} />);
+  expect(shown().text).toBe("LIVE 9:59 AMOFF GRIDSOLAR 6.2 kW · HOME 1.4 kW · PW 92% · DISCHARGING");
+});
+
 // dashboard-shell, "The highlight and the page move together": the page slides the way the tabs go.
 test("a tab change slides the page the way the tabs go", () => {
   vi.mocked(usePathname).mockReturnValue("/impact");

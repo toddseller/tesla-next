@@ -1,12 +1,20 @@
 import { DASH, staleWarning } from "@/lib/scene/live-scene";
 import { TIME_ZONE } from "@/lib/scene/replay";
+import { skyAt } from "@/lib/scene/sun";
 
 export type LiveStatus = {
   battery_percentage?: number | null; battery_status?: string | null; modified?: string | null;
   island_status?: string | null; storm_mode_active?: boolean | null;
+  solar_power?: number | string | null; home_power?: number | string | null; load_power?: number | string | null;
 };
 // The site's open state stretch as the server reads it from anton's site_state.
 export type SiteState = { start: string; island_status: string; storm_mode_active: boolean };
+
+// anton's figures can arrive as strings; anything that doesn't parse is unknown.
+const power = (value: unknown) => {
+  const parsed = parseFloat(String(value));
+  return Number.isNaN(parsed) ? null : parsed;
+};
 
 const clock = new Intl.DateTimeFormat("en-US", { hour: "numeric", minute: "2-digit", timeZone: TIME_ZONE });
 
@@ -20,6 +28,9 @@ export function liveStatus(status: LiveStatus | null, now: Date) {
     word: modified && !live ? "LAST" : "LIVE",
     time: modified ? clock.format(modified) : DASH,
     pill: `PW ${charge} · ${status?.battery_status?.toUpperCase() ?? DASH}`,
+    // By the sun rather than the reading, so solar never flickers in and out as its output crosses zero at dusk.
+    solar: live && skyAt(now) === "day" ? power(status?.solar_power) : null,
+    home: live ? power(status?.home_power ?? status?.load_power) : null,
   };
 }
 

@@ -62,3 +62,12 @@ Ships with a release, like any change. Rolling back is releasing the previous ta
   - **Reduced motion:** with reduced motion emulated, the bars were at ±45° and the menu at full opacity the moment it opened, and the menu was gone 20 ms after Escape.
   - **CSP:** no console error and no CSP violation at any width; the container is the production build, under the production CSP.
   - **Safari:** WebKit opened the menu with the bars crossed and the six links, and choosing Solar went to `/`.
+
+## Rollout
+
+- **Release v2026.11.11.3, 2026-11-11:** PR #44 merged, and the Deploy run and its health check passed. On teslasolar.report, the task 4.2 checks in headless Chromium gave the same results:
+  - At 320 and 390 px, the name and the Pages button share a row and nothing scrolls sideways. At 640 and 1280 px the links and preset buttons show as before.
+  - The bars and the menu move both ways, the six links are 44 px tall, and choosing Patterns closes the menu.
+  - Impact's, True-Up's and Backup's presets menus work as on the branch.
+  - Reduced motion makes everything change at once.
+  - There was no console error or CSP violation, and WebKit opened the menu and changed pages.

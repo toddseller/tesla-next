@@ -10,6 +10,7 @@ import { useLiveStream } from "@/components/use-live-stream";
 import { slidePage } from "@/components/page-slide";
 import { Rolling } from "@/components/rolling";
 import { gridPill, type LiveStatus, liveStatus, type SiteState } from "@/lib/live-status";
+import { kw } from "@/lib/scene/live-scene";
 
 const pages = [
   { name: "Solar", href: "/" },
@@ -28,7 +29,7 @@ const PILL_STYLES = {
 
 type Props = { initialStatus: string | null; initialSite: string | null; renderedAt: number };
 
-// The Powerwalls' live charge and state at the bar's end, after an off-grid or storm watch pill when there is one.
+// The live pill (solar, home and the Powerwalls) at the bar's end, after an off-grid or storm watch pill when there is one.
 // `renderedAt` is when the server rendered the page with the status it held: the first render in the browser uses it
 // too, so hydration finds the same text.
 function Status({ initialStatus, initialSite, renderedAt }: Props) {
@@ -48,7 +49,7 @@ function Status({ initialStatus, initialSite, renderedAt }: Props) {
     const timer = setInterval(() => setNow(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
-  const { live, word, time, pill } = liveStatus(status, now);
+  const { live, word, time, pill, solar, home } = liveStatus(status, now);
   const grid = gridPill(status, site);
   return (
     <p data-part="live-status" className="order-2 flex w-full flex-wrap items-center gap-2.5 font-mono text-[13px] whitespace-nowrap text-muted-foreground sm:order-3 sm:w-auto">
@@ -65,6 +66,13 @@ function Status({ initialStatus, initialSite, renderedAt }: Props) {
         </span>
       )}
       <span data-part="pill" className="rounded-full border border-input px-2.5 py-1 text-foreground">
+        {/* Left out below 1360 px: on a phone the pill doesn't fit under the brand, and on a laptop it wraps the links. */}
+        {([["SOLAR", solar, "bg-solar"], ["HOME", home, "bg-home"]] as const).map(([name, value, color]) => value != null && (
+          <span key={name} data-part="flow" className="max-[1360px]:hidden">
+            <span data-part="swatch" aria-hidden="true" className={`mr-1.5 inline-block size-2 rounded-[2px] align-middle ${color}`} />
+            {name} <Rolling value={value} format={kw} />{" · "}
+          </span>
+        ))}
         {status?.battery_percentage == null ? pill : (
           <Rolling value={status.battery_percentage} format={(charge) => liveStatus({ ...status, battery_percentage: Math.round(charge) }, now).pill} />
         )}

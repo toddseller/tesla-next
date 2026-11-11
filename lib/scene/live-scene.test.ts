@@ -1,7 +1,7 @@
 // Ported from anton-tesla-api-ws tesla-api-frontend/client/src/utils/liveScene.test.js.
 import { describe, test, expect } from "vitest";
 import { azimuthX } from "@/lib/scene/night-sky";
-import { type Link, type LiveInput, type SceneOptions, sceneState, staleWarning, type Sunlight, type Vehicle } from "@/lib/scene/live-scene";
+import { kw, type Link, type LiveInput, type SceneOptions, sceneState, staleWarning, type Sunlight, type Vehicle } from "@/lib/scene/live-scene";
 import { moonOrientation, moonPosition, sunPosition, sunTimes } from "@/lib/scene/sun";
 
 const NOW = new Date("2026-10-17T22:10:00Z");
@@ -556,4 +556,8 @@ describe("the roof's sunshine caps the cloud by day", () => {
     expect(sceneState(midday, NOW, { cover: 0.62, low: 0.62, sun: 1 }).sunlight!.strength)
       .toBeCloseTo(sceneState(midday, NOW, { cover: 0.3, low: 0.3 }).sunlight!.strength);
   });
+});
+
+test("the kW format is one decimal of the magnitude, and a plain 0 kW when idle", () => {
+  expect([6.24, 12.34, 0.04, -1.5].map(kw)).toEqual(["6.2 kW", "12.3 kW", "0 kW", "1.5 kW"]);
 });
