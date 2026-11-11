@@ -124,3 +124,16 @@ Merging to `main` deploys nothing. After the merge, a `v*` release (with the use
   | `/true-up`, '25 - '26 | 1080 / 1095 | 30 / 32 |
 
   At today's next `totals` notice (20:05:30 UTC), requests sent at once waited 238 ms for '26 - '27's fresh savings and for the payback, while '25 - '26, settled, answered in 9 ms. The next request was answered from memory in 3 ms, and nothing was logged as failed.
+
+## Rollout
+
+- **Release v2026.11.11.7, 2026-11-11:** PR #48 merged, and the Deploy run passed in about 3 minutes. The warm-up took 5.1 s.
+- **From outside,** first byte through Cloudflare, five runs:
+  - `/true-up`: 0.16 to 0.29 s, about 0.20 typical (was 0.29 to 0.37 s);
+  - `/true-up` for '25 - '26: 0.15 to 0.19 s (was about 1.2 s);
+  - `/api/payback`: 0.11 to 0.14 s (was 0.28 to 0.29 s), the same as `/api/true-up-years`' round trip.
+- **Inside onyx's network,** median / p90 of ten:
+  - `/true-up`: 35 / 43 ms (was 163 / 172);
+  - '25 - '26: 27 / 30 ms;
+  - `/api/payback` and the current year's savings: 3 ms.
+- What's left of an outside load is mostly the round trip to onyx.
