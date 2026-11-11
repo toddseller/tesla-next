@@ -123,3 +123,9 @@ Alternative: slide the new content in on mount by CSS and drop the out half. Tha
 ## Migration Plan
 
 Release as usual (ask first). Nothing on the server changes. Rollback is the previous release.
+
+## Rollout
+
+Released as v2026.11.11.0 on 2026-11-11. Its Deploy run passed; onyx runs the tag and teslasolar.report answered 200.
+
+- **The live site:** the Solar page's first view ran 42 `motion-rise` and 5 `motion-uncover` animations. 15 s later, after a live status had arrived (its dot rang), nothing was running and no column carried `motion-rise`. Layout shift was 0, with no CSP violation.

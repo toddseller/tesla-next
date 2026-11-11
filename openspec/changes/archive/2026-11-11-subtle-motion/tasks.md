@@ -45,7 +45,7 @@
 
 ## 7. Rollout
 
-- [ ] 7.1 With the owner's go-ahead, release; the deploy's health check passes, and teslasolar.report's Solar page draws in on first view and holds still on its next reload; record in design.md under Rollout
+- [x] 7.1 With the owner's go-ahead, release; the deploy's health check passes, and teslasolar.report's Solar page draws in on first view and holds still on its next reload; record in design.md under Rollout
 
 ## Workflow follow-up
 
