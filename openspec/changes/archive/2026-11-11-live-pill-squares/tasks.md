@@ -22,7 +22,7 @@
 
 ## 4. Rollout
 
-- [ ] 4.1 Release (ask first); the deploy's health check passes, and a zoomed screenshot of teslasolar.report at 1366 px shows the squares centered as in 3.2; record in design.md under Rollout
+- [x] 4.1 Release (ask first); the deploy's health check passes, and a zoomed screenshot of teslasolar.report at 1366 px shows the squares centered as in 3.2; record in design.md under Rollout
 
 ## Workflow follow-up
 

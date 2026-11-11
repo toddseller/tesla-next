@@ -1,7 +1,7 @@
 // The Solar page's forecast card from the stored forecast (solar-forecast spec).
 import { expect, test } from "vitest";
 
-import { forecastCard, type ForecastData } from "./forecast";
+import { forecastCard, type ForecastData, observedCode } from "./forecast";
 
 const TODAY = "2026-11-10";
 // 10:00 AM site time, PST.
@@ -62,16 +62,24 @@ const foggy = (reading: ForecastData["reading"]) =>
   data({ rows: data().rows.map((row) => (row.day === TODAY ? { ...row, weather_code: 45 } : row)), reading });
 
 test("a reading 10 minutes old is today's sky now, in daylight and after sunset; the days ahead keep the forecast", () => {
-  const day = forecastCard(foggy({ code: 0, sampled_at: "2026-11-10T17:50:00Z" }), TODAY, NOW);
+  const day = forecastCard(foggy({ ...sample(0, 0), sampled_at: "2026-11-10T17:50:00Z" }), TODAY, NOW);
   expect(day.today).toMatchObject({ code: 0, sky: "now" });
   expect(day.days).toEqual(forecastCard(data(), TODAY, NOW).days);
   // 9:00 PM site time.
-  const night = forecastCard(foggy({ code: 0, sampled_at: "2026-11-11T04:50:00Z" }), TODAY, Date.parse("2026-11-11T05:00:00Z"));
+  const night = forecastCard(foggy({ ...sample(0, 0), sampled_at: "2026-11-11T04:50:00Z" }), TODAY, Date.parse("2026-11-11T05:00:00Z"));
+  expect(night.today).toMatchObject({ code: 0, sky: "night" });
+});
+
+test("today's sky now is the observed sky: the model's few clouds under the airport's clear sky read sunny, day and night", () => {
+  // As at 10:00 AM on 2026-11-11: code 1 from 21% model low cloud, none at the airport.
+  const morning = forecastCard(foggy({ ...sample(1, 21, 0), sampled_at: "2026-11-10T17:50:00Z" }), TODAY, NOW);
+  expect(morning.today).toMatchObject({ code: 0, sky: "now" });
+  const night = forecastCard(foggy({ ...sample(1, 5), sampled_at: "2026-11-11T04:50:00Z" }), TODAY, Date.parse("2026-11-11T05:00:00Z"));
   expect(night.today).toMatchObject({ code: 0, sky: "night" });
 });
 
 test("a reading 4 hours old, or none, leaves today's forecast sky", () => {
-  expect(forecastCard(foggy({ code: 0, sampled_at: "2026-11-10T14:00:00Z" }), TODAY, NOW).today).toMatchObject({ code: 45, sky: "forecast" });
+  expect(forecastCard(foggy({ ...sample(0, 0), sampled_at: "2026-11-10T14:00:00Z" }), TODAY, NOW).today).toMatchObject({ code: 45, sky: "forecast" });
   expect(forecastCard(foggy(null), TODAY, NOW).today).toMatchObject({ code: 45, sky: "forecast" });
 });
 
@@ -129,4 +137,24 @@ test("past the last forecast hour the day isn't over until the sun has set", () 
   const rows = NOV_8.map(([hour, wm2, made]): (typeof NOV_8)[number] => [hour, hour === 16 ? 0 : wm2, hour === 14 || hour === 15 ? 500 : made]).filter(([hour]) => hour !== 16);
   expect(byHour("2026-11-11T00:05:00Z", 30, rows)!.byNow).toMatchObject({ over: false });
   expect(byHour("2026-11-11T01:30:00Z", 30, rows)!.byNow).toMatchObject({ over: true });
+});
+
+// solar-forecast, "The sky now": the sky the Distribution scene draws, the airport's low cloud over the model's.
+const sample = (code: number, low: number, airport: number | null = null) =>
+  ({ code, cloud_cover: low, cloud_cover_low: low, cloud_cover_mid: 0, cloud_cover_high: 0, airport_low: airport, airport_mid: airport === null ? null : 0 });
+
+test("the observed sky's code follows its cover: under 25% sunny, under 75% partly cloudy, then cloudy", () => {
+  expect(observedCode(sample(1, 21, 0))).toBe(0);
+  expect(observedCode(sample(1, 21, 44))).toBe(2);
+  expect(observedCode(sample(3, 90, 75))).toBe(3);
+  expect(observedCode(sample(3, 90, 100))).toBe(3);
+  expect(observedCode(sample(1, 21))).toBe(0);
+  expect(observedCode(sample(1, 27))).toBe(2);
+});
+
+test("fog needs an overcast low sky; rain keeps its code", () => {
+  expect(observedCode(sample(45, 100))).toBe(45);
+  expect(observedCode(sample(45, 100, 0))).toBe(0);
+  expect(observedCode(sample(45, 100, 100))).toBe(45);
+  expect(observedCode(sample(61, 100, 44))).toBe(61);
 });

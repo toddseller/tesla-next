@@ -42,3 +42,7 @@ Alternative: keep the inline layout and nudge the square up (`relative -top-px`)
   - The labels and figures share the Powerwall part's middle (0 px apart) on both.
   - The pill is 409 px wide on both, with the same text, so " · " kept its spaces.
   - At 390 and 1280 px the live status still reads LIVE with the time and PW 100% · STANDBY alone.
+
+## Rollout
+
+- **Release v2026.11.11.5, 2026-11-11:** PR #46 merged, and the Deploy run passed in about 2.5 minutes. On teslasolar.report at 10:06 AM PST, at 1366 px and 4x, the dot and both squares sit 0.25 px from their text's middle, and the pill is 409 px wide (SOLAR 5.1 kW · HOME 1.2 kW · PW 100% · STANDBY). A zoomed screenshot shows the squares level with SOLAR and HOME. At 390 and 1280 px the bar shows the Powerwall part alone.
