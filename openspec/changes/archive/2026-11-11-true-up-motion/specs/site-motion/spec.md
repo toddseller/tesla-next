@@ -63,7 +63,7 @@ On the True-Up Tracker's first view, the Payback card's timeline SHALL show only
 ## MODIFIED Requirements
 
 ### Requirement: Charts draw in when the view changes
-A chart SHALL draw in when its page is first viewed and when the viewer changes what it shows: a range, a preset or a day. Impact's rings, Solar offset bars and each car's split SHALL draw in on first view only, a car new to the range as it first shows, and move to a new range's figures. Columns SHALL rise from the zero line, horizontal bars SHALL uncover from their left end, a stacked bar SHALL grow as one piece, rings SHALL sweep round from the top and dots SHALL fade and grow in. Each SHALL take 450 ms, easing out, with each item starting 15 ms after the one before, no later than 200 ms.
+A chart SHALL draw in when its page is first viewed and when the viewer changes what it shows: a range, a preset or a day; Impact's charts instead move to a new range's figures. Columns SHALL rise from the zero line, horizontal bars SHALL uncover from their left end, a stacked bar SHALL grow as one piece, rings SHALL sweep round from the top and dots SHALL fade and grow in. Each SHALL take 450 ms, easing out, with each item starting 15 ms after the one before, no later than 200 ms.
 
 #### Scenario: Opening the Solar page
 - **WHEN** a viewer opens the Solar page on "This week"
@@ -80,6 +80,10 @@ A chart SHALL draw in when its page is first viewed and when the viewer changes 
 #### Scenario: Impact's ring on another range
 - **WHEN** the viewer picks another range on the Impact page
 - **THEN** neither ring sweeps again; their slices move to the new shares, Solar offset's bars move to their new lengths, and each car's split moves its sources to their new stretches
+
+#### Scenario: A car new to the range
+- **WHEN** another range on the Impact page charged a car the last range didn't
+- **THEN** that car's split uncovers from its left end as it first shows, while the other cars' splits move
 
 #### Scenario: Many columns
 - **WHEN** a range chart draws 31 columns
