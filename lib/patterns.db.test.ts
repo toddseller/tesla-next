@@ -1,6 +1,6 @@
 // patterns() (patterns-page spec): the always-on load by month, the Powerwalls' energy by year and the house's use by month and hour, against a database of its own.
 import type { Client } from "pg";
-import { afterAll, beforeAll, expect, test, vi } from "vitest";
+import { afterAll, beforeAll, beforeEach, expect, test, vi } from "vitest";
 
 import { ownDatabase, putInterval } from "@/test/true-up";
 
@@ -27,6 +27,9 @@ beforeAll(async () => {
   owner = await ownDatabase("tsr_patterns");
   ({ patterns } = await import("./patterns"));
 });
+
+// Each test changes stored days the last one's kept months would otherwise still hold.
+beforeEach(() => globalThis.patternsMonths?.clear());
 
 afterAll(async () => {
   await owner.end();
@@ -82,6 +85,56 @@ test("each month's house use by site-time hour, from every source, over this mon
     { month: "2026-09", hour: 0, watts: 2400 },
     { month: "2026-09", hour: 13, watts: 1800 },
   ]);
+});
+
+// November 10's split is November 1, the month holding yesterday: October is kept, November worked out each visit.
+test("figures on both sides of the split come out as one history, the split year's energy added up", async () => {
+  await owner.query("DELETE FROM energy_interval");
+  await night("2026-10-30", 60);
+  await night("2026-10-31", 70);
+  await night("2026-11-02", 80);
+  await putInterval(owner, "2026-02-01 18:00", { battery_exported_wh: 1000, battery_imported_from_solar_wh: 1200 });
+  await putInterval(owner, "2026-10-15 18:00", { battery_exported_wh: 2000, battery_imported_from_grid_wh: 300 });
+  await putInterval(owner, "2026-11-05 18:00", { battery_exported_wh: 500, battery_imported_from_solar_wh: 700, house_from_grid_wh: 50 });
+
+  const { months, years, hours } = await patterns(TODAY);
+  expect(months).toEqual([{ month: "2026-10", watts: 720 }, { month: "2026-11", watts: 960 }]);
+  expect(years).toEqual([{ year: 2026, out_wh: 3500, in_wh: 2200, first_day: "2026-02-01" }]);
+  expect(hours).toContainEqual({ month: "2026-11", hour: 18, watts: 600 });
+  expect(hours.filter((h) => h.month === "2026-10").map((h) => h.hour)).toEqual([1, 2, 3, 4, 18]);
+});
+
+test("on the 1st, the month just ended is still worked out with its last day", async () => {
+  await owner.query("DELETE FROM energy_interval");
+  await night("2026-10-31", 70);
+  await patterns("2026-11-01");
+  // anton finishes October 31 after midnight: its lowest interval moves.
+  await owner.query("UPDATE energy_interval SET house_from_grid_wh = 10, house_from_battery_wh = 0 WHERE day = '2026-10-31' AND house_from_battery_wh > 0");
+  expect((await patterns("2026-11-01")).months).toEqual([{ month: "2026-10", watts: 120 }]);
+});
+
+test("finished months are kept, so a later change to one shows only once they're forgotten, while this month's always does", async () => {
+  await owner.query("DELETE FROM energy_interval");
+  await night("2026-10-30", 60);
+  await night("2026-11-02", 80);
+  await patterns(TODAY);
+  await owner.query("UPDATE energy_interval SET house_from_battery_wh = 0, house_from_grid_wh = 5 WHERE house_from_battery_wh > 0");
+  expect((await patterns(TODAY)).months).toEqual([{ month: "2026-10", watts: 720 }, { month: "2026-11", watts: 60 }]);
+  globalThis.patternsMonths!.clear();
+  expect((await patterns(TODAY)).months).toEqual([{ month: "2026-10", watts: 60 }, { month: "2026-11", watts: 60 }]);
+});
+
+test("a new month's split replaces the kept months rather than adding to them", async () => {
+  await patterns(TODAY);
+  await patterns("2026-12-10");
+  expect([...globalThis.patternsMonths!.keys()]).toEqual(["2025-01-01..2026-12-01"]);
+});
+
+test("on the 1st the hour grid's window moves on though the split doesn't, so the kept months don't carry its oldest month", async () => {
+  await owner.query("DELETE FROM energy_interval");
+  await putInterval(owner, "2024-12-15 12:00", { house_from_grid_wh: 100 });
+  await patterns("2026-11-30");
+  expect((await patterns("2026-12-01")).hours.map((h) => h.month)).not.toContain("2024-12");
 });
 
 test("an empty table gives no months, no years and no hours", async () => {

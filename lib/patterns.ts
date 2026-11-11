@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { shiftDay } from "@/lib/scene/replay";
 
 export type MonthLoad = { month: string; watts: number };
 export type PowerwallYear = { year: number; out_wh: number; in_wh: number; first_day: string };
@@ -11,7 +12,8 @@ const shift = (month: string, by: number) => new Date(Date.UTC(+month.slice(0, 4
 // The session runs in UTC, so every hour, day and year is taken in site time.
 const SITE = "'America/Los_Angeles'";
 
-export async function patterns(today: string): Promise<Patterns> {
+// The three figures from days `from` up to `to`; the hour grid only from `hoursFrom`.
+async function between(from: string, to: string, hoursFrom: string): Promise<Patterns> {
   const [months, years, hours] = await Promise.all([
     // A night's intervals start 1:00 to 4:55 AM, Wh in 5 minutes x 12 is watts, and percentile_disc takes the lower
     // middle of an even count.
@@ -19,23 +21,62 @@ export async function patterns(today: string): Promise<Patterns> {
       `SELECT to_char(day, 'YYYY-MM') AS month, percentile_disc(0.5) WITHIN GROUP (ORDER BY watts) AS watts
        FROM (SELECT day, min(house_from_grid_wh + house_from_solar_wh + house_from_battery_wh) * 12 AS watts
              FROM energy_interval
-             WHERE extract(hour FROM start_at AT TIME ZONE ${SITE}) BETWEEN 1 AND 4
+             WHERE day >= $1 AND day < $2 AND extract(hour FROM start_at AT TIME ZONE ${SITE}) BETWEEN 1 AND 4
              GROUP BY day HAVING count(*) >= 40) nights
        GROUP BY 1 ORDER BY 1`,
+      [from, to],
     ),
     db.query<PowerwallYear>(
       `SELECT extract(year FROM day)::int AS year, sum(battery_exported_wh)::float8 AS out_wh,
          sum(battery_imported_from_grid_wh + battery_imported_from_solar_wh)::float8 AS in_wh, min(day)::text AS first_day
-       FROM energy_interval GROUP BY 1 ORDER BY 1`,
+       FROM energy_interval WHERE day >= $1 AND day < $2 GROUP BY 1 ORDER BY 1`,
+      [from, to],
     ),
     db.query<HourLoad>(
       `SELECT to_char(day, 'YYYY-MM') AS month, extract(hour FROM start_at AT TIME ZONE ${SITE})::int AS hour,
          round(avg(house_from_grid_wh + house_from_solar_wh + house_from_battery_wh) * 12)::int AS watts
-       FROM energy_interval WHERE day >= $1 GROUP BY 1, 2 ORDER BY 1, 2`,
-      [`${shift(today.slice(0, 7), -23)}-01`],
+       FROM energy_interval WHERE day >= $1 AND day < $2 GROUP BY 1, 2 ORDER BY 1, 2`,
+      [hoursFrom, to],
     ),
   ]);
   return { months: months.rows, years: years.rows, hours: hours.rows };
+}
+
+// The split year falls on both sides, so its two parts add up.
+function joinYears(kept: PowerwallYear[], live: PowerwallYear[]) {
+  const last = kept.at(-1);
+  const first = live[0];
+  if (!last || !first || last.year !== first.year) return [...kept, ...live];
+  const year = { year: last.year, out_wh: last.out_wh + first.out_wh, in_wh: last.in_wh + first.in_wh, first_day: last.first_day };
+  return [...kept.slice(0, -1), year, ...live.slice(1)];
+}
+
+const EVER = "1970-01-01";
+const NEVER = "9999-12-31";
+
+declare global {
+  var patternsMonths: Map<string, Patterns> | undefined;
+}
+// A finished month's figures change only when anton rewrites stored days, which empties this (instrumentation.ts).
+const keptMonths = (globalThis.patternsMonths ??= new Map());
+
+// Keyed by the hour grid's window too: on the 1st the window moves on a month while the split stays.
+async function keptBefore(split: string, window: string) {
+  const key = `${window}..${split}`;
+  const kept = keptMonths.get(key);
+  if (kept) return kept;
+  const worked = await between(EVER, split, window);
+  keptMonths.clear();
+  keptMonths.set(key, worked);
+  return worked;
+}
+
+export async function patterns(today: string): Promise<Patterns> {
+  // Months before the one holding yesterday are finished; yesterday's last intervals arrive after midnight.
+  const split = `${shiftDay(today, -1).slice(0, 7)}-01`;
+  const window = `${shift(today.slice(0, 7), -23)}-01`;
+  const [kept, live] = await Promise.all([keptBefore(split, window), between(split, NEVER, split > window ? split : window)]);
+  return { months: [...kept.months, ...live.months], years: joinYears(kept.years, live.years), hours: [...kept.hours, ...live.hours] };
 }
 
 const monthName = (month: string) => new Date(`${month}-01T00:00:00Z`).toLocaleString("en-US", { month: "long", timeZone: "UTC" });

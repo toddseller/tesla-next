@@ -20,6 +20,7 @@ vi.mock("pg", async (importOriginal) => {
 let live: typeof import("./live");
 const liveModule = () => live;
 let owner: Client;
+const rewrites: number[] = [];
 
 const notify = (payload: string, channel = "live_status") => owner.query("SELECT pg_notify($1, $2)", [channel, payload]);
 
@@ -41,6 +42,8 @@ beforeAll(async () => {
   owner = await ownDatabase("tsr_live");
   await owner.query("INSERT INTO site_state VALUES ('2026-11-09 08:36:41-08', '2026-11-09 08:37:45-08', 'off_grid_intentional', false), ('2026-11-09 17:15:21Z', NULL, 'on_grid', false)");
   live = await import("./live");
+  // Registered before the listener starts, so the first connect is seen too.
+  live.onRewrite(() => rewrites.push(Date.now()));
   live.startListening();
 });
 
@@ -76,6 +79,26 @@ async function killListener() {
     vi.useRealTimers();
   }
 }
+
+test("the first connect calls no rewrite hook, as nothing is kept yet", async () => {
+  await until(() => live.siteState() !== null, "the first connect");
+  expect(rewrites).toEqual([]);
+});
+
+test("a data_rewritten notice calls the rewrite hooks and reaches no subscriber", async () => {
+  const channels: string[] = [];
+  const unsubscribe = live.subscribe((_, channel) => channels.push(channel));
+  const before = rewrites.length;
+  await until(() => rewrites.length > before, "the rewrite hook", 10_000, async () => {
+    await notify('{"script":"backfill_intervals","start":"2026-04-01","end":"2026-04-30"}', "data_rewritten");
+  });
+  const received: string[] = [];
+  const unsubscribeStatus = live.subscribe((payload) => received.push(payload));
+  await deliver('{"after":"rewrite"}', received);
+  unsubscribe();
+  unsubscribeStatus();
+  expect(channels).not.toContain("data_rewritten");
+});
 
 test("the open site-state stretch is read when the listener starts", async () => {
   await until(() => live.siteState() === OPEN, "reading the open stretch");
@@ -179,7 +202,8 @@ test("updated totals reach subscribers by their own name, and aren't the latest 
   unsubscribe();
 });
 
-test("reconnects after a minute without a live status, as a dead connection never reports itself", async () => {
+test("reconnects after a minute without a live status, as a dead connection never reports itself, but calls no rewrite hook", async () => {
+  const rewritesBefore = rewrites.length;
   const received: string[] = [];
   const unsubscribe = liveModule().subscribe((payload) => received.push(payload));
   const before = await listener();
@@ -198,6 +222,9 @@ test("reconnects after a minute without a live status, as a dead connection neve
   }
   await deliver('{"solar_power":5.2}', received);
   unsubscribe();
+  // anton goes quiet when Tesla's API fails, and quiet is when it sends no notices; refilling every minute would load
+  // the database for nothing.
+  expect(rewrites.length).toBe(rewritesBefore);
 }, 30_000);
 
 test("after a reconnect the open stretch is read again and sent on, as a change may have been missed", async () => {
@@ -210,4 +237,10 @@ test("after a reconnect the open stretch is read again and sent on, as a change 
   await killListener();
   await until(() => received.includes(OPEN), "the stretch after the reconnect");
   unsubscribe();
+});
+
+test("a reconnect calls the rewrite hooks once listening again, as a notice may have been missed", async () => {
+  const before = rewrites.length;
+  await killListener();
+  await until(() => rewrites.length === before + 1, "the hook after the reconnect");
 });

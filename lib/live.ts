@@ -4,7 +4,10 @@ import { connection, db } from "./db";
 // anton-tesla-api-ws's scheduler notifies each live status (poll_live) about every 10 seconds, each day whose totals it
 // stores, each refresh that changes the outages, and each change in the site's state stretches it stores.
 const LIVE = "live_status";
-const CHANNELS = [LIVE, "totals_updated", "outages_updated", "site_state_updated"];
+// anton's scripts notify each run that rewrites stored data; the server's kept figures follow it, but pages never see it,
+// as /api/live would forward it as a live status.
+const REWRITE = "data_rewritten";
+const CHANNELS = [LIVE, "totals_updated", "outages_updated", "site_state_updated", REWRITE];
 const RETRY_MS = 5000;
 // A connection that dies without a word (the database host losing power, a network drop) never errors, and pg turns
 // TCP keep-alive off, so a minute without a live status, six of anton's polls, counts as lost.
@@ -13,7 +16,7 @@ const SILENCE_MS = 60_000;
 type Listener = (payload: string, channel: string) => void;
 
 // `current` is the notification's JSON text, so streams forward it byte for byte; `site` is the open state stretch.
-type State = { current: string | null; site: string | null; subscribers: Set<Listener>; started: boolean };
+type State = { current: string | null; site: string | null; subscribers: Set<Listener>; started: boolean; rewriteHooks: Set<() => void>; connected: boolean; broken: boolean };
 
 declare global {
   var liveStatus: State | undefined;
@@ -21,7 +24,7 @@ declare global {
 
 // Next.js gives instrumentation, pages and route handlers each their own copy of this module, so the state lives on
 // globalThis: the listener instrumentation starts is the one pages and streams read.
-const state = (globalThis.liveStatus ??= { current: null, site: null, subscribers: new Set(), started: false });
+const state = (globalThis.liveStatus ??= { current: null, site: null, subscribers: new Set(), started: false, rewriteHooks: new Set(), connected: false, broken: false });
 
 export const latest = () => state.current;
 export const siteState = () => state.site;
@@ -38,6 +41,14 @@ async function readSite() {
 const send = (payload: string, channel: string) => {
   for (const listener of state.subscribers) listener(payload, channel);
 };
+
+const rewritten = () => {
+  for (const hook of state.rewriteHooks) hook();
+};
+
+export function onRewrite(hook: () => void) {
+  state.rewriteHooks.add(hook);
+}
 
 export function subscribe(listener: Listener) {
   state.subscribers.add(listener);
@@ -57,9 +68,12 @@ async function listen() {
   const client = new Client(connection);
   let lost = false;
   let watchdog: ReturnType<typeof setTimeout> | undefined;
-  const retry = (error?: Error) => {
+  const retry = (error?: Error, silent = false) => {
     if (lost) return;
     lost = true;
+    // A broken connection may have missed a notice; one anton merely went quiet on (Tesla failing, its worker down)
+    // can't have, and treating it as a rewrite would refill every cache each minute of the outage.
+    if (!silent) state.broken = true;
     clearTimeout(watchdog);
     console.error("live status listener lost:", error?.message ?? "connection ended");
     client.end().catch(() => {});
@@ -67,7 +81,7 @@ async function listen() {
   };
   const watch = () => {
     clearTimeout(watchdog);
-    watchdog = setTimeout(() => retry(new Error("no live status for a minute")), SILENCE_MS);
+    watchdog = setTimeout(() => retry(new Error("no live status for a minute"), true), SILENCE_MS);
   };
   client.on("error", retry);
   client.on("end", () => retry());
@@ -76,6 +90,10 @@ async function listen() {
     if (channel === LIVE) {
       state.current = payload;
       watch();
+    }
+    if (channel === REWRITE) {
+      rewritten();
+      return;
     }
     if (channel === "site_state_updated") {
       readSite().then((site) => send(String(site), channel), (error) => console.error("site state read failed:", error.message));
@@ -87,6 +105,10 @@ async function listen() {
     await client.connect();
     await client.query(CHANNELS.map((channel) => `LISTEN ${channel}`).join("; "));
     watch();
+    // A notice sent while the connection was broken is lost, so that reconnect counts as a rewrite.
+    if (state.connected && state.broken) rewritten();
+    state.connected = true;
+    state.broken = false;
     // Also after a reconnect, and sent on, so a change notified while the connection was down isn't missed.
     await readSite().then((site) => send(String(site), "site_state_updated"), (error) => console.error("site state read failed:", error.message));
   } catch (error) {
