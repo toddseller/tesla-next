@@ -27,8 +27,8 @@
 
 ## 6. Rollout
 
-- [ ] 6.1 With the owner's go-ahead, release; the deploy's health check passes, and teslasolar.report's April 16, 2026 Solar view shows the expected line and "of 64 kWh expected (40%)"
-- [ ] 6.2 With the owner's go-ahead, send one test alert through `deploy/pushover` on onyx with a failing solar peak line and its link, and check on the phone that the link opens April 16's day view; record in design.md under Rollout, and if it isn't tappable, note it for a follow-up that passes Pushover's `url` field
+- [x] 6.1 With the owner's go-ahead, release; the deploy's health check passes, and teslasolar.report's April 16, 2026 Solar view shows the expected line and "of 64 kWh expected (40%)"
+- [x] 6.2 With the owner's go-ahead, send one test alert through `deploy/pushover` on onyx with a failing solar peak line and its link, and check on the phone that the link opens April 16's day view; record in design.md under Rollout, and if it isn't tappable, note it for a follow-up that passes Pushover's `url` field
 
 ## Workflow follow-up
 
