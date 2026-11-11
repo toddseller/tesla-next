@@ -44,7 +44,7 @@
 
 ## 5. Rollout
 
-- [ ] 5.1 Release (ask first); the deploy's health check passes, and teslasolar.report on a phone shows the page menu and the presets menus as in 4.2; record in design.md under Rollout
+- [x] 5.1 Release (ask first); the deploy's health check passes, and teslasolar.report on a phone shows the page menu and the presets menus as in 4.2; record in design.md under Rollout
 
 ## Workflow follow-up
 
