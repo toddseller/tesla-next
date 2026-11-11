@@ -9,16 +9,12 @@ import { toDate, toDay } from "@/lib/calendar-dates";
 import { FIRST_DAY } from "@/lib/scene/replay";
 import { datesLabel, type Preset, type Range } from "@/lib/solar/ranges";
 
-// Two years from the viewer's own today keeps inside the API's 732 days even when their clock is a day ahead of the site's.
-const lastPickable = () => {
-  const now = new Date();
-  return new Date(now.getFullYear() + 2, now.getMonth(), now.getDate());
-};
-
 const holds = (preset: Preset, range: Range) => preset.range.start === range.start && preset.range.end === range.end;
 
+const SELECTED = "bg-secondary text-white shadow-[inset_0_-2px_0_var(--primary)]";
+
 export const presetStyle = (selected: boolean) =>
-  `min-h-10 whitespace-nowrap rounded-md px-3.5 text-sm font-medium ${selected ? "bg-secondary text-white shadow-[inset_0_-2px_0_var(--primary)]" : "text-muted-foreground hover:text-foreground"}`;
+  `min-h-10 whitespace-nowrap rounded-md px-3.5 text-sm font-medium ${selected ? SELECTED : "text-muted-foreground hover:text-foreground"}`;
 
 type Menu = { label: string; empty: string; items: Preset[]; range: Range; onRange: (range: Range) => void; phone?: boolean };
 
@@ -75,10 +71,15 @@ export function PresetGroup({ label, range, presets, earlier, onRange }: Group) 
   );
 }
 
-export function RangeControls({ range, presets, earlier, onRange }: { range: Range; presets: Preset[]; earlier?: Preset[]; onRange: (range: Range) => void }) {
+type Controls = { today: string; range: Range; presets: Preset[]; earlier?: Preset[]; onRange: (range: Range) => void };
+
+export function RangeControls({ today, range, presets, earlier, onRange }: Controls) {
   const [open, setOpen] = useState(false);
   const [first, setFirst] = useState<string | null>(null);
+  const [months, setMonths] = useState(1);
   const onOpen = (value: boolean) => {
+    // Read on opening, so the server's render never depends on the window's width.
+    if (value) setMonths(typeof matchMedia === "function" && matchMedia("(min-width: 640px)").matches ? 2 : 1);
     setOpen(value);
     setFirst(null);
   };
@@ -89,25 +90,36 @@ export function RangeControls({ range, presets, earlier, onRange }: { range: Ran
     onOpen(false);
   };
   const shown = first ? { from: toDate(first), to: toDate(first) } : { from: toDate(range.start), to: toDate(range.end) };
+  const name = `Choose dates, ${datesLabel(range, "short")}`;
+  const custom = ![...presets, ...(earlier ?? [])].some((preset) => holds(preset, range));
+  const end = toDate(range.end);
   return (
     <div className="flex flex-wrap items-center gap-2 max-sm:w-full">
       <PresetGroup label="Preset ranges" range={range} presets={presets} earlier={earlier} onRange={onRange} />
       <Popover open={open} onOpenChange={onOpen}>
         <PopoverTrigger asChild>
-          <button type="button" aria-label="Choose dates"
-            className="flex min-h-11 items-center justify-center gap-2 rounded-lg border border-input bg-card px-3.5 font-mono text-sm whitespace-nowrap max-sm:flex-1">
+          <button type="button" aria-label={name} title={name}
+            className={`flex size-11 shrink-0 items-center justify-center rounded-lg border border-input ${custom ? SELECTED : "bg-card"}`}>
             <CalendarDays size={16} aria-hidden />
-            {datesLabel(range, "short")}
           </button>
         </PopoverTrigger>
         <PopoverContent className="w-auto p-0" align="end">
           <Calendar
             mode="range"
             selected={shown}
-            defaultMonth={toDate(range.start)}
-            disabled={{ before: toDate(FIRST_DAY), after: lastPickable() }}
-            onDayClick={pick}
+            numberOfMonths={months}
+            // The calendar pulls this back within startMonth and endMonth, so a range ending past today opens on today's month.
+            defaultMonth={new Date(end.getFullYear(), end.getMonth() - months + 1)}
+            today={toDate(today)}
+            disabled={{ before: toDate(FIRST_DAY), after: toDate(today) }}
+            startMonth={toDate(FIRST_DAY)}
+            endMonth={toDate(today)}
+            // Days after today inside a preset's range keep its fill, so the range reads as running to its end.
+            classNames={{ disabled: "text-muted-foreground opacity-50 data-[selected=true]:opacity-100 data-[selected=true]:[&>button]:opacity-100! [&>button]:text-muted-foreground/70!" }}
+            // onSelect makes `selected` controlled; without it the calendar keeps its own range and redraws it on each click.
+            onSelect={(_, day) => pick(day)}
           />
+          <p aria-live="polite" className="px-4 pb-3 text-[13px] text-muted-foreground">{first ? "Pick an end day" : "Pick a start day"}</p>
         </PopoverContent>
       </Popover>
     </div>
