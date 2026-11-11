@@ -15,7 +15,7 @@ const hourOf = new Intl.DateTimeFormat("en-US", { hour: "numeric", timeZone: TIM
 const onDay = (day: string, options: Intl.DateTimeFormatOptions) =>
   new Date(`${day}T12:00:00Z`).toLocaleString("en-US", { ...options, timeZone: "UTC" });
 // The share of the track the fill leaves covered, so the fill moves by its clip and nothing around it shifts.
-const hidden = (part: number, whole: number | null) => (whole ? `${Math.round((1 - Math.min(1, part / whole)) * 1000) / 10}%` : "100%");
+export const hidden = (part: number, whole: number | null) => (whole ? `${Math.round((1 - Math.min(1, part / whole)) * 1000) / 10}%` : "100%");
 
 // `estimate`: the track is what was expected, so it draws first and the fill grows into it from halfway.
 function Bar({ label, part, whole, estimate = false }: { label: string; part: number; whole: number | null; estimate?: boolean }) {
@@ -24,7 +24,7 @@ function Bar({ label, part, whole, estimate = false }: { label: string; part: nu
   const fill = entering ? (estimate ? "motion-uncover motion-second" : "motion-uncover") : "";
   return (
     <div role="img" aria-label={label} className={`h-2 overflow-hidden rounded bg-border ${track}`}>
-      <div className={`motion-tween h-full rounded bg-solar ${fill}`} style={{ clipPath: `inset(0 ${hidden(part, whole)} 0 0 round 4px)` }} />
+      <div className={`motion-tween h-full rounded bg-solar ${fill}`} style={{ "--hidden": hidden(part, whole), clipPath: `inset(0 ${hidden(part, whole)} 0 0 round 4px)` } as CSSProperties} />
     </div>
   );
 }

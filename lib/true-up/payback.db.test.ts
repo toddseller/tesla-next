@@ -45,7 +45,7 @@ test("without a costs file there is no payback", async () => {
   expect(await payback("2026-11-09")).toBeNull();
 });
 
-test("with one, only years and markers leave: solar, solar for the whole system, the Powerwalls, and their outage record", async () => {
+test("with one, only years, markers and solar's month leave: solar, solar for the whole system, the Powerwalls, and their outage record", async () => {
   vi.stubEnv("SYSTEM_COSTS_FILE", costsFile());
   const answer = (await payback("2026-11-09"))!;
   expect(Object.keys(answer).sort()).toEqual(["outages", "powerwalls", "solar", "system"]);
@@ -53,7 +53,9 @@ test("with one, only years and markers leave: solar, solar for the whole system,
   expect(answer.system).toMatchObject({ estimated: true });
   expect(answer.powerwalls).toEqual({ year: null, wont: true });
   expect(answer.outages).toEqual({ count: 0, seconds: 0, longest_seconds: null });
-  for (const part of [answer.solar, answer.system]) expect(Object.keys(part).sort()).toEqual(["estimated", "projected", "year"]);
+  expect(Object.keys(answer.solar).sort()).toEqual(["estimated", "month", "projected", "year"]);
+  expect(answer.solar.month).toEqual(answer.solar.projected ? null : expect.stringMatching(/^\d{4}-\d{2}$/));
+  expect(Object.keys(answer.system).sort()).toEqual(["estimated", "projected", "year"]);
   // No cost, net cost or amount left: the placeholder costs' figures never appear in the answer.
   expect(JSON.stringify(answer)).not.toMatch(/25000|20000|3000|19733|15786/);
 });

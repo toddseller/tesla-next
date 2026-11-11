@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 
+import { FirstView } from "@/components/count-up";
 import { RangeControls } from "@/components/solar/range-controls";
 import { useReload } from "@/components/solar/use-reload";
 import { CycleChart } from "@/components/true-up/cycle-chart";
@@ -9,6 +10,7 @@ import { CycleList, MeteringNote } from "@/components/true-up/cycle-list";
 import { PaybackCard } from "@/components/true-up/payback-card";
 import { SavingsCard } from "@/components/true-up/savings-card";
 import { Tiles } from "@/components/true-up/tiles";
+import { ENTER_MS, useEntering } from "@/components/use-entering";
 import { useLiveStream } from "@/components/use-live-stream";
 import { siteToday } from "@/lib/scene/replay";
 import { datesLabel, type Range, rangeIncludes, trueUpPresets } from "@/lib/solar/ranges";
@@ -54,27 +56,31 @@ export function TrueUpPage({ range, years, cycles: served, cost: servedCost, sav
   });
   const { presets, earlier } = trueUpPresets(years);
 
+  // Figures count up only while the page is first seen; a new range's tiles are new, but this isn't a first view.
+  const firstView = useEntering(ENTER_MS);
   return (
-    <div className="flex flex-col gap-5">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex flex-col gap-0.5">
-          <h1 className="text-[22px] font-semibold">True-Up Tracker</h1>
-          <p className="text-sm text-muted-foreground">Grid energy by PG&amp;E billing cycle</p>
+    <FirstView value={firstView}>
+      <div className="flex flex-col gap-5">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex flex-col gap-0.5">
+            <h1 className="text-[22px] font-semibold">True-Up Tracker</h1>
+            <p className="text-sm text-muted-foreground">Grid energy by PG&amp;E billing cycle</p>
+          </div>
+          <RangeControls range={range} presets={presets} earlier={earlier} onRange={(next) => router.push(address(next))} />
         </div>
-        <RangeControls range={range} presets={presets} earlier={earlier} onRange={(next) => router.push(address(next))} />
+        <Tiles cycles={cycles} cost={year && cost} year={year} today={today} />
+        <MeteringNote cycles={cycles} />
+        {year && savings && <SavingsCard savings={savings} season={cost?.vpp ?? null} current={year.current} />}
+        {payback && <PaybackCard payback={payback} today={today} />}
+        <section aria-labelledby="cycle-chart" className="flex flex-col gap-3.5 rounded-[10px] border bg-card px-4 py-5 sm:px-6">
+          <h2 id="cycle-chart" className="font-semibold">{year ? yearName(year.label) : datesLabel(range, "short")} by billing cycle</h2>
+          <CycleChart cycles={cycles} cost={year && cost} oneYear={Boolean(year)} />
+        </section>
+        <section aria-labelledby="cycle-list" className="flex flex-col gap-3 rounded-[10px] border bg-card px-4 py-5 sm:px-6">
+          <h2 id="cycle-list" className="font-semibold">Billing cycles</h2>
+          <CycleList cycles={cycles} />
+        </section>
       </div>
-      <Tiles cycles={cycles} cost={year && cost} year={year} today={today} />
-      <MeteringNote cycles={cycles} />
-      {year && savings && <SavingsCard savings={savings} season={cost?.vpp ?? null} current={year.current} />}
-      {payback && <PaybackCard payback={payback} today={today} />}
-      <section aria-labelledby="cycle-chart" className="flex flex-col gap-3.5 rounded-[10px] border bg-card px-4 py-5 sm:px-6">
-        <h2 id="cycle-chart" className="font-semibold">{year ? yearName(year.label) : datesLabel(range, "short")} by billing cycle</h2>
-        <CycleChart cycles={cycles} cost={year && cost} oneYear={Boolean(year)} />
-      </section>
-      <section aria-labelledby="cycle-list" className="flex flex-col gap-3 rounded-[10px] border bg-card px-4 py-5 sm:px-6">
-        <h2 id="cycle-list" className="font-semibold">Billing cycles</h2>
-        <CycleList cycles={cycles} />
-      </section>
-    </div>
+    </FirstView>
   );
 }

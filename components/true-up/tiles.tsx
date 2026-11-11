@@ -1,5 +1,7 @@
 import { type ReactNode, useId } from "react";
 
+import { CountUp } from "@/components/count-up";
+
 import type { TrueUpYear } from "@/lib/true-up/reads";
 import {
   billedText, chargesSoFarText, type Cost, type Cycle, kwh, netLabel, projectionText, startedCycles, type TileText, totals,
@@ -15,7 +17,7 @@ function Tile({ title, value, unit, children }: { title: string; value: string |
       <h2 id={id} className="text-sm font-medium text-muted-foreground">{title}</h2>
       {value && (
         <p className="flex flex-wrap items-baseline gap-2">
-          <span className="font-mono text-[34px] leading-none font-semibold">{value}</span>
+          <span className="font-mono text-[34px] leading-none font-semibold"><CountUp text={value} /></span>
           {unit && <span className="text-sm text-muted-foreground">{unit}</span>}
         </p>
       )}

@@ -7,10 +7,11 @@ const TWEEN_MS = 400;
 const reducedMotion = () => typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 // The figure shown while `value` moves to a new one: from wherever it is now, easing out, so a change mid-way
-// doesn't jump back. The first render shows `value` itself, so the server's HTML and hydration agree.
-export function useTween(value: number) {
-  const [shown, setShown] = useState(value);
-  const at = useRef(value);
+// doesn't jump back. The first render shows `from`, `value` itself unless a count from elsewhere is asked for, so the
+// server's HTML and hydration agree.
+export function useTween(value: number, from = value) {
+  const [shown, setShown] = useState(from);
+  const at = useRef(from);
   useEffect(() => {
     if (reducedMotion()) {
       at.current = value;

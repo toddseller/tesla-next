@@ -1,6 +1,7 @@
 import type { CSSProperties } from "react";
 
 import { Rolling } from "@/components/rolling";
+import { hidden } from "@/components/solar/forecast";
 import { ENTER_MS, useEntering } from "@/components/use-entering";
 import type { ImpactFigures } from "@/lib/impact";
 
@@ -83,26 +84,32 @@ export function SolarOffset({ figures }: { figures: ImpactFigures }) {
     { label: "Solar", kwh: figures.total_solar, fill: "bg-solar" },
     { label: "Home", kwh: figures.total_house, fill: "bg-home" },
   ];
+  // Uncovers as it first shows; after that a bar moves by its clip from its old length to its new one.
+  const entering = useEntering(ENTER_MS);
   return (
     <section aria-labelledby="solar-offset" className="flex flex-col gap-5">
       <Title id="solar-offset" title="Solar offset" explanation="Solar generated against home use" />
       <p className="flex items-baseline gap-2.5">
-        <span className="font-mono text-[52px] font-semibold">{figures.total_solar_percentage}%</span>
+        <span className="font-mono text-[52px] font-semibold"><Rolling value={figures.total_solar_percentage} format={percentOf} /></span>
         <span className="text-muted-foreground">energy offset</span>
       </p>
       <div className="flex flex-col gap-4">
-        {bars.map(({ label, kwh, fill }, i) => (
+        {bars.map(({ label, kwh, fill }, i) => {
+          const covered = hidden(kwh, scale);
+          return (
           <div key={label} className="flex flex-col gap-1.5">
             <div className="flex justify-between text-sm" aria-hidden>
               <span>{label}</span>
-              <span className="font-mono">{energy(kwh)}</span>
+              <span className="font-mono"><Rolling value={kwh} format={energy} /></span>
             </div>
             <div role="meter" aria-label={label} aria-valuenow={kwh} aria-valuemin={0} aria-valuemax={scale} aria-valuetext={energy(kwh)}
               className="h-7 rounded-md bg-secondary">
-              <div className={`motion-uncover h-full rounded-md ${fill}`} style={{ width: `${scale ? (kwh / scale) * 100 : 0}%`, "--i": i } as CSSProperties} />
+              <div className={`motion-tween h-full rounded-md ${entering ? "motion-uncover" : ""} ${fill}`}
+                style={{ "--i": i, "--hidden": covered, clipPath: `inset(0 ${covered} 0 0 round 8px)` } as CSSProperties} />
             </div>
           </div>
-        ))}
+          );
+        })}
       </div>
     </section>
   );

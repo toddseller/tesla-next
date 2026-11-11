@@ -1,5 +1,7 @@
 import type { ReactNode } from "react";
 
+import { CountUp } from "@/components/count-up";
+
 import type { Savings } from "@/lib/true-up/savings";
 import { type Cost, savingsText } from "@/lib/true-up/text";
 
@@ -10,7 +12,7 @@ function Key({ swatch, label, value, children }: { swatch: string; label: string
     <div className="flex flex-col gap-1 sm:max-w-[420px]">
       <div className="flex flex-wrap items-baseline justify-between gap-x-3 sm:flex-col sm:gap-1">
         <span className="flex items-center gap-2 text-[13px] text-muted-foreground"><span aria-hidden className={`size-2.5 rounded-[3px] ${swatch}`} />{label}</span>
-        <span className="font-mono text-xl font-semibold">{value}</span>
+        <span className="font-mono text-xl font-semibold"><CountUp text={value} /></span>
       </div>
       {children && <p className="text-[13px] text-muted-foreground">{children}</p>}
     </div>
@@ -27,7 +29,7 @@ export function SavingsCard({ savings, season, current }: { savings: Savings; se
         <div className="flex flex-col gap-2">
           <h2 id="savings" className="text-sm font-medium text-muted-foreground">What the system saved</h2>
           <p className="flex flex-wrap items-baseline gap-2">
-            <span className="font-mono text-[34px] leading-none font-semibold">{text.saved}</span>
+            <span className="font-mono text-[34px] leading-none font-semibold"><CountUp text={text.saved} /></span>
             <span className="text-sm text-muted-foreground">{text.unit}</span>
           </p>
         </div>
@@ -45,7 +47,7 @@ export function SavingsCard({ savings, season, current }: { savings: Savings; se
           <span id="powerwalls" className="flex items-center gap-2 text-[13px] text-muted-foreground">
             <span aria-hidden className={`size-2.5 rounded-[3px] ${cost ? "ring-[1.5px] ring-powerwall ring-inset" : "bg-powerwall"}`} />Powerwalls
           </span>
-          <span className="font-mono text-xl font-semibold">{powerwalls.bill}</span>
+          <span className="font-mono text-xl font-semibold"><CountUp text={powerwalls.bill} /></span>
           {powerwalls.vpp && <p className="text-[13px] text-muted-foreground">{powerwalls.vpp}</p>}
           {!powerwalls.whatIf && powerwalls.nem2 && <p className="text-[13px] text-muted-foreground">{powerwalls.nem2}</p>}
         </div>
@@ -53,14 +55,14 @@ export function SavingsCard({ savings, season, current }: { savings: Savings; se
           {powerwalls.parts.map(([label, value]) => (
             <div key={label} className="flex items-baseline justify-between gap-3 sm:flex-col sm:gap-1">
               <span className="text-[13px] text-muted-foreground">{label}</span>
-              <span className="font-mono text-lg font-semibold">{value}</span>
+              <span className="font-mono text-lg font-semibold"><CountUp text={value} /></span>
             </div>
           ))}
         </div>
         {powerwalls.whatIf && (
           <div role="group" aria-label="What if (simulation)" className="flex flex-col gap-1.5 rounded-lg border border-dashed px-3.5 py-3">
             <span aria-hidden className="text-[13px] text-muted-foreground">What if (simulation)</span>
-            <span className="font-mono text-lg font-semibold">{powerwalls.whatIf.value}</span>
+            <span className="font-mono text-lg font-semibold"><CountUp text={powerwalls.whatIf.value} /></span>
             <p className="text-[13px] text-muted-foreground">{[powerwalls.whatIf.line, powerwalls.nem2].filter(Boolean).join(" ")}</p>
           </div>
         )}

@@ -45,7 +45,7 @@ const pressed = (name: string) => screen.getByRole("button", { name }).getAttrib
 const page = (range = THIS_YEAR, cycles = CURRENT, cost = CURRENT_COST, savings: typeof CURRENT_SAVINGS | null = CURRENT_SAVINGS, payback: Payback | null = null) =>
   <TrueUpPage range={range} years={YEARS} cycles={cycles} cost={cost} savings={savings} payback={payback} today="2026-11-08" />;
 const PAYBACK: Payback = {
-  solar: { year: 2025, projected: false, estimated: true }, system: { year: 2030, projected: true, estimated: true },
+  solar: { year: 2025, month: "2025-06", projected: false, estimated: true }, system: { year: 2030, projected: true, estimated: true },
   powerwalls: { year: null, wont: true }, outages: { count: 35, seconds: 564_840, longest_seconds: 188_172 },
 };
 const RELOADS = (range: { start: string; end: string }) =>
@@ -168,4 +168,15 @@ test("on All time, with no savings card, the Payback card follows the tiles and 
   const payback = screen.getByRole("region", { name: "Payback" });
   expect(screen.queryByRole("region", { name: "What the system saved" })).toBeNull();
   expect(follows(screen.getByRole("region", { name: /by billing cycle$/ }), payback)).toBe(true);
+});
+
+// site-motion, "True-Up's figures count up when first seen": a new range's tiles are new figures, but not a first view.
+test("figures count up on the page's first view, and not after a range change brings new tiles", () => {
+  vi.useFakeTimers({ toFake: ["Date", "setTimeout", "clearTimeout"] });
+  vi.setSystemTime(Date.parse("2026-11-08T20:00:00Z"));
+  const { rerender } = render(page());
+  expect(document.querySelectorAll("[data-part=counting]").length).toBeGreaterThan(0);
+  act(() => vi.advanceTimersByTime(1000));
+  rerender(page(YEAR_25, YEAR_25_26, COST_25_26, SAVINGS_25_26));
+  expect(document.querySelectorAll("[data-part=counting]").length).toBe(0);
 });

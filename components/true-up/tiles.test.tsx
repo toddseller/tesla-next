@@ -1,12 +1,18 @@
 // @vitest-environment jsdom
 // The true-up-tracker spec's tiles, on the current year's and '25 - '26's figures from mockup A.
 import { cleanup, render, screen, within } from "@testing-library/react";
-import { afterEach, expect, test } from "vitest";
+import { afterEach, beforeEach, expect, test, vi } from "vitest";
 
 import { COST_25_26, CURRENT, CURRENT_COST, NO_COST, YEAR_25_26, yearOf } from "@/components/true-up/fixtures";
 import { Tiles } from "@/components/true-up/tiles";
 
-afterEach(cleanup);
+// These tests read what the figures say; the count-up's own tests turn reduced motion off.
+const reduced = () => vi.stubGlobal("matchMedia", (query: string) => ({ matches: query.includes("reduce") }));
+beforeEach(reduced);
+afterEach(() => {
+  cleanup();
+  vi.unstubAllGlobals();
+});
 
 const TODAY = "2026-11-08";
 const titles = () => screen.getAllByRole("region").map((tile) => within(tile).getByRole("heading").textContent);
@@ -79,4 +85,13 @@ test("year names never break", () => {
   render(<Tiles cycles={CURRENT} cost={CURRENT_COST} year={yearOf(2027)} today={TODAY} />);
 
   expect(screen.getByRole("region", { name: "Projected true-up" }).textContent).toContain("'24 - '25");
+});
+
+// site-motion, "True-Up's figures count up when first seen".
+test("the tiles' values count up from zero when the page is first seen", () => {
+  vi.unstubAllGlobals();
+  render(<Tiles cycles={CURRENT} cost={CURRENT_COST} year={yearOf(2027)} today={TODAY} />);
+  const charges = screen.getByRole("region", { name: "Charges so far" });
+  expect(charges.querySelector("[data-part=counting]")!.textContent).toBe("$0.00");
+  expect(charges.querySelector("[data-part=final]")!.textContent).toBe("$106.46");
 });
