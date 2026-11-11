@@ -54,7 +54,7 @@
 
 ## 5. Rollout
 
-- [ ] 5.1 Release (ask first); the deploy's health check passes, and teslasolar.report's Impact page stays one row on All time at 1280 px with the icon and two-month picker; record in design.md under Rollout
+- [x] 5.1 Release (ask first); the deploy's health check passes, and teslasolar.report's Impact page stays one row on All time at 1280 px with the icon and two-month picker; record in design.md under Rollout
 
 ## Workflow follow-up
 
