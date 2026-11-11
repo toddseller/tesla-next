@@ -70,14 +70,34 @@ A forecast day's sky SHALL follow its daylight weather code, the most severe wea
 - **THEN** it reads Cloudy
 
 ### Requirement: The sky now
-Today's sky now SHALL use the sky's groups with "now" after them, and Fog for 45 and 48. Between sunset and sunrise it SHALL read Clear for 0 and Partly cloudy for 1 and 2, with moon icons.
+Today's sky now SHALL name the sky the Distribution scene draws from the latest reading, the airport's observed low cloud replacing the model's when present: under 25% cover Sunny now, under 75% Partly cloudy now, from 75% Cloudy now. A fog code SHALL read Fog now only at 100% cover; rain, snow and thunderstorm codes keep their groups with "now". Between sunset and sunrise Sunny SHALL read Clear, with moon icons.
+
+#### Scenario: The model's few clouds under the airport's clear sky
+- **WHEN** the latest reading, at 10 AM, has code 1 and 21% low cloud from the model, and the airport reports no low cloud
+- **THEN** today's tile reads Sunny now with the sun icon, as the Distribution page draws a clear sky
+
+#### Scenario: Scattered cloud at the airport
+- **WHEN** the airport reports scattered low cloud, 44%, at midday
+- **THEN** today's tile reads Partly cloudy now
+
+#### Scenario: The marine layer
+- **WHEN** the airport reports broken or overcast low cloud, 75% or more, at 9 AM
+- **THEN** today's tile reads Cloudy now
 
 #### Scenario: Fog now
-- **WHEN** the latest reading, in daylight, is code 45
+- **WHEN** the latest reading, in daylight, is code 45 with no airport report
 - **THEN** today's tile reads Fog now
 
+#### Scenario: The model's fog under a clear airport
+- **WHEN** the latest reading is code 45 and the airport reports no low cloud
+- **THEN** today's tile reads Sunny now
+
+#### Scenario: Rain now
+- **WHEN** the latest reading is code 61
+- **THEN** today's tile reads Rain now
+
 #### Scenario: A clear night
-- **WHEN** the latest reading is code 0 at 9 PM
+- **WHEN** the latest reading at 9 PM has 5% cover
 - **THEN** today's tile reads Clear now with the moon icon
 
 ### Requirement: An old forecast
@@ -148,6 +168,7 @@ An hour's expected kWh SHALL be its forecast sunlight times its hour of the day'
 #### Scenario: A past day's hour
 - **WHEN** the 11 AM to noon hours of March 17 to April 15, 2026 give a scale, and April 16's 11 AM forecasts its sunlight
 - **THEN** April 16's 11 AM expects that sunlight times the scale of the 30 days before April 16, not of the 30 days before today
+
 ### Requirement: Made against expected by now
 Once today's first shown hour has started, the panel SHALL say how much today has made by the end of the latest stored interval and how much was expected by then: the expected kWh of every hour already over, plus the share of the current hour gone by. After the last shown hour, once the sun has set, it SHALL compare the day's made and expected kWh instead.
 

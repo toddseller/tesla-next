@@ -3,7 +3,7 @@
 ## MODIFIED Requirements
 
 ### Requirement: The sky now
-Today's sky now SHALL be the sky the Distribution scene draws from the latest reading: its cloud cover, with the airport's observed low cloud in place of the model's when the reading has it. Under 25% cover SHALL read Sunny now, under 75% Partly cloudy now, and from 75% Cloudy now. A fog code SHALL read Fog now only when that cover is 100%. Rain, snow and thunderstorm codes SHALL read as the sky's groups with "now". Between sunset and sunrise, Sunny SHALL read Clear and Partly cloudy keep its name, with moon icons.
+Today's sky now SHALL name the sky the Distribution scene draws from the latest reading, the airport's observed low cloud replacing the model's when present: under 25% cover Sunny now, under 75% Partly cloudy now, from 75% Cloudy now. A fog code SHALL read Fog now only at 100% cover; rain, snow and thunderstorm codes keep their groups with "now". Between sunset and sunrise Sunny SHALL read Clear, with moon icons.
 
 #### Scenario: The model's few clouds under the airport's clear sky
 - **WHEN** the latest reading, at 10 AM, has code 1 and 21% low cloud from the model, and the airport reports no low cloud
