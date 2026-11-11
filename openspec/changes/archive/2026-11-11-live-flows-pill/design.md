@@ -54,3 +54,11 @@ Merging to `main` deploys nothing. After the PR merges, a `v*` release deploys i
   - **Rolling:** statuses arrived during a 25 s watch, but the figures didn't change at one decimal, so no roll was seen; the top bar tests cover it.
   - **Night:** not checked in the browser, since the check ran in the morning and moving the browser's clock past sunset makes the status stale, which drops both flows anyway. The `liveStatus` and top bar tests cover sunset.
   - **CSP:** no console error and no CSP violation; the container is the production build, under the production CSP.
+
+## Rollout
+
+- **Release v2026.11.11.4, 2026-11-11:** PR #45 merged, and the Deploy run passed in about 2.5 minutes. On teslasolar.report at 9:39 AM PST, the task 4.2 checks in headless Chromium gave the same results:
+  - At 390 and 1280 px the pill reads `PW 100% · STANDBY` alone. The links keep their rows (one at 1280, two at 1024), and nothing scrolls sideways.
+  - From 1366 px the bar reads `LIVE 9:39 AM` with `SOLAR 4.5 kW · HOME 1.3 kW · PW 100% · STANDBY` on one line, with the amber and blue squares.
+  - The bar's solar and home agreed with the Distribution scene's labels.
+  - There was no console error or CSP violation.

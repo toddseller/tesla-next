@@ -188,6 +188,18 @@ test("below 1360 px the flows are left out", () => {
   for (const flow of flows()) expect(flow.className).toContain("max-[1360px]:hidden");
 });
 
+// jsdom lays nothing out, so this pins how the squares are centered; the zoomed browser check measures it.
+test("the pill and each flow are centered rows, the squares centered like the dot, the separators keeping their spaces", () => {
+  render(bar(FLOWING));
+  expect(document.querySelector('[data-part="pill"]')!.className).toMatch(/\bflex items-center\b/);
+  for (const flow of flows()) {
+    expect(flow.className).toMatch(/\bflex items-center\b/);
+    expect(flow.querySelector('[data-part="swatch"]')!.className).not.toContain("align-middle");
+    expect(flow.querySelector('[data-part="separator"]')!.className).toContain("whitespace-pre");
+  }
+  expect(flows().map((flow) => flow.textContent)).toEqual(["SOLAR 6.2 kW · ", "HOME 1.4 kW · "]);
+});
+
 test("solar and home roll to a new status while a screen reader gets the new figures at once", async () => {
   render(bar(FLOWING));
   FakeStream.opened[0].send({ ...FLOWING, solar_power: 5.8, home_power: 2.1, modified: "2026-11-08T10:00:20-08:00" });

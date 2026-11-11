@@ -65,12 +65,15 @@ function Status({ initialStatus, initialSite, renderedAt }: Props) {
           {grid.text}
         </span>
       )}
-      <span data-part="pill" className="rounded-full border border-input px-2.5 py-1 text-foreground">
+      {/* Flex rows center the squares on the line, as the dot is; inline, they sat below the capitals' middle. */}
+      <span data-part="pill" className="flex items-center rounded-full border border-input px-2.5 py-1 text-foreground">
         {/* Left out below 1360 px: on a phone the pill doesn't fit under the brand, and on a laptop it wraps the links. */}
         {([["SOLAR", solar, "bg-solar"], ["HOME", home, "bg-home"]] as const).map(([name, value, color]) => value != null && (
-          <span key={name} data-part="flow" className="max-[1360px]:hidden">
-            <span data-part="swatch" aria-hidden="true" className={`mr-1.5 inline-block size-2 rounded-[2px] align-middle ${color}`} />
-            {name} <Rolling value={value} format={kw} />{" · "}
+          <span key={name} data-part="flow" className="flex items-center max-[1360px]:hidden">
+            <span data-part="swatch" aria-hidden="true" className={`mr-1.5 size-2 rounded-[2px] ${color}`} />
+            <span>{name} <Rolling value={value} format={kw} /></span>
+            {/* A flex item drops the spaces at its edges; these are the pill's spacing. */}
+            <span data-part="separator" className="whitespace-pre">{" · "}</span>
           </span>
         ))}
         {status?.battery_percentage == null ? pill : (

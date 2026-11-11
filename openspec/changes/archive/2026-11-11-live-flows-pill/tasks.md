@@ -43,7 +43,7 @@
 
 ## 5. Rollout
 
-- [ ] 5.1 Release (ask first); the deploy's health check passes, and teslasolar.report shows the live pill on a wide screen and today's pill on a phone, as in 4.2; record in design.md under Rollout
+- [x] 5.1 Release (ask first); the deploy's health check passes, and teslasolar.report shows the live pill on a wide screen and today's pill on a phone, as in 4.2; record in design.md under Rollout
 
 ## Workflow follow-up
 
