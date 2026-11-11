@@ -117,3 +117,12 @@ The mockups (https://claude.ai/artifact/FNEFKV1pgTYLsbYnRrCzpq, production's Oct
 ## Migration Plan
 
 Release as usual (ask first). No data or schema change. Rollback is the previous release.
+
+## Rollout
+
+Released as v2026.11.11.2 on 2026-11-11. Its Deploy run passed; onyx runs the tag and teslasolar.report answered 200.
+
+- **The live site:**
+  - The Solar page for October 2025 serves the switch with Corrected chosen and the corrected note; May 2026 serves no switch.
+  - October 2025's grid reads 299.7 kWh corrected and 147.2 kWh with `readings=tesla`.
+  - Patterns' November reads 569, 657, 643 and 864 W for 2023 to 2026.
