@@ -128,3 +128,15 @@ Merging to `main` deploys nothing. After the merge, a `v*` release (with the use
   - **Console:** no error.
   - **The line still looked too fast on the branch** with the card in view at load. Sampling it frame by frame showed each stretch jumping in at its halfway point instead of drawing (see Decisions, "Each reveal ends at a shape"). The site's older `motion-uncover`, the savings and Patterns bars' reveal, does the same on teslasolar.report: 131 frames showed only `inset(0px 100% 0px 0px round 4px)`, then `none`.
 - **Fixed, test first:** each stretch and `motion-uncover` now end at `inset(0 0 0 0)`, and solar's dot sits mid-month. Sampled again on the rebuilt container, the first stretch drew smoothly, 100% hidden down to 0% across its 1.9 s.
+
+## Rollout
+
+- **Released** as v2026.11.11.8 on 2026-11-11, about 1:55 PM PST, from the merge of PR #49. The `Deploy` run passed and teslasolar.report answered 200.
+- **Checked on teslasolar.report** in headless Chromium, as on the branch container:
+  - **The count:** on the first view, 7 figures at 1280 px and 11 at 390 px were caught counting, keeping their separators and decimals; none by mid-way. Reduced motion counted nothing.
+  - **The story:** 2.5 s after load with the card below the fold, its 31 pieces were waiting and its dots hidden, at both widths. Scrolled into view, it played to the end, with "Mar '25" under the label on desktop and " · Mar '25" on the phone. Without JavaScript, and under reduced motion, the card showed complete, the connector at rest at 12/28.
+  - **Solar's dot** sits at 30.3% of the track, mid-March 2025.
+  - **A range change** after the story counted nothing and brought back no story piece. One taken while the story still played found its 3 stretches still running, as expected.
+  - **The uncover:** the savings bar went through 27 clip values in 130 frames, where the last release showed 2; the forecast's fills uncovered straight to their shares.
+  - **Impact,** from today to All time: the Home bar kept its element and grew over 25 steps while the offset rolled; R2D2's split moved from 1/0/99 to 8/29/63 with the car charging ring kept.
+  - **Layout shift:** 0.0000 at 1280 and 390 px. **Console:** no error.

@@ -74,7 +74,7 @@
 
 ## 5. Rollout
 
-- [ ] 5.1 Release (ask first); the deploy's health check passes, and teslasolar.report shows the count-up and the Payback story on a first view, desktop and phone; record in design.md under Rollout
+- [x] 5.1 Release (ask first); the deploy's health check passes, and teslasolar.report shows the count-up and the Payback story on a first view, desktop and phone; record in design.md under Rollout
 
 ## Workflow follow-up
 
