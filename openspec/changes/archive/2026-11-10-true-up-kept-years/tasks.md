@@ -17,7 +17,7 @@
 
 ## 4. Rollout
 
-- [ ] 4.1 With the owner's go-ahead, release; the deploy's health check passes, and teslasolar.report's True-Up page answers faster than its 0.43 s to first byte; record in design.md under Rollout
+- [x] 4.1 With the owner's go-ahead, release; the deploy's health check passes, and teslasolar.report's True-Up page answers faster than its 0.43 s to first byte; record in design.md under Rollout
 
 ## Workflow follow-up
 

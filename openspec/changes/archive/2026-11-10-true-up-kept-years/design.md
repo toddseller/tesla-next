@@ -53,3 +53,7 @@ A throwaway branch container on onyx against production, read-only, 2026-11-10:
 - **Boot:** the warm-ups logged "caches warmed in 4.0s".
 - **Same figures:** the True-Up page's text matched the live release's word for word, for the current year (439 words) and for '24 - '25 (`?start=2024-10-01&end=2025-09-30`, 670 words).
 - **Server time:** the True-Up page, fetched with `Accept-Encoding: gzip` inside each container, took 225 to 235 ms on the branch and 308 to 357 ms on the live release, about 100 ms less. That's short of the 130 to 150 ms the proposal estimated: what remains is the current year's own work, mostly `caseDays`, noted above as a later change.
+
+## Rollout
+
+Released as v2026.11.10.11 on 2026-11-10. Its Deploy run passed, connected throughout; onyx kept the result 0 and runs the merge commit, and the server logged "caches warmed in 4.3s" at start. The True-Up page then took 222 to 313 ms inside the container, and its first byte came in 0.28 to 0.34 s through Cloudflare from the Mac over six requests, against 0.43 s before (one earlier request, the first after the restart, took 0.68 s).
