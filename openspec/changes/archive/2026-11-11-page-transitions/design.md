@@ -70,3 +70,9 @@ The top bar isn't inside a named `ViewTransition`, and the root's animation is `
 ## Migration Plan
 
 Release after `subtle-motion` (ask first). Rollback is the previous release.
+
+## Rollout
+
+Released as v2026.11.11.1 on 2026-11-11. Its Deploy run passed; onyx runs the tag and teslasolar.report answered 200.
+
+- **The live site:** five tab changes in a row (Impact to Patterns, to Solar, to Patterns, to Impact, to True-Up) each slid the right way, `motion-in-right` and `motion-out-left` going right and the mirror going left, with the highlight's group animating, and no CSP violation.
