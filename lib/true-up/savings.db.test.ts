@@ -17,6 +17,8 @@ beforeAll(async () => {
 beforeEach(async () => {
   await owner.query("DELETE FROM meter_read; DELETE FROM energy_interval; DELETE FROM meter_day; DELETE FROM rate_revision; DELETE FROM data; DELETE FROM grid_outage; DELETE FROM site_state");
   for (const year of [2024, 2025, 2026]) await storeReads(owner, year);
+  // Each test stores its own days; another test's kept years would otherwise stand in for them.
+  globalThis.trueUpGrids?.clear();
 });
 
 afterAll(async () => {
