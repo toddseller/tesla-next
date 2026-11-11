@@ -72,3 +72,10 @@ The screenshots (task 5.3) were taken from that container, a production build un
 - **1280 pixels:** April 16 and April 10 match mockup B: the smooth expected curve over the flows (to about 8.6 kW over flows capped near 4.2 kW on the 16th), "25.7 kWh of 64 kWh expected (40%)" and "36.4 kWh of 43 kWh expected (84%)", the key under the chart, and pointing at 11:45 AM listing the flows then Expected 7.8 kW (6.5 kW on the 10th).
 - **375 pixels:** the first run showed the figure wrapping inside the 4xl number's line, leaving "expected (84%)" on a line of its own at that height. The figure now takes a line of its own under the kWh at its own size on phones (`max-sm:block`, test first), as mockup B's phone board did; the rerun matched it.
 - At both widths nothing scrolled sideways, and the console showed no error or CSP violation.
+
+## Rollout
+
+Released as v2026.11.10.9 on 2026-11-10. Its Deploy run passed, connected throughout; onyx kept the result 0 and runs the merge commit, and teslasolar.report answered 200.
+
+- **The live site:** `/api/intervals?date=2026-04-16` listed 24 expected hours adding up to 64.4 kWh, and the April 16, 2026 day view served "of 64 kWh expected" with "(40%)" in `text-destructive`, and the "Expected from the forecast" key.
+- **The alert's link:** one test alert went through `deploy/pushover` on onyx, titled "Test: daily checks failed: tesla-next", its message a failing solar peak line ending with `https://teslasolar.report/?day=2026-04-16`; Pushover answered 200. On the owner's phone the URL was a link in the monospace message, and tapping it opened April 16's day view. No follow-up with Pushover's `url` field is needed.
