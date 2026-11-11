@@ -1,17 +1,39 @@
 // @vitest-environment jsdom
-import { act, cleanup, render, screen, within } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { usePathname } from "next/navigation";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import { FakeStream } from "@/test/fake-event-source";
+import { PageSlide } from "./page-slide";
 import { TopBar } from "./top-bar";
 
 vi.mock("next/navigation", () => ({ usePathname: vi.fn() }));
+// The stand-ins show what a link asks of a navigation, and let a test say which link is still loading.
+const pendingHref = vi.hoisted(() => ({ current: "" }));
+vi.mock("next/link", async () => {
+  const { createContext, useContext } = await import("react");
+  const Href = createContext("");
+  return {
+    default: ({ href, onNavigate, children, ...rest }: { href: string; onNavigate?: () => void; children: React.ReactNode }) => (
+      <Href.Provider value={href}>
+        <a href={href} onClick={(event) => { event.preventDefault(); onNavigate?.(); }} {...rest}>{children}</a>
+      </Href.Provider>
+    ),
+    useLinkStatus: () => ({ pending: useContext(Href) === pendingHref.current }),
+  };
+});
+vi.mock("react", async (original) => ({
+  ...(await original<typeof import("react")>()),
+  ViewTransition: ({ name, default: slide, children }: { name?: string; default?: string; children: React.ReactNode }) => (
+    <span data-view-transition={name} data-default={slide}>{children}</span>
+  ),
+}));
 
 // 9:59:20 AM on November 8, 2026, the Powerwalls at 92% and charging.
 const STATUS = { battery_percentage: 92, battery_status: "Charging", modified: "2026-11-08T09:59:20-08:00" };
 const RENDERED_AT = Date.parse("2026-11-08T10:00:00-08:00");
 
 beforeEach(() => {
+  pendingHref.current = "";
   FakeStream.opened = [];
   vi.stubGlobal("EventSource", FakeStream);
   vi.mocked(usePathname).mockReturnValue("/true-up");
@@ -143,4 +165,39 @@ test("the charge rolls on screen while a screen reader gets the new figure at on
   await act(() => new Promise((resolve) => setTimeout(resolve, 500)));
   expect(pillOf().querySelector('[aria-hidden="true"]')).toBeNull();
   expect(pillOf().textContent).toBe("PW 100% · CHARGING");
+});
+
+// dashboard-shell, "The highlight and the page move together": the page slides the way the tabs go.
+test("a tab change slides the page the way the tabs go", () => {
+  vi.mocked(usePathname).mockReturnValue("/impact");
+  render(<>{bar()}<PageSlide><p>page</p></PageSlide></>);
+  const slide = () => (document.querySelector("[data-default]") as HTMLElement).dataset.default;
+  const tab = (name: string) => within(screen.getByRole("navigation", { name: "Pages" })).getByRole("link", { name });
+  expect(slide()).toBe("none");
+  fireEvent.click(tab("Patterns"));
+  expect(slide()).toBe("slide-next");
+  fireEvent.click(tab("Solar"));
+  expect(slide()).toBe("slide-previous");
+});
+
+test("the current tab holds the highlight that glides between tabs", () => {
+  vi.mocked(usePathname).mockReturnValue("/impact");
+  render(bar());
+  const highlights = document.querySelectorAll('[data-view-transition="nav-highlight"]');
+  expect(highlights).toHaveLength(1);
+  expect(highlights[0].closest("a")!.textContent).toBe("Impact");
+});
+
+// dashboard-shell, "The clicked tab shows at once".
+test("a tab still loading brightens, while the current page keeps the highlight and stays current", () => {
+  vi.mocked(usePathname).mockReturnValue("/");
+  pendingHref.current = "/true-up";
+  render(bar());
+  const link = (name: string) => screen.getByRole("link", { name });
+  const name = (tab: string) => link(tab).querySelector('[data-part="name"]')!.className;
+  expect(name("True-Up")).toContain("text-white");
+  expect(link("True-Up").getAttribute("aria-current")).toBeNull();
+  expect(link("Solar").getAttribute("aria-current")).toBe("page");
+  expect(link("Solar").querySelector('[data-view-transition="nav-highlight"]')).not.toBeNull();
+  expect(name("Impact")).not.toContain("text-white");
 });

@@ -1,10 +1,11 @@
 "use client";
 
-import Link from "next/link";
+import Link, { useLinkStatus } from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, ViewTransition } from "react";
 
 import { useLiveStream } from "@/components/use-live-stream";
+import { slidePage } from "@/components/page-slide";
 import { Rolling } from "@/components/rolling";
 import { gridPill, type LiveStatus, liveStatus, type SiteState } from "@/lib/live-status";
 
@@ -70,8 +71,16 @@ function Status({ initialStatus, initialSite, renderedAt }: Props) {
   );
 }
 
+// The page takes a moment to come from the server, so the chosen tab brightens at once; it becomes current, with the
+// highlight and aria-current, only when the page arrives.
+function TabName({ name }: { name: string }) {
+  const { pending } = useLinkStatus();
+  return <span data-part="name" className={`relative ${pending ? "text-white" : ""}`}>{name}</span>;
+}
+
 export function TopBar({ initialStatus, initialSite, renderedAt }: Props) {
   const path = usePathname();
+  const here = pages.findIndex((page) => page.href === path);
   return (
     <header className="flex flex-wrap items-center gap-x-6 gap-y-2 border-b px-4 py-3 sm:px-8">
       <Link href="/" className="flex min-h-11 items-center gap-2.5 font-semibold tracking-wide">
@@ -80,18 +89,23 @@ export function TopBar({ initialStatus, initialSite, renderedAt }: Props) {
         Tesla Solar Report
       </Link>
       <nav aria-label="Pages" className="order-3 flex flex-1 flex-wrap gap-1 sm:order-2">
-        {pages.map(({ name, href }) => {
+        {pages.map(({ name, href }, i) => {
           const current = path === href;
           return (
             <Link
               key={href}
               href={href}
               aria-current={current ? "page" : undefined}
-              className={`flex min-h-11 items-center rounded-md px-3 text-sm ${
-                current ? "bg-secondary text-white shadow-[inset_0_-2px_0_var(--primary)]" : "text-muted-foreground hover:text-foreground"
-              }`}
+              onNavigate={current ? undefined : () => slidePage(i > here ? "next" : "previous")}
+              className={`relative flex min-h-11 items-center rounded-md px-3 text-sm ${current ? "text-white" : "text-muted-foreground hover:text-foreground"}`}
             >
-              {name}
+              {/* One name across pages, so the browser glides it from the old tab to the new one as the page arrives. */}
+              {current && (
+                <ViewTransition name="nav-highlight">
+                  <span aria-hidden className="absolute inset-0 rounded-md bg-secondary shadow-[inset_0_-2px_0_var(--primary)]" />
+                </ViewTransition>
+              )}
+              <TabName name={name} />
             </Link>
           );
         })}
