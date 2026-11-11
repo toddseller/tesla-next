@@ -4,6 +4,8 @@ import Link, { useLinkStatus } from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState, ViewTransition } from "react";
 
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+
 import { useLiveStream } from "@/components/use-live-stream";
 import { slidePage } from "@/components/page-slide";
 import { Rolling } from "@/components/rolling";
@@ -78,9 +80,39 @@ function TabName({ name }: { name: string }) {
   return <span data-part="name" className={`relative ${pending ? "text-white" : ""}`}>{name}</span>;
 }
 
+// Below 640 px the links move behind a button; choosing one closes the menu as the page starts to slide.
+function PageMenu({ path, slideTo }: { path: string; slideTo: (i: number) => (() => void) | undefined }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <nav aria-label="Pages" className="order-1 ml-auto sm:hidden">
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger aria-label="Pages" className="relative flex size-11 items-center justify-center rounded-lg border border-input bg-card data-[state=open]:border-ring">
+          <span aria-hidden className="motion-burger absolute h-0.5 w-[18px] rounded-full bg-current" />
+          <span aria-hidden className="motion-burger absolute h-0.5 w-[18px] rounded-full bg-current" />
+          <span aria-hidden className="motion-burger absolute h-0.5 w-[18px] rounded-full bg-current" />
+        </PopoverTrigger>
+        <PopoverContent aria-label="Pages" align="end" className="flex w-48 flex-col gap-0.5 border-input p-1 shadow-xl shadow-black/45">
+          {pages.map(({ name, href }, i) => {
+            const current = path === href;
+            const slide = slideTo(i);
+            return (
+              <Link key={href} href={href} aria-current={current ? "page" : undefined}
+                onNavigate={() => { slide?.(); setOpen(false); }}
+                className={`flex min-h-11 items-center rounded-md px-3 text-[15px] ${current ? "bg-secondary text-white shadow-[inset_0_-2px_0_var(--primary)]" : "hover:bg-secondary"}`}>
+                {name}
+              </Link>
+            );
+          })}
+        </PopoverContent>
+      </Popover>
+    </nav>
+  );
+}
+
 export function TopBar({ initialStatus, initialSite, renderedAt }: Props) {
   const path = usePathname();
   const here = pages.findIndex((page) => page.href === path);
+  const slideTo = (i: number) => (i === here ? undefined : () => slidePage(i > here ? "next" : "previous"));
   return (
     <header className="flex flex-wrap items-center gap-x-6 gap-y-2 border-b px-4 py-3 sm:px-8">
       <Link href="/" className="flex min-h-11 items-center gap-2.5 font-semibold tracking-wide">
@@ -88,7 +120,8 @@ export function TopBar({ initialStatus, initialSite, renderedAt }: Props) {
         <img src="/android-chrome-192x192.png" alt="" width={24} height={24} />
         Tesla Solar Report
       </Link>
-      <nav aria-label="Pages" className="order-3 flex flex-1 flex-wrap gap-1 sm:order-2">
+      <PageMenu path={path} slideTo={slideTo} />
+      <nav aria-label="Pages" className="order-3 flex flex-1 flex-wrap gap-1 max-sm:hidden sm:order-2">
         {pages.map(({ name, href }, i) => {
           const current = path === href;
           return (
@@ -96,7 +129,7 @@ export function TopBar({ initialStatus, initialSite, renderedAt }: Props) {
               key={href}
               href={href}
               aria-current={current ? "page" : undefined}
-              onNavigate={current ? undefined : () => slidePage(i > here ? "next" : "previous")}
+              onNavigate={slideTo(i)}
               className={`relative flex min-h-11 items-center rounded-md px-3 text-sm ${current ? "text-white" : "text-muted-foreground hover:text-foreground"}`}
             >
               {/* One name across pages, so the browser glides it from the old tab to the new one as the page arrives. */}

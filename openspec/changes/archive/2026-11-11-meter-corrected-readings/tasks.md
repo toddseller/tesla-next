@@ -35,7 +35,7 @@
 
 ## 6. Rollout
 
-- [ ] 6.1 Release (ask first); the deploy's health check passes, and teslasolar.report shows the switch on October 2025 with corrected figures by default; record in design.md under Rollout
+- [x] 6.1 Release (ask first); the deploy's health check passes, and teslasolar.report shows the switch on October 2025 with corrected figures by default; record in design.md under Rollout
 
 ## Workflow follow-up
 

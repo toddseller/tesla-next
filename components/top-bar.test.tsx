@@ -56,6 +56,8 @@ const shown = () => {
   return { text: spoken(status), live: status.querySelector('[data-part="dot"]')!.className.includes("bg-powerwall") };
 };
 const rings = () => document.querySelectorAll('[data-part="dot-ring"]');
+// The wide-screen links; the phone's Pages landmark holds only its button until opened.
+const wideNav = () => screen.getAllByRole("navigation", { name: "Pages" }).find((nav) => nav.className.includes("max-sm:hidden"))!;
 
 test.each([
   ["/", "Solar"],
@@ -69,7 +71,7 @@ test.each([
   expect(home.getAttribute("href")).toBe("/");
   expect(home.querySelector("img")).not.toBeNull();
 
-  const links = within(screen.getByRole("navigation", { name: "Pages" })).getAllByRole("link");
+  const links = within(wideNav()).getAllByRole("link");
   expect(links.map((link) => [link.textContent, link.getAttribute("href")])).toEqual([
     ["Solar", "/"],
     ["Impact", "/impact"],
@@ -172,7 +174,7 @@ test("a tab change slides the page the way the tabs go", () => {
   vi.mocked(usePathname).mockReturnValue("/impact");
   render(<>{bar()}<PageSlide><p>page</p></PageSlide></>);
   const slide = () => (document.querySelector("[data-default]") as HTMLElement).dataset.default;
-  const tab = (name: string) => within(screen.getByRole("navigation", { name: "Pages" })).getByRole("link", { name });
+  const tab = (name: string) => within(wideNav()).getByRole("link", { name });
   expect(slide()).toBe("none");
   fireEvent.click(tab("Patterns"));
   expect(slide()).toBe("slide-next");
@@ -200,4 +202,44 @@ test("a tab still loading brightens, while the current page keeps the highlight 
   expect(link("Solar").getAttribute("aria-current")).toBe("page");
   expect(link("Solar").querySelector('[data-view-transition="nav-highlight"]')).not.toBeNull();
   expect(name("Impact")).not.toContain("text-white");
+});
+
+// dashboard-shell, "The page menu on a phone": below 640 px a Pages button opens the links; CSS picks which shows.
+const pagesButton = () => screen.getByRole("button", { name: "Pages" });
+const menuLinks = () => within(screen.getByRole("dialog")).getAllByRole("link");
+
+test("on a phone the links are behind a Pages button, and on a wide screen in the bar", () => {
+  vi.mocked(usePathname).mockReturnValue("/impact");
+  render(bar());
+  expect(pagesButton().getAttribute("aria-expanded")).toBe("false");
+  expect(pagesButton().closest("nav")!.className).toContain("sm:hidden");
+  expect(screen.getByRole("link", { name: "Patterns" }).closest("nav")!.className).toContain("max-sm:hidden");
+  expect(screen.queryByRole("dialog")).toBeNull();
+});
+
+test("the Pages button opens the six links in order, the current one marked", () => {
+  vi.mocked(usePathname).mockReturnValue("/impact");
+  render(bar());
+  fireEvent.click(pagesButton());
+  expect(pagesButton().getAttribute("aria-expanded")).toBe("true");
+  expect(menuLinks().map((link) => link.textContent)).toEqual(["Solar", "Impact", "Distribution", "True-Up", "Top Ten", "Patterns"]);
+  expect(menuLinks().map((link) => link.getAttribute("aria-current"))).toEqual([null, "page", null, null, null, null]);
+  expect(document.querySelectorAll('[data-view-transition="nav-highlight"]')).toHaveLength(1);
+});
+
+test("choosing a page from the menu closes it and slides the page the way the tabs go", () => {
+  vi.mocked(usePathname).mockReturnValue("/impact");
+  render(<>{bar()}<PageSlide><p>page</p></PageSlide></>);
+  fireEvent.click(pagesButton());
+  fireEvent.click(within(screen.getByRole("dialog")).getByRole("link", { name: "Patterns" }));
+  expect(screen.queryByRole("dialog")).toBeNull();
+  expect((document.querySelector("[data-default]") as HTMLElement).dataset.default).toBe("slide-next");
+});
+
+test("Escape closes the menu", () => {
+  render(bar());
+  fireEvent.click(pagesButton());
+  fireEvent.keyDown(screen.getByRole("dialog"), { key: "Escape" });
+  expect(screen.queryByRole("dialog")).toBeNull();
+  expect(pagesButton().getAttribute("aria-expanded")).toBe("false");
 });
