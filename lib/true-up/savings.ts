@@ -1,11 +1,11 @@
-import { cache } from "react";
-
 import { EVENTS } from "@/lib/backup";
 import { db } from "@/lib/db";
 import { pyRound } from "@/lib/intervals/python";
+import { type Kept, keptFor, refreshKept } from "@/lib/kept";
+import { siteToday } from "@/lib/scene/replay";
 import { METER_FIX_DATE } from "@/lib/meter";
 import { isTrueUpYear, loadPricing } from "@/lib/true-up/cost";
-import { cycleGrids } from "@/lib/true-up/grid";
+import { cycleGrids, settled } from "@/lib/true-up/grid";
 import { type DayGrid, inEffect, minimumDelivery, newestFirst, priceDays } from "@/lib/true-up/pricing";
 import { generationCharges, westlightIn } from "@/lib/true-up/westlight";
 
@@ -102,8 +102,7 @@ const FIRST_YEAR = "2023-10-01";
 // A true-up year's cost to the house so far in three cases, each PG&E's NEM charges plus WestLight's generation, all
 // calculated from the same days so their differences come from the energy alone: actual, solar with no Powerwalls, and
 // no system. Null for any other range, or before a day with data.
-// The savings card and the Payback card each ask for the current year; one page render works it out once.
-export const trueUpSavings = cache(async (start: string, end: string) => {
+async function workOut(start: string, end: string) {
   if (!isTrueUpYear(start, end) || start < FIRST_YEAR) return null;
   const [cycles, { revisions }] = await Promise.all([cycleGrids(start, end), loadPricing()]);
   const started = cycles.filter(({ row }) => row.through !== null);
@@ -177,6 +176,30 @@ export const trueUpSavings = cache(async (start: string, end: string) => {
     // The estimated revisions come before the known ones, so a year's first day says whether any were used.
     estimated_rates: Boolean(westlightIn(first)?.estimated),
   };
-});
+}
 
 export type Savings = NonNullable<Awaited<ReturnType<typeof trueUpSavings>>>;
+
+declare global {
+  var savingsKept: Kept<Awaited<ReturnType<typeof workOut>>> | undefined;
+}
+const kept = () => (globalThis.savingsKept ??= new Map());
+
+// The savings card, the Payback card and the route all ask for a year. A settled year (grid.ts) changes only on a rewrite,
+// which empties this, so it's kept under "settled"; any other is kept for the site day and worked out again on its
+// totals (refreshSavings). Other ranges answer null at once and aren't kept, so dates in the route's address can't grow
+// the map.
+export function trueUpSavings(start: string, end: string) {
+  if (!isTrueUpYear(start, end)) return workOut(start, end);
+  return keptFor(kept(), `${start}..${end}`, settled(end) ? "settled" : siteToday(), () => workOut(start, end));
+}
+
+// Today's entries are the unsettled years worked out today. Taken from what's kept, with no lookup first, so each refresh
+// is in place before the totals notice reaches a page. A year not kept yet needs nothing: its next request works it out.
+export function refreshSavings(today: string) {
+  const unsettled = [...kept()].filter(([, { day }]) => day === today).map(([key]) => key);
+  return Promise.all(unsettled.map((key) => {
+    const [start, end] = key.split("..");
+    return refreshKept(kept(), key, today, () => workOut(start, end), "savings");
+  })).then(() => {});
+}

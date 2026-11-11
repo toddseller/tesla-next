@@ -19,6 +19,7 @@ beforeEach(async () => {
   for (const year of [2024, 2025, 2026]) await storeReads(owner, year);
   // Each test stores its own days; another test's kept years would otherwise stand in for them.
   globalThis.trueUpGrids?.clear();
+  globalThis.savingsKept?.clear();
 });
 
 afterAll(async () => {

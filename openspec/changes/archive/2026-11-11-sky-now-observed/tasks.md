@@ -35,7 +35,7 @@
 
 ## 4. Rollout
 
-- [ ] 4.1 Release (ask first); the deploy's health check passes, and teslasolar.report's today tile agrees with the Distribution scene; record in design.md under Rollout
+- [x] 4.1 Release (ask first); the deploy's health check passes, and teslasolar.report's today tile agrees with the Distribution scene; record in design.md under Rollout
 
 ## Workflow follow-up
 

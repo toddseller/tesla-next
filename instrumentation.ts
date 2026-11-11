@@ -3,7 +3,7 @@ export async function register() {
   if (process.env.NEXT_RUNTIME !== "nodejs") return;
   const live = await import("./lib/live");
   live.startListening();
-  const [{ carCharging }, { payback }, { patterns }, { FIRST_DAY, siteToday }] = await Promise.all([
+  const [{ carCharging }, { payback, refreshPayback }, { patterns }, { FIRST_DAY, shiftDay, siteToday }] = await Promise.all([
     import("./lib/car-charging"), import("./lib/true-up/payback"), import("./lib/patterns"), import("./lib/scene/replay"),
   ]);
   // A deploy starts the caches empty, and filling them on the first visit takes seconds; not awaited, so pages
@@ -21,9 +21,24 @@ export async function register() {
   live.onRewrite(() => {
     console.log("stored data rewritten; warming the caches again");
     globalThis.chargingDays?.clear();
-    globalThis.paybackYears?.clear();
+    globalThis.paybackKept?.clear();
+    globalThis.savingsKept?.clear();
     globalThis.patternsMonths?.clear();
     globalThis.trueUpGrids?.clear();
     warmAll();
+  });
+  // Today's totals, and the 00:15 notice finishing yesterday, move the unsettled years' savings and the payback; they're
+  // kept, so they're refreshed here, not on a visit. An older day's notice comes from a backfill, whose rewrite empties them.
+  // It runs inside the database client's notice handler, where a throw would stop every page's stream, or the server.
+  live.subscribe((payload, channel) => {
+    if (channel !== "totals_updated") return;
+    let date: unknown;
+    try {
+      ({ date } = JSON.parse(payload));
+    } catch {
+      return;
+    }
+    const today = siteToday();
+    if (date === today || date === shiftDay(today, -1)) void refreshPayback(today);
   });
 }

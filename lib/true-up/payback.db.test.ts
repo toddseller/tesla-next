@@ -3,7 +3,7 @@ import { mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import type { Client } from "pg";
-import { afterAll, beforeAll, expect, test, vi } from "vitest";
+import { afterAll, beforeAll, beforeEach, expect, test, vi } from "vitest";
 
 import { ownDatabase, seedIntervals, storeReads, storeRevision } from "@/test/true-up";
 
@@ -33,6 +33,11 @@ beforeAll(async () => {
 afterAll(async () => {
   await owner.end();
   vi.unstubAllEnvs();
+});
+
+// Each test asks for the same day, which payback() would otherwise answer from what the last one kept.
+beforeEach(() => {
+  globalThis.paybackKept?.clear();
 });
 
 test("without a costs file there is no payback", async () => {

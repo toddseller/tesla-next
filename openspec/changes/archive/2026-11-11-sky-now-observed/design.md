@@ -60,3 +60,7 @@ Merging to `main` deploys nothing. After the merge, a `v*` release (with the use
   - **The card against the scene at the same moment:** the live status the Distribution scene draws (10:28:44) had 0% cover, and the branch's `/api/forecast` gave today code 0, with the tile reading "Sunny now".
   - **Screenshots:** the tile, at 2x, reads "Sunny now" with the sun icon. Headless Chromium draws the Distribution scene's sky as dusk at 10:30 on teslasolar.report as well as on the branch, so the scene was compared by its live-status cover rather than its picture.
   - There was no console error.
+
+## Rollout
+
+- **Release v2026.11.11.6, 2026-11-11:** PR #47 merged, and the Deploy run passed in about 1.5 minutes. On teslasolar.report at 10:38 AM PST, the live status the Distribution scene draws had 0% cover, and the Solar page's today tile read "Sunny now" with the sun icon (`/api/forecast` today code 0). A screenshot of the live tile showed the same, with no console error.

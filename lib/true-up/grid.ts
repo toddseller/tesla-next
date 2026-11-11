@@ -84,6 +84,7 @@ async function loadGrids(start: string, end: string): Promise<CycleGrid[]> {
 // By a month after a range ends, PG&E's October read is in and the meter days anton's scheduler adds a day and a half
 // late (with no rewrite notice) have arrived.
 const KEPT_AFTER_DAYS = 31;
+export const settled = (end: string) => end < shiftDay(siteToday(), -KEPT_AFTER_DAYS);
 
 declare global {
   var trueUpGrids: Map<string, CycleGrid[]> | undefined;
@@ -101,7 +102,7 @@ export const cycleGrids = cache(async (start: string, end: string) => {
   // Only whole true-up years, as the cost comparison and Payback ask for: a range from an address could be anything, and
   // keeping each would let anyone grow the memory without end. (cost.ts' isTrueUpYear can't be imported here: it imports this.)
   const trueUpYear = start.slice(5) === "10-01" && end === `${Number(start.slice(0, 4)) + 1}-09-30`;
-  if (trueUpYear && end < shiftDay(siteToday(), -KEPT_AFTER_DAYS)) keptRanges.set(key, grids);
+  if (trueUpYear && settled(end)) keptRanges.set(key, grids);
   return grids;
 });
 
