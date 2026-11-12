@@ -41,3 +41,4 @@ Released as v2026.11.11.10 on 2026-11-11 from the merge of PR #51; the Deploy ru
 - Solar scrolled to its chart (y 745) stays there through This year, picked dates, the October 2026 bar and Back; the October 14 bar opens the day view at y 0.
 - Impact and True-Up, scrolled to their presets (y 85 and 89), keep their position through presets, Earlier '22 - '23 and picked dates.
 - No console error or CSP violation.
+- On a phone, the site keeps the reader's place when picking a range, checked by hand on 2026-11-11.
