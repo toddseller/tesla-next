@@ -45,7 +45,7 @@ const settle = () => act(() => new Promise((resolve) => setTimeout(resolve, 0)))
 test("a preset and a picked day each push their address", () => {
   const { container } = render(<SolarPage range={november} items={[item("2026-11-07", 12.1)]} today="2026-11-07" initialStatus={null} />);
   fireEvent.click(screen.getByRole("button", { name: "This year" }));
-  expect(router.push).toHaveBeenCalledWith("/?start=2026-01-01&end=2026-12-31");
+  expect(router.push).toHaveBeenCalledWith("/?start=2026-01-01&end=2026-12-31", { scroll: false });
   fireEvent.click(solarOf(container, "Nov 7")!);
   expect(router.push).toHaveBeenLastCalledWith("/?start=2026-11-01&end=2026-11-30&day=2026-11-07");
 });
@@ -56,7 +56,7 @@ test("a month bar of a long range pushes that month, and the subtitle says a mon
   const { container } = render(<SolarPage range={trueUpYear} items={months} today="2026-11-07" initialStatus={null} />);
   expect(screen.getByText(/select a month for its days/)).toBeTruthy();
   fireEvent.click(solarOf(container, "Oct 2026")!);
-  expect(router.push).toHaveBeenCalledWith("/?start=2026-10-01&end=2026-10-31");
+  expect(router.push).toHaveBeenCalledWith("/?start=2026-10-01&end=2026-10-31", { scroll: false });
 });
 
 test("the served bars draw with no request of their own", async () => {
@@ -209,7 +209,7 @@ test("a range in the corrected years offers the readings, and Tesla's view keeps
   expect(screen.getByRole("button", { name: "As Tesla reported" }).getAttribute("aria-pressed")).toBe("true");
   expect(screen.getByText(/Grid figures are as Tesla reported them/)).toBeTruthy();
   fireEvent.click(screen.getByRole("button", { name: "This year" }));
-  expect(router.push).toHaveBeenLastCalledWith("/?start=2026-01-01&end=2026-12-31&readings=tesla");
+  expect(router.push).toHaveBeenLastCalledWith("/?start=2026-01-01&end=2026-12-31&readings=tesla", { scroll: false });
   FakeStream.opened[0].send({ date: "2025-10-07" }, "totals");
   await settle();
   expect(fetches.at(-1)).toBe("/api/range?start_date=2025-10-01&end_date=2025-10-31&readings=tesla");

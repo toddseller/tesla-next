@@ -57,10 +57,10 @@ test("This year is marked, and the presets and Earlier menu push their addresses
   expect(screen.getByRole("heading", { level: 1 }).textContent).toBe("True-Up Tracker");
   expect(["This year", "'25 - '26", "'24 - '25", "All time"].map(pressed)).toEqual(["true", "false", "false", "false"]);
   fireEvent.click(screen.getByRole("button", { name: "All time" }));
-  expect(router.push).toHaveBeenLastCalledWith("/true-up?start=2021-10-01&end=2027-09-30");
+  expect(router.push).toHaveBeenLastCalledWith("/true-up?start=2021-10-01&end=2027-09-30", { scroll: false });
   act(() => fireEvent.click(screen.getByRole("button", { name: /Earlier/ })));
   act(() => fireEvent.click(screen.getByRole("menuitemradio", { name: "'22 - '23" })));
-  expect(router.push).toHaveBeenLastCalledWith("/true-up?start=2022-10-01&end=2023-09-30");
+  expect(router.push).toHaveBeenLastCalledWith("/true-up?start=2022-10-01&end=2023-09-30", { scroll: false });
 });
 
 test("the served data shows with no request of its own", async () => {
