@@ -66,7 +66,7 @@ export function TrueUpPage({ range, years, cycles: served, cost: servedCost, sav
             <h1 className="text-[22px] font-semibold">True-Up Tracker</h1>
             <p className="text-sm text-muted-foreground">Grid energy by PG&amp;E billing cycle</p>
           </div>
-          <RangeControls today={today} range={range} presets={presets} earlier={earlier} onRange={(next) => router.push(address(next))} />
+          <RangeControls today={today} range={range} presets={presets} earlier={earlier} onRange={(next) => router.push(address(next), { scroll: false })} />
         </div>
         <Tiles cycles={cycles} cost={year && cost} year={year} today={today} />
         <MeteringNote cycles={cycles} />

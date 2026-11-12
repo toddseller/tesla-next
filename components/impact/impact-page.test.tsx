@@ -66,7 +66,7 @@ test("today is marked, and each preset pushes its address", () => {
   expect(screen.getByRole("heading", { level: 2, name: "November 8, 2026" })).toBeTruthy();
   expect(["Today", "This week", "This month", "This year", "True-up year", "All time"].map(pressed)).toEqual(["true", "false", "false", "false", "false", "false"]);
   fireEvent.click(ranges().getByRole("button", { name: "This week" }));
-  expect(router.push).toHaveBeenCalledWith("/impact?start=2026-11-08&end=2026-11-14");
+  expect(router.push).toHaveBeenCalledWith("/impact?start=2026-11-08&end=2026-11-14", { scroll: false });
 });
 
 test("the served figures show with no request of their own", async () => {
@@ -123,7 +123,7 @@ test("picking a backup year replaces the address, keeping the range, with no new
 test("a new range keeps the backup year chosen", () => {
   render(<ImpactPage range={today} figures={figures(95)} today="2026-11-08" backup={NO_BACKUP} charging={CHARGING} backupYear={{ start: "2024-10-01", end: "2025-09-30" }} />);
   fireEvent.click(ranges().getByRole("button", { name: "This week" }));
-  expect(router.push).toHaveBeenCalledWith("/impact?start=2026-11-08&end=2026-11-14&backup=24-25");
+  expect(router.push).toHaveBeenCalledWith("/impact?start=2026-11-08&end=2026-11-14&backup=24-25", { scroll: false });
 });
 
 test("the Backup section reloads its year on outages, site-state and reopen events", async () => {
@@ -175,7 +175,7 @@ test("All time, last in the row, pushes the site's first day of service to today
   const { rerender } = render(<ImpactPage range={today} figures={figures(95)} today="2026-11-08" backup={NO_BACKUP} charging={CHARGING} backupYear={THIS_YEAR} />);
   expect(ranges().getAllByRole("button").at(-1)!.textContent).toBe("All time");
   fireEvent.click(ranges().getByRole("button", { name: "All time" }));
-  expect(router.push).toHaveBeenCalledWith("/impact?start=2021-10-10&end=2026-11-08");
+  expect(router.push).toHaveBeenCalledWith("/impact?start=2021-10-10&end=2026-11-08", { scroll: false });
   rerender(<ImpactPage range={{ start: "2021-10-10", end: "2026-11-08" }} figures={figures(95)} today="2026-11-08" backup={NO_BACKUP} charging={CHARGING} backupYear={THIS_YEAR} />);
   expect(pressed("All time")).toBe("true");
 });
@@ -200,7 +200,7 @@ test("a range in the corrected years offers the readings, and Tesla's view keeps
   expect(screen.getByRole("button", { name: "As Tesla reported" }).getAttribute("aria-pressed")).toBe("true");
   expect(screen.getByText(/Grid figures are as Tesla reported them/)).toBeTruthy();
   fireEvent.click(ranges().getByRole("button", { name: "This week" }));
-  expect(router.push).toHaveBeenLastCalledWith("/impact?start=2026-11-08&end=2026-11-14&readings=tesla");
+  expect(router.push).toHaveBeenLastCalledWith("/impact?start=2026-11-08&end=2026-11-14&readings=tesla", { scroll: false });
   FakeStream.opened[0].send({ date: "2025-10-07" }, "totals");
   await settle();
   expect(fetches).toEqual([

@@ -85,6 +85,17 @@ On a branch container on onyx reading production read-only, 2026-11-11, measured
 - The icon's name reads "Choose dates, Oct 10, 2021 – Nov 11, 2026" on All time.
 - No CSP violation or page error.
 
+## Rollout
+
+Released as v2026.11.11.9 on 2026-11-11 from the merge of PR #50; the Deploy run and its health check passed. On teslasolar.report, in headless Chromium:
+
+- At 1280 px, choosing All time on Impact brings the readings switch into the same row as the heading, presets and icon, and the first card stays at 169 px.
+- The picker opens on October and November 2026, with the days after November 11 dimmed, and at 390 px on November 2026 alone.
+- The icon is named "Choose dates, Oct 10, 2021 – Nov 11, 2026".
+- No console error or CSP violation.
+
+On a phone the first card still moves down 56 px when All time brings the readings switch, which takes its own full-width row there; the one-row requirement covers windows from 1024 px.
+
 ## Migration Plan
 
 Nothing stored or routed changes. Release with a `v*` tag as usual; rollback is the previous tag.

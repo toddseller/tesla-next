@@ -84,7 +84,7 @@ export function SolarPage({ range, items, today, initialStatus, day, forecast, r
         <h1 className="text-[22px] font-semibold">Solar by date range</h1>
         <div className="flex flex-wrap items-center gap-2 max-sm:w-full">
           {corrected && <ReadingsSwitch readings={readings} addresses={both(range)} />}
-          <RangeControls today={today} range={range} presets={presets(today)} onRange={(next) => router.push(at(next))} />
+          <RangeControls today={today} range={range} presets={presets(today)} onRange={(next) => router.push(at(next), { scroll: false })} />
         </div>
       </div>
       <section aria-labelledby="range-title" className="flex flex-col gap-4 rounded-[10px] border bg-card p-4 sm:p-6">
@@ -94,7 +94,7 @@ export function SolarPage({ range, items, today, initialStatus, day, forecast, r
             {isDaily(range) ? "Daily · select a day for its 5-minute detail" : "Monthly · select a month for its days"}
           </span>
         </div>
-        <RangeChart key={at(range)} items={bars} range={range} onOpenDay={(next) => router.push(at(range, next))} onOpenRange={(next) => router.push(at(next))} />
+        <RangeChart key={at(range)} items={bars} range={range} onOpenDay={(next) => router.push(at(range, next))} onOpenRange={(next) => router.push(at(next), { scroll: false })} />
         {corrected && <ReadingsNote readings={readings} />}
       </section>
     </div>
