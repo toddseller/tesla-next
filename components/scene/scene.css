@@ -218,7 +218,8 @@
    the car. By day an overcast sky leaves the house slightly darker and grayer
    (--cover, 0 clear to 1 overcast; openspec/specs/scene-weather). */
 .scene-render,
-.scene-plug {
+.scene-plug,
+.scene-vane {
   filter: brightness(calc((0.72 + 0.28 * var(--day, 1)) * (1 - 0.12 * var(--cover, 0) * var(--day, 1))))
     saturate(calc(1 - 0.2 * var(--cover, 0) * var(--day, 1)));
   transition: filter 1.5s ease;
@@ -322,4 +323,53 @@
 .scene-label-note {
   color: #a3abb8;
   font-size: clamp(11px, 1.5cqw, 18px);
+}
+
+/* The weather vane: dark iron like the roof, with a faint rim so it reads against the night sky. */
+.scene-vane-iron {
+  stroke: #2a2d32;
+  stroke-linecap: round;
+}
+
+.scene-vane-rim {
+  stroke: rgb(139 147 157 / 0.45);
+}
+
+.scene-vane-plate {
+  fill: #2a2d32;
+  stroke: rgb(139 147 157 / 0.5);
+  stroke-width: 0.9;
+  stroke-linejoin: round;
+}
+
+/* Iron like the vane, outlined bolder than its rim: the letters are small, and the
+   outline is all that sets them apart from a night sky. */
+.scene-vane-point {
+  fill: #2a2d32;
+  stroke: rgb(170 177 186 / 0.85);
+  stroke-width: 2.4px;
+  paint-order: stroke;
+  font-size: 13px;
+  font-weight: 600;
+  text-anchor: middle;
+  dominant-baseline: central;
+}
+
+/* The vane's tap target: the size of the vane, never under 44px on a phone. */
+.scene-vane-button {
+  position: absolute;
+  width: max(44px, 5.5%);
+  aspect-ratio: 88 / 106;
+  min-height: 44px;
+  transform: translate(-50%, -50%);
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  cursor: pointer;
+}
+
+.scene-vane-button:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
 }

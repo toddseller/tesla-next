@@ -4,8 +4,8 @@ import { describe, it, test, expect, vi, beforeEach, afterEach } from "vitest";
 import React from "react";
 import {act, cleanup, render} from "@testing-library/react";
 
-import LiveScene, {drawStars, driftVelocity, easeDrift, flowOffset, moonLitPath, moveFlows, PAUSED_AT, skyY, TIMING} from "@/components/scene/live-scene";
-import {CAR_CABLES, CHARGE_BAR, type LegName, EAVES, FLOW_COLORS, GLOW, HEADROOM, HORIZON, labelBox, LABELS, LANE_DROP, legPoints, LEGS, PANEL, PHONE_TEXT, RENDER, STAGE} from "@/components/scene/layout";
+import LiveScene, {drawStars, driftVelocity, easeDrift, flowOffset, moonLitPath, moveFlows, PAUSED_AT, skyY, TIMING, vaneAxis, vaneShake} from "@/components/scene/live-scene";
+import {CAR_CABLES, CHARGE_BAR, type LegName, EAVES, FLOW_COLORS, GLOW, HEADROOM, HORIZON, labelBox, LABELS, LANE_DROP, legPoints, LEGS, PANEL, PHONE_TEXT, RENDER, STAGE, VANE} from "@/components/scene/layout";
 import {type LiveInput, type SceneOptions, sceneState, type Vehicle} from "@/lib/scene/live-scene";
 import {twinkle} from "@/lib/scene/night-sky";
 import {sunTimes} from "@/lib/scene/sun";
@@ -1201,4 +1201,156 @@ describe("weather", () => {
       expect(eased(container)).toBe(true);
     });
   });
+});
+
+describe("weather vane motion", () => {
+  test.each([
+    [3, 20, 0], // under 5 km/h it holds still
+    [30, 32, 4], // a steady breeze wavers a few degrees
+    [30, 60, 18], // the same wind, gusty, swings well to either side
+    [100, 200, 25], // capped
+    [20, null, 7], // without gusts, as for gusts half again the wind: 30
+  ])("%s km/h with gusts of %s shakes %s degrees either way", (speed, gusts, amplitude) => {
+    expect(vaneShake(speed, gusts).amplitude).toBeCloseTo(amplitude, 6);
+  });
+
+  test("a stronger wind shakes it faster", () => {
+    expect(vaneShake(40, 60).frequency).toBeGreaterThan(vaneShake(10, 30).frequency);
+  });
+
+  test("no wind reading, no shake", () => {
+    expect(vaneShake(null, null).amplitude).toBe(0);
+  });
+
+  test("east and west wind point it side-on, right and left", () => {
+    const [ex, ey] = vaneAxis(90);
+    const [wx, wy] = vaneAxis(270);
+    expect(ex).toBeGreaterThan(0.9);
+    expect(Math.abs(ey)).toBeLessThan(0.3);
+    expect([wx, wy]).toEqual([-ex, -ey].map((v) => expect.closeTo(v, 12)));
+  });
+
+  test("north points it away, up into the picture, and south toward the viewer, down", () => {
+    const [nx, ny] = vaneAxis(0);
+    const [sx, sy] = vaneAxis(180);
+    expect(ny).toBeLessThan(-0.3);
+    expect(sy).toBeGreaterThan(0.3);
+    expect(Math.hypot(nx, ny)).toBeLessThan(Math.hypot(...vaneAxis(90))); // foreshortened
+  });
+});
+
+describe("weather vane", () => {
+  const gale = { windSpeed: 29, windGusts: 56, windDirection: 225 };
+  const vane = (options: SceneOptions) => <LiveScene state={sceneState(midday, NOW, options)} />;
+  const transform = (container: Element) => part(container, "vane-arrow").getAttribute("transform");
+  const posed = (degrees: number) => {
+    const [dx, dy] = vaneAxis(degrees);
+    return `matrix(${dx} ${dy} 0 1 ${VANE.foot[0]} ${VANE.foot[1] - VANE.arrow})`;
+  };
+  // The compass direction a drawn arrow points, from its matrix: inverts vaneAxis.
+  const pointing = (container: Element) => {
+    const [dx, dy] = transform(container)!.slice(7).split(" ").map(Number);
+    const [e, n] = [vaneAxis(90), vaneAxis(0)];
+    const det = e[0] * n[1] - e[1] * n[0];
+    const [sin, cos] = [(dx * n[1] - dy * n[0]) / det, (e[0] * dy - e[1] * dx) / det];
+    return ((Math.atan2(sin, cos) * 180) / Math.PI + 360) % 360;
+  };
+  const reduced = (run: () => void) => {
+    const original = window.matchMedia;
+    window.matchMedia = ((query: string) => ({ matches: query === "(prefers-reduced-motion: reduce)" })) as unknown as typeof window.matchMedia;
+    try { run(); } finally { window.matchMedia = original; }
+  };
+  const withFrames = (run: () => void) => {
+    vi.useFakeTimers({ toFake: ["requestAnimationFrame", "cancelAnimationFrame", "performance", "Date", "setInterval", "clearInterval", "setTimeout", "clearTimeout"] });
+    try { run(); } finally { vi.useRealTimers(); }
+  };
+
+  test("stands on the roof, in the stage, and names the wind", () => {
+    const scene = render(vane(gale)).container;
+    expect(part(scene, "stage").contains(part(scene, "vane-art"))).toBe(true);
+    expect(part(scene, "vane").tagName).toBe("BUTTON");
+    expect(part(scene, "vane").getAttribute("aria-label")).toBe("Wind: 18 mph, gusts 35 mph, from SW");
+  });
+
+  test("without a wind reading it says so", () => {
+    expect(part(render(vane({})).container, "vane").getAttribute("aria-label")).toBe("Wind: No wind reading");
+  });
+
+  test("under reduced motion it points straight into the wind", () => reduced(() => {
+    expect(transform(render(vane(gale)).container)).toBe(posed(225));
+  }));
+
+  test("below 2 mph it keeps its last direction", () => withFrames(() => reduced(() => {
+    const { container, rerender } = render(vane(gale));
+    rerender(vane({ windSpeed: 3, windGusts: 5, windDirection: 90 }));
+    act(() => vi.advanceTimersByTime(50));
+    expect(transform(container)).toBe(posed(225));
+    rerender(vane({ windSpeed: 20, windGusts: 25, windDirection: 90 }));
+    act(() => vi.advanceTimersByTime(50));
+    expect(transform(container)).toBe(posed(90));
+  })));
+
+  test("swings the shorter way to a new direction, overshoots once and settles within about 3 seconds", () => withFrames(() => {
+    const light = { windSpeed: 4, windGusts: 4 }; // 2.5 mph: turns, too light to shake
+    const { container, rerender } = render(vane({ ...light, windDirection: 350 }));
+    act(() => vi.advanceTimersByTime(1000));
+    expect(pointing(container)).toBeCloseTo(350, 3);
+    rerender(vane({ ...light, windDirection: 20 }));
+    const path: number[] = [];
+    for (let i = 0; i < 40; i++) {
+      act(() => vi.advanceTimersByTime(100));
+      path.push((pointing(container) + 180) % 360 - 180); // -180..180, so north is 0
+    }
+    expect(Math.min(...path)).toBeGreaterThan(-15); // through north, never round the long way
+    expect(Math.max(...path)).toBeGreaterThan(22); // past 20 once
+    expect(path.slice(30).every((angle) => Math.abs(angle - 20) < 1)).toBe(true);
+  }));
+
+  test("reduced motion turned on mid-shake sets it straight on its direction", () => withFrames(() => {
+    const original = window.matchMedia;
+    const { container } = render(vane({ windSpeed: 30, windGusts: 60, windDirection: 270 }));
+    act(() => vi.advanceTimersByTime(3000));
+    try {
+      window.matchMedia = ((query: string) => ({ matches: query === "(prefers-reduced-motion: reduce)" })) as unknown as typeof window.matchMedia;
+      act(() => vi.advanceTimersByTime(100));
+      expect(transform(container)).toBe(posed(270));
+    } finally {
+      window.matchMedia = original;
+    }
+  }));
+
+  test("a stronger shake comes on gradually, not in a jump", () => withFrames(() => {
+    const swing = (container: Element, ms: number) => {
+      const angles: number[] = [];
+      for (let i = 0; i < ms / 20; i++) {
+        act(() => vi.advanceTimersByTime(20));
+        angles.push(pointing(container));
+      }
+      return Math.max(...angles) - Math.min(...angles);
+    };
+    const { container, rerender } = render(vane({ windSpeed: 4, windGusts: 4, windDirection: 270 }));
+    act(() => vi.advanceTimersByTime(1000));
+    rerender(vane({ windSpeed: 30, windGusts: 60, windDirection: 270 }));
+    const first = swing(container, 200);
+    act(() => vi.advanceTimersByTime(3000));
+    expect(first).toBeLessThan(swing(container, 2000) / 3);
+  }));
+
+  test("shakes in a gusty wind and holds still in a steady one", () => withFrames(() => {
+    const spread = (options: SceneOptions) => {
+      const { container, unmount } = render(vane(options));
+      act(() => vi.advanceTimersByTime(4000));
+      const angles: number[] = [];
+      for (let i = 0; i < 60; i++) {
+        act(() => vi.advanceTimersByTime(50));
+        angles.push(pointing(container));
+      }
+      unmount();
+      return Math.max(...angles) - Math.min(...angles);
+    };
+    const gusty = spread({ windSpeed: 30, windGusts: 60, windDirection: 270 });
+    expect(gusty).toBeGreaterThan(15);
+    expect(spread({ windSpeed: 30, windGusts: 32, windDirection: 270 })).toBeLessThan(gusty / 3);
+    expect(spread({ windSpeed: 4, windGusts: 4, windDirection: 270 })).toBeLessThan(0.01);
+  }));
 });

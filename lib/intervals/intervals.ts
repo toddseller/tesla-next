@@ -229,6 +229,10 @@ export async function dayIntervals(day: string, gridReadings: Readings) {
       ...skyFrom(r.weather_code, r.cloud_cover, r.cloud_cover_low, r.cloud_cover_mid, r.cloud_cover_high, r.airport_low, r.airport_mid),
       rain: rainFrom(r.weather_code),
       wind: windAcross(r.wind_speed, r.wind_direction),
+      windSpeed: r.wind_speed,
+      // Undefined, not null, on a database from before anton added the column.
+      windGusts: r.wind_gusts ?? null,
+      windDirection: r.wind_direction,
       ...windsAloft(r.wind_low_speed, r.wind_low_direction, r.wind_mid_speed, r.wind_mid_direction, r.wind_high_speed, r.wind_high_direction),
       sun: share(quarterKw(solarWh, at), best.get(slot(at))),
     };

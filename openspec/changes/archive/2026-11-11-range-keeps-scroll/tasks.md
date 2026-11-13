@@ -32,7 +32,7 @@
 
 ## 5. Rollout
 
-- [ ] 5.1 Release (ask first); the deploy's health check passes, and on teslasolar.report a preset picked while scrolled to Solar's chart in a short window keeps the chart in view; record in design.md under Rollout
+- [x] 5.1 Release (ask first); the deploy's health check passes, and on teslasolar.report a preset picked while scrolled to Solar's chart in a short window keeps the chart in view; record in design.md under Rollout. Released as v2026.11.11.10
 
 ## Workflow follow-up
 

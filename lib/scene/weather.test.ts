@@ -1,6 +1,6 @@
 // Ported from anton-tesla-api-ws tesla-api-frontend/client/src/utils/weather.test.js.
 import { test, expect } from "vitest";
-import { weatherAt, withSplit } from "@/lib/scene/weather";
+import { turn, weatherAt, windText, withSplit } from "@/lib/scene/weather";
 
 // As /api/intervals returns them, in the site's time zone.
 const READINGS = [
@@ -54,4 +54,59 @@ test("a reading with the split, or without a cover, is unchanged", () => {
   expect(withSplit(split)).toBe(split);
   const none = { cover: null, low: null, mid: null };
   expect(withSplit(none)).toBe(none);
+});
+
+test("the wind readout in mph, from the reading in km/h", () => {
+  expect(windText(29, 56, 225)).toBe("18 mph, gusts 35 mph, from SW");
+  expect(windText(29, null, 225)).toBe("18 mph from SW");
+  expect(windText(3, 6, 90)).toBe("Calm"); // 1.9 mph
+  expect(windText(4, null, 90)).toBe("2 mph from E");
+});
+
+test("no wind reading without a speed or a direction", () => {
+  expect(windText(null, null, null)).toBe("No wind reading");
+  expect(windText(undefined, 40, 225)).toBe("No wind reading");
+  expect(windText(29, 56, null)).toBe("No wind reading");
+});
+
+test.each([
+  [0, "N"], [22, "N"], [23, "NE"], [67, "NE"], [68, "E"], [135, "SE"], [180, "S"], [225, "SW"], [270, "W"], [315, "NW"], [337, "NW"], [338, "N"], [359, "N"],
+])("wind from %i degrees reads from %s", (direction, point) => {
+  expect(windText(20, null, direction)).toBe(`12 mph from ${point}`);
+});
+
+test("a direction turns the shorter way round, through north", () => {
+  expect(turn(350, 10, 0.5)).toBe(0);
+  expect(turn(10, 350, 0.5)).toBe(0);
+  expect(turn(350, 10, 0.25)).toBe(355);
+  expect(turn(90, 180, 0.5)).toBe(135);
+  expect(turn(0, 180, 1)).toBe(180);
+});
+
+test("replay blends the wind's direction through north and its speed linearly", () => {
+  const turning = [
+    { start: "2026-10-21T09:00:00-07:00", windSpeed: 20, windDirection: 340 },
+    { start: "2026-10-21T10:00:00-07:00", windSpeed: 40, windDirection: 20 },
+  ];
+  expect(weatherAt(turning, t("2026-10-21T09:30:00-07:00"), "windDirection")).toBe(0);
+  expect(weatherAt(turning, t("2026-10-21T09:15:00-07:00"), "windDirection")).toBe(350);
+  expect(weatherAt(turning, t("2026-10-21T09:30:00-07:00"), "windSpeed")).toBe(30);
+});
+
+test("a direction missing on one side keeps the other's", () => {
+  const older = [
+    { start: "2026-10-21T09:00:00-07:00", windDirection: null },
+    { start: "2026-10-21T10:00:00-07:00", windDirection: 200 },
+  ];
+  expect(weatherAt(older, t("2026-10-21T09:30:00-07:00"), "windDirection")).toBe(200);
+});
+
+test("gusts missing on both sides stay missing, and missing on one side keep the other's", () => {
+  const none = [
+    { start: "2026-10-21T09:00:00-07:00", windSpeed: 20, windGusts: null },
+    { start: "2026-10-21T10:00:00-07:00", windSpeed: 30, windGusts: null },
+  ];
+  expect(weatherAt(none, t("2026-10-21T09:30:00-07:00"), "windGusts")).toBeNull();
+  const later = [none[0], { ...none[1], windGusts: 50 }];
+  expect(weatherAt(later, t("2026-10-21T09:30:00-07:00"), "windGusts")).toBe(50);
 });

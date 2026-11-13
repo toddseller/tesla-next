@@ -757,3 +757,83 @@ describe("stale warning", () => {
     expect(vi.getTimerCount()).toBe(0);
   });
 });
+
+describe("weather vane readout", () => {
+  const vane = () => screen.getByRole("button", { name: /^Wind:/ });
+  const gale = { weatherCover: 0.4, weatherRain: 0, weatherWind: 20.5, weatherWindSpeed: 29, weatherWindGusts: 56, weatherWindDirection: 225 };
+
+  test("tapping the vane shows the live wind, and tapping elsewhere closes it", () => {
+    vi.useFakeTimers({ now: new Date("2026-10-20T20:00:00Z") });
+    Object.assign(context, gale);
+    page();
+    act(() => fireEvent.click(vane()));
+    expect(screen.getByRole("dialog").textContent).toBe("18 mph, gusts 35 mph, from SW");
+    act(() => vi.advanceTimersByTime(0)); // Radix listens for a tap outside from the next tick
+    act(() => { fireEvent.pointerDown(document.body); fireEvent.click(document.body); });
+    expect(screen.queryByRole("dialog")).toBeNull();
+  });
+
+  test("Escape closes it, and the vane is a button the keyboard reaches", () => {
+    vi.useFakeTimers({ now: new Date("2026-10-20T20:00:00Z") });
+    Object.assign(context, gale);
+    page();
+    vane().focus();
+    expect(document.activeElement).toBe(vane());
+    act(() => fireEvent.click(vane()));
+    act(() => fireEvent.keyDown(document.activeElement ?? document.body, { key: "Escape" }));
+    expect(screen.queryByRole("dialog")).toBeNull();
+  });
+
+  test("without a wind reading it says so", () => {
+    vi.useFakeTimers({ now: new Date("2026-10-20T20:00:00Z") });
+    Object.assign(context, { weatherCover: 0.4 });
+    page();
+    act(() => fireEvent.click(vane()));
+    expect(screen.getByRole("dialog").textContent).toBe("No wind reading");
+  });
+
+  test("in replay it shows the replayed reading, through north", () => {
+    vi.useFakeTimers({ now: new Date("2026-10-20T18:00:00Z") });
+    Object.assign(context, gale);
+    context.replayData = {
+      ...history(12, 14, "2026-10-19"),
+      weather: [{ start: "2026-10-19T12:00:00-07:00", cover: 0.4, windSpeed: 20, windGusts: 30, windDirection: 340 },
+        { start: "2026-10-19T14:00:00-07:00", cover: 0.4, windSpeed: 40, windGusts: 70, windDirection: 20 }],
+    };
+    page("/distribution?at=2026-10-19T13:00");
+    expect(vane().getAttribute("aria-label")).toBe("Wind: 19 mph, gusts 31 mph, from N");
+  });
+
+  test("in replay a day without readings has no wind reading", () => {
+    vi.useFakeTimers({ now: new Date("2026-10-20T18:00:00Z") });
+    Object.assign(context, gale);
+    context.replayData = { ...history(12, 14, "2026-10-19"), weather: [] };
+    page("/distribution?at=2026-10-19T13:00");
+    expect(vane().getAttribute("aria-label")).toBe("Wind: No wind reading");
+  });
+
+  test("live, the readout gives the latest reading at once, even without gusts", () => {
+    vi.useFakeTimers({ now: new Date("2026-10-20T20:00:00Z") });
+    Object.assign(context, { ...gale, weatherWindSpeed: 20, weatherWindGusts: null, weatherWindDirection: 270 });
+    const tree = () => <Distribution initialStatus={null} search={{}} />;
+    window.history.replaceState(null, "", "/distribution");
+    const { rerender } = render(tree());
+    Object.assign(context, { weatherWindSpeed: 40 });
+    rerender(tree());
+    act(() => { vi.setSystemTime(Date.now() + 60000 - 1000); vi.advanceTimersByTime(1000); });
+    expect(vane().getAttribute("aria-label")).toBe("Wind: 25 mph from W");
+  });
+
+  test("live, a new direction isn't walked the long way round", () => {
+    vi.useFakeTimers({ now: new Date("2026-10-20T20:00:00Z") });
+    Object.assign(context, { ...gale, weatherWindSpeed: 20, weatherWindGusts: 30, weatherWindDirection: 350 });
+    const tree = () => <Distribution initialStatus={null} search={{}} />;
+    window.history.replaceState(null, "", "/distribution");
+    const { rerender } = render(tree());
+    Object.assign(context, { weatherWindSpeed: 40, weatherWindGusts: 70, weatherWindDirection: 10 });
+    rerender(tree());
+    act(() => { vi.setSystemTime(Date.now() + 2.5 * 60000 - 1000); vi.advanceTimersByTime(1000); });
+    // The vane's wind isn't walked with the sky: the readout gives the latest reading, and the vane eases on its own.
+    expect(vane().getAttribute("aria-label")).toBe("Wind: 25 mph, gusts 43 mph, from N");
+  });
+});

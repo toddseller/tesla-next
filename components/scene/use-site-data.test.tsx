@@ -11,7 +11,7 @@ const charging = {
   load_power: 11.3, home_power: 4.1, solar_power: 6.1, grid_power: 2.0, battery_power: 0, battery_percentage: 82,
   battery_status: "Standby", modified: "2026-10-19T12:33:37-07:00",
   vehicle: { name: "R2D2", color: "#C0C4C8", charging_power: 7.2, battery_level: 80, charging_state: "Charging", battery_level_at: "2026-10-19T19:30:00Z" },
-  weather: { cover: 0.4, rain: 0, wind: -3.2, windLow: 5, windMid: 8, windHigh: 20, cirrus: 0.1, low: 0.3, mid: 0, sun: 0.9 },
+  weather: { cover: 0.4, rain: 0, wind: -3.2, windLow: 5, windMid: 8, windHigh: 20, cirrus: 0.1, low: 0.3, mid: 0, sun: 0.9, windSpeed: 29, windGusts: 56, windDirection: 225 },
 };
 
 test("a live status becomes the page's values", () => {
@@ -19,7 +19,7 @@ test("a live status becomes the page's values", () => {
   expect(state).toMatchObject({
     solarPower: 6.1, homePower: 4.1, batteryPower: 0, battery: 82, gridPower: 2.0, vehicle: charging.vehicle, liveReceived: true,
     weatherCover: 0.4, weatherRain: 0, weatherWind: -3.2, weatherWindLow: 5, weatherWindMid: 8, weatherWindHigh: 20,
-    weatherCirrus: 0.1, weatherLow: 0.3, weatherMid: 0, weatherSun: 0.9,
+    weatherCirrus: 0.1, weatherLow: 0.3, weatherMid: 0, weatherSun: 0.9, weatherWindSpeed: 29, weatherWindGusts: 56, weatherWindDirection: 225,
   });
   expect(state.modifiedAt).toEqual(new Date("2026-10-19T19:33:37Z"));
 });
@@ -30,6 +30,14 @@ test("a missing battery reading keeps the last one; no car and no weather are nu
   expect(after.battery).toBe(82);
   expect(after.vehicle).toBeNull();
   expect([after.weatherCover, after.weatherSun]).toEqual([null, null]);
+  expect([after.weatherWindSpeed, after.weatherWindGusts, after.weatherWindDirection]).toEqual([null, null, null]);
+});
+
+test("a status from before anton sent the raw wind has none", () => {
+  const { windSpeed, windGusts, windDirection, ...older } = charging.weather;
+  const state = applyStatus(EMPTY, { ...charging, weather: older });
+  expect([state.weatherWindSpeed, state.weatherWindGusts, state.weatherWindDirection]).toEqual([null, null, null]);
+  expect(state.weatherWind).toBe(-3.2);
 });
 
 test("home power falls back to load power", () => {
