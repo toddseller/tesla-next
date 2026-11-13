@@ -42,7 +42,7 @@
 
 ## 6. Rollout
 
-- [ ] 6.1 Release (ask first); the deploy's health check passes, and on teslasolar.report the vane shows on the roof and its readout matches the latest `weather_sample` row (or "No wind reading" before anton's release); record in design.md under Rollout
+- [x] 6.1 Release (ask first); the deploy's health check passes, and on teslasolar.report the vane shows on the roof and its readout matches the latest `weather_sample` row (or "No wind reading" before anton's release); record in design.md under Rollout. Released as v2026.11.13
 
 ## Workflow follow-up
 
