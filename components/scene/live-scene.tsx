@@ -1,13 +1,15 @@
-import React, {type CSSProperties, type ReactNode, useEffect, useRef, useState, useSyncExternalStore} from 'react';
+import React, {type CSSProperties, type ReactNode, type Ref, useEffect, useRef, useState, useSyncExternalStore} from 'react';
 
 import {sceneLayers, SUNLIGHT} from '@/components/scene/images';
 import {type SkyPoint, twinkle} from '@/lib/scene/night-sky';
 import type {Link, SceneState} from '@/lib/scene/live-scene';
-import {chargeBarPoints, EAVES, FLOW_COLORS, GLOW, HEADROOM, LABELS, type LegName, legPoints, LEGS, MOON, pathLength, type Point, RENDER, skyY, STAGE, STRAIGHT_THROUGH} from '@/components/scene/layout';
+import {chargeBarPoints, EAVES, FLOW_COLORS, GLOW, HEADROOM, LABELS, type LegName, legPoints, LEGS, MOON, pathLength, type Point, RENDER, skyY, STAGE, STRAIGHT_THROUGH, VANE} from '@/components/scene/layout';
 
 import CloudCanvas, {type CloudHandle} from '@/components/scene/cloud-canvas';
 import {cloudInputs} from '@/components/scene/cloud-inputs';
 import {useMoonFace} from '@/components/scene/moon-face';
+import {Popover, PopoverContent, PopoverTrigger} from '@/components/ui/popover';
+import {isCalm, windText} from '@/lib/scene/weather';
 
 export {skyY};
 import '@/components/scene/scene.css';
@@ -224,6 +226,79 @@ export const driftVelocity = (wind: number | null | undefined, band: Band) => {
   const velocity = ((wind ?? 0) / HEIGHT_KM[band]) * PACE;
   if (band === "high" || Math.abs(velocity) >= CREEP) return velocity;
   return (wind ?? 0) < 0 ? -CREEP : CREEP;
+};
+
+// The weather vane's motion (openspec/specs/scene-weather), tuned by eye together:
+// it shakes about its direction more the more the gusts exceed the wind, a little
+// more with the wind itself, and faster the stronger it blows.
+const SHAKE = { still: 5, perGust: 0.5, perWind: 0.1, max: 25, gustFactor: 1.5, hz: 0.3, hzPerKmh: 1 / 40 };
+export const vaneShake = (speed: number | null | undefined, gusts: number | null | undefined) => {
+  if (speed == null || speed < SHAKE.still) return { amplitude: 0, frequency: 0 };
+  const gust = gusts ?? SHAKE.gustFactor * speed;
+  return {
+    amplitude: Math.min(SHAKE.max, SHAKE.perGust * Math.max(0, gust - speed) + SHAKE.perWind * speed),
+    frequency: SHAKE.hz + speed * SHAKE.hzPerKmh,
+  };
+};
+// The house art's ground axes on screen, measured off the render: east along the
+// ridge, north up the right block's side, foreshortened. A compass direction maps
+// along them, so north tips up into the picture and south comes down toward us.
+const EAST: Point = [0.97, 0.24];
+const NORTH: Point = [0.73 * 0.7, -0.68 * 0.7];
+export const vaneAxis = (degrees: number): Point => {
+  const [sin, cos] = [Math.sin((degrees * Math.PI) / 180), Math.cos((degrees * Math.PI) / 180)];
+  return [sin * EAST[0] + cos * NORTH[0], sin * EAST[1] + cos * NORTH[1]];
+};
+
+// Before any wind reading the vane rests side-on, into the site's usual west wind.
+const VANE_REST = 270;
+// A spring (per second squared, per second) that overshoots once and settles in about 3 seconds.
+const SWING = { stiffness: 9, damping: 2.7 };
+// Longer gaps between frames (a hidden tab) step the spring this far at most, so it can't blow up.
+const SWING_STEP_MS = 50;
+const vanePose = (degrees: number) => {
+  const [dx, dy] = vaneAxis(degrees);
+  return `matrix(${dx} ${dy} 0 1 ${VANE.foot[0]} ${VANE.foot[1] - VANE.arrow})`;
+};
+// Two sines at an irrational ratio, so the shake never visibly repeats. The phase is
+// accumulated frame by frame, so a change of pace doesn't jump the arrow.
+const wobble = (amplitude: number, phase: number) => amplitude * (0.6 * Math.sin(phase) + 0.4 * Math.sin(1.73 * phase + 1.3));
+const VANE_ARMS = [['N', 0], ['E', 90], ['S', 180], ['W', 270]] as const;
+// The arrow in its own vertical plane, pointing along +x; vanePose lays that plane along the wind.
+const VANE_ARROW = 'M -30 -9 L -16 -9 L -12 -1.6 L 22 -1.6 L 22 -6 L 34 0 L 22 6 L 22 1.6 L -12 1.6 L -16 9 L -30 9 L -24 0 Z';
+
+const Vane = ({ arrow, pose, text }: { arrow: Ref<SVGGElement>; pose: string; text: string }) => {
+  const [x, y] = VANE.foot;
+  const armsAt = y - VANE.arms;
+  return (
+    <>
+      <svg className="scene-layer scene-vane" viewBox={`0 0 ${STAGE.width} ${STAGE.height}`} data-part="vane-art" aria-hidden="true">
+        <line className="scene-vane-iron" x1={x} y1={y} x2={x} y2={y - VANE.post} strokeWidth={3.2} />
+        <line className="scene-vane-rim" x1={x + 1} y1={y} x2={x + 1} y2={y - VANE.post} strokeWidth={0.8} />
+        {VANE_ARMS.map(([point, degrees]) => {
+          const [dx, dy] = vaneAxis(degrees);
+          return (
+            <g key={point}>
+              <line className="scene-vane-iron" x1={x} y1={armsAt} x2={x + dx * 17} y2={armsAt + dy * 17} strokeWidth={2.6} />
+              <line className="scene-vane-rim" x1={x} y1={armsAt} x2={x + dx * 17} y2={armsAt + dy * 17} strokeWidth={0.8} />
+              <text className="scene-vane-point" x={x + dx * 25} y={armsAt + dy * 25}>{point}</text>
+            </g>
+          );
+        })}
+        <g ref={arrow} data-part="vane-arrow" transform={pose}>
+          <path className="scene-vane-plate" d={VANE_ARROW} />
+        </g>
+        <circle className="scene-vane-plate" cx={x} cy={y - VANE.post} r={3.6} />
+      </svg>
+      <Popover>
+        <PopoverTrigger asChild>
+          <button type="button" className="scene-vane-button" data-part="vane" aria-label={`Wind: ${text}`}
+            style={{ left: pct(x, STAGE.width), top: pct(y - VANE.post / 2 - 12, STAGE.height) }} />
+        </PopoverTrigger>
+        <PopoverContent side="left" className="w-auto px-3 py-1.5 text-sm tabular-nums" data-part="vane-readout">{text}</PopoverContent>
+      </Popover>
+    </>
+  );
 };
 
 // The bands that drift, in the shader's layer order (cirrus, mid, low), with the wind
@@ -445,6 +520,15 @@ const LiveScene = ({ state, paused = false, drift = 1 }: { state: SceneState; pa
   // reduced motion or while a replay is paused.
   const driftTarget = useRef<number[]>([]);
   driftTarget.current = DRIFTING.map(([band, wind]) => (still || paused ? 0 : drift * driftVelocity(state[wind], band)));
+  // The vane turns to each reading's direction but keeps its last in calm air; it shakes
+  // only while the scene moves.
+  const vaneTarget = useRef(VANE_REST);
+  if (state.windSpeed != null && state.windDirection != null && !isCalm(state.windSpeed)) vaneTarget.current = state.windDirection;
+  const shake = useRef(vaneShake(null, null));
+  shake.current = vaneShake(paused ? null : state.windSpeed, state.windGusts);
+  const vaneArrow = useRef<SVGGElement>(null);
+  // Set once: the frame loop owns the arrow's transform from then on.
+  const [firstPose] = useState(() => vanePose(vaneTarget.current));
 
   // One frame loop moves all the flow gradients, draws the clouds where the wind
   // has drifted them, and redraws the twinkling stars; it finds the
@@ -455,6 +539,10 @@ const LiveScene = ({ state, paused = false, drift = 1 }: { state: SceneState; pa
     let last: number | null = null;
     let velocities = driftTarget.current;
     let offsets = [0, 0, 0];
+    let angle = vaneTarget.current;
+    let spin = 0;
+    let { amplitude, frequency } = shake.current;
+    let phase = 0;
     const tick = (now: number) => {
       if (lines.current) moveFlows(lines.current, pausedRef.current ? PAUSED_AT : now);
       paintStars(starsCanvas.current, stage.current, stars.current ?? [], pausedRef.current || reducedMotion() ? PAUSED_AT : now);
@@ -463,6 +551,19 @@ const LiveScene = ({ state, paused = false, drift = 1 }: { state: SceneState; pa
       velocities = velocities.map((velocity, i) => easeDrift(velocity, driftTarget.current[i], dt));
       offsets = offsets.map((offset, i) => (((offset + (velocities[i] * dt) / 1000) % 1) + 1) % 1);
       clouds.current?.draw([...offsets, offsets[2]]);
+      if (reducedMotion()) {
+        [angle, spin, amplitude] = [vaneTarget.current, 0, 0];
+        vaneArrow.current?.setAttribute('transform', vanePose(angle));
+      } else if (vaneArrow.current) {
+        const step = Math.min(dt, SWING_STEP_MS) / 1000;
+        const off = ((((vaneTarget.current - angle) % 360) + 540) % 360) - 180;
+        spin += (SWING.stiffness * off - SWING.damping * spin) * step;
+        angle = (((angle + spin * step) % 360) + 360) % 360;
+        amplitude = easeDrift(amplitude, shake.current.amplitude, dt);
+        frequency = easeDrift(frequency, shake.current.frequency, dt);
+        phase = (phase + 2 * Math.PI * frequency * step) % (2 * Math.PI * 100);
+        vaneArrow.current.setAttribute('transform', vanePose(angle + wobble(amplitude, phase)));
+      }
       frame = requestAnimationFrame(tick);
     };
     frame = requestAnimationFrame(tick);
@@ -521,6 +622,7 @@ const LiveScene = ({ state, paused = false, drift = 1 }: { state: SceneState; pa
           </>
         )}
         <Rain rain={state.rain ?? 0} dusk={dusk} wind={state.wind} />
+        <Vane arrow={vaneArrow} pose={firstPose} text={windText(state.windSpeed, state.windGusts, state.windDirection)} />
         {(['solar', 'home', 'powerwall', 'grid'] as const).map((name) => (
           <Label key={name} name={name} title={LABELS[name].title} value={labels[name]} />
         ))}

@@ -175,8 +175,9 @@ export const sceneState = (
   { solarPower, homePower, batteryPower, battery, gridPower, vehicle, liveReceived }: LiveInput,
   now: Date = new Date(),
   // Replay passes the recorded links, and has no 20% default for a missing charge. A weather field is null without
-  // a recent reading and undefined before the weather is known; wind is km/h across the scene, positive to its right.
-  { links, replay = false, cover, rain, wind, windLow, windMid, windHigh, cirrus, low, mid, sun }: SceneOptions = {}
+  // a recent reading and undefined before the weather is known; wind is km/h across the scene, positive to its right,
+  // and the vane's windSpeed, windGusts and windDirection the 10 m wind as stored, in km/h and degrees from.
+  { links, replay = false, cover, rain, wind, windLow, windMid, windHigh, windSpeed, windGusts, windDirection, cirrus, low, mid, sun }: SceneOptions = {}
 ) => {
   // The weather service's model can keep a marine layer for hours after the roof is in full sun.
   const cap = roofCap(sun);
@@ -221,6 +222,9 @@ export const sceneState = (
     windLow,
     windMid,
     windHigh,
+    windSpeed,
+    windGusts,
+    windDirection,
     cloudSeed: cloudSeedAt(now),
     cover,
     cirrus,

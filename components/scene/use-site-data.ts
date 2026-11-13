@@ -5,7 +5,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useLiveStream } from "@/components/use-live-stream";
 import type { Vehicle } from "@/lib/scene/live-scene";
 import type { IntervalRecord } from "@/lib/scene/replay";
-import type { WeatherReading } from "@/lib/scene/weather";
+import type { Sky, WeatherReading } from "@/lib/scene/weather";
 
 // What anton's scheduler notifies each poll (anton-tesla-api-ws live-site-status), as /api/live forwards it.
 type LiveStatus = {
@@ -17,7 +17,7 @@ type LiveStatus = {
   battery_percentage?: number | null;
   modified?: string | null;
   vehicle?: Vehicle | null;
-  weather?: Partial<Record<"cover" | "rain" | "wind" | "windLow" | "windMid" | "windHigh" | "cirrus" | "low" | "mid" | "sun", number | null>> | null;
+  weather?: Sky | null;
 };
 
 export type ReplayDay = { date: string; data: IntervalRecord[]; weather?: WeatherReading[] };
@@ -41,6 +41,9 @@ export const EMPTY = {
   weatherLow: null as number | null,
   weatherMid: null as number | null,
   weatherSun: null as number | null,
+  weatherWindSpeed: null as number | null,
+  weatherWindGusts: null as number | null,
+  weatherWindDirection: null as number | null,
 };
 type Live = typeof EMPTY;
 
@@ -65,6 +68,9 @@ export const applyStatus = (previous: Live, status: LiveStatus): Live => ({
   weatherLow: status.weather?.low ?? null,
   weatherMid: status.weather?.mid ?? null,
   weatherSun: status.weather?.sun ?? null,
+  weatherWindSpeed: status.weather?.windSpeed ?? null,
+  weatherWindGusts: status.weather?.windGusts ?? null,
+  weatherWindDirection: status.weather?.windDirection ?? null,
   liveReceived: true,
 });
 

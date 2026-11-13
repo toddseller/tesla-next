@@ -42,6 +42,11 @@ const at = (x: number, y: number): Point => [x, y + RENDER.y];
 // the panel, drawn over them, hides where they meet, as if wired inside.
 export const PANEL = { x: 1460, y: 372 + RENDER.y, width: 20, height: 52 };
 
+// The weather vane: its foot on the main roof's hip apex (the render's pixel
+// 1720, 92 of 2400), against open sky clear of SOLAR and the car label, and the
+// heights of its post, compass arms and arrow above the foot, in stage units.
+export const VANE = { foot: [1146.7, 141.3] as Point, post: 70, arms: 40, arrow: 60 };
+
 // Each element's leg runs from the element to the electrical panel (the small
 // gray box on the right wall), along the isometric axes of the roof, walls and
 // ground. Solar runs down the roof slope, over the eave and down the wall; the

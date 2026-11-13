@@ -306,7 +306,8 @@ CREATE TABLE public.weather_sample (
     wind_mid_speed smallint,
     wind_mid_direction smallint,
     wind_high_speed smallint,
-    wind_high_direction smallint
+    wind_high_direction smallint,
+    wind_gusts smallint
 );
 
 

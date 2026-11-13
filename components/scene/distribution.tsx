@@ -41,10 +41,11 @@ const toMinute = (t: number) => Math.floor(t / 60000) * 60000;
 
 // In development only, `cover`, `rain`, `cirrus`, `low`, `mid` and `sun` (0 to 1) and `wind`, `windLow`,
 // `windMid` and `windHigh` (km/h across the scene at 10 m and each band's height, positive toward its
-// right) in the address replace the live weather, to check its looks on any device on any day, and
-// `drift` multiplies the clouds' pace, to tune it by eye; the production build drops this.
+// right), `windSpeed` and `windGusts` (km/h) and `windDirection` (degrees from) in the address replace the
+// live weather, to check its looks on any device on any day, and `drift` multiplies the clouds' pace, to
+// tune it by eye; the production build drops this.
 const DEV_WEATHER: Record<keyof Sky, [number, number]> = { cover: [0, 1], rain: [0, 1], wind: [-60, 60], windLow: [-150, 150], windMid: [-150, 150], windHigh: [-150, 150],
-  cirrus: [0, 1], low: [0, 1], mid: [0, 1], sun: [0, 1] };
+  cirrus: [0, 1], low: [0, 1], mid: [0, 1], sun: [0, 1], windSpeed: [0, 150], windGusts: [0, 200], windDirection: [0, 359] };
 // Next.js compiles these out of a production build; tests and `next dev` keep them.
 const dev = () => process.env.NODE_ENV !== "production";
 const devDrift = (params: URLSearchParams) => (dev() && params.has("drift") ? Math.min(10, Math.max(0, Number(params.get("drift")) || 0)) : 1);
@@ -60,10 +61,13 @@ const devWeather = (params: URLSearchParams) => {
 // Live readings arrive every 15 minutes; each is walked in over about 5, so the sky
 // changes like weather rather than jumping (openspec/specs/scene-weather). The first
 // known weather shows at once. A missing value walks as 0, which the scene reads the
-// same way (no sunshine caps nothing).
+// same way (no sunshine caps nothing). The vane's wind isn't walked: its readout gives
+// the latest reading, the vane eases to it on its own, and a walk from 350 to 10
+// degrees would sweep the long way.
 const WALK_MS = 5 * 60 * 1000;
+const UNWALKED = new Set<keyof Sky>(["windSpeed", "windGusts", "windDirection"]);
 const towards = (from: Sky, to: Sky, f: number): Sky =>
-  Object.fromEntries((Object.keys(to) as (keyof Sky)[]).map((k) => [k, f === 1 ? to[k] : (from[k] ?? 0) + ((to[k] ?? 0) - (from[k] ?? 0)) * f]));
+  Object.fromEntries((Object.keys(to) as (keyof Sky)[]).map((k) => [k, f === 1 || UNWALKED.has(k) ? to[k] : (from[k] ?? 0) + ((to[k] ?? 0) - (from[k] ?? 0)) * f]));
 const useWalkedWeather = (weather: Sky) => {
   const key = JSON.stringify(withSplit(weather));
   const [shown, setShown] = useState<Sky>(() => JSON.parse(key));
@@ -94,6 +98,7 @@ const useWalkedWeather = (weather: Sky) => {
 const Distribution = ({ initialStatus, search, renderedAt }: { initialStatus: string | null; search: Record<string, string>; renderedAt?: number }) => {
   const {
     solarPower, homePower, batteryPower, battery, gridPower, vehicle, liveReceived, modifiedAt, weatherCover, weatherRain, weatherWind, weatherWindLow, weatherWindMid, weatherWindHigh, weatherCirrus, weatherLow, weatherMid, weatherSun,
+    weatherWindSpeed, weatherWindGusts, weatherWindDirection,
     setReplayDay, replayData,
   } = useSiteData(initialStatus);
   const searchParams = useMemo(() => new URLSearchParams(search), [search]);
@@ -223,7 +228,8 @@ const Distribution = ({ initialStatus, search, renderedAt }: { initialStatus: st
     showInAddress(null);
   };
 
-  const liveWeather = useWalkedWeather(liveReceived ? { cover: weatherCover, rain: weatherRain, wind: weatherWind, windLow: weatherWindLow, windMid: weatherWindMid, windHigh: weatherWindHigh, cirrus: weatherCirrus, low: weatherLow, mid: weatherMid, sun: weatherSun } : {});
+  const liveWeather = useWalkedWeather(liveReceived ? { cover: weatherCover, rain: weatherRain, wind: weatherWind, windLow: weatherWindLow, windMid: weatherWindMid, windHigh: weatherWindHigh, cirrus: weatherCirrus, low: weatherLow, mid: weatherMid, sun: weatherSun,
+    windSpeed: weatherWindSpeed, windGusts: weatherWindGusts, windDirection: weatherWindDirection } : {});
 
   let state: SceneState;
   if (replaying) {
@@ -232,7 +238,7 @@ const Distribution = ({ initialStatus, search, renderedAt }: { initialStatus: st
     const known = replayData?.date === day;
     const readings = known ? replayData!.weather?.map(withSplit) : null;
     const at = (field: keyof Sky) => (known ? weatherAt(readings, replayTime!, field) : undefined);
-    const weather = Object.fromEntries((["cover", "rain", "wind", "windLow", "windMid", "windHigh", "cirrus", "low", "mid", "sun"] as const).map((field) => [field, at(field)])) as Sky;
+    const weather = Object.fromEntries((["cover", "rain", "wind", "windLow", "windMid", "windHigh", "cirrus", "low", "mid", "sun", "windSpeed", "windGusts", "windDirection"] as const).map((field) => [field, at(field)])) as Sky;
     state = sceneState(values, new Date(replayTime!), { links, replay: true, ...weather });
   } else {
     state = sceneState({ solarPower, homePower, batteryPower, battery, gridPower, vehicle, liveReceived }, now, { ...liveWeather, ...devWeather(searchParams) });
