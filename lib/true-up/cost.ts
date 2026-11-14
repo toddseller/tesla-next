@@ -44,7 +44,7 @@ export async function cycleRows(start: string, end: string, pricing?: Pricing) {
 // Tesla's credit for the Powerwalls' exports during PG&E virtual power plant events: $2.00 a kWh delivered on the days
 // marked as VPP days from May to October, paid about six months later.
 const VPP_RATE = 2;
-const FIRST_SEASON = 2024;
+export const FIRST_SEASON = 2024;
 
 export async function vppSeason(year: number) {
   if (year < FIRST_SEASON) return null;
