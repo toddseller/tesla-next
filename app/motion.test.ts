@@ -80,7 +80,8 @@ test("the Payback line's reveals end at a clip-path shape the browser can blend 
 
 // site-motion, "Charts draw in when the view changes": horizontal bars uncover from their left end. The reveal used to
 // give only a start state, so the bars showed nothing, then all of themselves at once, 225 ms in.
-// A bar that shows only part of itself, like the forecast's fill, gives the share it keeps covered as --hidden.
+// A bar that shows only part of itself, like the forecast's fill, gives the share it keeps covered as --hidden, and a
+// bar that rests rounder than 4px gives its corner as --round, so its corners don't change when the uncover ends.
 test("horizontal bars uncover to a shape the browser can blend into, keeping their rounded ends", () => {
-  expect(css).toMatch(/@keyframes motion-uncover\s*{\s*from\s*{\s*clip-path: inset\(0 100% 0 0 round 4px\);\s*}\s*to\s*{\s*clip-path: inset\(0 var\(--hidden, 0%\) 0 0 round 4px\);\s*}/);
+  expect(css).toMatch(/@keyframes motion-uncover\s*{\s*from\s*{\s*clip-path: inset\(0 100% 0 0 round var\(--round, 4px\)\);\s*}\s*to\s*{\s*clip-path: inset\(0 var\(--hidden, 0%\) 0 0 round var\(--round, 4px\)\);\s*}/);
 });

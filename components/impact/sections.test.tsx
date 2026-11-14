@@ -18,7 +18,7 @@ afterEach(cleanup);
 const section = (name: string) => screen.getByRole("region", { name });
 // How much of its track a bar shows: what its clip leaves uncovered.
 const shown = (meter: HTMLElement) =>
-  100 - Number((meter.firstChild as HTMLElement).style.clipPath.match(/^inset\(0(?:px)? ([\d.e-]+)% 0(?:px)? 0(?:px)? round 8px\)$/)?.[1]);
+  100 - Number((meter.firstChild as HTMLElement).style.clipPath.match(/^inset\(0(?:px)? ([\d.e-]+)% 0(?:px)? 0(?:px)? round var\(--round\)\)$/)?.[1]);
 
 test("Self Powered explains itself and shows the self-powered share in the ring and each source in the legend", () => {
   render(<SelfPowered figures={day} />);
@@ -100,10 +100,13 @@ test("Solar offset's bars uncover from the left, one after the other, to the sha
   render(<SolarOffset figures={day} />);
   const fills = screen.getAllByRole("meter").map((bar) => bar.firstChild as HTMLElement);
   expect(fills.every((fill) => fill.classList.contains("motion-uncover"))).toBe(true);
-  // Rounded as the track is, so its left end matches the track's while the uncover's clip rounds less.
+  // Rounded as the track is at both ends, and the uncover rounds its right end by the same --round, so its corners
+  // don't change when the uncover ends.
   expect(fills.every((fill) => fill.classList.contains("rounded-md"))).toBe(true);
   expect(fills.map((fill) => fill.style.getPropertyValue("--i"))).toEqual(["0", "1"]);
+  expect(fills.map((fill) => fill.style.getPropertyValue("--round"))).toEqual(["8px", "8px"]);
   expect(fills.every((fill) => fill.style.clipPath.includes(` ${fill.style.getPropertyValue("--hidden")} `))).toBe(true);
+  expect(fills.every((fill) => fill.style.clipPath.endsWith("round var(--round))"))).toBe(true);
 });
 
 test("new figures move Solar offset's bars from their old length, and roll its figures", () => {
