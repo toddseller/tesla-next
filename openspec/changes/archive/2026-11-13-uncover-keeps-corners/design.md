@@ -33,3 +33,7 @@ Checked 2026-11-13 on a throwaway branch container on onyx reading production re
 - **Solar page's forecast bars:** uncover and rest at `round 4px`, as before.
 - **Backup duration bars:** keep `motion-uncover`, whose fill holds the last frame, so they uncover and rest at the default `round 4px` over their 2px `rounded-xs`; no snap, as before.
 - **Console:** no errors and no CSP violation.
+
+## Rollout
+
+Released as v2026.11.13.1 on 2026-11-13; the deploy's health check passed (teslasolar.report answered 200). On teslasolar.report's Impact page on Today, in headless Chromium at 1440 x 900 and 390 x 844, the Solar bar (21.8% of its track) uncovers and rests at `round 8px`, and Home at `round 8px`. The screenshots 1 ms before the uncover ends and at rest are byte-identical at 1440 px and look the same at 390 px. No console errors.
