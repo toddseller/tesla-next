@@ -1280,6 +1280,50 @@ describe("weather vane", () => {
     expect(transform(render(vane(gale)).container)).toBe(posed(225));
   }));
 
+  const arrow = (container: Element) => transform(container)!.slice(7, -1).split(" ").map(Number);
+
+  test("pointing at the viewer it keeps a minimum width, its tip down toward them", () => reduced(() => {
+    const [dx, dy] = arrow(render(vane({ ...gale, windDirection: 152 })).container);
+    expect(Math.abs(dx)).toBeCloseTo(0.25, 6);
+    expect(dy).toBeGreaterThan(0.3);
+  }));
+
+  test("pointing away it keeps a minimum width, its tip up into the picture", () => reduced(() => {
+    const [dx, dy] = arrow(render(vane({ ...gale, windDirection: 332 })).container);
+    expect(Math.abs(dx)).toBeCloseTo(0.25, 6);
+    expect(dy).toBeLessThan(-0.3);
+  }));
+
+  test("side-on it is drawn as before", () => reduced(() => {
+    expect(transform(render(vane({ ...gale, windDirection: 270 })).container)).toBe(posed(270));
+  }));
+
+  test("shaking across end-on it stays on one side of the post", () => withFrames(() => {
+    const { container } = render(vane({ ...gale, windDirection: 150 }));
+    act(() => vi.advanceTimersByTime(4000));
+    const widths: number[] = [];
+    for (let i = 0; i < 100; i++) {
+      act(() => vi.advanceTimersByTime(50));
+      widths.push(arrow(container)[0]);
+    }
+    expect(widths.every((dx) => dx > 0) || widths.every((dx) => dx < 0)).toBe(true);
+    expect(Math.min(...widths.map(Math.abs))).toBeGreaterThanOrEqual(0.25 - 1e-9);
+  }));
+
+  // 152 and 154 lie either side of exactly end-on, so the spring's first overshoot leaves the zone on opposite sides.
+  test.each([[270, 152], [288, 154]])("swinging from %i to settle near end-on at %i it changes side at most once", (from, to) => withFrames(() => {
+    const light = { windSpeed: 4, windGusts: 4 }; // 2.5 mph: turns, too light to shake
+    const { container, rerender } = render(vane({ ...light, windDirection: from }));
+    act(() => vi.advanceTimersByTime(1000));
+    rerender(vane({ ...light, windDirection: to }));
+    const sides: number[] = [];
+    for (let i = 0; i < 80; i++) {
+      act(() => vi.advanceTimersByTime(50));
+      sides.push(Math.sign(arrow(container)[0]));
+    }
+    expect(sides.filter((side, i) => i > 0 && side !== sides[i - 1]).length).toBeLessThanOrEqual(1);
+  }));
+
   test("below 2 mph it keeps its last direction", () => withFrames(() => reduced(() => {
     const { container, rerender } = render(vane(gale));
     rerender(vane({ windSpeed: 3, windGusts: 5, windDirection: 90 }));

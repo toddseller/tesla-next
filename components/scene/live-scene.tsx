@@ -256,8 +256,13 @@ const VANE_REST = 270;
 const SWING = { stiffness: 9, damping: 2.7 };
 // Longer gaps between frames (a hidden tab) step the spring this far at most, so it can't blow up.
 const SWING_STEP_MS = 50;
-const vanePose = (degrees: number) => {
-  const [dx, dy] = vaneAxis(degrees);
+// Pointing at or away from the viewer the arrow would thin to a hairline, which reads as no arrow at all,
+// so it keeps this width (side-on is about 0.97), chosen in the mockups.
+const VANE_MIN = 0.25;
+const sideOf = (degrees: number) => Math.sign(vaneAxis(degrees)[0]) || 1;
+const vanePose = (degrees: number, side = sideOf(degrees)) => {
+  const [x, dy] = vaneAxis(degrees);
+  const dx = side * Math.max(Math.abs(x), VANE_MIN);
   return `matrix(${dx} ${dy} 0 1 ${VANE.foot[0]} ${VANE.foot[1] - VANE.arrow})`;
 };
 // Two sines at an irrational ratio, so the shake never visibly repeats. The phase is
@@ -540,6 +545,9 @@ const LiveScene = ({ state, paused = false, drift = 1 }: { state: SceneState; pa
     let velocities = driftTarget.current;
     let offsets = [0, 0, 0];
     let angle = vaneTarget.current;
+    // The arrow changes side only once the swing is clearly past end-on: a shake, or the spring's
+    // overshoots as it settles there, would otherwise flick it from one side of the post to the other.
+    let side = sideOf(angle);
     let spin = 0;
     let { amplitude, frequency } = shake.current;
     let phase = 0;
@@ -552,17 +560,18 @@ const LiveScene = ({ state, paused = false, drift = 1 }: { state: SceneState; pa
       offsets = offsets.map((offset, i) => (((offset + (velocities[i] * dt) / 1000) % 1) + 1) % 1);
       clouds.current?.draw([...offsets, offsets[2]]);
       if (reducedMotion()) {
-        [angle, spin, amplitude] = [vaneTarget.current, 0, 0];
-        vaneArrow.current?.setAttribute('transform', vanePose(angle));
+        [angle, spin, amplitude, side] = [vaneTarget.current, 0, 0, sideOf(vaneTarget.current)];
+        vaneArrow.current?.setAttribute('transform', vanePose(angle, side));
       } else if (vaneArrow.current) {
         const step = Math.min(dt, SWING_STEP_MS) / 1000;
         const off = ((((vaneTarget.current - angle) % 360) + 540) % 360) - 180;
         spin += (SWING.stiffness * off - SWING.damping * spin) * step;
         angle = (((angle + spin * step) % 360) + 360) % 360;
+        if (Math.abs(vaneAxis(angle)[0]) >= VANE_MIN) side = sideOf(angle);
         amplitude = easeDrift(amplitude, shake.current.amplitude, dt);
         frequency = easeDrift(frequency, shake.current.frequency, dt);
         phase = (phase + 2 * Math.PI * frequency * step) % (2 * Math.PI * 100);
-        vaneArrow.current.setAttribute('transform', vanePose(angle + wobble(amplitude, phase)));
+        vaneArrow.current.setAttribute('transform', vanePose(angle + wobble(amplitude, phase), side));
       }
       frame = requestAnimationFrame(tick);
     };
