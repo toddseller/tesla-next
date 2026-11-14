@@ -24,7 +24,7 @@
 
 ## 4. Rollout
 
-- [ ] 4.1 Release (ask first); the deploy's health check passes, and on teslasolar.report the arrow shows at the current wind's direction; record in design.md under Rollout
+- [x] 4.1 Release (ask first); the deploy's health check passes, and on teslasolar.report the arrow shows at the current wind's direction; record in design.md under Rollout. Released as v2026.11.14
 
 ## Workflow follow-up
 

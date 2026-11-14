@@ -1,6 +1,6 @@
 # Tesla Solar Report (Next.js)
 
-The Next.js dashboard at https://teslasolar.report, served from onyx. anton-tesla-api-ws writes the database; this app only reads it.
+The Next.js dashboard at https://teslasolar.report, served from onyx. anton-tesla-api-ws writes the database; this app only reads it, except the owner's saves from `/admin`.
 
 What each part does, exactly, is in [`openspec/specs/`](openspec/specs/); the redesign's mockups are at https://claude.ai/artifact/7crQGRyQS9J8wSdKYJjD6d.
 
@@ -10,7 +10,7 @@ What each part does, exactly, is in [`openspec/specs/`](openspec/specs/); the re
 |---|---|---|
 | App | Node 24, Next.js 16 (app router, standalone output), React 19, TypeScript 6 | `.nvmrc`, `package.json`, `Dockerfile` |
 | UI | Tailwind 4, shadcn/ui (Radix, `react-day-picker`, `lucide-react` icons, charts on Recharts 3), IBM Plex Sans and Mono through `next/font` | `package.json` |
-| Database | PostgreSQL 18 at 192.168.40.5 through `pg`, read-only (a throwaway PostgreSQL 18 in tests) | `package.json` |
+| Database | PostgreSQL 18 at 192.168.40.5 through `pg`, read-only except `/admin`'s saves (a throwaway PostgreSQL 18 in tests) | `package.json` |
 | Tests | Vitest, Testing Library, jsdom | `package.json` |
 | Serving | onyx in Docker, behind its own Cloudflare tunnel | `docker-compose.yml`, `deploy/` |
 
@@ -36,12 +36,14 @@ Settings live in `.env` at the repository root, never committed; `.env.example` 
 | `SYSTEM_COSTS_FILE` | optional | host path of a JSON file (mode 600, outside the repository) holding what the system cost: `{"solar": …, "powerwalls": …, "sales_tax": …, "credit_rate": …}`, the two prices and the tax in dollars and the federal credit as a fraction. Compose mounts it read-only. The True-Up Tracker's Payback card shows only years worked out from it, and the month solar paid back; without it there is no card. Never commit it or print its figures: the repository and the site are public. |
 | `PUSHOVER_USER` | optional | Pushover user key; with `PUSHOVER_TOKEN`, the weekly audit and daily check alert when they fail |
 | `PUSHOVER_TOKEN` | optional | Pushover application API token; without both, nothing is sent |
+| `CF_ACCESS_TEAM_DOMAIN` | optional | the Cloudflare Zero Trust team domain whose Access application guards `/admin`, as `<team>.cloudflareaccess.com`. The app fetches its signing keys from it to check each admin request's token. |
+| `CF_ACCESS_AUD` | optional | that Access application's audience tag. Without both settings `/admin` answers not found. |
 
-Every session the app opens is read-only and in UTC, so nothing here can change the data the API writes. The database accepts `tsr_app` only from onyx, so a local `next dev` can't read production; pages that need the database work on onyx.
+Every session the app opens is in UTC and read-only, so nothing here can change the data the API writes, except the admin writer's: `/admin`'s saves, after its owner check (The admin page). The database accepts `tsr_app` only from onyx, so a local `next dev` can't read production; pages that need the database work on onyx.
 
 ## What the app reads
 
-anton-tesla-api-ws stays the writer: its scheduler reads Tesla and the weather and stores them. This app only reads.
+anton-tesla-api-ws stays the writer: its scheduler reads Tesla and the weather and stores them. This app only reads, except the owner's saves from `/admin` (The admin page).
 
 - **Live status** (`/api/live`, a server-sent event stream). anton's scheduler sends each live status as a `pg_notify` on `live_status` about every 10 seconds, each day whose totals it stores on `totals_updated`, each outage refresh that changes `grid_outage` on `outages_updated`, and each change to the site's state stretches in `site_state` on `site_state_updated`. One `LISTEN` connection in the server (`lib/live.ts`, started from `instrumentation.ts`) keeps the latest status and the open `site_state` stretch (read at connect and on each `site_state_updated`) and forwards them to every open page: live status as plain messages, totals as `event: totals`, outages as `event: outages`, the stretch as `event: site_state`. Every page is rendered with the latest status and stretch, so the top bar's live status (the Powerwalls' charge and state, "LAST" with a gray dot once two minutes old, and OFF GRID, OFF GRID TEST or STORM WATCH while the site is off the grid or in storm watch) and the Distribution page's labels show values before any script runs. A tab opens one stream, shared by the top bar and the page (`components/use-live-stream.ts`).
 - **A day's history** (`/api/intervals?date=YYYY-MM-DD`), which the Distribution page replays: a TypeScript port of anton's `/api/v2/intervals` (`lib/intervals/`), reading `energy_interval`, `battery_sample`, `vehicle_interval`, `charge_session`, `weather_sample` and the car names anton keeps in `vehicle`. It also lists the day's off-grid spans (`grid_outage`, with their kinds) and storm watch spans (`site_state`), which the Solar page's day view shades.
@@ -57,6 +59,16 @@ anton-tesla-api-ws stays the writer: its scheduler reads Tesla and the weather a
 ## The Solar page
 
 The Solar page (`/`) keeps its range and its open day in the address: `/?start=2026-10-01&end=2026-10-31` shows October 2026, and `&day=2026-10-14` opens that day. A missing or invalid range shows the current month; an invalid day is ignored. The server renders both from the address, and a `totals` event on the live stream reloads the bars or the day in place through `/api/range` and `/api/intervals`.
+
+## The admin page
+
+`/admin` is the owner's page for what the site can't fetch: PG&E's bill figures, the VPP event days and Tesla's VPP payouts. Nothing links to it. Cloudflare Access guards it, and the app checks the token Access signs (`Cf-Access-Jwt-Assertion`) on the page and on every form it submits (`lib/admin/access.ts`), since a form's action can be posted through any path. A request without a valid token, or a server without both `CF_ACCESS_*` settings, gets the not-found page.
+
+To set it up:
+
+1. In Cloudflare Zero Trust, under Access, add a self-hosted application for `teslasolar.report/admin*` with an Allow policy for the owner's email.
+2. Copy the application's audience tag, and the team domain from Zero Trust's settings.
+3. Add `CF_ACCESS_TEAM_DOMAIN` and `CF_ACCESS_AUD` to `~/tesla-next/.env` on onyx, then publish a release (Releasing).
 
 ## Deploy
 

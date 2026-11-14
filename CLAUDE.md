@@ -4,7 +4,7 @@ Facts that change how to work in this repo. What the app is, setup and env vars:
 
 ## Traps
 
-- `DATABASE_URL` on onyx is production, the database anton-tesla-api-ws's API writes. This app's sessions are read-only on purpose (`lib/db.ts`); never loosen that or add a write. The database accepts `tsr_app` only from onyx, so a local `yarn dev` can't reach it.
+- `DATABASE_URL` on onyx is production, the database anton-tesla-api-ws's API writes. Every session the app opens is read-only on purpose (`lib/db.ts`) except the admin writer (`lib/admin/writer.ts`), which only `/admin`'s saves use, after the owner check (`lib/admin/access.ts`). Never loosen `lib/db.ts`, import the writer anywhere else, or add a write outside `/admin`. The database accepts `tsr_app` only from onyx, so a local `yarn dev` can't reach it.
 - `next dev` writes `AGENTS.md`; commit it as it is rather than deleting it, or it comes back as an uncommitted change.
 - The CSP allows `'unsafe-eval'` only when `NODE_ENV` is `development` (`lib/csp.ts`). A page that works in `yarn dev` can still break under the production policy, so check new pages with `yarn build && yarn start` too.
 - The pages are rendered per request (`dynamic = "force-dynamic"` in the layout) because the CSP nonce is per request. Don't make a page static.
