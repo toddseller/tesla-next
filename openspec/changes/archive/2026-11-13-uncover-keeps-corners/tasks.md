@@ -18,7 +18,7 @@
 
 ## 4. Rollout
 
-- [ ] 4.1 Release (ask first); the deploy's health check passes, and on teslasolar.report the Impact page's Solar bar keeps its corners as it uncovers; record in design.md under Rollout
+- [x] 4.1 Release (ask first); the deploy's health check passes, and on teslasolar.report the Impact page's Solar bar keeps its corners as it uncovers; record in design.md under Rollout. Released as v2026.11.13.1
 
 ## Workflow follow-up
 
