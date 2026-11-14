@@ -51,3 +51,5 @@ Checked 2026-11-14 on a throwaway branch container on onyx reading production re
 ## Rollout
 
 Released as v2026.11.14 on 2026-11-14; the Deploy workflow succeeded. On teslasolar.report at 1440 x 900: live ("9 mph, gusts 11 mph, from S") the arrow stood 0.25 wide; the 2024-02-04 1 PM replay (from SE) was 0.25 wide with its tip toward the viewer, and the 2022-10-22 10 PM replay (from NW) 0.25 wide with its tip away. No console errors.
+
+At 390 x 844 (3x, touch), the same day: live and both replays drew the arrow 0.25 wide, about 3 x 10 px on screen, tipped the same ways; the vane's tap target stayed 44 x 53 px. No console errors.
