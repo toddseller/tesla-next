@@ -82,3 +82,7 @@ Checked 2026-11-13 on a throwaway branch container on onyx reading production re
 - **Console:** no errors and no CSP violation, there and under `yarn build && yarn start` locally.
 
 The Chrome used for the local check runs Dark Reader on localhost, which recolors the vane's dark iron to a light gray; headless Chromium shows the real colors.
+
+## Rollout
+
+Released as v2026.11.13 on 2026-11-13, after main's Tests run passed; the Deploy workflow succeeded. On teslasolar.report the vane stands on the roof, and its readout, "30 mph, gusts 42 mph, from S", matches the latest stored reading at 11:00 (49 km/h, gusts 67, from 193 degrees).

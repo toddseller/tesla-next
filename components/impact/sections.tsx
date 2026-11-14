@@ -105,7 +105,7 @@ export function SolarOffset({ figures }: { figures: ImpactFigures }) {
             <div role="meter" aria-label={label} aria-valuenow={kwh} aria-valuemin={0} aria-valuemax={scale} aria-valuetext={energy(kwh)}
               className="h-7 rounded-md bg-secondary">
               <div className={`motion-tween h-full rounded-md ${entering ? "motion-uncover" : ""} ${fill}`}
-                style={{ "--i": i, "--hidden": covered, clipPath: `inset(0 ${covered} 0 0 round 8px)` } as CSSProperties} />
+                style={{ "--i": i, "--hidden": covered, "--round": "8px", clipPath: `inset(0 ${covered} 0 0 round var(--round))` } as CSSProperties} />
             </div>
           </div>
           );

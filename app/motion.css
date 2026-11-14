@@ -78,8 +78,8 @@
 @keyframes motion-rise { from { transform: scaleY(0); } }
 @keyframes motion-draw { from { transform: scaleX(0); } }
 @keyframes motion-uncover {
-  from { clip-path: inset(0 100% 0 0 round 4px); }
-  to { clip-path: inset(0 var(--hidden, 0%) 0 0 round 4px); }
+  from { clip-path: inset(0 100% 0 0 round var(--round, 4px)); }
+  to { clip-path: inset(0 var(--hidden, 0%) 0 0 round var(--round, 4px)); }
 }
 @keyframes motion-pop { from { opacity: 0; scale: .6; } }
 /* Each ends at a shape, not "none", which a clip-path can't be blended into: the line would show nothing for half its
