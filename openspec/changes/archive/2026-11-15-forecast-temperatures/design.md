@@ -50,3 +50,9 @@ A throwaway branch container on onyx against production, 2026-11-15 from 7:30 AM
 - `/api/forecast` read anton's new columns: today 57° from a reading recent enough to read "Cloudy now", and the next three days 57° / 49°, 58° / 48° and 58° / 54°. That is anton's `store-temperatures` filling both tables.
 - Playwright at 1280 and 375 pixels against the "Temperatures on the tiles" mockups: Today's "57°" across from its kWh so far, each day's high and low across from its sky on wide screens and under its kWh on a phone. Nothing scrolled sideways, and the console had no errors.
 - Zoomed in, the first build showed the high and low a few pixels under the sky label and the slash floating between full-width mono spaces, and the day tiles' last line above Today's. Fixed here (centred row, thin spaces, `sm:mt-auto`); the rebuilt container's four last lines read level.
+
+## Rollout
+
+Released as v2026.11.15.1 on 2026-11-15. Its Deploy run passed, and teslasolar.report answered 200. At 7:51 AM:
+- `/api/forecast` read today 57° from the reading behind "Cloudy now", and 57° / 49°, 58° / 48° and 58° / 54° for November 16 to 18.
+- Playwright at 1280 and 375 pixels: the tiles showed the same figures, Today's across from its kWh so far, the days' across from their skies on wide screens and under their kWh on a phone. The four tiles' last lines were level, nothing scrolled sideways, and the console had no errors.
