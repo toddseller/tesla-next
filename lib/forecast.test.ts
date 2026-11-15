@@ -12,10 +12,11 @@ const FRESH = "2026-11-10T17:20:00Z";
 const data = (overrides: Partial<ForecastData> = {}): ForecastData => ({
   scale: { solar_kwh: 900, radiation_mj: 360, days: 30, good_day: 37 },
   rows: [
-    { day: "2026-11-10", radiation_mj: 12.4, weather_code: 0, fetched_at: FRESH },
-    { day: "2026-11-11", radiation_mj: 13.2, weather_code: 0, fetched_at: FRESH },
-    { day: "2026-11-12", radiation_mj: 5.6, weather_code: 45, fetched_at: FRESH },
-    { day: "2026-11-13", radiation_mj: 10.8, weather_code: 2, fetched_at: FRESH },
+    { day: "2026-11-10", radiation_mj: 12.4, weather_code: 0, fetched_at: FRESH, temperature_max: 16.2, temperature_min: 9.4 },
+    { day: "2026-11-11", radiation_mj: 13.2, weather_code: 0, fetched_at: FRESH, temperature_max: 17.8, temperature_min: 11.1 },
+    // A high without a low, as on no day anton stores, shows neither.
+    { day: "2026-11-12", radiation_mj: 5.6, weather_code: 45, fetched_at: FRESH, temperature_max: 15, temperature_min: null },
+    { day: "2026-11-13", radiation_mj: 10.8, weather_code: 2, fetched_at: FRESH, temperature_max: null, temperature_min: null },
   ],
   so_far: 9.6,
   reading: null,
@@ -25,11 +26,11 @@ const data = (overrides: Partial<ForecastData> = {}): ForecastData => ({
 
 test("each day's expected kWh is its forecast sunlight times the last 30 days' kWh per MJ/m², to a whole kWh", () => {
   const card = forecastCard(data(), TODAY, NOW);
-  expect(card.today).toEqual({ day: TODAY, soFar: 9.6, expected: 31, code: 0, sky: "forecast" });
+  expect(card.today).toEqual({ day: TODAY, soFar: 9.6, expected: 31, code: 0, sky: "forecast", temperature: null });
   expect(card.days).toEqual([
-    { day: "2026-11-11", expected: 33, code: 0, byHour: null },
-    { day: "2026-11-12", expected: 14, code: 45, byHour: null },
-    { day: "2026-11-13", expected: 27, code: 2, byHour: null },
+    { day: "2026-11-11", expected: 33, code: 0, byHour: null, high: 64, low: 52 },
+    { day: "2026-11-12", expected: 14, code: 45, byHour: null, high: null, low: null },
+    { day: "2026-11-13", expected: 27, code: 2, byHour: null, high: null, low: null },
   ]);
   expect(card.goodDay).toBe(37);
   expect(card.staleSince).toBeNull();
@@ -44,7 +45,7 @@ test("the good day is a whole kWh, as the stored real arrives with float noise",
 test("with fewer than 7 days behind the scale there is no forecast, only today's kWh so far", () => {
   const card = forecastCard(data({ scale: { solar_kwh: 150, radiation_mj: 60, days: 5, good_day: 37 } }), TODAY, NOW);
   expect(card.days).toBeNull();
-  expect(card.today).toEqual({ day: TODAY, soFar: 9.6, expected: null, code: 0, sky: "forecast" });
+  expect(card.today).toEqual({ day: TODAY, soFar: 9.6, expected: null, code: 0, sky: "forecast", temperature: null });
 });
 
 test("a forecast over 6 hours old says when it is from; one 40 minutes old doesn't", () => {
@@ -87,6 +88,16 @@ test("today's sky now is the observed sky: the model's few clouds under the airp
 test("a reading 4 hours old, or none, leaves today's forecast sky", () => {
   expect(forecastCard(foggy({ ...sample(0, 0), sampled_at: "2026-11-10T14:00:00Z" }), TODAY, NOW).today).toMatchObject({ code: 45, sky: "forecast" });
   expect(forecastCard(foggy(null), TODAY, NOW).today).toMatchObject({ code: 45, sky: "forecast" });
+});
+
+// solar-forecast, "Temperatures on the tiles".
+test("today's temperature is the recent reading's in whole °F, none when the reading is old, missing or has none", () => {
+  const at = (sampled_at: string, temperature: number | null) => forecastCard(foggy({ ...sample(0, 0), temperature, sampled_at }), TODAY, NOW).today.temperature;
+  expect(at("2026-11-10T17:50:00Z", 14.6)).toBe(58);
+  expect(at("2026-11-10T17:50:00Z", -3.1)).toBe(26);
+  expect(at("2026-11-10T14:00:00Z", 14.6)).toBeNull();
+  expect(at("2026-11-10T17:50:00Z", null)).toBeNull();
+  expect(forecastCard(foggy(null), TODAY, NOW).today.temperature).toBeNull();
 });
 
 // 1 Wh per W/m² at every daylight hour, so an hour expects its W/m² over 1,000 in kWh. November 8's hours at 1:40 PM.
@@ -165,7 +176,7 @@ test("past the last forecast hour the day isn't over until the sun has set", () 
 
 // solar-forecast, "The sky now": the sky the Distribution scene draws, the airport's low cloud over the model's.
 const sample = (code: number, low: number, airport: number | null = null) =>
-  ({ code, cloud_cover: low, cloud_cover_low: low, cloud_cover_mid: 0, cloud_cover_high: 0, airport_low: airport, airport_mid: airport === null ? null : 0 });
+  ({ code, cloud_cover: low, cloud_cover_low: low, cloud_cover_mid: 0, cloud_cover_high: 0, airport_low: airport, airport_mid: airport === null ? null : 0, temperature: null });
 
 test("the observed sky's code follows its cover: under 25% sunny, under 75% partly cloudy, then cloudy", () => {
   expect(observedCode(sample(1, 21, 0))).toBe(0);

@@ -67,3 +67,9 @@ A throwaway branch container on onyx against production, 2026-11-15 before sunri
 - Playwright at 1280 and 375 pixels: with Today chosen, the card matched teslasolar.report's tile for tile; with Tuesday chosen, its tile (its row on a phone) was raised, Today kept its outline, and the chart read "Tuesday by hour" with its date, faded bars and the Expected legend alone. Nothing scrolled sideways, and the console had no errors or CSP violations. The keyboard focus ring showed on the focused tile.
 - The good day read 43.29999923706055 kWh on the live site and the branch; rounded in this change, the branch answered 43.
 - Looked at through the tunnel before the commit: the footnote's "Pick a day above" sentence came out, and Today no longer becomes a lone button with no day ahead to choose.
+
+## Rollout
+
+Released as v2026.11.15.0 on 2026-11-15. Its Deploy run passed, and teslasolar.report answered 200. At 6:50 AM, before sunrise:
+- `/api/forecast` gave a good day of 43 and every day ahead its hours, none made: Tomorrow 9 hours summing to 26.1 kWh, Tuesday 10 to 25.7, Wednesday 10 to 1.4, against tiles of 26, 26 and 1.
+- Playwright at 1280 and 375 pixels: Today and the three days ahead were buttons, Today pressed. Pressing Tuesday raised its tile and showed "Tuesday by hour" with Tue, Nov 17, its faded bars and the Expected legend alone; the footnote read "a good day, 43 kWh". Nothing scrolled sideways, and the console had no errors.
