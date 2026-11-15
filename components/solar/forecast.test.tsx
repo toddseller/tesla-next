@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 // The Solar forecast card (solar-forecast spec, mockup A).
-import { act, cleanup, render, screen, within } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, expect, test, vi } from "vitest";
 
 import { ForecastCard, HourDetails } from "@/components/solar/forecast";
@@ -11,9 +11,9 @@ afterEach(cleanup);
 const CARD: Card = {
   today: { day: "2026-11-10", soFar: 9.6, expected: 31, code: 0, sky: "forecast" },
   days: [
-    { day: "2026-11-11", expected: 33, code: 0 },
-    { day: "2026-11-12", expected: 14, code: 45 },
-    { day: "2026-11-13", expected: 27, code: 2 },
+    { day: "2026-11-11", expected: 33, code: 0, byHour: null },
+    { day: "2026-11-12", expected: 14, code: 45, byHour: null },
+    { day: "2026-11-13", expected: 27, code: 2, byHour: null },
   ],
   goodDay: 37,
   staleSince: null,
@@ -80,7 +80,7 @@ test("without a forecast the days give way to a message and today shows only its
 });
 
 test("the days are named from the date the card was worked out for", () => {
-  render(<ForecastCard card={{ ...CARD, today: { ...CARD.today, day: "2026-11-11" }, days: [{ day: "2026-11-12", expected: 14, code: 45 }] }} />);
+  render(<ForecastCard card={{ ...CARD, today: { ...CARD.today, day: "2026-11-11" }, days: [{ day: "2026-11-12", expected: 14, code: 45, byHour: null }] }} />);
   expect(within(card().getByRole("list", { name: "The next three days" })).getByRole("listitem").textContent).toContain("Tomorrow");
 });
 
@@ -128,6 +128,97 @@ test("without hourly figures the card has no Today by hour", () => {
   expect(card().queryByRole("group", { name: "Today by hour" })).toBeNull();
 });
 
+// solar-forecast, "Choosing the day": Tomorrow and Thursday have forecast hours, Friday none.
+const PST_ON = (date: number, hour: number) => new Date(Date.UTC(2026, 10, date, hour + 8)).toISOString();
+const ahead = (date: number, kwh: number[]): NonNullable<Card["byHour"]> => ({
+  hours: kwh.map((expected, i) => ({ start: PST_ON(date, 7 + i), expected, made: null })),
+  byNow: null,
+});
+const THURSDAY = ahead(12, [0.3, 1.5, 2.2, 2.8, 3.0, 2.8, 2.2, 1.4, 0.6, 0.1]);
+const CHOOSING: Card = {
+  ...CARD,
+  byHour: BY_HOUR,
+  days: [
+    { ...CARD.days![0], byHour: ahead(11, [0.7, 3.0, 4.4, 5.6, 5.6, 5.0, 4.0, 2.6, 1.0, 0.2]) },
+    { ...CARD.days![1], byHour: THURSDAY },
+    { ...CARD.days![2], byHour: null },
+  ],
+};
+const tile = (name: string) => card().getByRole("button", { name: new RegExp(`^${name}`) });
+const press = (name: string) => fireEvent.click(tile(name));
+
+test("Today and each day ahead with forecast hours are buttons, Today chosen at first", () => {
+  render(<ForecastCard card={CHOOSING} />);
+  expect(tile("Today").getAttribute("aria-pressed")).toBe("true");
+  expect(tile("Tomorrow").getAttribute("aria-pressed")).toBe("false");
+  expect(tile("Thursday").getAttribute("aria-pressed")).toBe("false");
+  expect(card().queryByRole("button", { name: /^Friday/ })).toBeNull();
+  expect(card().getByRole("group", { name: "Today by hour" }).textContent).not.toContain("Pick a day");
+});
+
+test("choosing Thursday shows its expected hours alone, and choosing Today brings today back", () => {
+  const { container } = render(<ForecastCard card={CHOOSING} />);
+  press("Thursday");
+  expect(tile("Thursday").getAttribute("aria-pressed")).toBe("true");
+  expect(tile("Today").getAttribute("aria-pressed")).toBe("false");
+  const thursday = within(card().getByRole("group", { name: "Thursday by hour" }));
+  expect(thursday.getByText("Thu, Nov 12")).toBeTruthy();
+  expect(thursday.getByText("Expected")).toBeTruthy();
+  expect(thursday.queryByText("Made")).toBeNull();
+  expect(thursday.queryByText("Expected, where beaten")).toBeNull();
+  expect(card().getByRole("group", { name: "Thursday by hour" }).textContent).not.toContain("kWh made");
+  expect(parts(container, "expected")).toEqual(THURSDAY.hours.map((h) => h.start));
+  expect(parts(container, "made")).toEqual([]);
+  expect(card().queryByRole("group", { name: "Today by hour" })).toBeNull();
+  press("Today");
+  expect(card().getByRole("group", { name: "Today by hour" })).toBeTruthy();
+  expect(tile("Today").getAttribute("aria-pressed")).toBe("true");
+});
+
+test("a reload keeps the chosen day while it is still ahead, and past midnight goes back to Today", () => {
+  const { rerender } = render(<ForecastCard card={CHOOSING} />);
+  press("Tomorrow");
+  rerender(<ForecastCard card={{ ...CHOOSING, today: { ...CHOOSING.today, soFar: 12.4 } }} />);
+  expect(card().getByRole("group", { name: "Tomorrow by hour" })).toBeTruthy();
+  expect(tile("Tomorrow").getAttribute("aria-pressed")).toBe("true");
+  const nextDay: Card = {
+    ...CHOOSING,
+    today: { ...CHOOSING.today, day: "2026-11-11", soFar: 0 },
+    days: [{ ...CHOOSING.days![1] }, { ...CHOOSING.days![2] }, { day: "2026-11-14", expected: 30, code: 0, byHour: ahead(14, [1, 2]) }],
+  };
+  rerender(<ForecastCard card={nextDay} />);
+  expect(card().getByRole("group", { name: "Today by hour" })).toBeTruthy();
+  expect(tile("Today").getAttribute("aria-pressed")).toBe("true");
+});
+
+test("the chosen day ahead is raised; Today keeps its outline and is never raised; no tile changes on hover", () => {
+  render(<ForecastCard card={CHOOSING} />);
+  const classes = (name: string) => tile(name).className.split(/\s+/);
+  const raised = () => ["Today", "Tomorrow", "Thursday"].filter((name) => classes(name).includes("bg-input"));
+  expect(raised()).toEqual([]);
+  press("Thursday");
+  expect(raised()).toEqual(["Thursday"]);
+  expect(classes("Today")).toEqual(expect.arrayContaining(["outline-solar", "bg-secondary"]));
+  press("Today");
+  expect(raised()).toEqual([]);
+  expect(classes("Today")).toEqual(expect.arrayContaining(["outline-solar", "bg-secondary"]));
+  expect(card().getAllByRole("button").some((button) => button.className.includes("hover:"))).toBe(false);
+});
+
+test("without Today by hour no tile is a button", () => {
+  render(<ForecastCard card={{ ...CHOOSING, byHour: null, days: CARD.days }} />);
+  expect(card().queryAllByRole("button")).toHaveLength(0);
+});
+
+test("with no day ahead to choose, Today isn't a button either", () => {
+  render(<ForecastCard card={{ ...CHOOSING, days: null }} />);
+  expect(card().getByRole("group", { name: "Today by hour" })).toBeTruthy();
+  expect(card().queryAllByRole("button")).toHaveLength(0);
+  cleanup();
+  render(<ForecastCard card={{ ...CHOOSING, days: CARD.days }} />);
+  expect(card().queryAllByRole("button")).toHaveLength(0);
+});
+
 const details = (hour: number, expected: number, made: number | null) =>
   render(<HourDetails active payload={[{ payload: { start: PST(hour), expected, made } }]} />).container.textContent;
 
@@ -168,5 +259,21 @@ test("today by hour: each hour's expected column rises at an even pace, and its 
   expect(expected.map((path) => path.style.getPropertyValue("--i"))).toEqual(expected.map((_, i) => String(i)));
   act(() => vi.advanceTimersByTime(650));
   expect(container.querySelectorAll('[data-part].motion-rise')).toHaveLength(0);
+  vi.useRealTimers();
+});
+
+test("choosing another day draws the chart in again; a reload of the same day doesn't", () => {
+  vi.useFakeTimers();
+  const { container, rerender } = render(<ForecastCard card={CHOOSING} />);
+  const rising = () => container.querySelectorAll('[data-part="expected"].motion-rise').length;
+  act(() => vi.advanceTimersByTime(650));
+  expect(rising()).toBe(0);
+  press("Thursday");
+  expect(rising()).toBe(THURSDAY.hours.length);
+  act(() => vi.advanceTimersByTime(650));
+  rerender(<ForecastCard card={{ ...CHOOSING, today: { ...CHOOSING.today, soFar: 12.4 } }} />);
+  expect(rising()).toBe(0);
+  press("Today");
+  expect(rising()).toBe(BY_HOUR.hours.length);
   vi.useRealTimers();
 });

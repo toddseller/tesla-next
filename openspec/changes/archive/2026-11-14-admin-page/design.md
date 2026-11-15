@@ -87,3 +87,7 @@ The current season is `today.year` if `today >= May 1`, else the year before (sp
 4. Sign in at `/admin`; save the next bill through the form and compare with `import_true_up`'s result.
 
 Rollback: delete the two settings (the page answers not found) or roll back the image as README says. Nothing in the database changes shape.
+
+## Rollout
+
+Released as v2026.11.14.1 on 2026-11-14; the Deploy workflow succeeded. The Cloudflare Access application for `teslasolar.report/admin` allows only the owner's email: a sign-in from another address got no code. With both `CF_ACCESS_*` settings in `~/tesla-next/.env` and the container recreated, `/admin` without signing in is sent to Access's login, and signed in it shows the page. The owner loaded '25 - '26 into the form and saved it, then unmarked a 2026 VPP day and marked it again. Read back: '25 - '26 still has 12 cycles, $827.82 of NEM charges and $767.73 due; the 2026 season has its 7 marked days; the server logged one cache refresh per save and no errors. The owner then tried a payout of 0, which the form refused, storing nothing; no payout has been recorded through it yet.

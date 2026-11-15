@@ -28,7 +28,7 @@ beforeEach(() => {
     reading: null,
     hourly: {
       scale: [{ hour: 11, wh: 9000, wm2: 1000 }], days: 30, made_until: "2026-11-07T19:55:00Z",
-      today: [{ start_at: "2026-11-07T19:00:00Z", wm2: 500, made_wh: 3800 }],
+      hours: [{ day: "2026-11-07", start_at: "2026-11-07T19:00:00Z", wm2: 500, made_wh: 3800 }],
     },
   });
   rangeTotals.mockResolvedValue([

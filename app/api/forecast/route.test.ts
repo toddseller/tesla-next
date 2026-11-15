@@ -17,13 +17,17 @@ test("answers the card for today, as the page renders it", async () => {
     reading: { code: 3, sampled_at: "2026-11-10T17:45:00Z" },
     hourly: {
       scale: [{ hour: 10, wh: 9000, wm2: 1000 }], days: 7, made_until: "2026-11-10T18:30:00Z",
-      today: [{ start_at: "2026-11-10T18:00:00Z", wm2: 500, made_wh: 2000 }],
+      hours: [
+        { day: "2026-11-10", start_at: "2026-11-10T18:00:00Z", wm2: 500, made_wh: 2000 },
+        { day: "2026-11-11", start_at: "2026-11-11T18:00:00Z", wm2: 300, made_wh: null },
+      ],
     },
   });
   const response = await GET();
   expect(response.status).toBe(200);
   expect(await response.json()).toEqual({
-    data: { today: { day: "2026-11-10", soFar: 9.6, expected: null, code: 3, sky: "now" }, days: [{ day: "2026-11-11", expected: 33, code: 0 }], goodDay: 37, staleSince: null,
+    data: { today: { day: "2026-11-10", soFar: 9.6, expected: null, code: 3, sky: "now" }, days: [{ day: "2026-11-11", expected: 33, code: 0, byHour: { hours: [{ start: "2026-11-11T18:00:00Z", expected: 2.7, made: null }], byNow: null } }],
+      goodDay: 37, staleSince: null,
       byHour: {
         hours: [{ start: "2026-11-10T18:00:00Z", expected: 4.5, made: 2 }],
         byNow: { made: 2, expected: 2.25, at: "2026-11-10T18:30:00Z", over: false },

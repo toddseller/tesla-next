@@ -64,7 +64,7 @@ When a value already on screen changes, its mark and its figure SHALL move from 
 - **THEN** each slice of the ring moves from its old size to its new one, and the percentages in the middle and the legend roll to their new figures; Solar offset's bars grow or shrink from their old lengths, and the offset and their kWh roll
 
 ### Requirement: The estimate draws before what happened
-Where a chart shows an estimate next to what actually happened, the estimate SHALL draw first, left to right at an even pace. What happened SHALL start drawing when the estimate is halfway across, easing out. This applies to the day view's Solar chart and to the forecast card's Today bar and Today by hour chart.
+Where a chart shows an estimate next to what actually happened, the estimate SHALL draw first, left to right at an even pace. What happened SHALL start drawing when the estimate is halfway across, easing out. This applies to the day view's Solar chart and to the forecast card's Today bar and Today by hour chart. The forecast card's hourly chart SHALL draw in again each time another day is chosen.
 
 #### Scenario: The day view's Solar chart
 - **WHEN** the Solar view of a day with an expected line draws in
@@ -77,6 +77,14 @@ Where a chart shows an estimate next to what actually happened, the estimate SHA
 #### Scenario: A day with no expected line
 - **WHEN** the Solar view draws a day from the first week of service, which has no expected line
 - **THEN** the flows draw in left to right as the only layer, with no wait
+
+#### Scenario: Choosing a day ahead
+- **WHEN** the viewer presses Thursday's tile on the forecast card
+- **THEN** Thursday's faded columns draw in as the only layer, with no wait
+
+#### Scenario: Back to Today
+- **WHEN** the viewer presses Today's tile with Thursday chosen
+- **THEN** today's faded columns draw in first and its made columns start halfway, as when the card first shows
 
 ### Requirement: A day step slides the day
 Stepping to another day in the day view SHALL slide the day's content 24 px in the direction of the step: out in 150 ms, then in from the other side in 250 ms. The day stepper, the back link and the days strip SHALL stay still. Total Generated SHALL roll to the new day's figure, and the new day's chart SHALL draw in, the estimate first.
