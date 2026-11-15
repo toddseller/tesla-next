@@ -21,8 +21,8 @@ beforeEach(() => {
   forecast.mockResolvedValue({
     scale: { solar_kwh: 900, radiation_mj: 360, days: 30, good_day: 37 },
     rows: [
-      { day: "2026-11-07", radiation_mj: 12.4, weather_code: 0, fetched_at: "2026-11-07T19:30:00Z" },
-      { day: "2026-11-08", radiation_mj: 13.2, weather_code: 45, fetched_at: "2026-11-07T19:30:00Z" },
+      { day: "2026-11-07", radiation_mj: 12.4, weather_code: 0, fetched_at: "2026-11-07T19:30:00Z", temperature_max: 16.2, temperature_min: 9.4 },
+      { day: "2026-11-08", radiation_mj: 13.2, weather_code: 45, fetched_at: "2026-11-07T19:30:00Z", temperature_max: 17.8, temperature_min: 11.1 },
     ],
     so_far: 9.6,
     reading: null,

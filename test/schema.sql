@@ -11,7 +11,8 @@
 -- \unrestrict lines. Dumped 2026-11-08, at anton-tesla-api-ws 86714a1; grid_outage and site_state written by hand from
 -- anton's models (api/models/grid.py, ae61e56), as its init_db creates them; solar_forecast copied from production's columns
 -- (`\d solar_forecast`, 2026-11-10, store-solar-forecast and store-daylight-weather) and solar_forecast_hour
--- likewise (store-daylight-weather), until the next dump.
+-- likewise (store-daylight-weather), and weather_sample.temperature with solar_forecast.temperature_max and
+-- temperature_min added as anton's store-temperatures adds them (d2374c4), until the next dump.
 --
 -- PostgreSQL database dump
 --
@@ -307,7 +308,8 @@ CREATE TABLE public.weather_sample (
     wind_mid_direction smallint,
     wind_high_speed smallint,
     wind_high_direction smallint,
-    wind_gusts smallint
+    wind_gusts smallint,
+    temperature real
 );
 
 
@@ -510,7 +512,9 @@ CREATE TABLE public.solar_forecast (
     radiation_mj real NOT NULL,
     weather_code smallint NOT NULL,
     fetched_at timestamp with time zone NOT NULL,
-    daylight_code smallint
+    daylight_code smallint,
+    temperature_max real,
+    temperature_min real
 );
 
 ALTER TABLE ONLY public.solar_forecast

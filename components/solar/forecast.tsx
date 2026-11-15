@@ -42,6 +42,10 @@ function Sky({ code, when, className = "" }: { code: number; when?: SkyWhen; cla
 // A tile that picks the chart's day is a button reset to look as the tile does; one that can't stays a plain group.
 const PICKS = "cursor-pointer text-left focus-visible:ring-[3px] focus-visible:ring-ring/50";
 
+function HighLow({ high, low, className }: { high: number; low: number; className: string }) {
+  return <span role="img" aria-label={`High ${high}°, low ${low}°`} className={`font-mono ${className}`}>{high}°&thinsp;/&thinsp;{low}°</span>;
+}
+
 function Today({ today, pick }: { today: Card["today"]; pick?: { chosen: boolean; choose: () => void } }) {
   const soFar = today.soFar ?? 0;
   const Tile = pick ? "button" : "div";
@@ -61,8 +65,11 @@ function Today({ today, pick }: { today: Card["today"]; pick?: { chosen: boolean
           <Bar label={`${soFar.toFixed(1)} of about ${today.expected} kWh so far`} part={soFar} whole={today.expected} estimate />
         </>
       )}
-      <span className="text-[13px] text-muted-foreground">
-        <span className="font-mono text-foreground">{soFar.toFixed(1)} kWh</span> so far
+      <span className="flex items-baseline justify-between gap-2">
+        <span className="text-[13px] text-muted-foreground">
+          <span className="font-mono text-foreground">{soFar.toFixed(1)} kWh</span> so far
+        </span>
+        {today.temperature !== null && <span className="font-mono text-sm">{today.temperature}°</span>}
       </span>
     </Tile>
   );
@@ -187,13 +194,13 @@ export function ForecastCard({ card }: { card: Card }) {
           <p className="text-sm text-muted-foreground sm:col-span-3 sm:self-center">No forecast right now</p>
         ) : (
           <ul aria-label="The next three days" className="flex flex-col sm:col-span-3 sm:grid sm:grid-cols-3 sm:gap-3">
-            {days.map(({ day, expected, code, byHour }) => {
+            {days.map(({ day, expected, code, byHour, high, low }) => {
               const Tile = byHour ? "button" : "div";
               const raised = ahead?.day === day;
               return (
               <li key={day} className="flex border-t sm:border-0">
                 <Tile {...(Tile === "button" ? { type: "button", "aria-pressed": raised, onClick: () => choose(day) } : {})}
-                  className={`grid min-w-0 flex-1 grid-cols-[96px_minmax(0,1fr)_64px] items-center gap-2.5 py-2.5 sm:flex sm:flex-col sm:items-stretch sm:rounded-lg sm:p-4 ${raised ? "-mx-2.5 rounded-lg bg-input px-2.5 sm:mx-0" : "sm:bg-secondary"} ${Tile === "button" ? `${PICKS} outline-none` : ""}`}>
+                  className={`grid min-w-0 flex-1 grid-cols-[96px_minmax(0,1fr)_80px] items-center gap-2.5 py-2.5 sm:flex sm:flex-col sm:items-stretch sm:rounded-lg sm:p-4 ${raised ? "-mx-2.5 rounded-lg bg-input px-2.5 sm:mx-0" : "sm:bg-secondary"} ${Tile === "button" ? `${PICKS} outline-none` : ""}`}>
                 <span className="flex flex-col sm:flex-row sm:items-baseline sm:justify-between">
                   <span className="text-sm sm:font-medium">{name(day)}</span>
                   <span className="text-xs text-muted-foreground max-sm:hidden">{onDay(day, { month: "short", day: "numeric" })}</span>
@@ -202,11 +209,15 @@ export function ForecastCard({ card }: { card: Card }) {
                 <span className="order-3 text-right font-mono text-sm sm:order-2 sm:flex sm:items-baseline sm:gap-1.5 sm:text-left">
                   <span className="sm:text-[28px] sm:font-semibold">{expected}</span>
                   <span className="sm:text-sm sm:text-muted-foreground"> kWh</span>
+                  {high !== null && low !== null && <HighLow high={high} low={low} className="block text-xs text-muted-foreground sm:hidden" />}
                 </span>
                 <span className="order-2 sm:order-3">
                   <Bar label={`${expected} kWh against a good day of ${goodDay}`} part={expected} whole={goodDay} />
                 </span>
-                <Sky code={code} className="hidden sm:order-4 sm:flex" />
+                <span className="hidden items-center justify-between gap-2 sm:order-4 sm:mt-auto sm:flex">
+                  <Sky code={code} className="flex" />
+                  {high !== null && low !== null && <HighLow high={high} low={low} className="text-sm" />}
+                </span>
                 </Tile>
               </li>
               );

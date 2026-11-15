@@ -3,10 +3,11 @@ import { FIRST_PRECIPITATION_CODE, skyFrom } from "@/lib/intervals/weather";
 import { shiftDay, TIME_ZONE, wallTime } from "@/lib/scene/replay";
 import { skyAt } from "@/lib/scene/sun";
 
-export type ForecastRow = { day: string; radiation_mj: number; weather_code: number; fetched_at: string };
+// The high and low in °C, null on days anton stored before it kept them.
+export type ForecastRow = { day: string; radiation_mj: number; weather_code: number; fetched_at: string; temperature_max: number | null; temperature_min: number | null };
 // The 30 days before today with both a solar total and a forecast: their kWh, forecast MJ/m², count and best day.
 export type Scale = { solar_kwh: number; radiation_mj: number; days: number; good_day: number | null };
-export type Reading = Sample & { sampled_at: string };
+export type Reading = Sample & { sampled_at: string; temperature: number | null };
 // Each hour of the day's Wh and forecast W/m² over the same 30 days, and the days with any such hour.
 export type HourScale = { hour: number; wh: number; wm2: number };
 // An hour of today or the next three days, with what it has made so far (today's only).
@@ -25,8 +26,9 @@ export type ByHour = {
 
 export type ForecastCard = {
   // The day the card was worked out for, so a page left open past midnight names its days from the data.
-  today: { day: string; soFar: number | null; expected: number | null; code: number | null; sky: SkyWhen };
-  days: { day: string; expected: number; code: number; byHour: ByHour | null }[] | null;
+  // Temperatures in whole °F.
+  today: { day: string; soFar: number | null; expected: number | null; code: number | null; sky: SkyWhen; temperature: number | null };
+  days: { day: string; expected: number; code: number; byHour: ByHour | null; high: number | null; low: number | null }[] | null;
   goodDay: number | null;
   staleSince: string | null;
   byHour: ByHour | null;
@@ -80,13 +82,15 @@ export async function forecast(today: string): Promise<ForecastData> {
     db.query<Omit<ForecastRow, "fetched_at"> & { fetched_at: Date }>(
       // radiation_mj is real; rounded so 12.83 doesn't arrive as 12.829999923706055. The daily code is the whole day's
       // worst weather, so overnight fog would label a sunny day; days stored before anton kept a daylight code keep the daily one.
-      `SELECT day::text, round(radiation_mj::numeric, 2)::float8 AS radiation_mj, coalesce(daylight_code, weather_code) AS weather_code, fetched_at
+      `SELECT day::text, round(radiation_mj::numeric, 2)::float8 AS radiation_mj, coalesce(daylight_code, weather_code) AS weather_code, fetched_at,
+         temperature_max, temperature_min
        FROM solar_forecast WHERE day BETWEEN $1::date AND $1::date + 3 ORDER BY day`,
       [today],
     ),
     db.query<{ so_far: number }>("SELECT round(solar_generated::numeric, 2)::float8 AS so_far FROM data WHERE date = $1", [today]),
-    db.query<Sample & { sampled_at: Date }>(
-      `SELECT weather_code AS code, cloud_cover, cloud_cover_low, cloud_cover_mid, cloud_cover_high, airport_low, airport_mid, sampled_at
+    db.query<Omit<Reading, "sampled_at"> & { sampled_at: Date }>(
+      `SELECT weather_code AS code, cloud_cover, cloud_cover_low, cloud_cover_mid, cloud_cover_high, airport_low, airport_mid,
+         temperature, sampled_at
        FROM weather_sample ORDER BY sampled_at DESC LIMIT 1`,
     ),
     hourScale(today),
@@ -159,13 +163,18 @@ export function forecastCard({ scale, rows, so_far, reading, hourly }: ForecastD
       expected: usable && todays ? expected(todays) : null,
       code: current ? observedCode(current) : (todays?.weather_code ?? null),
       sky,
+      temperature: current?.temperature == null ? null : fahrenheit(current.temperature),
     },
-    days: usable ? ahead.map((r) => ({ day: r.day, expected: expected(r), code: r.weather_code, byHour: todayByHour && hoursOf(r.day, null) })) : null,
+    days: usable ? ahead.map((r) => ({ day: r.day, expected: expected(r), code: r.weather_code, byHour: todayByHour && hoursOf(r.day, null), ...highLow(r) })) : null,
     goodDay: scale.good_day === null ? null : Math.round(scale.good_day),
     staleSince: usable && newest && age(newest) > STALE_AFTER ? newest.fetched_at : null,
     byHour: todayByHour,
   };
 }
+
+const fahrenheit = (celsius: number) => Math.round((celsius * 9) / 5 + 32);
+const highLow = ({ temperature_max: high, temperature_min: low }: ForecastRow) =>
+  high === null || low === null ? { high: null, low: null } : { high: fahrenheit(high), low: fahrenheit(low) };
 
 // Below this an hour's output is the panels' night-time noise, not daylight.
 const MADE_AT_LEAST_KWH = 0.05;

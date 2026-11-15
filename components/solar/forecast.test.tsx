@@ -9,11 +9,11 @@ import type { ForecastCard as Card } from "@/lib/forecast";
 afterEach(cleanup);
 
 const CARD: Card = {
-  today: { day: "2026-11-10", soFar: 9.6, expected: 31, code: 0, sky: "forecast" },
+  today: { day: "2026-11-10", soFar: 9.6, expected: 31, code: 0, sky: "forecast", temperature: null },
   days: [
-    { day: "2026-11-11", expected: 33, code: 0, byHour: null },
-    { day: "2026-11-12", expected: 14, code: 45, byHour: null },
-    { day: "2026-11-13", expected: 27, code: 2, byHour: null },
+    { day: "2026-11-11", expected: 33, code: 0, byHour: null, high: null, low: null },
+    { day: "2026-11-12", expected: 14, code: 45, byHour: null, high: null, low: null },
+    { day: "2026-11-13", expected: 27, code: 2, byHour: null, high: null, low: null },
   ],
   goodDay: 37,
   staleSince: null,
@@ -62,6 +62,33 @@ test("the next three days, each with its kWh, a bar against the good day and its
   expect(card().getByText(/Bars run to a good day, 37 kWh, the best of those 30\./)).toBeTruthy();
 });
 
+// solar-forecast, "Temperatures on the tiles".
+test("today's tile shows the temperature now with its kWh so far, and none without one", () => {
+  render(<ForecastCard card={{ ...CARD, today: { ...CARD.today, temperature: 58 } }} />);
+  expect(today().getByText("58°")).toBeTruthy();
+  cleanup();
+  render(<ForecastCard card={CARD} />);
+  expect(today().queryByText(/°/)).toBeNull();
+});
+
+test("a day ahead shows its high and low with its sky, read as high and low, and none without them", () => {
+  render(<ForecastCard card={{ ...CARD, days: [{ ...CARD.days![0], high: 64, low: 52 }, ...CARD.days!.slice(1)] }} />);
+  const [tomorrow, thursday] = within(card().getByRole("list", { name: "The next three days" })).getAllByRole("listitem");
+  const temps = within(tomorrow).getAllByRole("img", { name: "High 64°, low 52°" });
+  // One for the phone row, one for the wide tile; CSS shows one of them.
+  expect(temps).toHaveLength(2);
+  // Thin spaces: the mono font's full-width spaces leave the slash floating.
+  expect(temps.every((t) => t.textContent === "64°\u2009/\u200952°")).toBe(true);
+  expect(thursday.textContent).not.toContain("°");
+});
+
+test("on wide screens a day ahead's sky and high and low sit at the tile's bottom, level with Today's last line", () => {
+  render(<ForecastCard card={{ ...CARD, days: [{ ...CARD.days![0], high: 64, low: 52 }, ...CARD.days!.slice(1)] }} />);
+  const [tomorrow] = within(card().getByRole("list", { name: "The next three days" })).getAllByRole("listitem");
+  const wide = within(tomorrow).getAllByRole("img", { name: "High 64°, low 52°" }).find((t) => !t.classList.contains("sm:hidden"))!;
+  expect(wide.parentElement!.classList.contains("sm:mt-auto")).toBe(true);
+});
+
 test("an old forecast says when it is from; a fresh one shows no time", () => {
   render(<ForecastCard card={{ ...CARD, staleSince: "2026-11-10T12:15:00Z" }} />);
   expect(card().getByText("Forecast from 4:15 AM")).toBeTruthy();
@@ -80,7 +107,7 @@ test("without a forecast the days give way to a message and today shows only its
 });
 
 test("the days are named from the date the card was worked out for", () => {
-  render(<ForecastCard card={{ ...CARD, today: { ...CARD.today, day: "2026-11-11" }, days: [{ day: "2026-11-12", expected: 14, code: 45, byHour: null }] }} />);
+  render(<ForecastCard card={{ ...CARD, today: { ...CARD.today, day: "2026-11-11" }, days: [{ day: "2026-11-12", expected: 14, code: 45, byHour: null, high: null, low: null }] }} />);
   expect(within(card().getByRole("list", { name: "The next three days" })).getByRole("listitem").textContent).toContain("Tomorrow");
 });
 
@@ -184,7 +211,7 @@ test("a reload keeps the chosen day while it is still ahead, and past midnight g
   const nextDay: Card = {
     ...CHOOSING,
     today: { ...CHOOSING.today, day: "2026-11-11", soFar: 0 },
-    days: [{ ...CHOOSING.days![1] }, { ...CHOOSING.days![2] }, { day: "2026-11-14", expected: 30, code: 0, byHour: ahead(14, [1, 2]) }],
+    days: [{ ...CHOOSING.days![1] }, { ...CHOOSING.days![2] }, { day: "2026-11-14", expected: 30, code: 0, byHour: ahead(14, [1, 2]), high: null, low: null }],
   };
   rerender(<ForecastCard card={nextDay} />);
   expect(card().getByRole("group", { name: "Today by hour" })).toBeTruthy();

@@ -12,8 +12,8 @@ const TODAY = "2026-11-10";
 const FETCHED = new Date("2026-11-10T17:20:00Z");
 
 const solar = (date: string, kwh: number) => owner.query("INSERT INTO data (date, solar_generated) VALUES ($1, $2)", [date, kwh]);
-const forecastFor = (day: string, mj: number, code = 0, daylight: number | null = null) =>
-  owner.query("INSERT INTO solar_forecast VALUES ($1, $2, $3, $4, $5)", [day, mj, code, FETCHED, daylight]);
+const forecastFor = (day: string, mj: number, code = 0, daylight: number | null = null, high: number | null = null, low: number | null = null) =>
+  owner.query("INSERT INTO solar_forecast VALUES ($1, $2, $3, $4, $5, $6, $7)", [day, mj, code, FETCHED, daylight, high, low]);
 const sunlight = (startAt: string, wm2: number) =>
   owner.query("INSERT INTO solar_forecast_hour VALUES ($1, $2, $3)", [startAt, wm2, FETCHED]);
 const made = (startAt: string, day: string, wh: number) =>
@@ -21,11 +21,11 @@ const made = (startAt: string, day: string, wh: number) =>
     `INSERT INTO energy_interval VALUES ($1, $2, $3, 0, 0, 0, 0, 0, 0, 0, 0, 0)`,
     [startAt, day, wh],
   );
-const reading = (at: string, code: number, low = 0, airport: number | null = null) =>
+const reading = (at: string, code: number, low = 0, airport: number | null = null, temperature: number | null = null) =>
   owner.query(
-    `INSERT INTO weather_sample (sampled_at, weather_code, cloud_cover, cloud_cover_low, cloud_cover_mid, cloud_cover_high, airport_low, airport_mid)
-     VALUES ($1, $2, $3, $3, 0, 0, $4, $5)`,
-    [at, code, low, airport, airport === null ? null : 0],
+    `INSERT INTO weather_sample (sampled_at, weather_code, cloud_cover, cloud_cover_low, cloud_cover_mid, cloud_cover_high, airport_low, airport_mid, temperature)
+     VALUES ($1, $2, $3, $3, 0, 0, $4, $5, $6)`,
+    [at, code, low, airport, airport === null ? null : 0, temperature],
   );
 
 beforeAll(async () => {
@@ -44,8 +44,8 @@ beforeAll(async () => {
   // Today so far, and the forecast for today, the next three days and one more.
   await solar(TODAY, 9.6);
   await forecastFor("2026-11-10", 12.5, 45);
-  // Fog only overnight: the daylight code stands in for the daily one.
-  await forecastFor("2026-11-11", 13.25, 45, 3);
+  // Fog only overnight: the daylight code stands in for the daily one. Tomorrow alone has its high and low.
+  await forecastFor("2026-11-11", 13.25, 45, 3, 17.8, 11.1);
   await forecastFor("2026-11-12", 9, 51);
   await forecastFor("2026-11-13", 5.25, 81);
   await forecastFor("2026-11-14", 14);
@@ -69,7 +69,7 @@ beforeAll(async () => {
   await made("2026-11-10T18:00:00Z", TODAY, 250);
   await made("2026-11-10T18:05:00Z", TODAY, 300);
   await reading("2026-11-10T17:30:00Z", 45);
-  await reading("2026-11-10T17:45:00Z", 1, 21, 0);
+  await reading("2026-11-10T17:45:00Z", 1, 21, 0, 14.6);
 });
 
 afterAll(async () => {
@@ -85,22 +85,22 @@ test("the scale and the good day come from the 30 days before today that have bo
   expect(scale.good_day).toBe(37);
 });
 
-test("today's and the next three days' forecasts, and today's solar so far", async () => {
+test("today's and the next three days' forecasts with their highs and lows in °C, and today's solar so far", async () => {
   const { rows, so_far } = await forecast(TODAY);
   expect(rows).toEqual([
-    { day: "2026-11-10", radiation_mj: 12.5, weather_code: 45, fetched_at: FETCHED.toISOString() },
-    { day: "2026-11-11", radiation_mj: 13.25, weather_code: 3, fetched_at: FETCHED.toISOString() },
-    { day: "2026-11-12", radiation_mj: 9, weather_code: 51, fetched_at: FETCHED.toISOString() },
-    { day: "2026-11-13", radiation_mj: 5.25, weather_code: 81, fetched_at: FETCHED.toISOString() },
+    { day: "2026-11-10", radiation_mj: 12.5, weather_code: 45, fetched_at: FETCHED.toISOString(), temperature_max: null, temperature_min: null },
+    { day: "2026-11-11", radiation_mj: 13.25, weather_code: 3, fetched_at: FETCHED.toISOString(), temperature_max: 17.8, temperature_min: 11.1 },
+    { day: "2026-11-12", radiation_mj: 9, weather_code: 51, fetched_at: FETCHED.toISOString(), temperature_max: null, temperature_min: null },
+    { day: "2026-11-13", radiation_mj: 5.25, weather_code: 81, fetched_at: FETCHED.toISOString(), temperature_max: null, temperature_min: null },
   ]);
   expect(so_far).toBe(9.6);
 });
 
-test("the sky now is the newest weather reading, with its cloud and the airport's", async () => {
+test("the sky now is the newest weather reading, with its cloud, the airport's and its temperature in °C", async () => {
   const { reading } = await forecast(TODAY);
   expect(reading).toEqual({
     code: 1, cloud_cover: 21, cloud_cover_low: 21, cloud_cover_mid: 0, cloud_cover_high: 0, airport_low: 0, airport_mid: 0,
-    sampled_at: "2026-11-10T17:45:00.000Z",
+    temperature: 14.6, sampled_at: "2026-11-10T17:45:00.000Z",
   });
 });
 
