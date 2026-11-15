@@ -60,10 +60,12 @@ beforeAll(async () => {
   await sunlight("2026-11-07T18:00:00Z", 450);
   await sunlight("2026-10-01T17:00:00Z", 600);
   await made("2026-10-01T17:00:00Z", "2026-10-01", 3000);
-  // Today: 10 AM under way to 10:10, 11 AM ahead, and tomorrow's 10 AM left out.
+  // Today: 10 AM under way to 10:10 and 11 AM ahead; Tomorrow's and Friday's 10 AM, and Saturday's left out.
   await sunlight("2026-11-10T18:00:00Z", 532.4);
   await sunlight("2026-11-10T19:00:00Z", 583);
   await sunlight("2026-11-11T18:00:00Z", 300);
+  await sunlight("2026-11-13T18:00:00Z", 210);
+  await sunlight("2026-11-14T18:00:00Z", 450);
   await made("2026-11-10T18:00:00Z", TODAY, 250);
   await made("2026-11-10T18:05:00Z", TODAY, 300);
   await reading("2026-11-10T17:30:00Z", 45);
@@ -108,11 +110,13 @@ test("each hour of the day's scale comes from the 30 days before today's hours w
   expect(hourly.days).toBe(2);
 });
 
-test("today's forecast hours with what each has made so far, and when the newest interval ends", async () => {
+test("the forecast hours of today and the next three days, with what today's have made so far, and when the newest interval ends", async () => {
   const { hourly } = await forecast(TODAY);
-  expect(hourly.today).toEqual([
-    { start_at: "2026-11-10T18:00:00.000Z", wm2: 532.4, made_wh: 550 },
-    { start_at: "2026-11-10T19:00:00.000Z", wm2: 583, made_wh: null },
+  expect(hourly.hours).toEqual([
+    { day: "2026-11-10", start_at: "2026-11-10T18:00:00.000Z", wm2: 532.4, made_wh: 550 },
+    { day: "2026-11-10", start_at: "2026-11-10T19:00:00.000Z", wm2: 583, made_wh: null },
+    { day: "2026-11-11", start_at: "2026-11-11T18:00:00.000Z", wm2: 300, made_wh: null },
+    { day: "2026-11-13", start_at: "2026-11-13T18:00:00.000Z", wm2: 210, made_wh: null },
   ]);
   expect(hourly.made_until).toBe("2026-11-10T18:10:00.000Z");
 });
@@ -146,6 +150,6 @@ test("with nothing stored there is no scale, no forecast, no solar so far, no re
   await owner.query("DELETE FROM data; DELETE FROM solar_forecast; DELETE FROM weather_sample; DELETE FROM energy_interval; DELETE FROM solar_forecast_hour");
   expect(await forecast(TODAY)).toEqual({
     scale: { solar_kwh: 0, radiation_mj: 0, days: 0, good_day: null }, rows: [], so_far: null, reading: null,
-    hourly: { scale: [], days: 0, today: [], made_until: null },
+    hourly: { scale: [], days: 0, hours: [], made_until: null },
   });
 });

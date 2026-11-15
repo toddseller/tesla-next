@@ -19,7 +19,7 @@ const data = (overrides: Partial<ForecastData> = {}): ForecastData => ({
   ],
   so_far: 9.6,
   reading: null,
-  hourly: { scale: [], days: 0, today: [], made_until: null },
+  hourly: { scale: [], days: 0, hours: [], made_until: null },
   ...overrides,
 });
 
@@ -27,12 +27,18 @@ test("each day's expected kWh is its forecast sunlight times the last 30 days' k
   const card = forecastCard(data(), TODAY, NOW);
   expect(card.today).toEqual({ day: TODAY, soFar: 9.6, expected: 31, code: 0, sky: "forecast" });
   expect(card.days).toEqual([
-    { day: "2026-11-11", expected: 33, code: 0 },
-    { day: "2026-11-12", expected: 14, code: 45 },
-    { day: "2026-11-13", expected: 27, code: 2 },
+    { day: "2026-11-11", expected: 33, code: 0, byHour: null },
+    { day: "2026-11-12", expected: 14, code: 45, byHour: null },
+    { day: "2026-11-13", expected: 27, code: 2, byHour: null },
   ]);
   expect(card.goodDay).toBe(37);
   expect(card.staleSince).toBeNull();
+});
+
+test("the good day is a whole kWh, as the stored real arrives with float noise", () => {
+  const card = forecastCard(data({ scale: { ...data().scale, good_day: 43.29999923706055 } }), TODAY, NOW);
+  expect(card.goodDay).toBe(43);
+  expect(forecastCard(data({ scale: { ...data().scale, good_day: null } }), TODAY, NOW).goodDay).toBeNull();
 });
 
 test("with fewer than 7 days behind the scale there is no forecast, only today's kWh so far", () => {
@@ -85,21 +91,24 @@ test("a reading 4 hours old, or none, leaves today's forecast sky", () => {
 
 // 1 Wh per W/m² at every daylight hour, so an hour expects its W/m² over 1,000 in kWh. November 8's hours at 1:40 PM.
 const SCALE = [6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16].map((hour) => ({ hour, wh: 30_000, wm2: 30_000 }));
-const PST = (hour: number) => new Date(Date.UTC(2026, 10, 10, hour + 8)).toISOString();
+const PST = (hour: number, date = 10) => new Date(Date.UTC(2026, 10, date, hour + 8)).toISOString();
 const NOV_8: [number, number, number | null][] = [
   [5, 0, null], [6, 0, 10], [7, 690, 340], [8, 3160, 1740], [9, 4340, 2470], [10, 5740, 5000], [11, 5260, 5900],
   [12, 4570, 5380], [13, 4100, 3100], [14, 3060, null], [15, 1590, null], [16, 300, null], [17, 0, null],
 ];
-const hourly = (madeUntil: string | null, days = 30, rows = NOV_8): ForecastData["hourly"] => ({
+// Thursday, November 12: a gray day, nothing made yet.
+const NOV_12: [number, number][] = [[5, 0], [6, 0], [7, 300], [8, 1500], [9, 2200], [10, 2800], [11, 3000], [12, 2800], [13, 2200], [14, 1400], [15, 600], [16, 100], [17, 0]];
+const thursday = NOV_12.map(([hour, wm2]) => ({ day: "2026-11-12", start_at: PST(hour, 12), wm2, made_wh: null }));
+const hourly = (madeUntil: string | null, days = 30, rows = NOV_8, ahead = thursday): ForecastData["hourly"] => ({
   scale: SCALE, days, made_until: madeUntil,
-  today: rows.map(([hour, wm2, made]) => ({ start_at: PST(hour), wm2, made_wh: made })),
+  hours: [...rows.map(([hour, wm2, made]) => ({ day: TODAY, start_at: PST(hour), wm2, made_wh: made })), ...ahead],
 });
 const byHour = (madeUntil: string | null, days?: number, rows?: typeof NOV_8) =>
   forecastCard(data({ hourly: hourly(madeUntil, days, rows) }), TODAY, NOW).byHour;
 
 test("each hour expects its sunlight times its hour of the day's scale, from the first to the last hour with sunlight or 0.05 kWh made", () => {
   const card = byHour("2026-11-10T21:40:00Z")!;
-  expect(card.hours.map((h) => h.start)).toEqual([7, 8, 9, 10, 11, 12, 13, 14, 15, 16].map(PST));
+  expect(card.hours.map((h) => h.start)).toEqual([7, 8, 9, 10, 11, 12, 13, 14, 15, 16].map((hour) => PST(hour)));
   expect(card.hours[2]).toEqual({ start: PST(9), expected: 4.34, made: 2.47 });
   expect(card.hours[7]).toEqual({ start: PST(14), expected: 3.06, made: null });
 });
@@ -130,6 +139,21 @@ test("no hourly panel without an hour today or with fewer than 7 days to scale b
   expect(byHour("2026-11-10T21:40:00Z", 6)).toBeNull();
   expect(byHour(null, 30, [])).toBeNull();
   expect(byHour("2026-11-10T21:40:00Z", 7)).not.toBeNull();
+});
+
+test("a day ahead's hours expect their sunlight times today's scale, from its first to its last hour with sunlight, none made", () => {
+  const days = forecastCard(data({ hourly: hourly("2026-11-10T21:40:00Z") }), TODAY, NOW).days!;
+  const thu = days.find((d) => d.day === "2026-11-12")!.byHour!;
+  expect(thu.hours.map((h) => h.start)).toEqual([7, 8, 9, 10, 11, 12, 13, 14, 15, 16].map((hour) => PST(hour, 12)));
+  expect(thu.hours[3]).toEqual({ start: PST(10, 12), expected: 2.8, made: null });
+  expect(thu.byNow).toBeNull();
+});
+
+test("a day ahead without forecast hours has none, and no day ahead has hours when today has none", () => {
+  const days = (h: ForecastData["hourly"]) => forecastCard(data({ hourly: h }), TODAY, NOW).days!.map((d) => d.byHour !== null);
+  expect(days(hourly("2026-11-10T21:40:00Z"))).toEqual([false, true, false]);
+  expect(days(hourly("2026-11-10T21:40:00Z", 6))).toEqual([false, false, false]);
+  expect(days(hourly(null, 30, []))).toEqual([false, false, false]);
 });
 
 test("past the last forecast hour the day isn't over until the sun has set", () => {

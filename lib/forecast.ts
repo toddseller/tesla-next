@@ -9,8 +9,9 @@ export type Scale = { solar_kwh: number; radiation_mj: number; days: number; goo
 export type Reading = Sample & { sampled_at: string };
 // Each hour of the day's Wh and forecast W/m² over the same 30 days, and the days with any such hour.
 export type HourScale = { hour: number; wh: number; wm2: number };
-export type TodayHour = { start_at: string; wm2: number; made_wh: number | null };
-export type Hourly = { scale: HourScale[]; days: number; today: TodayHour[]; made_until: string | null };
+// An hour of today or the next three days, with what it has made so far (today's only).
+export type ForecastHour = { day: string; start_at: string; wm2: number; made_wh: number | null };
+export type Hourly = { scale: HourScale[]; days: number; hours: ForecastHour[]; made_until: string | null };
 export type ForecastData = { scale: Scale; rows: ForecastRow[]; so_far: number | null; reading: Reading | null; hourly: Hourly };
 
 export type SkyWhen = "forecast" | "now" | "night";
@@ -25,7 +26,7 @@ export type ByHour = {
 export type ForecastCard = {
   // The day the card was worked out for, so a page left open past midnight names its days from the data.
   today: { day: string; soFar: number | null; expected: number | null; code: number | null; sky: SkyWhen };
-  days: { day: string; expected: number; code: number }[] | null;
+  days: { day: string; expected: number; code: number; byHour: ByHour | null }[] | null;
   goodDay: number | null;
   staleSince: string | null;
   byHour: ByHour | null;
@@ -68,7 +69,7 @@ export async function expectedHours(day: string): Promise<{ start: string; kwh: 
 }
 
 export async function forecast(today: string): Promise<ForecastData> {
-  const [scale, rows, soFar, reading, hourly, todayHours, madeUntil] = await Promise.all([
+  const [scale, rows, soFar, reading, hourly, hours, madeUntil] = await Promise.all([
     db.query<Scale>(
       `SELECT coalesce(sum(d.solar_generated), 0)::float8 AS solar_kwh, coalesce(sum(f.radiation_mj), 0)::float8 AS radiation_mj,
          count(*)::int AS days, max(d.solar_generated)::float8 AS good_day
@@ -89,12 +90,12 @@ export async function forecast(today: string): Promise<ForecastData> {
        FROM weather_sample ORDER BY sampled_at DESC LIMIT 1`,
     ),
     hourScale(today),
-    db.query<Omit<TodayHour, "start_at"> & { start_at: Date }>(
-      `SELECT f.start_at, round(f.radiation_wm2::numeric, 1)::float8 AS wm2, m.wh::float8 AS made_wh
+    db.query<Omit<ForecastHour, "start_at"> & { start_at: Date }>(
+      `SELECT (f.start_at AT TIME ZONE $2)::date::text AS day, f.start_at, round(f.radiation_wm2::numeric, 1)::float8 AS wm2, m.wh::float8 AS made_wh
        FROM solar_forecast_hour f
        LEFT JOIN (SELECT date_trunc('hour', start_at) AS start_at, sum(solar_generated_wh) AS wh FROM energy_interval WHERE day = $1 GROUP BY 1) m
          USING (start_at)
-       WHERE f.start_at >= $1::date::timestamp AT TIME ZONE $2 AND f.start_at < ($1::date + 1)::timestamp AT TIME ZONE $2
+       WHERE f.start_at >= $1::date::timestamp AT TIME ZONE $2 AND f.start_at < ($1::date + 4)::timestamp AT TIME ZONE $2
        ORDER BY f.start_at`,
       [today, TIME_ZONE],
     ),
@@ -109,7 +110,7 @@ export async function forecast(today: string): Promise<ForecastData> {
     hourly: {
       scale: hourly.rows.map(({ hour, wh, wm2 }) => ({ hour, wh, wm2 })),
       days: hourly.rows[0]?.days ?? 0,
-      today: todayHours.rows.map((row) => ({ ...row, start_at: row.start_at.toISOString() })),
+      hours: hours.rows.map((row) => ({ ...row, start_at: row.start_at.toISOString() })),
       made_until: madeUntil.rows[0].made_until?.toISOString() ?? null,
     },
   };
@@ -148,6 +149,9 @@ export function forecastCard({ scale, rows, so_far, reading, hourly }: ForecastD
   const todays = row(today);
   const current = reading && now - Date.parse(reading.sampled_at) < READING_FOR ? reading : null;
   const sky: SkyWhen = current ? (skyAt(new Date(now)) === "day" ? "now" : "night") : "forecast";
+  const scales = hourly.days >= FEWEST_DAYS ? perWm2(hourly.scale) : null;
+  const hoursOf = (day: string, madeUntil: string | null) => scales && byHour(scales, hourly.hours.filter((h) => h.day === day), madeUntil);
+  const todayByHour = hoursOf(today, hourly.made_until);
   return {
     today: {
       day: today,
@@ -156,20 +160,19 @@ export function forecastCard({ scale, rows, so_far, reading, hourly }: ForecastD
       code: current ? observedCode(current) : (todays?.weather_code ?? null),
       sky,
     },
-    days: usable ? ahead.map((r) => ({ day: r.day, expected: expected(r), code: r.weather_code })) : null,
-    goodDay: scale.good_day,
+    days: usable ? ahead.map((r) => ({ day: r.day, expected: expected(r), code: r.weather_code, byHour: todayByHour && hoursOf(r.day, null) })) : null,
+    goodDay: scale.good_day === null ? null : Math.round(scale.good_day),
     staleSince: usable && newest && age(newest) > STALE_AFTER ? newest.fetched_at : null,
-    byHour: byHour(hourly),
+    byHour: todayByHour,
   };
 }
 
 // Below this an hour's output is the panels' night-time noise, not daylight.
 const MADE_AT_LEAST_KWH = 0.05;
 
-function byHour({ scale, days, today, made_until }: Hourly): ByHour | null {
-  if (today.length === 0 || days < FEWEST_DAYS) return null;
-  const scales = perWm2(scale);
-  const all = today.map(({ start_at, wm2, made_wh }) => ({
+function byHour(scales: Map<number, number>, day: ForecastHour[], made_until: string | null): ByHour | null {
+  if (day.length === 0) return null;
+  const all = day.map(({ start_at, wm2, made_wh }) => ({
     start: start_at,
     expected: expectedKwh(scales, start_at, wm2),
     made: made_wh === null ? null : made_wh / 1000,

@@ -1,4 +1,4 @@
-import type { CSSProperties } from "react";
+import { type CSSProperties, useState } from "react";
 import { Bar as Column, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
 
 import { AxisTick } from "@/components/solar/axis-tick";
@@ -39,10 +39,15 @@ function Sky({ code, when, className = "" }: { code: number; when?: SkyWhen; cla
   );
 }
 
-function Today({ today }: { today: Card["today"] }) {
+// A tile that picks the chart's day is a button reset to look as the tile does; one that can't stays a plain group.
+const PICKS = "cursor-pointer text-left focus-visible:ring-[3px] focus-visible:ring-ring/50";
+
+function Today({ today, pick }: { today: Card["today"]; pick?: { chosen: boolean; choose: () => void } }) {
   const soFar = today.soFar ?? 0;
+  const Tile = pick ? "button" : "div";
   return (
-    <div role="group" aria-label="Today" className="flex flex-col gap-2.5 rounded-lg bg-secondary p-3.5 outline outline-1 -outline-offset-1 outline-solar sm:p-4">
+    <Tile {...(pick ? { type: "button", "aria-pressed": pick.chosen, onClick: pick.choose } : { role: "group", "aria-label": "Today" })}
+      className={`flex flex-col gap-2.5 rounded-lg bg-secondary p-3.5 outline outline-1 -outline-offset-1 outline-solar sm:p-4 ${pick ? PICKS : ""}`}>
       <div className="flex items-baseline justify-between gap-2">
         <span className="text-sm font-medium">Today</span>
         {today.code !== null && <Sky code={today.code} when={today.sky} className="flex" />}
@@ -59,7 +64,7 @@ function Today({ today }: { today: Card["today"] }) {
       <span className="text-[13px] text-muted-foreground">
         <span className="font-mono text-foreground">{soFar.toFixed(1)} kWh</span> so far
       </span>
-    </div>
+    </Tile>
   );
 }
 
@@ -128,21 +133,23 @@ function ByNow({ byNow }: { byNow: NonNullable<Hourly["byNow"]> }) {
   );
 }
 
-function TodayByHour({ byHour }: { byHour: Hourly }) {
+// `date` names a day ahead: nothing made yet, so the legend and the line keep to what is expected.
+function ByHourPanel({ byHour, title, date }: { byHour: Hourly; title: string; date?: string }) {
   const rows: HourRow[] = byHour.hours.map((hour) => ({ ...hour, label: hourOf.format(new Date(hour.start)), top: Math.max(hour.expected, hour.made ?? 0) }));
   const axis = niceAxis(0, Math.max(1, ...rows.map((row) => row.top)));
   const entering = useEntering(ENTER_MS);
   return (
-    <div role="group" aria-label="Today by hour" className="flex flex-col gap-3 rounded-lg bg-secondary p-3.5 sm:p-4">
+    <div role="group" aria-label={title} className="flex flex-col gap-3 rounded-lg bg-secondary p-3.5 sm:p-4">
       <div className="flex flex-wrap items-baseline justify-between gap-x-5 gap-y-2">
         <div className="flex flex-wrap items-baseline gap-x-3.5 gap-y-1">
-          <h3 className="text-sm font-medium">Today by hour</h3>
+          <h3 className="text-sm font-medium">{title}</h3>
           {byHour.byNow && <ByNow byNow={byHour.byNow} />}
+          {date && <span className="text-[13px] text-muted-foreground">{date}</span>}
         </div>
         <div className="flex flex-wrap gap-x-4 gap-y-1 text-[13px] text-muted-foreground">
-          <span className="flex items-center gap-1.5"><span className="size-3 rounded-[3px] bg-solar" />Made</span>
+          {!date && <span className="flex items-center gap-1.5"><span className="size-3 rounded-[3px] bg-solar" />Made</span>}
           <span className="flex items-center gap-1.5"><span className="size-3 rounded-[3px] bg-solar/25" />Expected</span>
-          <span className="flex items-center gap-1.5"><span className="h-[3px] w-3.5 rounded-sm bg-foreground" />Expected, where beaten</span>
+          {!date && <span className="flex items-center gap-1.5"><span className="h-[3px] w-3.5 rounded-sm bg-foreground" />Expected, where beaten</span>}
         </div>
       </div>
       <ChartContainer config={{}} className="aspect-auto h-48 w-full sm:h-56">
@@ -163,6 +170,11 @@ function TodayByHour({ byHour }: { byHour: Hourly }) {
 
 export function ForecastCard({ card }: { card: Card }) {
   const { days, goodDay, staleSince } = card;
+  const [chosen, choose] = useState<string | null>(null);
+  // A choice no longer among the days ahead, as past midnight, falls back to Today.
+  const ahead = days?.find((d) => d.day === chosen && d.byHour);
+  const picking = card.byHour !== null && !!days?.some((d) => d.byHour);
+  const name = (day: string) => (day === shiftDay(card.today.day, 1) ? "Tomorrow" : onDay(day, { weekday: "long" }));
   return (
     <section aria-labelledby="forecast" className="flex flex-col gap-4 rounded-[10px] border bg-card p-4 sm:p-6">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
@@ -170,16 +182,20 @@ export function ForecastCard({ card }: { card: Card }) {
         {staleSince && <span className="text-[13px] text-muted-foreground">{`Forecast from ${clock.format(new Date(staleSince))}`}</span>}
       </div>
       <div className="grid gap-3 sm:grid-cols-4">
-        <Today today={card.today} />
+        <Today today={card.today} pick={picking ? { chosen: !ahead, choose: () => choose(null) } : undefined} />
         {days === null ? (
           <p className="text-sm text-muted-foreground sm:col-span-3 sm:self-center">No forecast right now</p>
         ) : (
           <ul aria-label="The next three days" className="flex flex-col sm:col-span-3 sm:grid sm:grid-cols-3 sm:gap-3">
-            {days.map(({ day, expected, code }) => (
-              <li key={day}
-                className="grid grid-cols-[96px_minmax(0,1fr)_64px] items-center gap-2.5 border-t py-2.5 sm:flex sm:flex-col sm:items-stretch sm:rounded-lg sm:border-0 sm:bg-secondary sm:p-4">
+            {days.map(({ day, expected, code, byHour }) => {
+              const Tile = byHour ? "button" : "div";
+              const raised = ahead?.day === day;
+              return (
+              <li key={day} className="flex border-t sm:border-0">
+                <Tile {...(Tile === "button" ? { type: "button", "aria-pressed": raised, onClick: () => choose(day) } : {})}
+                  className={`grid min-w-0 flex-1 grid-cols-[96px_minmax(0,1fr)_64px] items-center gap-2.5 py-2.5 sm:flex sm:flex-col sm:items-stretch sm:rounded-lg sm:p-4 ${raised ? "-mx-2.5 rounded-lg bg-input px-2.5 sm:mx-0" : "sm:bg-secondary"} ${Tile === "button" ? `${PICKS} outline-none` : ""}`}>
                 <span className="flex flex-col sm:flex-row sm:items-baseline sm:justify-between">
-                  <span className="text-sm sm:font-medium">{day === shiftDay(card.today.day, 1) ? "Tomorrow" : onDay(day, { weekday: "long" })}</span>
+                  <span className="text-sm sm:font-medium">{name(day)}</span>
                   <span className="text-xs text-muted-foreground max-sm:hidden">{onDay(day, { month: "short", day: "numeric" })}</span>
                   <Sky code={code} className="flex sm:hidden" />
                 </span>
@@ -191,12 +207,18 @@ export function ForecastCard({ card }: { card: Card }) {
                   <Bar label={`${expected} kWh against a good day of ${goodDay}`} part={expected} whole={goodDay} />
                 </span>
                 <Sky code={code} className="hidden sm:order-4 sm:flex" />
+                </Tile>
               </li>
-            ))}
+              );
+            })}
           </ul>
         )}
       </div>
-      {card.byHour && <TodayByHour byHour={card.byHour} />}
+      {card.byHour && (ahead ? (
+        <ByHourPanel key={ahead.day} byHour={ahead.byHour!} title={`${name(ahead.day)} by hour`} date={onDay(ahead.day, { weekday: "short", month: "short", day: "numeric" })} />
+      ) : (
+        <ByHourPanel key="today" byHour={card.byHour} title="Today by hour" />
+      ))}
       <p className="text-[13px] text-muted-foreground">
         Open-Meteo&apos;s sunlight forecast, scaled by what the panels made in the last 30 days.
         {days !== null && goodDay !== null && ` Bars run to a good day, ${goodDay} kWh, the best of those 30.`} A forecast is usually within about 4
