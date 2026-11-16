@@ -161,16 +161,20 @@ export function forecastCard({ scale, rows, so_far, reading, hourly }: ForecastD
       day: today,
       soFar: so_far,
       expected: usable && todays ? expected(todays) : null,
-      code: current ? observedCode(current) : (todays?.weather_code ?? null),
+      code: current ? observedCode(current) : todays ? forecastCode(todays) : null,
       sky,
       temperature: current?.temperature == null ? null : fahrenheit(current.temperature),
     },
-    days: usable ? ahead.map((r) => ({ day: r.day, expected: expected(r), code: r.weather_code, byHour: todayByHour && hoursOf(r.day, null), ...highLow(r) })) : null,
+    days: usable ? ahead.map((r) => ({ day: r.day, expected: expected(r), code: forecastCode(r), byHour: todayByHour && hoursOf(r.day, null), ...highLow(r) })) : null,
     goodDay: scale.good_day === null ? null : Math.round(scale.good_day),
     staleSince: usable && newest && age(newest) > STALE_AFTER ? newest.fetched_at : null,
     byHour: todayByHour,
   };
 }
+
+// The model now and then calls a mild day's rain snow; at this site a low above freezing has never brought any.
+const forecastCode = ({ weather_code: code, temperature_min: low }: ForecastRow) =>
+  low !== null && low > 0 && ((code >= 71 && code <= 77) || code === 85 || code === 86) ? 61 : code;
 
 const fahrenheit = (celsius: number) => Math.round((celsius * 9) / 5 + 32);
 const highLow = ({ temperature_max: high, temperature_min: low }: ForecastRow) =>
