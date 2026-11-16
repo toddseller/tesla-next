@@ -57,22 +57,30 @@ test("a reading with the split, or without a cover, is unchanged", () => {
 });
 
 test("the wind readout in mph, from the reading in km/h", () => {
-  expect(windText(29, 56, 225)).toBe("18 mph, gusts 35 mph, from SW");
-  expect(windText(29, null, 225)).toBe("18 mph from SW");
-  expect(windText(3, 6, 90)).toBe("Calm"); // 1.9 mph
-  expect(windText(4, null, 90)).toBe("2 mph from E");
+  expect(windText(29, 56, 225, "mph")).toBe("18 mph, gusts 35 mph, from SW");
+  expect(windText(29, null, 225, "mph")).toBe("18 mph from SW");
+  expect(windText(3, 6, 90, "mph")).toBe("Calm"); // 1.9 mph
+  expect(windText(4, null, 90, "mph")).toBe("2 mph from E");
+});
+
+// display-units: a viewer whose browser names a km/h region; Calm stays below 2 mph.
+test("the wind readout in km/h, as the reading is", () => {
+  expect(windText(29, 56, 225, "km/h")).toBe("29 km/h, gusts 56 km/h, from SW");
+  expect(windText(29.4, null, 225, "km/h")).toBe("29 km/h from SW");
+  expect(windText(3, 6, 90, "km/h")).toBe("Calm");
+  expect(windText(4, null, 90, "km/h")).toBe("4 km/h from E");
 });
 
 test("no wind reading without a speed or a direction", () => {
-  expect(windText(null, null, null)).toBe("No wind reading");
-  expect(windText(undefined, 40, 225)).toBe("No wind reading");
-  expect(windText(29, 56, null)).toBe("No wind reading");
+  expect(windText(null, null, null, "mph")).toBe("No wind reading");
+  expect(windText(undefined, 40, 225, "mph")).toBe("No wind reading");
+  expect(windText(29, 56, null, "mph")).toBe("No wind reading");
 });
 
 test.each([
   [0, "N"], [22, "N"], [23, "NE"], [67, "NE"], [68, "E"], [135, "SE"], [180, "S"], [225, "SW"], [270, "W"], [315, "NW"], [337, "NW"], [338, "N"], [359, "N"],
 ])("wind from %i degrees reads from %s", (direction, point) => {
-  expect(windText(20, null, direction)).toBe(`12 mph from ${point}`);
+  expect(windText(20, null, direction, "mph")).toBe(`12 mph from ${point}`);
 });
 
 test("a direction turns the shorter way round, through north", () => {

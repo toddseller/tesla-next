@@ -9,6 +9,7 @@ import {CAR_CABLES, CHARGE_BAR, type LegName, EAVES, FLOW_COLORS, GLOW, HEADROOM
 import {type LiveInput, type SceneOptions, sceneState, type Vehicle} from "@/lib/scene/live-scene";
 import {twinkle} from "@/lib/scene/night-sky";
 import {sunTimes} from "@/lib/scene/sun";
+import {UnitsProvider} from "@/components/units";
 
 // Each test's render is removed after it, as anton's Vitest did with its globals.
 afterEach(cleanup);
@@ -1270,6 +1271,12 @@ describe("weather vane", () => {
     expect(part(scene, "stage").contains(part(scene, "vane-art"))).toBe(true);
     expect(part(scene, "vane").tagName).toBe("BUTTON");
     expect(part(scene, "vane").getAttribute("aria-label")).toBe("Wind: 18 mph, gusts 35 mph, from SW");
+  });
+
+  // display-units: a viewer whose browser names a km/h region.
+  test("names the wind in km/h for a km/h viewer", () => {
+    const scene = render(<UnitsProvider value={{ temperature: "C", wind: "km/h" }}>{vane(gale)}</UnitsProvider>).container;
+    expect(part(scene, "vane").getAttribute("aria-label")).toBe("Wind: 29 km/h, gusts 56 km/h, from SW");
   });
 
   test("without a wind reading it says so", () => {

@@ -1,8 +1,11 @@
 import { IBM_Plex_Mono, IBM_Plex_Sans } from "next/font/google";
 import { Footer } from "@/components/footer";
 import { PageSlide } from "@/components/page-slide";
+import { headers } from "next/headers";
 import { TopBar } from "@/components/top-bar";
+import { UnitsProvider } from "@/components/units";
 import { latest, siteState } from "@/lib/live";
+import { unitsFor } from "@/lib/units";
 import "./globals.css";
 
 // next/font downloads these at build and serves them from the site, so no font request leaves it.
@@ -14,14 +17,17 @@ export const metadata = { title: "Tesla Solar Report" };
 // A nonce is per request, so no page may be prerendered without one.
 export const dynamic = "force-dynamic";
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const units = unitsFor((await headers()).get("accept-language"));
   return (
     <html lang="en" className={`${sans.variable} ${mono.variable}`}>
       <body className="flex min-h-screen flex-col">
         {/* The live status the server holds, so the top bar's pill is in the page as served. */}
         <TopBar initialStatus={latest()} initialSite={siteState()} renderedAt={Date.now()} />
         <PageSlide>
-          <main className="mx-auto box-border w-full max-w-[1200px] px-4 py-8 sm:px-8">{children}</main>
+          <main className="mx-auto box-border w-full max-w-[1200px] px-4 py-8 sm:px-8">
+            <UnitsProvider value={units}>{children}</UnitsProvider>
+          </main>
         </PageSlide>
         <Footer />
       </body>

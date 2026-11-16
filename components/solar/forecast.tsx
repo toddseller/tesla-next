@@ -5,6 +5,7 @@ import { AxisTick } from "@/components/solar/axis-tick";
 import { kwh, roundedRect } from "@/components/solar/range-chart";
 import { skyOf } from "@/components/solar/sky";
 import { ChartContainer, ChartTooltip } from "@/components/ui/chart";
+import { useUnits } from "@/components/units";
 import { ENTER_MS, useEntering } from "@/components/use-entering";
 import type { ByHour as Hourly, ForecastCard as Card, SkyWhen } from "@/lib/forecast";
 import { shiftDay, TIME_ZONE } from "@/lib/scene/replay";
@@ -42,12 +43,21 @@ function Sky({ code, when, className = "" }: { code: number; when?: SkyWhen; cla
 // A tile that picks the chart's day is a button reset to look as the tile does; one that can't stays a plain group.
 const PICKS = "cursor-pointer text-left focus-visible:ring-[3px] focus-visible:ring-ring/50";
 
+// The card carries °C; whole degrees in the viewer's unit.
+const useDegrees = () => {
+  const { temperature } = useUnits();
+  return (celsius: number) => Math.round(temperature === "F" ? (celsius * 9) / 5 + 32 : celsius);
+};
+
 function HighLow({ high, low, className }: { high: number; low: number; className: string }) {
-  return <span role="img" aria-label={`High ${high}°, low ${low}°`} className={`font-mono ${className}`}>{high}°&thinsp;/&thinsp;{low}°</span>;
+  const degrees = useDegrees();
+  const [shownHigh, shownLow] = [degrees(high), degrees(low)];
+  return <span role="img" aria-label={`High ${shownHigh}°, low ${shownLow}°`} className={`font-mono ${className}`}>{shownHigh}°&thinsp;/&thinsp;{shownLow}°</span>;
 }
 
 function Today({ today, pick }: { today: Card["today"]; pick?: { chosen: boolean; choose: () => void } }) {
   const soFar = today.soFar ?? 0;
+  const degrees = useDegrees();
   const Tile = pick ? "button" : "div";
   return (
     <Tile {...(pick ? { type: "button", "aria-pressed": pick.chosen, onClick: pick.choose } : { role: "group", "aria-label": "Today" })}
@@ -69,7 +79,7 @@ function Today({ today, pick }: { today: Card["today"]; pick?: { chosen: boolean
         <span className="text-[13px] text-muted-foreground">
           <span className="font-mono text-foreground">{soFar.toFixed(1)} kWh</span> so far
         </span>
-        {today.temperature !== null && <span className="font-mono text-sm">{today.temperature}°</span>}
+        {today.temperature !== null && <span className="font-mono text-sm">{degrees(today.temperature)}°</span>}
       </span>
     </Tile>
   );

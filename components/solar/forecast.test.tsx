@@ -4,6 +4,7 @@ import { act, cleanup, fireEvent, render, screen, within } from "@testing-librar
 import { afterEach, expect, test, vi } from "vitest";
 
 import { ForecastCard, HourDetails } from "@/components/solar/forecast";
+import { UnitsProvider } from "@/components/units";
 import type { ForecastCard as Card } from "@/lib/forecast";
 
 afterEach(cleanup);
@@ -64,7 +65,7 @@ test("the next three days, each with its kWh, a bar against the good day and its
 
 // solar-forecast, "Temperatures on the tiles".
 test("today's tile shows the temperature now with its kWh so far, and none without one", () => {
-  render(<ForecastCard card={{ ...CARD, today: { ...CARD.today, temperature: 58 } }} />);
+  render(<ForecastCard card={{ ...CARD, today: { ...CARD.today, temperature: 14.6 } }} />);
   expect(today().getByText("58°")).toBeTruthy();
   cleanup();
   render(<ForecastCard card={CARD} />);
@@ -72,7 +73,7 @@ test("today's tile shows the temperature now with its kWh so far, and none witho
 });
 
 test("a day ahead shows its high and low with its sky, read as high and low, and none without them", () => {
-  render(<ForecastCard card={{ ...CARD, days: [{ ...CARD.days![0], high: 64, low: 52 }, ...CARD.days!.slice(1)] }} />);
+  render(<ForecastCard card={{ ...CARD, days: [{ ...CARD.days![0], high: 17.8, low: 11.1 }, ...CARD.days!.slice(1)] }} />);
   const [tomorrow, thursday] = within(card().getByRole("list", { name: "The next three days" })).getAllByRole("listitem");
   const temps = within(tomorrow).getAllByRole("img", { name: "High 64°, low 52°" });
   // One for the phone row, one for the wide tile; CSS shows one of them.
@@ -82,8 +83,20 @@ test("a day ahead shows its high and low with its sky, read as high and low, and
   expect(thursday.textContent).not.toContain("°");
 });
 
+// display-units: a viewer whose browser names a Celsius region.
+test("the tiles' temperatures read in whole °C for a Celsius viewer", () => {
+  render(
+    <UnitsProvider value={{ temperature: "C", wind: "km/h" }}>
+      <ForecastCard card={{ ...CARD, today: { ...CARD.today, temperature: 14.6 }, days: [{ ...CARD.days![0], high: 17.8, low: 11.1 }, ...CARD.days!.slice(1)] }} />
+    </UnitsProvider>,
+  );
+  expect(today().getByText("15°")).toBeTruthy();
+  const [tomorrow] = within(card().getByRole("list", { name: "The next three days" })).getAllByRole("listitem");
+  expect(within(tomorrow).getAllByRole("img", { name: "High 18°, low 11°" })).toHaveLength(2);
+});
+
 test("on wide screens a day ahead's sky and high and low sit at the tile's bottom, level with Today's last line", () => {
-  render(<ForecastCard card={{ ...CARD, days: [{ ...CARD.days![0], high: 64, low: 52 }, ...CARD.days!.slice(1)] }} />);
+  render(<ForecastCard card={{ ...CARD, days: [{ ...CARD.days![0], high: 17.8, low: 11.1 }, ...CARD.days!.slice(1)] }} />);
   const [tomorrow] = within(card().getByRole("list", { name: "The next three days" })).getAllByRole("listitem");
   const wide = within(tomorrow).getAllByRole("img", { name: "High 64°, low 52°" }).find((t) => !t.classList.contains("sm:hidden"))!;
   expect(wide.parentElement!.classList.contains("sm:mt-auto")).toBe(true);

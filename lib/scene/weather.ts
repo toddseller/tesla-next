@@ -1,4 +1,5 @@
 // Replay's readings are blended so a fast replay changes the sky smoothly between them. See the scene-weather spec.
+import type { Units } from "@/lib/units";
 
 // 0 to 1, km/h for wind, or degrees the 10 m wind blows from. Any may be missing or null: before a reading, or for a
 // reading stored before that field was kept.
@@ -36,11 +37,11 @@ const POINTS = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"];
 export const CALM_MPH = 2;
 export const isCalm = (speed: number) => speed * MPH_PER_KMH < CALM_MPH;
 
-// The vane's readout, from the 10 m wind in km/h and degrees from.
-export const windText = (speed: number | null | undefined, gusts: number | null | undefined, direction: number | null | undefined) => {
+// The vane's readout, from the 10 m wind in km/h and degrees from, in the viewer's wind unit.
+export const windText = (speed: number | null | undefined, gusts: number | null | undefined, direction: number | null | undefined, unit: Units["wind"]) => {
   if (speed == null || direction == null) return "No wind reading";
   if (isCalm(speed)) return "Calm";
-  const mph = (kmh: number) => Math.round(kmh * MPH_PER_KMH);
+  const shown = (kmh: number) => `${Math.round(unit === "mph" ? kmh * MPH_PER_KMH : kmh)} ${unit}`;
   const from = POINTS[Math.round(direction / 45) % 8];
-  return gusts == null ? `${mph(speed)} mph from ${from}` : `${mph(speed)} mph, gusts ${mph(gusts)} mph, from ${from}`;
+  return gusts == null ? `${shown(speed)} from ${from}` : `${shown(speed)}, gusts ${shown(gusts)}, from ${from}`;
 };

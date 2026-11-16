@@ -9,6 +9,7 @@ import CloudCanvas, {type CloudHandle} from '@/components/scene/cloud-canvas';
 import {cloudInputs} from '@/components/scene/cloud-inputs';
 import {useMoonFace} from '@/components/scene/moon-face';
 import {Popover, PopoverContent, PopoverTrigger} from '@/components/ui/popover';
+import {useUnits} from '@/components/units';
 import {isCalm, windText} from '@/lib/scene/weather';
 
 export {skyY};
@@ -499,6 +500,7 @@ const useLingering = <T extends { fade: number }>(body: T | null): T | null => {
 
 const LiveScene = ({ state, paused = false, drift = 1 }: { state: SceneState; paused?: boolean; drift?: number }) => {
   const still = useReducedMotion();
+  const { wind } = useUnits();
   const { labels, links, sunlight, twilight, dusk, charge, glow, replay } = state;
   const sunGlow = useLingering(state.sunGlow);
   const moon = useLingering(state.moon);
@@ -631,7 +633,7 @@ const LiveScene = ({ state, paused = false, drift = 1 }: { state: SceneState; pa
           </>
         )}
         <Rain rain={state.rain ?? 0} dusk={dusk} wind={state.wind} />
-        <Vane arrow={vaneArrow} pose={firstPose} text={windText(state.windSpeed, state.windGusts, state.windDirection)} />
+        <Vane arrow={vaneArrow} pose={firstPose} text={windText(state.windSpeed, state.windGusts, state.windDirection, wind)} />
         {(['solar', 'home', 'powerwall', 'grid'] as const).map((name) => (
           <Label key={name} name={name} title={LABELS[name].title} value={labels[name]} />
         ))}
