@@ -100,7 +100,7 @@ test("today's temperature is the recent reading's in whole °F, none when the re
   expect(forecastCard(foggy(null), TODAY, NOW).today.temperature).toBeNull();
 });
 
-// solar-forecast, "The sky". Every day forecast to snow, moderate (73) unless given, with the given low.
+// solar-forecast, "Snow on a mild day". Every day forecast to snow, moderate (73) unless given, with the given low.
 const snowy = (low: number | null, reading: ForecastData["reading"] = null, code = 73) =>
   data({ rows: data().rows.map((row) => ({ ...row, weather_code: code, temperature_min: low })), reading });
 
