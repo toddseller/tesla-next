@@ -73,6 +73,25 @@ A forecast day's sky SHALL follow its daylight weather code, the most severe wea
 - **WHEN** a day has a daily code of 3 and no daylight code
 - **THEN** it reads Cloudy
 
+### Requirement: Snow on a mild day
+A forecast day's snow code SHALL read Rain, with the rain icon, when the day's forecast low is above freezing (0 °C). A day at or below freezing, or without a stored low, SHALL keep Snow.
+
+#### Scenario: Snow on a mild day
+- **WHEN** tomorrow's daylight code is 73 and its low is 8.9 °C
+- **THEN** tomorrow reads Rain with the rain icon
+
+#### Scenario: Snow on today's tile without a recent reading
+- **WHEN** today's daylight code is 73, its low is 8.9 °C, and the latest reading is 4 hours old
+- **THEN** today's tile reads Rain, without "now"
+
+#### Scenario: Snow on a freezing day
+- **WHEN** Friday's daylight code is 73 and its low is -1.5 °C
+- **THEN** Friday reads Snow
+
+#### Scenario: Snow on a day stored before the low was kept
+- **WHEN** Friday's daylight code is 73 and it has no low
+- **THEN** Friday reads Snow
+
 ### Requirement: The sky now
 Today's sky now SHALL name the sky the Distribution scene draws from the latest reading, the airport's observed low cloud replacing the model's when present: under 25% cover Sunny now, under 75% Partly cloudy now, from 75% Cloudy now. A fog code SHALL read Fog now only at 100% cover; rain, snow and thunderstorm codes keep their groups with "now". Between sunset and sunrise Sunny SHALL read Clear, with moon icons.
 

@@ -100,6 +100,24 @@ test("today's temperature is the recent reading's in whole °F, none when the re
   expect(forecastCard(foggy(null), TODAY, NOW).today.temperature).toBeNull();
 });
 
+// solar-forecast, "Snow on a mild day". Every day forecast to snow, moderate (73) unless given, with the given low.
+const snowy = (low: number | null, reading: ForecastData["reading"] = null, code = 73) =>
+  data({ rows: data().rows.map((row) => ({ ...row, weather_code: code, temperature_min: low })), reading });
+
+test("a forecast day's snow reads as rain when its low is above freezing", () => {
+  const mild = forecastCard(snowy(8.9), TODAY, NOW);
+  expect(mild.today).toMatchObject({ code: 61, sky: "forecast" });
+  expect(mild.days!.map((d) => d.code)).toEqual([61, 61, 61]);
+  for (const low of [-1.5, 0, null]) expect(forecastCard(snowy(low), TODAY, NOW).days!.map((d) => d.code)).toEqual([73, 73, 73]);
+  const mildDay = (code: number) => forecastCard(snowy(8.9, null, code), TODAY, NOW).days![0].code;
+  for (const code of [71, 77, 85, 86]) expect(mildDay(code)).toBe(61);
+  for (const code of [70, 80]) expect(mildDay(code)).toBe(code);
+});
+
+test("a recent reading's snow is left as it is", () => {
+  expect(forecastCard(snowy(8.9, { ...sample(73, 100), sampled_at: "2026-11-10T17:50:00Z" }), TODAY, NOW).today).toMatchObject({ code: 73, sky: "now" });
+});
+
 // 1 Wh per W/m² at every daylight hour, so an hour expects its W/m² over 1,000 in kWh. November 8's hours at 1:40 PM.
 const SCALE = [6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16].map((hour) => ({ hour, wh: 30_000, wm2: 30_000 }));
 const PST = (hour: number, date = 10) => new Date(Date.UTC(2026, 10, date, hour + 8)).toISOString();

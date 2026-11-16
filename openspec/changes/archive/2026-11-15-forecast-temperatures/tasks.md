@@ -22,8 +22,8 @@
 
 ## 5. Rollout
 
-- [ ] 5.1 Once a release is asked for, publish it; the Deploy run passes
-- [ ] 5.2 On teslasolar.report: the tiles' temperatures against `/api/forecast`; record in design.md under Rollout
+- [x] 5.1 Once a release is asked for, publish it; the Deploy run passes
+- [x] 5.2 On teslasolar.report: the tiles' temperatures against `/api/forecast`; record in design.md under Rollout
 
 ## Workflow follow-up
 
