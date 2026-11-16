@@ -35,3 +35,9 @@ The request was "the low above freezing". A low of exactly 0 °C keeps Snow. Sno
 
 - [A real snow day with a low just above 0 °C reads Rain] → Acceptable here; the threshold is one constant if the site ever moves somewhere it snows.
 - [The API's code no longer matches anton's stored code for such a day] → The route already serves the card as the page renders it; the stored code stays untouched for anyone reading the database.
+
+## Rollout
+
+Released as v2026.11.16.0 on 2026-11-16. Its Deploy run passed, and the new container was up at 8:19 AM. At 8:20 AM:
+- `/api/forecast` read today Cloudy now (code 3) at 54°, and codes 3, 82 and 80 for November 17 to 19, with lows of 48°, 50° and 50°. No day was forecast to snow, so the swap itself rests on the tests.
+- teslasolar.report's card at 1280 pixels showed the same: Cloudy now, Cloudy, Rain and Rain. The console had no errors.

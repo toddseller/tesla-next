@@ -12,8 +12,8 @@
 
 ## 3. Rollout
 
-- [ ] 3.1 Once a release is asked for, publish it; the Deploy run passes
-- [ ] 3.2 On teslasolar.report: `/api/forecast` and the card agree; record in design.md under Rollout
+- [x] 3.1 Once a release is asked for, publish it; the Deploy run passes
+- [x] 3.2 On teslasolar.report: `/api/forecast` and the card agree; record in design.md under Rollout
 
 ## Workflow follow-up
 
