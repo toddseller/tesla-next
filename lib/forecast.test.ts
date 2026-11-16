@@ -28,7 +28,7 @@ test("each day's expected kWh is its forecast sunlight times the last 30 days' k
   const card = forecastCard(data(), TODAY, NOW);
   expect(card.today).toEqual({ day: TODAY, soFar: 9.6, expected: 31, code: 0, sky: "forecast", temperature: null });
   expect(card.days).toEqual([
-    { day: "2026-11-11", expected: 33, code: 0, byHour: null, high: 64, low: 52 },
+    { day: "2026-11-11", expected: 33, code: 0, byHour: null, high: 17.8, low: 11.1 },
     { day: "2026-11-12", expected: 14, code: 45, byHour: null, high: null, low: null },
     { day: "2026-11-13", expected: 27, code: 2, byHour: null, high: null, low: null },
   ]);
@@ -91,10 +91,10 @@ test("a reading 4 hours old, or none, leaves today's forecast sky", () => {
 });
 
 // solar-forecast, "Temperatures on the tiles".
-test("today's temperature is the recent reading's in whole °F, none when the reading is old, missing or has none", () => {
+test("today's temperature is the recent reading's as stored, none when the reading is old, missing or has none", () => {
   const at = (sampled_at: string, temperature: number | null) => forecastCard(foggy({ ...sample(0, 0), temperature, sampled_at }), TODAY, NOW).today.temperature;
-  expect(at("2026-11-10T17:50:00Z", 14.6)).toBe(58);
-  expect(at("2026-11-10T17:50:00Z", -3.1)).toBe(26);
+  expect(at("2026-11-10T17:50:00Z", 14.6)).toBe(14.6);
+  expect(at("2026-11-10T17:50:00Z", -3.1)).toBe(-3.1);
   expect(at("2026-11-10T14:00:00Z", 14.6)).toBeNull();
   expect(at("2026-11-10T17:50:00Z", null)).toBeNull();
   expect(forecastCard(foggy(null), TODAY, NOW).today.temperature).toBeNull();

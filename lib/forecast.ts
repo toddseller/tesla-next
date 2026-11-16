@@ -26,7 +26,7 @@ export type ByHour = {
 
 export type ForecastCard = {
   // The day the card was worked out for, so a page left open past midnight names its days from the data.
-  // Temperatures in whole °F.
+  // Temperatures in °C as stored, so the page rounds once in the viewer's unit.
   today: { day: string; soFar: number | null; expected: number | null; code: number | null; sky: SkyWhen; temperature: number | null };
   days: { day: string; expected: number; code: number; byHour: ByHour | null; high: number | null; low: number | null }[] | null;
   goodDay: number | null;
@@ -163,7 +163,7 @@ export function forecastCard({ scale, rows, so_far, reading, hourly }: ForecastD
       expected: usable && todays ? expected(todays) : null,
       code: current ? observedCode(current) : todays ? forecastCode(todays) : null,
       sky,
-      temperature: current?.temperature == null ? null : fahrenheit(current.temperature),
+      temperature: current?.temperature ?? null,
     },
     days: usable ? ahead.map((r) => ({ day: r.day, expected: expected(r), code: forecastCode(r), byHour: todayByHour && hoursOf(r.day, null), ...highLow(r) })) : null,
     goodDay: scale.good_day === null ? null : Math.round(scale.good_day),
@@ -176,9 +176,8 @@ export function forecastCard({ scale, rows, so_far, reading, hourly }: ForecastD
 const forecastCode = ({ weather_code: code, temperature_min: low }: ForecastRow) =>
   low !== null && low > 0 && ((code >= 71 && code <= 77) || code === 85 || code === 86) ? 61 : code;
 
-const fahrenheit = (celsius: number) => Math.round((celsius * 9) / 5 + 32);
 const highLow = ({ temperature_max: high, temperature_min: low }: ForecastRow) =>
-  high === null || low === null ? { high: null, low: null } : { high: fahrenheit(high), low: fahrenheit(low) };
+  high === null || low === null ? { high: null, low: null } : { high, low };
 
 // Below this an hour's output is the panels' night-time noise, not daylight.
 const MADE_AT_LEAST_KWH = 0.05;
