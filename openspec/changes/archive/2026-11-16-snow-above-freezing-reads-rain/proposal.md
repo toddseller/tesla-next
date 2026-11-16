@@ -17,7 +17,7 @@ Out of scope: the sky now (a weather reading's snow code, which the Distribution
 None.
 
 ### Modified Capabilities
-- `solar-forecast`: a forecast day's snow reads Rain when its low is above freezing.
+- `solar-forecast`: a new requirement, a forecast day's snow reads Rain when its low is above freezing.
 
 ## Impact
 
