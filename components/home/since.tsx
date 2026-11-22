@@ -22,7 +22,9 @@ export function Since({ today, months, solar, matched, net, trueUpStart, payback
   let [made, used] = [0, 0];
   const rows = months.map((m) => ({ t: at(m.month), solar: (made += m.solar), house: (used += m.house) }));
   const systemYear = payback?.system.year ?? null;
-  const end = Math.max(Date.parse(today), systemYear ? Date.UTC(systemYear, 11, 31) : 0);
+  // The chart ends at today, all of it real; a projected whole-system year is said under it instead.
+  const end = Date.parse(today);
+  const projected = systemYear !== null && payback!.system.projected;
   const solarPaid = payback?.solar.year ? (payback.solar.projected ? `Solar should pay for itself in ${payback.solar.year}, projected.` : `Solar paid for itself in ${payback.solar.month ? monthName(payback.solar.month) : payback.solar.year}.`) : null;
   const powerwalls = payback ? (payback.powerwalls.wont ? "The Powerwalls won't pay for themselves within their warranty." : payback.powerwalls.year ? `The Powerwalls should pay for themselves in ${payback.powerwalls.year}.` : null) : null;
   const label = `Running totals since October 2021: solar ${whole(made)} kWh against the house's ${whole(used)} kWh${solarPaid ? `; ${solarPaid}` : ""}${systemYear ? ` The whole system pays back in ${systemYear}${payback!.system.projected ? ", projected" : ""}.` : ""}`;
@@ -41,7 +43,8 @@ export function Since({ today, months, solar, matched, net, trueUpStart, payback
             <XAxis dataKey="t" type="number" domain={[at("2021-10"), end]} ticks={yearTicks(at("2021-10"), end)} tickFormatter={(t) => String(new Date(t).getUTCFullYear())} tickLine={false} axisLine={false} />
             <YAxis tickFormatter={(v) => whole(v)} tickLine={false} axisLine={false} width={64} />
             <ChartTooltip content={<SinceDetails />} />
-            {systemYear && <ReferenceArea x1={Date.UTC(systemYear, 0, 1)} x2={Date.UTC(systemYear, 11, 31)} fill="var(--muted-foreground)" fillOpacity={0.08} stroke={payback!.system.projected ? "var(--muted-foreground)" : "none"} strokeDasharray="5 4" />}
+            {/* Clipped at today: the year it pays back, the box runs past the axis, and Recharts would drop it whole. */}
+            {systemYear && !projected && <ReferenceArea x1={Date.UTC(systemYear, 0, 1)} x2={Date.UTC(systemYear, 11, 31)} fill="var(--muted-foreground)" fillOpacity={0.08} stroke="none" ifOverflow="hidden" />}
             {payback?.solar.month && !payback.solar.projected && <ReferenceLine x={at(payback.solar.month)} stroke="var(--foreground)" strokeDasharray="2 3" />}
             <ReferenceLine x={Date.parse(today)} stroke="var(--foreground)" label={{ value: "now", position: "insideBottomRight", fill: "var(--foreground)", fontSize: 12 }} />
             <Line dataKey="house" stroke="var(--color-home)" strokeWidth={2} dot={false} isAnimationActive={false} />
@@ -52,9 +55,10 @@ export function Since({ today, months, solar, matched, net, trueUpStart, payback
       {payback && (
         <p className="flex flex-wrap gap-x-5 gap-y-1 font-mono text-[13px] text-muted-foreground">
           {payback.solar.month && !payback.solar.projected && <span>dotted line: solar paid back, {monthName(payback.solar.month)}</span>}
-          {systemYear && <span>{payback.system.projected ? `dashed box: the whole system pays back in ${systemYear}, projected` : `shaded box: the whole system paid back in ${systemYear}`}</span>}
+          {systemYear && !projected && <span>shaded box: the whole system paid back in {systemYear}</span>}
         </p>
       )}
+      {projected && <p className="text-[15px] text-pretty">The whole system is projected to pay back in {systemYear}.</p>}
       <div className="grid gap-x-10 gap-y-6 border-t pt-6 md:grid-cols-2">
         <div className="flex flex-col gap-3">
           <p className="text-xl leading-snug font-medium text-pretty">

@@ -290,11 +290,11 @@ Beside its chart, the Habits chapter SHALL say since which month the always-on l
 - **THEN** the chapter says "Since July it has run above last year"
 
 ### Requirement: Since 2021
-The Since 2021 chapter SHALL chart, by month since October 2021, the running totals of solar made and of the house's use, as Impact gives each month's figures, each line named, the house's as including the car's charging, with today marked, and mark the payback years from the Payback card on the same time axis, a projected year drawn apart from a past one. The time axis SHALL be marked at each January 1 it spans, with that year. It SHALL link to True-Up.
+The Since 2021 chapter SHALL chart, by month from October 2021 to today, the running totals of solar made and of the house's use, as Impact gives each month's figures, each line named, the house's as including the car's charging, with today marked. It SHALL mark on the chart the payback years from the Payback card that have been reached, and say a projected one in words under the chart. The time axis SHALL be marked at each January 1 it spans, with that year. It SHALL link to True-Up.
 
 #### Scenario: With costs
 - **WHEN** the server has the costs file and the Payback card gives solar paid back in March 2025 and the whole system in 2028, projected
-- **THEN** the chart marks March 2025 and, drawn as a projection, 2028
+- **THEN** the chart marks March 2025, ends at today, and under it reads "The whole system is projected to pay back in 2028"
 
 #### Scenario: Without costs
 - **WHEN** the server has no costs file
@@ -305,8 +305,8 @@ The Since 2021 chapter SHALL chart, by month since October 2021, the running tot
 - **THEN** it names "solar made" and "house used, car included"
 
 #### Scenario: The years on the axis
-- **WHEN** the chart runs from October 2021 to the end of 2028
-- **THEN** the axis reads 2022 to 2028, each at its January 1, so March 2025's payback mark falls just after "2025"
+- **WHEN** the chart runs from October 2021 to November 22, 2026
+- **THEN** the axis reads 2022 to 2026, each at its January 1, so March 2025's payback mark falls just after "2025", and nothing is drawn past today
 
 ### Requirement: Since 2021's figures
 Beside its chart, the Since 2021 chapter SHALL give the solar since October 22, 2021, say whether solar has made as much as the house used and by what share, as Impact gives it for that range, and give the current true-up year's net so far as True-Up's net tile gives it: the figure once, then in words what it is, imported or sent, more than the other, since the year began, without repeating the figure.
