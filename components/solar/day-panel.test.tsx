@@ -63,22 +63,22 @@ test("the day is shown with its date, and the range's link returns to it", () =>
   expect(button("Day").textContent).toBe("Wed, Oct 14, 2026");
   expect(screen.queryByText("Solar by date range")).toBeNull();
   const back = screen.getByRole("link", { name: "October 2026" });
-  expect(back.getAttribute("href")).toBe("/?start=2026-10-01&end=2026-10-31");
+  expect(back.getAttribute("href")).toBe("/solar?start=2026-10-01&end=2026-10-31");
 });
 
 test("previous and next replace the day in the address, keeping the range", () => {
   render(page("2026-10-14"));
   fireEvent.click(button("Next day"));
-  expect(router.replace).toHaveBeenCalledWith("/?start=2026-10-01&end=2026-10-31&day=2026-10-15", NEXT);
+  expect(router.replace).toHaveBeenCalledWith("/solar?start=2026-10-01&end=2026-10-31&day=2026-10-15", NEXT);
   fireEvent.click(button("Previous day"));
-  expect(router.replace).toHaveBeenLastCalledWith("/?start=2026-10-01&end=2026-10-31&day=2026-10-13", PREVIOUS);
+  expect(router.replace).toHaveBeenLastCalledWith("/solar?start=2026-10-01&end=2026-10-31&day=2026-10-13", PREVIOUS);
   expect(router.push).not.toHaveBeenCalled();
 });
 
 test("stepping past the range keeps going, with the range unchanged", () => {
   render(page("2026-10-31"));
   fireEvent.click(button("Next day"));
-  expect(router.replace).toHaveBeenCalledWith("/?start=2026-10-01&end=2026-10-31&day=2026-11-01", NEXT);
+  expect(router.replace).toHaveBeenCalledWith("/solar?start=2026-10-01&end=2026-10-31&day=2026-11-01", NEXT);
 });
 
 test("there is no next day after today and no previous day before the first day of service", () => {
@@ -96,7 +96,7 @@ test("there is no next day after today and no previous day before the first day 
 test("the arrow keys step a day, unless a modifier is held or a field has focus", () => {
   render(page("2026-10-14"));
   fireEvent.keyDown(window, { key: "ArrowLeft" });
-  expect(router.replace).toHaveBeenCalledWith("/?start=2026-10-01&end=2026-10-31&day=2026-10-13", PREVIOUS);
+  expect(router.replace).toHaveBeenCalledWith("/solar?start=2026-10-01&end=2026-10-31&day=2026-10-13", PREVIOUS);
   fireEvent.keyDown(window, { key: "ArrowRight", altKey: true });
   fireEvent.keyDown(window, { key: "ArrowRight", metaKey: true });
   const field = document.body.appendChild(document.createElement("input"));
@@ -112,7 +112,7 @@ test("the calendar opens a day, and arrow keys inside it move the calendar, not 
   fireEvent.keyDown(button(/October 3rd, 2026/), { key: "ArrowRight" });
   expect(router.replace).not.toHaveBeenCalled();
   fireEvent.click(button(/October 3rd, 2026/));
-  expect(router.replace).toHaveBeenCalledWith("/?start=2026-10-01&end=2026-10-31&day=2026-10-03", PREVIOUS);
+  expect(router.replace).toHaveBeenCalledWith("/solar?start=2026-10-01&end=2026-10-31&day=2026-10-03", PREVIOUS);
 });
 
 test("the strip shows the range's days with the shown day marked, and opens any of them", () => {
@@ -123,7 +123,7 @@ test("the strip shows the range's days with the shown day marked, and opens any 
   expect(days[13].getAttribute("aria-current")).toBe("date");
   expect(days[13].getAttribute("aria-label")).toBe("Oct 14, 43 kWh solar");
   fireEvent.click(days[2]);
-  expect(router.replace).toHaveBeenCalledWith("/?start=2026-10-01&end=2026-10-31&day=2026-10-03", PREVIOUS);
+  expect(router.replace).toHaveBeenCalledWith("/solar?start=2026-10-01&end=2026-10-31&day=2026-10-03", PREVIOUS);
 });
 
 test("today's day view shows the latest live update's time; other days don't", () => {
@@ -182,7 +182,7 @@ test("the day's content slides the way the step went, and only for a day step", 
 test("a later day from the strip slides in as a step forward", () => {
   render(page("2026-10-14"));
   fireEvent.click(screen.getByRole("button", { name: /^Oct 20,/ }));
-  expect(router.replace).toHaveBeenCalledWith("/?start=2026-10-01&end=2026-10-31&day=2026-10-20", NEXT);
+  expect(router.replace).toHaveBeenCalledWith("/solar?start=2026-10-01&end=2026-10-31&day=2026-10-20", NEXT);
 });
 
 // meter-correction: a day in the corrected years offers the readings beside its stepper, and keeps the view as it steps.
@@ -192,8 +192,8 @@ test("a corrected day offers the readings, and Tesla's view keeps itself in its 
   expect(screen.getByRole("group", { name: "Readings" })).toBeTruthy();
   expect(screen.getByText(/Grid figures are as Tesla reported them/)).toBeTruthy();
   fireEvent.click(button("Next day"));
-  expect(router.replace).toHaveBeenLastCalledWith("/?start=2025-10-01&end=2025-10-31&day=2025-10-15&readings=tesla", NEXT);
-  expect(screen.getByRole("link", { name: "October 2025" }).getAttribute("href")).toBe("/?start=2025-10-01&end=2025-10-31&readings=tesla");
+  expect(router.replace).toHaveBeenLastCalledWith("/solar?start=2025-10-01&end=2025-10-31&day=2025-10-15&readings=tesla", NEXT);
+  expect(screen.getByRole("link", { name: "October 2025" }).getAttribute("href")).toBe("/solar?start=2025-10-01&end=2025-10-31&readings=tesla");
 });
 
 test("a day after the fix offers no readings", () => {

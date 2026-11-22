@@ -5,6 +5,7 @@ import { type PointerEvent, useEffect, useMemo, useRef, useState } from "react";
 import ReplayBar, { DEFAULT_SPEED } from "@/components/scene/replay-bar";
 import LiveScene from "@/components/scene/live-scene";
 import { useSiteData } from "@/components/scene/use-site-data";
+import { useLiveWeather } from "@/components/scene/live-weather";
 import { type SceneState, sceneState, staleWarning } from "@/lib/scene/live-scene";
 import { type Sky, weatherAt, withSplit } from "@/lib/scene/weather";
 import { dataEnd, daySpan, FIRST_DAY, formatAt, momentAt, parseAt, replayValues, siteInstant, siteToday, toSteps, wallTime } from "@/lib/scene/replay";
@@ -58,49 +59,13 @@ const devWeather = (params: URLSearchParams) => {
   return weather;
 };
 
-// Live readings arrive every 15 minutes; each is walked in over about 5, so the sky
-// changes like weather rather than jumping (openspec/specs/scene-weather). The first
-// known weather shows at once. A missing value walks as 0, which the scene reads the
-// same way (no sunshine caps nothing). The vane's wind isn't walked: its readout gives
-// the latest reading, the vane eases to it on its own, and a walk from 350 to 10
-// degrees would sweep the long way.
-const WALK_MS = 5 * 60 * 1000;
-const UNWALKED = new Set<keyof Sky>(["windSpeed", "windGusts", "windDirection"]);
-const towards = (from: Sky, to: Sky, f: number): Sky =>
-  Object.fromEntries((Object.keys(to) as (keyof Sky)[]).map((k) => [k, f === 1 || UNWALKED.has(k) ? to[k] : (from[k] ?? 0) + ((to[k] ?? 0) - (from[k] ?? 0)) * f]));
-const useWalkedWeather = (weather: Sky) => {
-  const key = JSON.stringify(withSplit(weather));
-  const [shown, setShown] = useState<Sky>(() => JSON.parse(key));
-  const shownRef = useRef(shown);
-  shownRef.current = shown;
-  useEffect(() => {
-    const from = shownRef.current;
-    const to = JSON.parse(key);
-    if (from.cover == null) {
-      setShown(to);
-      return undefined;
-    }
-    const start = Date.now();
-    const timer = setInterval(() => {
-      const f = Math.min(1, (Date.now() - start) / WALK_MS);
-      setShown(towards(from, to, f));
-      if (f === 1) clearInterval(timer);
-    }, 1000);
-    return () => clearInterval(timer);
-  }, [key]);
-  return shown;
-};
-
 // Live, the scene follows the clock once a minute too, so it darkens through dusk
 // even if no live update arrives.
 // `renderedAt` is when the server rendered the page: the first render in the browser uses it too, so hydration finds
 // the same times the server's HTML shows, and moves to the browser's clock right after.
 const Distribution = ({ initialStatus, search, renderedAt }: { initialStatus: string | null; search: Record<string, string>; renderedAt?: number }) => {
-  const {
-    solarPower, homePower, batteryPower, battery, gridPower, vehicle, liveReceived, modifiedAt, weatherCover, weatherRain, weatherWind, weatherWindLow, weatherWindMid, weatherWindHigh, weatherCirrus, weatherLow, weatherMid, weatherSun,
-    weatherWindSpeed, weatherWindGusts, weatherWindDirection,
-    setReplayDay, replayData,
-  } = useSiteData(initialStatus);
+  const site = useSiteData(initialStatus);
+  const { solarPower, homePower, batteryPower, battery, gridPower, vehicle, liveReceived, modifiedAt, setReplayDay, replayData } = site;
   const searchParams = useMemo(() => new URLSearchParams(search), [search]);
   const [now, setNow] = useState(() => new Date(renderedAt ?? Date.now()));
   // null while live.
@@ -228,8 +193,7 @@ const Distribution = ({ initialStatus, search, renderedAt }: { initialStatus: st
     showInAddress(null);
   };
 
-  const liveWeather = useWalkedWeather(liveReceived ? { cover: weatherCover, rain: weatherRain, wind: weatherWind, windLow: weatherWindLow, windMid: weatherWindMid, windHigh: weatherWindHigh, cirrus: weatherCirrus, low: weatherLow, mid: weatherMid, sun: weatherSun,
-    windSpeed: weatherWindSpeed, windGusts: weatherWindGusts, windDirection: weatherWindDirection } : {});
+  const liveWeather = useLiveWeather(site);
 
   let state: SceneState;
   if (replaying) {

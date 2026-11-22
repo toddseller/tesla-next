@@ -103,8 +103,8 @@ describe("the address", () => {
   });
 
   test("a range and an open day make the page's address", () => {
-    expect(address(march)).toBe("/?start=2026-03-01&end=2026-03-31");
-    expect(address(march, "2026-03-14")).toBe("/?start=2026-03-01&end=2026-03-31&day=2026-03-14");
+    expect(address(march)).toBe("/solar?start=2026-03-01&end=2026-03-31");
+    expect(address(march, "2026-03-14")).toBe("/solar?start=2026-03-01&end=2026-03-31&day=2026-03-14");
   });
 });
 

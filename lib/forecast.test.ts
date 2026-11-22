@@ -178,6 +178,13 @@ test("a day ahead's hours expect their sunlight times today's scale, from its fi
   expect(thu.byNow).toBeNull();
 });
 
+test("a day its hours cover expects their sum, to a whole kWh, so the expected by now never passes it; other days keep the daily scale", () => {
+  const card = forecastCard(data({ hourly: hourly("2026-11-11T01:30:00Z") }), TODAY, NOW);
+  expect(card.today.expected).toBe(33);
+  expect(card.days!.map((d) => [d.day, d.expected])).toEqual([["2026-11-11", 33], ["2026-11-12", 17], ["2026-11-13", 27]]);
+  expect(card.byHour!.byNow!.expected).toBeLessThanOrEqual(card.today.expected!);
+});
+
 test("a day ahead without forecast hours has none, and no day ahead has hours when today has none", () => {
   const days = (h: ForecastData["hourly"]) => forecastCard(data({ hourly: h }), TODAY, NOW).days!.map((d) => d.byHour !== null);
   expect(days(hourly("2026-11-10T21:40:00Z"))).toEqual([false, true, false]);
@@ -210,4 +217,14 @@ test("fog needs an overcast low sky; rain keeps its code", () => {
   expect(observedCode(sample(45, 100, 0))).toBe(0);
   expect(observedCode(sample(45, 100, 100))).toBe(45);
   expect(observedCode(sample(61, 100, 44))).toBe(61);
+});
+
+test("a day its hours cover rounds their sum up, so a sum like 18.4 never shows below the expected by now", () => {
+  // Scales a hundredth apart move the sum about a third of a kWh, so some of them round down.
+  for (const f of Array.from({ length: 20 }, (_, i) => 0.8 + i / 100)) {
+    const rows = NOV_8.map(([hour, wm2, made]) => [hour, wm2 * f, made]) as typeof NOV_8;
+    const card = forecastCard(data({ hourly: hourly(null, 30, rows) }), TODAY, NOW);
+    const sum = Math.round(card.byHour!.hours.reduce((total, h) => total + h.expected, 0) * 10) / 10;
+    expect(card.today.expected).toBe(Math.ceil(sum));
+  }
 });

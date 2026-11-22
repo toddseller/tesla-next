@@ -87,7 +87,7 @@ export function parseDay(value: Param): string | null {
 }
 
 export const address = (range: Range, day?: string | null) =>
-  `/?start=${range.start}&end=${range.end}${day ? `&day=${day}` : ""}`;
+  `/solar?start=${range.start}&end=${range.end}${day ? `&day=${day}` : ""}`;
 
 // The range switches to periods when the end is more than 31 days after the start.
 export const isDaily = (range: Range) => range.end <= shiftDay(range.start, 31);

@@ -38,3 +38,14 @@ export async function impactFigures(start: string, end: string, readings: Readin
     total_house: pyRound(totalHouse, 1),
   };
 }
+
+// The same sums by month, unrounded, so running totals add up to Impact's figure for the whole span.
+export async function impactByMonth(start: string, end: string, readings: Readings) {
+  const { house } = dailySql(readings);
+  const { rows } = await db.query<{ month: string; solar: number | null; house: number | null }>(
+    `SELECT substr(data.date, 1, 7) AS month, sum(data.solar_generated)::float8 AS solar, sum(${house})::float8 AS house
+     FROM data WHERE data.date BETWEEN $1 AND $2 GROUP BY month ORDER BY month`,
+    [start, end],
+  );
+  return rows.map((r) => ({ month: r.month, solar: r.solar ?? 0, house: r.house ?? 0 }));
+}

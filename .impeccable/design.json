@@ -1,0 +1,399 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-22T00:00:00Z",
+  "title": "Design System: Tesla Solar Report",
+  "extensions": {
+    "colorMeta": {
+      "tesla-red": {
+        "role": "primary",
+        "displayName": "Tesla Red",
+        "canonical": "#E82127",
+        "tonalRamp": [
+          "#1F0000",
+          "#4E0003",
+          "#810008",
+          "#BA0010",
+          "#E33C38",
+          "#F8796E",
+          "#FFADA3",
+          "#FFDFD8"
+        ]
+      },
+      "night-sky": {
+        "role": "neutral",
+        "displayName": "Night Sky",
+        "canonical": "#0E1116",
+        "tonalRamp": [
+          "#0A0B0C",
+          "#232528",
+          "#404246",
+          "#5E6167",
+          "#7F8289",
+          "#A2A5AA",
+          "#C7C9CD",
+          "#EDEEF1"
+        ]
+      },
+      "slate-card": {
+        "role": "neutral",
+        "displayName": "Slate Card",
+        "canonical": "#151A21",
+        "tonalRamp": [
+          "#0A0B0D",
+          "#232529",
+          "#3E4248",
+          "#5C6269",
+          "#7D838B",
+          "#A1A5AC",
+          "#C6C9CE",
+          "#EDEFF1"
+        ]
+      },
+      "raised-slate": {
+        "role": "neutral",
+        "displayName": "Raised Slate",
+        "canonical": "#1A1F27",
+        "tonalRamp": [
+          "#0A0B0D",
+          "#232529",
+          "#3E4248",
+          "#5C626A",
+          "#7D838C",
+          "#A1A5AD",
+          "#C6C9CF",
+          "#EDEEF2"
+        ]
+      },
+      "hairline": {
+        "role": "neutral",
+        "displayName": "Hairline",
+        "canonical": "#232831",
+        "tonalRamp": [
+          "#0A0B0D",
+          "#232529",
+          "#3E4249",
+          "#5C616B",
+          "#7D838C",
+          "#A1A5AD",
+          "#C6C9CF",
+          "#EDEEF2"
+        ]
+      },
+      "control-edge": {
+        "role": "neutral",
+        "displayName": "Control Edge",
+        "canonical": "#2B313B",
+        "tonalRamp": [
+          "#0A0B0D",
+          "#22252A",
+          "#3E4249",
+          "#5B626C",
+          "#7C838D",
+          "#A0A5AE",
+          "#C6C9CF",
+          "#ECEFF2"
+        ]
+      },
+      "moonlight": {
+        "role": "neutral",
+        "displayName": "Moonlight",
+        "canonical": "#E6E8EB",
+        "tonalRamp": [
+          "#0B0B0C",
+          "#242526",
+          "#414244",
+          "#606164",
+          "#818285",
+          "#A4A5A7",
+          "#C8C9CA",
+          "#EEEEEF"
+        ]
+      },
+      "dusk-gray": {
+        "role": "neutral",
+        "displayName": "Dusk Gray",
+        "canonical": "#9AA3AD",
+        "tonalRamp": [
+          "#0A0B0D",
+          "#222529",
+          "#3D4348",
+          "#5B626A",
+          "#7B838C",
+          "#A0A6AD",
+          "#C5CACF",
+          "#ECEFF2"
+        ]
+      },
+      "alert-coral": {
+        "role": "error",
+        "displayName": "Alert Coral",
+        "canonical": "#F87171",
+        "tonalRamp": [
+          "#1A0304",
+          "#441012",
+          "#732124",
+          "#A53338",
+          "#CC5858",
+          "#E48784",
+          "#F9B5B2",
+          "#FFE3E1"
+        ]
+      },
+      "solar": {
+        "role": "flow",
+        "displayName": "Solar",
+        "canonical": "#F7B500",
+        "tonalRamp": [
+          "#140800",
+          "#381F00",
+          "#603900",
+          "#8A5400",
+          "#AE7600",
+          "#C99D48",
+          "#E3C58D",
+          "#FEECCD"
+        ]
+      },
+      "home": {
+        "role": "flow",
+        "displayName": "Home",
+        "canonical": "#3E6AE1",
+        "tonalRamp": [
+          "#213C86",
+          "#2F52B4",
+          "#3E6AE1",
+          "#6189E8",
+          "#89AAEF",
+          "#AFC6F5",
+          "#D4E1FA"
+        ]
+      },
+      "powerwall": {
+        "role": "flow",
+        "displayName": "Powerwall",
+        "canonical": "#31B76B",
+        "tonalRamp": [
+          "#001004",
+          "#002F12",
+          "#005224",
+          "#007737",
+          "#239A58",
+          "#6BB985",
+          "#A3D8B2",
+          "#D9F8E1"
+        ]
+      },
+      "grid": {
+        "role": "flow",
+        "displayName": "Grid",
+        "canonical": "#8E8E93",
+        "tonalRamp": [
+          "#0B0B0C",
+          "#252527",
+          "#424245",
+          "#616165",
+          "#828286",
+          "#A5A5A8",
+          "#C9C9CB",
+          "#EEEEF0"
+        ]
+      },
+      "vehicle": {
+        "role": "flow",
+        "displayName": "Vehicle",
+        "canonical": "#E8474F",
+        "tonalRamp": [
+          "#1D0103",
+          "#49080E",
+          "#7A141E",
+          "#AF212F",
+          "#D84B4F",
+          "#EE807E",
+          "#FFB1AD",
+          "#FFE1DE"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "The page's h1."
+      },
+      "figure": {
+        "displayName": "Figure",
+        "purpose": "Measured and computed values: kWh, kW, dollars, percentages."
+      },
+      "section-label": {
+        "displayName": "Section label",
+        "purpose": "Each card's uppercase h2 in Dusk Gray."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Controls, table rows, prose."
+      },
+      "reading": {
+        "displayName": "Reading",
+        "purpose": "Live status line, chart notes, input text."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Chart axes and small legends."
+      },
+      "chapter-word": {
+        "displayName": "Chapter word",
+        "purpose": "The home page's one-word chapter headings, 112 px desktop and 64 px phone. Home page only."
+      }
+    },
+    "shadows": [
+      {
+        "name": "float",
+        "value": "0 20px 25px -5px rgb(0 0 0 / 0.45), 0 8px 10px -6px rgb(0 0 0 / 0.45)",
+        "purpose": "Popovers and the page menu, the only things above the page."
+      },
+      {
+        "name": "selection-line",
+        "value": "inset 0 -2px 0 #E82127",
+        "purpose": "Marks the current tab and the selected segment."
+      }
+    ],
+    "motion": [
+      {
+        "name": "motion-enter",
+        "value": "450ms",
+        "purpose": "Charts drawing in on arrival."
+      },
+      {
+        "name": "motion-tween",
+        "value": "400ms",
+        "purpose": "A figure or chart moving to new values."
+      },
+      {
+        "name": "motion-ease",
+        "value": "cubic-bezier(.2, .7, .2, 1)",
+        "purpose": "Default easing for every site motion."
+      },
+      {
+        "name": "motion-stagger",
+        "value": "min(calc(var(--i, 0) * 15ms), 200ms)",
+        "purpose": "Per-mark delay as a chart draws in."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "sm",
+        "value": "640px"
+      },
+      {
+        "name": "status-flows",
+        "value": "1440px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Card",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "Every section: Slate Card on Night Sky, hairline border, led by an uppercase section label.",
+      "html": "<section class=\"ds-card\"><h2 class=\"ds-card-label\">Solar forecast</h2><p class=\"ds-card-figure\">42.6 <span>kWh</span></p></section>",
+      "css": ".ds-card { display: flex; flex-direction: column; gap: 16px; background: var(--card, #151A21); color: var(--foreground, #E6E8EB); border: 1px solid var(--border, #232831); border-radius: 10px; padding: 24px; font-family: 'IBM Plex Sans', system-ui, sans-serif; } .ds-card-label { margin: 0; font-size: 14px; font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted-foreground, #9AA3AD); } .ds-card-figure { margin: 0; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 28px; font-weight: 600; line-height: 1; } .ds-card-figure span { font-size: 14px; font-weight: 400; color: var(--muted-foreground, #9AA3AD); }"
+    },
+    {
+      "name": "Segmented control",
+      "kind": "chip",
+      "refersTo": "segment-selected",
+      "description": "The site's main control: a tray of choices, the selected one raised with the red selection line.",
+      "html": "<div class=\"ds-seg\" role=\"group\" aria-label=\"Readings\"><button class=\"ds-seg-item\" aria-pressed=\"true\">PG&amp;E meter</button><button class=\"ds-seg-item\" aria-pressed=\"false\">Tesla</button></div>",
+      "css": ".ds-seg { display: inline-flex; gap: 2px; padding: 3px; background: var(--card, #151A21); border: 1px solid var(--input, #2B313B); border-radius: 10px; } .ds-seg-item { min-height: 40px; padding: 0 14px; border: 0; border-radius: 8px; background: transparent; color: var(--muted-foreground, #9AA3AD); font: 500 14px 'IBM Plex Sans', system-ui, sans-serif; cursor: pointer; white-space: nowrap; } .ds-seg-item:hover { color: var(--foreground, #E6E8EB); } .ds-seg-item[aria-pressed=\"true\"] { background: var(--secondary, #1A1F27); color: #fff; box-shadow: inset 0 -2px 0 var(--primary, #E82127); } .ds-seg-item:focus-visible { outline: none; box-shadow: 0 0 0 3px rgb(154 163 173 / 0.5); }"
+    },
+    {
+      "name": "Navigation",
+      "kind": "nav",
+      "refersTo": "nav-link-current",
+      "description": "Top bar page links; the current page raised with the selection line.",
+      "html": "<nav class=\"ds-nav\" aria-label=\"Pages\"><a class=\"ds-nav-link\" aria-current=\"page\" href=\"#\">Solar</a><a class=\"ds-nav-link\" href=\"#\">Impact</a><a class=\"ds-nav-link\" href=\"#\">Distribution</a><a class=\"ds-nav-link\" href=\"#\">True-Up</a></nav>",
+      "css": ".ds-nav { display: flex; gap: 4px; font-family: 'IBM Plex Sans', system-ui, sans-serif; } .ds-nav-link { display: flex; align-items: center; min-height: 44px; padding: 0 12px; border-radius: 8px; font-size: 14px; color: var(--muted-foreground, #9AA3AD); text-decoration: none; } .ds-nav-link:hover { color: var(--foreground, #E6E8EB); } .ds-nav-link[aria-current=\"page\"] { background: var(--secondary, #1A1F27); color: #fff; box-shadow: inset 0 -2px 0 var(--primary, #E82127); } .ds-nav-link:focus-visible { outline: none; box-shadow: 0 0 0 3px rgb(154 163 173 / 0.5); }"
+    },
+    {
+      "name": "Save button",
+      "kind": "button",
+      "refersTo": "button-save",
+      "description": "The admin forms' primary action; light, not red, for contrast.",
+      "html": "<button class=\"ds-btn-save\">Save bill</button>",
+      "css": ".ds-btn-save { display: inline-flex; align-items: center; justify-content: center; height: 36px; padding: 0 16px; border: 0; border-radius: 8px; background: var(--foreground, #E6E8EB); color: var(--background, #0E1116); font: 500 14px 'IBM Plex Sans', system-ui, sans-serif; cursor: pointer; } .ds-btn-save:hover { background: rgb(230 232 235 / 0.9); } .ds-btn-save:focus-visible { outline: none; box-shadow: 0 0 0 3px rgb(154 163 173 / 0.5); } .ds-btn-save:disabled { opacity: 0.5; }"
+    },
+    {
+      "name": "Outline button",
+      "kind": "button",
+      "refersTo": "button-outline",
+      "description": "Secondary admin actions such as loading a statement into the form.",
+      "html": "<button class=\"ds-btn-outline\">Load into form</button>",
+      "css": ".ds-btn-outline { display: inline-flex; align-items: center; justify-content: center; height: 32px; padding: 0 12px; border: 1px solid var(--input, #2B313B); border-radius: 8px; background: rgb(43 49 59 / 0.3); color: var(--foreground, #E6E8EB); font: 500 13px 'IBM Plex Sans', system-ui, sans-serif; cursor: pointer; } .ds-btn-outline:hover { background: rgb(43 49 59 / 0.5); } .ds-btn-outline:focus-visible { outline: none; box-shadow: 0 0 0 3px rgb(154 163 173 / 0.5); }"
+    },
+    {
+      "name": "Input",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Admin fields, figures typed in mono.",
+      "html": "<input class=\"ds-input\" placeholder=\"0.00\" aria-label=\"Amount due\">",
+      "css": ".ds-input { height: 36px; width: 100%; padding: 0 10px; border: 1px solid var(--input, #2B313B); border-radius: 8px; background: rgb(43 49 59 / 0.3); color: var(--foreground, #E6E8EB); font: 400 14px 'IBM Plex Mono', ui-monospace, monospace; outline: none; } .ds-input::placeholder { color: rgb(154 163 173 / 0.6); } .ds-input:focus-visible { border-color: var(--ring, #9AA3AD); box-shadow: 0 0 0 3px rgb(154 163 173 / 0.5); } .ds-input[aria-invalid=\"true\"] { border-color: var(--destructive, #F87171); box-shadow: 0 0 0 3px rgb(248 113 113 / 0.2); }"
+    },
+    {
+      "name": "Live status pill",
+      "kind": "custom",
+      "refersTo": "status-pill",
+      "description": "The top bar's live readings with flow-color swatches, after the live dot.",
+      "html": "<p class=\"ds-live\"><span class=\"ds-live-dot\"></span>Live 2:41 PM<span class=\"ds-pill\"><i style=\"background:#F7B500\"></i>SOLAR 4.2 kW · <i style=\"background:#3E6AE1\"></i>HOME 1.1 kW · POWERWALL 86%</span></p>",
+      "css": ".ds-live { display: flex; align-items: center; gap: 10px; margin: 0; font: 400 13px 'IBM Plex Mono', ui-monospace, monospace; color: var(--muted-foreground, #9AA3AD); white-space: nowrap; } .ds-live-dot { width: 8px; height: 8px; border-radius: 9999px; background: #31B76B; } .ds-pill { display: flex; align-items: center; gap: 6px; padding: 4px 10px; border: 1px solid var(--input, #2B313B); border-radius: 9999px; color: var(--foreground, #E6E8EB); } .ds-pill i { display: inline-block; width: 8px; height: 8px; border-radius: 2px; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Instrument Panel",
+    "overview": "The site is a panel of readouts for one home's energy system. It sits beside the Tesla app in spirit: the same five flow colors, Tesla red as the single accent, a dark field that lets live figures glow. Every surface is a gauge or a log; nothing is there to sell.\n\nDensity is moderate and technical. Figures are set in IBM Plex Mono so digits line up and changing values don't jitter; labels, headings and prose are IBM Plex Sans. Structure comes from hairline borders and two tonal steps above the page, not from decoration. Color is reserved for meaning: a flow's color always names that flow, and red marks the current selection, an outage, or a mark that must be found at once.\n\nThere is one theme, dark, because the Distribution house scene is dark and every page matches it. The scene keeps its own styling; this system frames it.",
+    "keyCharacteristics": [
+      "One dark theme; no light mode.",
+      "Mono figures, sans everything else.",
+      "Five fixed flow colors, the Tesla app's, used identically on every page.",
+      "Tesla red as a marker, never as a surface or as body text.",
+      "Flat bordered cards on a darker page.",
+      "Controls stay quiet so the figures lead."
+    ],
+    "rules": [
+      {
+        "name": "The One Flow, One Color Rule",
+        "body": "A flow's color means that flow and nothing else. Never reuse Solar yellow for a warning or Powerwall green for \"success\" outside a flow, the live dot excepted.",
+        "section": "colors"
+      },
+      {
+        "name": "The Red Marker Rule",
+        "body": "Tesla Red is for marks, indicators and text of 24px or more. Body text, button labels and fills behind text use Moonlight or white instead; that is why Save is light, not red.",
+        "section": "colors"
+      },
+      {
+        "name": "The Mono Means Measured Rule",
+        "body": "A number that was measured or computed is set in Plex Mono; words around it are in Plex Sans. A date in running prose stays sans.",
+        "section": "typography"
+      },
+      {
+        "name": "The Chapter Word Rule",
+        "body": "Oversized words head the home page's chapters and nothing else. A chapter word takes its chapter's flow color only when the chapter is about that flow (Today and the year in Solar amber, Habits in Home blue); otherwise Moonlight. \"Now\" is Moonlight, because it is about every flow.",
+        "section": "typography"
+      }
+    ],
+    "dos": [
+      "Do use the design tokens (`text-solar`, `bg-card`, `text-muted-foreground`), never raw hex in components.",
+      "Do color every flow with its own flow color, the same on every page and chart.",
+      "Do set measured figures in Plex Mono and everything else in Plex Sans.",
+      "Do mark a selection with Raised Slate plus the 2px Tesla Red line at the bottom.",
+      "Do build cards as Slate Card with a 1px Hairline border, 10px corners, 16/24px padding and an uppercase section label.",
+      "Do keep navigation targets 44px tall and segment choices 40px."
+    ],
+    "donts": [
+      "Don't set body text, button labels or small text in Tesla Red; it is below 4.5:1 on the dark field.",
+      "Don't add a light theme.",
+      "Don't reuse a flow color for an unrelated meaning.",
+      "Don't restyle the Distribution house scene with this system; it keeps its own styling.",
+      "Don't animate layout properties; motion stays on transform, opacity, clip-path and SVG stroke."
+    ]
+  }
+}

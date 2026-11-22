@@ -21,6 +21,11 @@ const monthLabel = (month: string) =>
 const ten = <T>(rows: T[], shown: (row: T) => number, date: (row: T) => string) =>
   rows.sort((a, b) => shown(a) - shown(b) || date(b).localeCompare(date(a))).slice(0, 10);
 
+const monthsSql = (gridIn: string, gridOut: string, kept: string) =>
+  `SELECT substr(data.date, 1, 7) AS month, sum(coalesce(${gridIn}, 0::integer)) - sum(${gridOut}) AS net FROM data WHERE ${kept} GROUP BY month`;
+const OUTAGES = `SELECT timezone('America/Los_Angeles', start_at)::date::text AS day, extract(epoch FROM end_at - start_at)::float8 / 3600 AS hours
+  FROM (${EVENTS}) e WHERE kind = 'outage'`;
+
 export async function topTen(withVpp: boolean, readings: Readings): Promise<TopTen> {
   const { gridIn, gridOut } = dailySql(readings);
   const net = `coalesce(${gridIn}, 0::integer) - ${gridOut}`;
@@ -34,14 +39,11 @@ export async function topTen(withVpp: boolean, readings: Readings): Promise<TopT
       `SELECT ${dayColumns} FROM data WHERE ${kept} AND ${net} <= (SELECT max(v) FROM (SELECT ${net} AS v FROM data WHERE ${kept} ORDER BY v LIMIT 10) t) + 0.1`,
     ),
     db.query<{ month: string; net: number }>(
-      `WITH months AS (SELECT substr(data.date, 1, 7) AS month, sum(coalesce(${gridIn}, 0::integer)) - sum(${gridOut}) AS net FROM data WHERE ${kept} GROUP BY month)
+      `WITH months AS (${monthsSql(gridIn, gridOut, kept)})
        SELECT month, net FROM months WHERE net <= (SELECT max(net) FROM (SELECT net FROM months ORDER BY net LIMIT 10) t) + 0.1`,
     ),
     // A few dozen outages, so all of them are read and ranked here.
-    db.query<{ day: string; hours: number }>(
-      `SELECT timezone('America/Los_Angeles', start_at)::date::text AS day, extract(epoch FROM end_at - start_at)::float8 / 3600 AS hours
-       FROM (${EVENTS}) e WHERE kind = 'outage'`,
-    ),
+    db.query<{ day: string; hours: number }>(OUTAGES),
   ]);
   return [
     { solar: ten(solar.rows.map((r) => ({ date: dayLabel(r.date), solar: r.solar_generated, day: r.date })), (r) => -pyRound(r.solar, 1), (r) => r.day) },
@@ -49,4 +51,23 @@ export async function topTen(withVpp: boolean, readings: Readings): Promise<TopT
     { to_grid_months: ten(months.rows.map((r) => ({ date: monthLabel(r.month), net_grid: pyRound(r.net, 1), month: r.month })), (r) => r.net_grid, (r) => r.month) },
     { outages: ten(outages.rows.map((r) => ({ date: dayLabel(r.day), hours: pyRound(r.hours, 1), day: r.day })), (r) => -r.hours, (r) => r.day) },
   ];
+}
+
+// The whole series each ranking ranks, oldest first, as Top Ten's own figures, each valued so its record is the
+// highest: kWh sent to PG&E net of imports, hours off the grid. The home page's records draw their steps from it.
+export async function recordSeries(withVpp: boolean, readings: Readings) {
+  const { gridIn, gridOut } = dailySql(readings);
+  const kept = withVpp ? "true" : "NOT data.is_vpp";
+  const [solar, days, months, outages] = await Promise.all([
+    db.query<{ date: string; solar_generated: number }>("SELECT date, solar_generated FROM data WHERE solar_generated IS NOT NULL ORDER BY date"),
+    db.query<DayRow>(`SELECT ${dayColumns} FROM data WHERE ${kept} ORDER BY date`),
+    db.query<{ month: string; net: number }>(`${monthsSql(gridIn, gridOut, kept)} ORDER BY month`),
+    db.query<{ day: string; hours: number }>(`${OUTAGES} ORDER BY start_at`),
+  ]);
+  return {
+    solar: solar.rows.map((r) => ({ at: r.date, value: r.solar_generated })),
+    exportDays: days.rows.map((r) => ({ at: r.date, value: -dailyItem(r, readings).grid! })),
+    exportMonths: months.rows.map((r) => ({ at: r.month, value: -r.net })),
+    outages: outages.rows.map((r) => ({ at: r.day, value: r.hours })),
+  };
 }
