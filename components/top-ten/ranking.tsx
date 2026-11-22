@@ -4,6 +4,7 @@ import { useId } from "react";
 
 import { type Entry, FLOW_DOT, type Flow, held, lead } from "@/components/top-ten/entries";
 import { Timeline } from "@/components/top-ten/timeline";
+import { Length } from "@/components/length";
 
 type Props = { record: string; chart: string; subtitle: string; flow: Flow; entries: Entry[]; today: string };
 
@@ -68,20 +69,5 @@ export function Ranking({ record, chart, subtitle, flow, entries, today }: Props
         </ol>
       )}
     </section>
-  );
-}
-
-// An outage's length at figure size: its numbers large, each unit small beside its number as kWh sits, read out whole.
-function Length({ text }: { text: string }) {
-  const parts = text.split(" ");
-  return (
-    <>
-      <span className="sr-only">{text}</span>
-      <span aria-hidden="true">
-        {parts.map((part, i) => (i % 2
-          ? <span key={i} className={`ml-2.5 text-[0.4em] font-medium text-muted-foreground ${i < parts.length - 1 ? "mr-4" : ""}`}>{part}</span>
-          : <span key={i}>{part}</span>))}
-      </span>
-    </>
   );
 }

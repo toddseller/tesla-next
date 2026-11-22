@@ -303,3 +303,11 @@ test("Escape closes the menu", () => {
   expect(screen.queryByRole("dialog")).toBeNull();
   expect(pagesButton().getAttribute("aria-expanded")).toBe("false");
 });
+
+// dashboard-shell, "The frame fits any screen": the links keep one row, so where the bar runs out of room the live
+// status (the bar's last item) wraps to its own row, rather than Patterns wrapping alone under the other links.
+test("the links never wrap among themselves; the live status takes the next row instead", () => {
+  render(bar());
+  expect(wideNav().className).toContain("flex-nowrap");
+  expect(wideNav().className).not.toMatch(/(^| )flex-wrap/);
+});

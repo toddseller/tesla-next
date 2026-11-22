@@ -65,3 +65,13 @@ test("the page reads in the units of the browser's region, and in US units witho
   request.headers = {};
   expect(await serve(<Shown />)).toContain("<p>F mph</p>");
 });
+
+// A keyboard user shouldn't tab through the top bar's ten stops on every page to reach it.
+test("a Skip to content link comes first, pointing at the main content", async () => {
+  const html = await serve();
+  const body = html.slice(html.indexOf("<body"));
+  expect(body).toMatch(/^<body[^>]*><a href="#content"[^>]*>Skip to content<\/a>/);
+  expect(html).toMatch(/<main id="content" tabindex="-1"/);
+  // not-sr-only resets padding to 0, so the link's padding must come with its focus state.
+  expect(body).toMatch(/<a href="#content" class="[^"]*focus:px-4 focus:py-3/);
+});

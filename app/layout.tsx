@@ -22,10 +22,11 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html lang="en" className={`${sans.variable} ${mono.variable}`}>
       <body className="flex min-h-screen flex-col">
+        <a href="#content" className="sr-only rounded-md border border-input bg-secondary text-sm font-medium text-white focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-50 focus:px-4 focus:py-3">Skip to content</a>
         {/* The live status the server holds, so the top bar's pill is in the page as served. */}
         <TopBar initialStatus={latest()} initialSite={siteState()} renderedAt={Date.now()} />
         <PageSlide>
-          <main className="mx-auto box-border w-full max-w-[1200px] px-4 py-8 sm:px-8">
+          <main id="content" tabIndex={-1} className="mx-auto box-border outline-none w-full max-w-[1200px] px-4 py-8 sm:px-8">
             <UnitsProvider value={units}>{children}</UnitsProvider>
           </main>
         </PageSlide>

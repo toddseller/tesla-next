@@ -47,3 +47,30 @@ test("the heading is 28px at every width", () => {
   expect(heading.className).toContain("text-[28px]");
   expect(heading.className).not.toMatch(/md:text-\[/);
 });
+
+// Go is what the field is for, so it leads; Random day is the aside.
+test("Go is the filled button and Random day the outlined one", () => {
+  render(<PickADay today={TODAY} />);
+  expect(screen.getByRole("button", { name: "Go" }).className).toContain("bg-foreground");
+  const random = screen.getByRole("button", { name: "Random day" }).className;
+  expect(random).toContain("border-input");
+  expect(random).not.toContain("bg-foreground");
+});
+
+// The section aligns its two halves at the bottom, so a message growing the form would lift the buttons.
+test("a refused date's message hangs under the form on wide screens, leaving the buttons where they were", () => {
+  render(<PickADay today={TODAY} />);
+  fireEvent.change(field(), { target: { value: "2021-01-01" } });
+  fireEvent.click(screen.getByRole("button", { name: "Go" }));
+  const alert = screen.getByRole("alert");
+  expect(alert.className).toMatch(/sm:absolute sm:top-full/);
+  expect(alert.closest("form")!.className).toContain("relative");
+});
+
+// Kept to one line on wide screens: two lines inside the form's width ran past the page's padding into the footer.
+test("a refused date's message keeps to one line on wide screens", () => {
+  render(<PickADay today={TODAY} />);
+  fireEvent.change(field(), { target: { value: "2021-01-01" } });
+  fireEvent.click(screen.getByRole("button", { name: "Go" }));
+  expect(screen.getByRole("alert").className).toMatch(/max-sm:w-full sm:w-max/);
+});

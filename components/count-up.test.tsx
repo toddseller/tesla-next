@@ -19,7 +19,7 @@ test("counts up from zero to the figure in 400 ms, then shows it plainly", () =>
   const { container } = render(<CountUp text="$410" />);
   expect(counting(container)).toBe("$0");
   act(() => vi.advanceTimersByTime(500));
-  expect(container.innerHTML).toBe("<span>$410</span>");
+  expect(container.innerHTML).toBe('<span><span class="font-mono">$410</span></span>');
 });
 
 test("keeps the figure's separators, decimals and the text around it while counting", () => {
@@ -37,14 +37,15 @@ test("one span keeps the width and gives a screen reader the final figure at onc
   expect(kept.className).toContain("text-transparent");
   expect(kept.hasAttribute("aria-hidden")).toBe(false);
   expect(container.querySelector("[data-part=counting]")!.getAttribute("aria-hidden")).toBe("true");
-  expect(container.querySelectorAll("*").length).toBe(3);
+  // The wrapper, the kept text and the counting copy, each figure in its mono span.
+  expect(container.querySelectorAll("*").length).toBe(5);
 });
 
 test("a new figure after the first count shows at once, without counting", () => {
   const { container, rerender } = render(<CountUp text="$410" />);
   act(() => vi.advanceTimersByTime(500));
   rerender(<CountUp text="$455" />);
-  expect(container.innerHTML).toBe("<span>$455</span>");
+  expect(container.innerHTML).toBe('<span><span class="font-mono">$455</span></span>');
 });
 
 test("text with no figure shows as it is", () => {
@@ -55,12 +56,12 @@ test("text with no figure shows as it is", () => {
 test("under reduced motion the figure shows at once", () => {
   vi.stubGlobal("matchMedia", (query: string) => ({ matches: query.includes("reduce") }));
   const { container } = render(<CountUp text="$410" />);
-  expect(container.innerHTML).toBe("<span>$410</span>");
+  expect(container.innerHTML).toBe('<span><span class="font-mono">$410</span></span>');
 });
 
 test("a figure first shown after the page's first view, as on a new range, shows at once", () => {
   const { container } = render(<FirstView value={false}><CountUp text="$410" /></FirstView>);
-  expect(container.innerHTML).toBe("<span>$410</span>");
+  expect(container.innerHTML).toBe('<span><span class="font-mono">$410</span></span>');
 });
 
 // Until the page's JavaScript runs the count can't start, so the figure is blank rather than a zero that isn't true.
@@ -81,7 +82,7 @@ test("under reduced motion the page takes over the server's HTML without a misma
   document.body.append(box);
   act(() => { hydrateRoot(box, <CountUp text="$410" />, { onRecoverableError: (error) => console.error(error) }); });
   expect(errors).not.toHaveBeenCalled();
-  expect(box.innerHTML).toBe("<span>$410</span>");
+  expect(box.innerHTML).toBe('<span><span class="font-mono">$410</span></span>');
   errors.mockRestore();
   box.remove();
 });

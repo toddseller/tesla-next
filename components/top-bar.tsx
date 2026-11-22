@@ -11,16 +11,7 @@ import { slidePage } from "@/components/page-slide";
 import { Rolling } from "@/components/rolling";
 import { gridPill, type LiveStatus, liveStatus, type SiteState } from "@/lib/live-status";
 import { kw } from "@/lib/scene/live-scene";
-
-const pages = [
-  { name: "Home", href: "/" },
-  { name: "Solar", href: "/solar" },
-  { name: "Impact", href: "/impact" },
-  { name: "Distribution", href: "/distribution" },
-  { name: "True-Up", href: "/true-up" },
-  { name: "Top Ten", href: "/top" },
-  { name: "Patterns", href: "/patterns" },
-];
+import { PAGES } from "@/lib/pages";
 
 const PILL_STYLES = {
   outage: "border-primary text-foreground",
@@ -104,7 +95,7 @@ function PageMenu({ path, slideTo }: { path: string; slideTo: (i: number) => (()
           <span aria-hidden className="motion-burger absolute h-0.5 w-[18px] rounded-full bg-current" />
         </PopoverTrigger>
         <PopoverContent aria-label="Pages" align="end" className="flex w-48 flex-col gap-0.5 border-input p-1 shadow-xl shadow-black/45">
-          {pages.map(({ name, href }, i) => {
+          {PAGES.map(({ name, href }, i) => {
             const current = path === href;
             const slide = slideTo(i);
             return (
@@ -123,7 +114,7 @@ function PageMenu({ path, slideTo }: { path: string; slideTo: (i: number) => (()
 
 export function TopBar({ initialStatus, initialSite, renderedAt }: Props) {
   const path = usePathname();
-  const here = pages.findIndex((page) => page.href === path);
+  const here = PAGES.findIndex((page) => page.href === path);
   const slideTo = (i: number) => (i === here ? undefined : () => slidePage(i > here ? "next" : "previous"));
   return (
     <header className="flex flex-wrap items-center gap-x-6 gap-y-2 border-b px-4 py-3 sm:px-8">
@@ -133,8 +124,8 @@ export function TopBar({ initialStatus, initialSite, renderedAt }: Props) {
         Tesla Solar Report
       </Link>
       <PageMenu path={path} slideTo={slideTo} />
-      <nav aria-label="Pages" className="order-3 flex flex-1 flex-wrap gap-1 max-sm:hidden sm:order-2">
-        {pages.map(({ name, href }, i) => {
+      <nav aria-label="Pages" className="order-3 flex flex-1 flex-nowrap gap-1 max-sm:hidden sm:order-2">
+        {PAGES.map(({ name, href }, i) => {
           const current = path === href;
           return (
             <Link

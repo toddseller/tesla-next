@@ -53,7 +53,7 @@ const HISTORY: BackupHistory = {
 test("the summary gives the outages' number, time, longest with its day, and the house's energy through them", () => {
   render(<BackupSection history={HISTORY} year={YEAR_23_24} today={TODAY} onYear={() => {}} />);
   const summary = within(screen.getByRole("group", { name: "Outages" }));
-  expect(summary.getByText("2")).toBeTruthy();
+  expect(summary.getByText("Outages").nextElementSibling!.textContent).toBe("2");
   expect(summary.getByText("2 d 5 h")).toBeTruthy();
   expect(summary.getByText("2 d 4 h")).toBeTruthy();
   expect(summary.getByRole("link", { name: "Feb 4, 2024" }).getAttribute("href")).toBe("/solar?start=2024-02-01&end=2024-02-29&day=2024-02-04");
@@ -156,4 +156,15 @@ test("a storm day is grouped under its first day, count and time off the grid", 
   const heading = document.querySelector('[data-part="storm-day"]')!;
   expect(heading.textContent).toBe("Dec 1, 20232 events · 1 h 0 m off the grid");
   expect(heading.closest("li")!.querySelectorAll('[data-part="event"]')).toHaveLength(2);
+});
+
+// Plex Mono gives each space a full cell, so "1 m 4 s" at figure size reads as spaced-out letters; Top Ten's outage
+// lengths set their units small beside the numbers, and so do these.
+test("the duration tiles set their units small beside the numbers, read out whole", () => {
+  render(<BackupSection history={HISTORY} year={YEAR_23_24} today={TODAY} onYear={() => {}} />);
+  const summary = screen.getByRole("group", { name: "Outages" });
+  const units = [...summary.querySelectorAll("[aria-hidden] > span")].filter((s) => /^[dhms]$/.test(s.textContent!));
+  expect(units.map((u) => u.textContent)).toEqual(["d", "h", "d", "h"]);
+  expect(units.every((u) => u.className.includes("text-[0.4em]"))).toBe(true);
+  expect(within(summary).getByText("2 d 5 h").className).toBe("sr-only");
 });

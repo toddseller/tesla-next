@@ -41,7 +41,7 @@ function Sky({ code, when, className = "" }: { code: number; when?: SkyWhen; cla
 }
 
 // A tile that picks the chart's day is a button reset to look as the tile does; one that can't stays a plain group.
-const PICKS = "cursor-pointer text-left focus-visible:ring-[3px] focus-visible:ring-ring/50";
+const PICKS = "cursor-pointer text-left focus-visible:ring-[3px] focus-visible:ring-ring";
 
 // The card carries °C; whole degrees in the viewer's unit.
 const useDegrees = () => {

@@ -10,6 +10,7 @@ import { backupPresets } from "@/lib/backup-years";
 import { siteToday, TIME_ZONE } from "@/lib/scene/replay";
 import { address, monthOf, type Range } from "@/lib/solar/ranges";
 import { kwh } from "@/lib/true-up/text";
+import { Length } from "@/components/length";
 
 type Props = { history: BackupHistory; year: Range; today: string; onYear: (year: Range) => void };
 
@@ -23,7 +24,7 @@ const dayLink = (start: string) => {
   return address(monthOf(day), day);
 };
 
-function Tile({ label, value, children }: { label: string; value: string; children?: ReactNode }) {
+function Tile({ label, value, children }: { label: string; value: ReactNode; children?: ReactNode }) {
   return (
     <div className="flex flex-col gap-1 rounded-lg border p-3 sm:p-4">
       <span className="text-[13px] text-muted-foreground">{label}</span>
@@ -95,8 +96,8 @@ export function BackupSection({ history: { summary, events }, year, today, onYea
         <div className="flex flex-col gap-3">
           <div role="group" aria-label="Outages" className="grid grid-cols-2 gap-2 lg:grid-cols-5 lg:gap-3">
             <Tile label="Outages" value={String(summary.outages)}>a minute or longer</Tile>
-            <Tile label="Off the grid" value={duration(summary.seconds)} />
-            <Tile label="Longest" value={duration(summary.longest.seconds)}>
+            <Tile label="Off the grid" value={<Length text={duration(summary.seconds)} />} />
+            <Tile label="Longest" value={<Length text={duration(summary.longest.seconds)} />}>
               <Link href={dayLink(summary.longest.start)} className="text-foreground hover:text-white">{dayDate.format(new Date(summary.longest.start))}</Link>
             </Tile>
             <Tile label="House ran on" value={`${kwh(summary.house_kwh)} kWh`}>{`Powerwalls ${kwh(summary.powerwalls_kwh)} · Solar ${kwh(summary.solar_kwh)}`}</Tile>
