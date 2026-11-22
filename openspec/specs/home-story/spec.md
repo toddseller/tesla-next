@@ -40,21 +40,6 @@ Every chart on the home page SHALL have its key figures as text beside it, and a
 - **WHEN** a screen reader reaches the 2026 chapter's chart
 - **THEN** it reads a summary naming the year, its solar total and its best day
 
-### Requirement: The status line
-The Now chapter SHALL open with a status line giving the top bar's live word and time ("Live · updated 10:55 AM", or "Last update 10:41 AM" once the live status is stale by the Distribution page's rule), followed by the top bar's off-grid, storm watch or test text when there is one.
-
-#### Scenario: All normal
-- **WHEN** the latest live status arrived at 10:55 AM, 30 seconds ago, with the site on the grid
-- **THEN** the status line reads "Live · updated 10:55 AM" and nothing else
-
-#### Scenario: An outage
-- **WHEN** the site has been off the grid since 2:14 PM and the live status is current
-- **THEN** the status line gives the live time followed by the top bar's off-grid text for 2:14 PM
-
-#### Scenario: Stale
-- **WHEN** the latest live status is 5 minutes old
-- **THEN** the status line reads "Last update" with its time
-
 ### Requirement: Now in a sentence
 The Now chapter SHALL lead, under the word Now, with one sentence from the live status, the scene beside it carrying the figures: what supplies the house, largest first; that solar is at 0 after sunset or before sunrise when it is; what the Powerwalls are doing and how full they are; and, when the live status carries the car, its charge or charging power. The sentence SHALL change with each live status. A flow under 0.05 kW, which the scene shows at 0, SHALL not count as supplying the house.
 
@@ -206,15 +191,26 @@ The day readout SHALL have previous-day and next-day buttons at least 44 pixels 
 - **THEN** June 14 is shown and announced with its solar kWh
 
 ### Requirement: The year switcher
-The year chapter SHALL offer every year from 2021 to the current one, the current year chosen by default. Choosing a year SHALL show its chart and shares without a page reload and put the year in the address as `year` without adding a history entry, and opening `/?year=<year>` SHALL show that year. A `year` outside 2021 to the current year SHALL show the current year.
+The year chapter SHALL offer every year from 2021 to the current one, the current year chosen by default. Choosing a year SHALL show its chart and shares without a page reload and put the year in the address as `year` without adding a history entry, keeping the address's other parameters. Opening `/?year=<year>` SHALL show that year. A `year` outside 2021 to the current year SHALL show the current year.
 
 #### Scenario: Choosing 2023
 - **WHEN** a visitor on `/` chooses 2023
 - **THEN** the chart shows 2023, the address becomes `/?year=2023`, the page does not reload, and Back leaves the page
 
 #### Scenario: A shared year
-- **WHEN** a visitor opens `/?year=2022`
-- **THEN** the year chapter shows 2022 in the first response
+- **WHEN** a visitor opens `/?year=2022` on November 22, 2026
+- **THEN** the year chapter shows 2022 in the first response, its readout on November 22, 2022
+
+### Requirement: Another year keeps the date
+Choosing a year SHALL open its readout on the same month and day as the day shown (February 28 for a 29th), or the nearest day with figures; in the current year, up to today. Opening `/?year=<year>` SHALL open on today's month and day in that year.
+
+#### Scenario: The same date in another year
+- **WHEN** the readout shows November 22, 2026 and a visitor chooses 2024
+- **THEN** the readout shows November 22, 2024
+
+#### Scenario: A date before the figures begin
+- **WHEN** the readout shows June 13, 2026 and a visitor chooses 2021
+- **THEN** the readout shows October 22, 2021, the first day with figures
 
 ### Requirement: A year that is slow or fails
 While a chosen year loads, the chart SHALL say so and keep the year it showed. If the year fails to load, the chapter SHALL say it couldn't load that year, offer to try again, and keep the year it showed chosen.
@@ -251,6 +247,13 @@ The Records chapter SHALL offer four tabs, Best solar day, Most sent to PG&E in 
 #### Scenario: Never off the grid
 - **WHEN** Top Ten has no outages
 - **THEN** the Longest outage tab says the house has not been off the grid since October 2021
+
+### Requirement: A Records tab in the address
+Choosing a Records tab SHALL put it in the address as `record` (`solar`, `sent-day`, `sent-month` or `outage`) without adding a history entry, keeping the address's other parameters, and opening such an address SHALL show that tab in the first response.
+
+#### Scenario: A shared tab
+- **WHEN** a visitor on `/?year=2024` chooses Longest outage, then reloads
+- **THEN** the address is `/?year=2024&record=outage` and Longest outage is shown
 
 ### Requirement: How each record was beaten
 Under its steps, each Records tab SHALL say how many days (or months) since the record was set have come within 2% of it, or that none has. Each Records tab SHALL chart its record since October 22, 2021 as steps, the highest figure up to each date, its y-axis marked at 0, the record and the lowest figure if below 0 (to a tenth, or in days and hours for outages), and its x-axis at each January 1. The current record SHALL be marked with its date and how long ago it was set ("set 4 years ago").
@@ -341,11 +344,15 @@ The home page SHALL NOT show any cost, net cost, amount left or share of cost re
 - **THEN** no dollar figure about what the system cost appears
 
 ### Requirement: Pick a day
-The page SHALL end with a date field limited to October 22, 2021 through today and a Random day button. The date field SHALL start empty; submitting a date (its Go button or Enter) SHALL open that day on the Solar page, and changing the field alone SHALL NOT. A date outside the span SHALL be refused with a message naming the span. Random day SHALL open a day picked at random from that span.
+The page SHALL end with a date field limited to October 22, 2021 through today, a filled Go button that leads, and an outlined Random day button. The field SHALL start empty; submitting it (Go or Enter) SHALL open that day on the Solar page, and changing it alone SHALL NOT. A date outside the span SHALL be refused with a message naming the span, under the form, one line on a wide screen, the buttons unmoved. Random day SHALL open a day picked at random from that span.
 
 #### Scenario: A random day
 - **WHEN** a visitor presses Random day
 - **THEN** a day between October 22, 2021 and today opens on `/solar` in its month
+
+#### Scenario: A refused date on a wide screen
+- **WHEN** a visitor at 1440 pixels submits a date before October 22, 2021
+- **THEN** the message appears and the Go and Random day buttons stay where they were
 
 ### Requirement: Chapters below Today stay as served
 The year, Records, Habits and Since 2021 chapters SHALL show the figures they were served with and SHALL NOT update while the page is open, except that the year switcher loads the year it is asked for.

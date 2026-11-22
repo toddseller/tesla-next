@@ -34,7 +34,7 @@ Every page SHALL have a top bar with the site's icon and name, "Tesla Solar Repo
 - **THEN** it finds a navigation landmark holding the Pages button, and once opened, the seven links with the current one announced as the current page
 
 ### Requirement: The frame fits any screen
-At any window width from 320 pixels up, every page's frame SHALL fit the window with no sideways scrolling. From 640 pixels up, the top bar's links and its live status SHALL wrap onto more lines rather than overflow; below 640 pixels the brand and the page menu's button SHALL share one row, with the live status under them. Each link and the page menu's button SHALL be at least 44 pixels tall so it can be tapped.
+At any window width from 320 pixels up, every page's frame SHALL fit the window with no sideways scrolling. From 640 pixels up, the top bar's seven links SHALL stay on one row, the live status taking a row of its own when it doesn't fit beside them; below 640 pixels the brand and the page menu's button SHALL share one row, with the live status under them. Each link and the page menu's button SHALL be at least 44 pixels tall so it can be tapped.
 
 #### Scenario: A phone
 - **WHEN** a viewer opens the site on a 390 pixel wide screen
@@ -47,6 +47,10 @@ At any window width from 320 pixels up, every page's frame SHALL fit the window 
 #### Scenario: A wide window
 - **WHEN** a viewer opens the site in a 1512 pixel wide window
 - **THEN** the top bar holds the name, all seven links and the live status on one line, and the page's content is centered at no more than 1200 pixels wide
+
+#### Scenario: A laptop window
+- **WHEN** a viewer opens the site in a 1024 pixel wide window
+- **THEN** the name and all seven links share one row, and the live status is on the row under them
 
 ### Requirement: The dashboard's design system
 Every page SHALL use one dark design system: a near-black background (`#0E1116`), raised panels (`#151A21`) with a fine border (`#232831`), light text (`#E6E8EB`) and muted gray labels (`#9AA3AD`). Text SHALL be set in IBM Plex Sans and figures in IBM Plex Mono, both served by the site itself. Tesla red (`#E82127`) SHALL mark the current page and indicators, and SHALL NOT be used for text smaller than 24 pixels, because it falls short of 4.5:1 contrast on the background.
@@ -82,11 +86,15 @@ Wherever a page shows energy by flow, each flow SHALL keep one color, the Tesla 
 - **THEN** both are the same blue, `#3E6AE1`
 
 ### Requirement: Footer
-Every page SHALL end with a footer reading "© <current year> teslasolar.report".
+Every page SHALL end with a footer linking the seven pages by their top bar names, the current one marked, and reading "© <current year> teslasolar.report".
 
 #### Scenario: The footer's year
 - **WHEN** a page is opened in 2027
 - **THEN** its footer reads "© 2027 teslasolar.report"
+
+#### Scenario: The footer's links
+- **WHEN** a visitor reaches the end of any page
+- **THEN** the footer links Home, Solar, Impact, Distribution, True-Up, Top Ten and Patterns
 
 ### Requirement: The True-Up Tracker's old address
 `/numbers`, the True-Up Tracker's address on teslasolar.report before it was renamed, SHALL redirect permanently to `/true-up`, so old bookmarks open the True-Up Tracker.
@@ -328,3 +336,14 @@ In a window narrower than 1440 pixels, the live pill SHALL leave out solar and h
 #### Scenario: A 1440 pixel window
 - **WHEN** the same status shows in a 1440 pixel wide window
 - **THEN** the pill reads SOLAR 6.2 kW · HOME 1.4 kW · PW 92% · CHARGING, on one line with the name and the seven links
+
+### Requirement: Keyboard use
+Every page SHALL begin with a "Skip to content" link, shown when it has keyboard focus, that moves focus to the page's main content. Every link, button and focusable chart SHALL show a 2 pixel focus ring in the ring color at full strength when focused from the keyboard.
+
+#### Scenario: Skipping the top bar
+- **WHEN** a keyboard user opens a page and presses Tab, then Enter
+- **THEN** "Skip to content" shows on the first Tab, and Enter moves focus past the top bar to the main content
+
+#### Scenario: A visible focus
+- **WHEN** a keyboard user tabs to a top bar link
+- **THEN** a solid 2 pixel ring in the ring color surrounds it
