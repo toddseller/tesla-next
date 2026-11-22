@@ -245,7 +245,7 @@ The Records chapter SHALL offer four tabs, Best solar day, Most sent to PG&E in 
 - **THEN** the Longest outage tab says the house has not been off the grid since October 2021
 
 ### Requirement: How each record was beaten
-Under its steps, each Records tab SHALL say how many days (or months) since the record was set have come within 2% of it, or that none has. Each Records tab SHALL chart its record over time since October 22, 2021, as steps: the highest figure up to each date, rising on each day or month that beat it, on a y-axis marked to a tenth at 0, at the record and, when the series starts below 0, at its lowest figure, and an x-axis marked at each January 1. The current record SHALL be marked with its date and how long ago it was set, as "set 5 days ago" or "set 4 years ago".
+Under its steps, each Records tab SHALL say how many days (or months) since the record was set have come within 2% of it, or that none has. Each Records tab SHALL chart its record since October 22, 2021 as steps, the highest figure up to each date, its y-axis marked to a tenth at 0, the record and the lowest figure if below 0, and its x-axis at each January 1. The current record SHALL be marked with its date and how long ago it was set ("set 4 years ago").
 
 #### Scenario: A record that stands
 - **WHEN** June 13, 2022 at 80.9 kWh is the best solar day and nothing has beaten it
