@@ -76,3 +76,19 @@ test("the outage tab reads lengths in days and hours, as Top Ten and the Backup 
   expect(within(panel()).getByText("2 d 4 h on February 4, 2024 · set 2 years ago")).toBeTruthy();
   expect(within(panel()).getAllByRole("link").map((row) => row.textContent)).toEqual(["1February 4, 20242 d 4 h", "2December 14, 20241 d 11 h"]);
 });
+
+// A tab survives a reload or a shared link only if it's in the address, kept beside the year chapter's `year`.
+test("choosing a tab puts it in the address as `record`, keeping `year`, without a history entry", () => {
+  window.history.pushState(null, "", "/?year=2024");
+  const replace = vi.spyOn(window.history, "replaceState").mockImplementation(() => {});
+  records();
+  fireEvent.click(screen.getByRole("tab", { name: "Longest outage" }));
+  expect(replace).toHaveBeenLastCalledWith(null, "", "/?year=2024&record=outage");
+  replace.mockRestore();
+  window.history.pushState(null, "", "/");
+});
+
+test("a served `record` opens its tab", () => {
+  render(<Records today={TODAY} tabs={recordTabs(RANKINGS, SERIES)} record="sent-month" />);
+  expect(screen.getByRole("tab", { name: "Most sent to PG&E in a month" }).getAttribute("aria-selected")).toBe("true");
+});

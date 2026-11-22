@@ -1,7 +1,8 @@
+import { Measured } from "@/components/measured";
 import { type Cycle, chargesText, cycleDates, estimateText, kwh, netLabel, startedCycles, uncorrectedDays } from "@/lib/true-up/text";
 
 const Figure = ({ name, value }: { name: string; value: string }) => (
-  <span className="text-sm text-muted-foreground">{name} <span className="font-mono text-foreground">{value}</span></span>
+  <span className="text-sm text-muted-foreground">{name} <span className="text-foreground"><Measured text={value} /></span></span>
 );
 
 // Each started cycle's grid energy and NEM charges, wrapping on a phone rather than scrolling sideways.
@@ -26,7 +27,7 @@ export function CycleList({ cycles }: { cycles: Cycle[] }) {
               <Figure name="Net" value={`${kwh(cycle.net)} ${netLabel(cycle.net).toLowerCase()}`} />
               {charges && (
                 <span className="flex flex-col items-end gap-0.5">
-                  <span className="font-mono">{charges}</span>
+                  <span><Measured text={charges} /></span>
                   {estimate && <span className="text-xs text-muted-foreground">{estimate}</span>}
                 </span>
               )}

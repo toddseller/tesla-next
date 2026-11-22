@@ -11,7 +11,7 @@ import { hoursLength, outageTick } from "@/lib/backup-figures";
 import { type recordTabs, setAgo, tenthTick, valueTicks, yearTicks } from "@/lib/home/records";
 import { address, monthOf } from "@/lib/solar/ranges";
 
-type Props = { today: string; tabs: ReturnType<typeof recordTabs> };
+type Props = { today: string; tabs: ReturnType<typeof recordTabs>; record?: string };
 
 const longDay = new Intl.DateTimeFormat("en-US", { month: "long", day: "numeric", year: "numeric", timeZone: "UTC" });
 const longMonth = new Intl.DateTimeFormat("en-US", { month: "long", year: "numeric", timeZone: "UTC" });
@@ -28,14 +28,20 @@ const LENGTH = { cell: hoursLength, figure: hoursLength, tick: outageTick };
 
 // In recordTabs' order.
 const TABS = [
-  { name: "Best solar day", ...KWH, per: "day", color: "text-solar", stroke: "var(--color-solar)" },
-  { name: "Most sent to PG&E in a day", ...KWH, per: "day", color: "", stroke: "var(--color-grid)" },
-  { name: "Most sent to PG&E in a month", ...KWH, per: "month", color: "", stroke: "var(--color-grid)" },
-  { name: "Longest outage", ...LENGTH, per: "outage", color: "text-powerwall", stroke: "var(--color-powerwall)" },
+  { name: "Best solar day", slug: "solar", ...KWH, per: "day", color: "text-solar", stroke: "var(--color-solar)" },
+  { name: "Most sent to PG&E in a day", slug: "sent-day", ...KWH, per: "day", color: "", stroke: "var(--color-grid)" },
+  { name: "Most sent to PG&E in a month", slug: "sent-month", ...KWH, per: "month", color: "", stroke: "var(--color-grid)" },
+  { name: "Longest outage", slug: "outage", ...LENGTH, per: "outage", color: "text-powerwall", stroke: "var(--color-powerwall)" },
 ];
 
-export function Records({ today, tabs }: Props) {
-  const [chosen, setChosen] = useState(0);
+export function Records({ today, tabs, record: served }: Props) {
+  const [chosen, setChosen] = useState(() => Math.max(0, TABS.findIndex((t) => t.slug === served)));
+  const choose = (i: number) => {
+    setChosen(i);
+    const params = new URLSearchParams(window.location.search);
+    params.set("record", TABS[i].slug);
+    window.history.replaceState(null, "", `/?${params}`);
+  };
   const tab = { ...TABS[chosen], ...tabs[chosen] };
   const record = tab.record;
   const rising = tab.steps;
@@ -49,7 +55,7 @@ export function Records({ today, tabs }: Props) {
       <h2 id="records" className="text-[64px] leading-[0.9] font-semibold tracking-[-0.04em] md:text-[112px]">Records</h2>
       <div role="tablist" aria-label="Record" className="grid grid-cols-2 gap-0.5 rounded-lg border border-input bg-card p-[3px] sm:flex sm:self-start">
         {TABS.map((t, i) => (
-          <button key={t.name} type="button" role="tab" id={`record-tab-${i}`} aria-selected={i === chosen} aria-controls="record-panel" onClick={() => setChosen(i)}
+          <button key={t.name} type="button" role="tab" id={`record-tab-${i}`} aria-selected={i === chosen} aria-controls="record-panel" onClick={() => choose(i)}
             className={`min-h-11 rounded-md px-3 text-sm font-medium text-balance ${i === chosen ? "bg-secondary text-white shadow-[inset_0_-2px_0_var(--primary)]" : "text-muted-foreground hover:text-foreground"}`}>
             {t.name}
           </button>

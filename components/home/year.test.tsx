@@ -132,3 +132,62 @@ test("the day readout is set at the 15px Lede", () => {
   year();
   expect(document.querySelector('[data-part="day-readout"]')!.className).toContain("text-[15px]");
 });
+
+// Comparing a time of year across years is the point of switching, so the readout keeps its date.
+const switchTo = async (y: number, days: string[]) => {
+  vi.stubGlobal("fetch", vi.fn(async (url: string) => ({ ok: true, json: async () => ({ data: url.startsWith("/api/solar-hours") ? days.map((day) => ({ day, kwh: hours(30) })) : SHARES }) })));
+  fireEvent.click(within(screen.getAllByRole("group", { name: "Year" })[0]).getByRole("button", { name: String(y) }));
+  await act(async () => {});
+};
+
+test("another year opens on the same date", async () => {
+  year();
+  expect(plain()).toBe("November 21, 2026 · 21.7 kWh");
+  await switchTo(2024, ["2024-06-13", "2024-11-21", "2024-12-31"]);
+  expect(plain()).toBe("November 21, 2024 · 30.0 kWh");
+});
+
+test("a date before the figures begin opens on the first day with figures", async () => {
+  year();
+  fireEvent.keyDown(chart(), { key: "Home" });
+  expect(plain()).toBe("June 13, 2026 · 45.9 kWh");
+  await switchTo(2021, ["2021-10-22", "2021-12-31"]);
+  expect(plain()).toBe("October 22, 2021 · 30.0 kWh");
+});
+
+test("choosing a year keeps the address's other parameters", async () => {
+  window.history.pushState(null, "", "/?record=outage");
+  year();
+  await switchTo(2023, ["2023-06-20"]);
+  expect(window.history.replaceState).toHaveBeenLastCalledWith(null, "", "/?record=outage&year=2023");
+  window.history.pushState(null, "", "/");
+});
+
+// A reloaded or shared `/?year=2024` opens where switching would have: today's date in that year.
+test("a served past year opens on today's date in that year", () => {
+  render(<Year year={2024} today={TODAY} days={[{ day: "2024-06-13", kwh: hours(40) }, { day: "2024-11-21", kwh: hours(30) }, { day: "2024-12-31", kwh: hours(20) }]} shares={SHARES} />);
+  expect(plain()).toBe("November 21, 2024 · 30.0 kWh");
+});
+
+test("a day moved while the new year loads is the one kept", async () => {
+  let answer!: (value: unknown) => void;
+  vi.stubGlobal("fetch", vi.fn((url: string) => (url.startsWith("/api/solar-hours") ? new Promise((resolve) => (answer = resolve)) : Promise.resolve({ ok: true, json: async () => ({ data: SHARES }) }))));
+  year();
+  fireEvent.click(within(screen.getAllByRole("group", { name: "Year" })[0]).getByRole("button", { name: "2024" }));
+  fireEvent.keyDown(chart(), { key: "Home" });
+  await act(async () => answer({ ok: true, json: async () => ({ data: ["2024-06-13", "2024-11-21"].map((day) => ({ day, kwh: hours(30) })) }) }));
+  expect(plain()).toBe("June 13, 2024 · 30.0 kWh");
+});
+
+test("February 29 opens February 28 in a year without one", async () => {
+  render(<Year year={2024} today={TODAY} days={[{ day: "2024-02-29", kwh: hours(20) }]} shares={SHARES} />);
+  expect(plain()).toMatch(/^February 29, 2024/);
+  await switchTo(2025, ["2025-02-28", "2025-03-01"]);
+  expect(plain()).toBe("February 28, 2025 · 30.0 kWh");
+});
+
+test("coming back to this year opens today, as the page does, even before today has figures", async () => {
+  render(<Year year={2024} today={TODAY} days={[{ day: "2024-12-01", kwh: hours(20) }]} shares={SHARES} />);
+  await switchTo(2026, ["2026-11-20"]);
+  expect(plain()).toMatch(/^November 21, 2026/);
+});

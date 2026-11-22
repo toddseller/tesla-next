@@ -85,6 +85,10 @@ test("?year= picks the year chapter's year, and one outside 2021 to now falls ba
   expect(readers.solarHours).toHaveBeenCalledWith(2026, TODAY);
 });
 
+test("?record= opens that Records tab in the first response", async () => {
+  expect(await served({ record: "outage" })).toMatch(/aria-selected="true"[^>]*>Longest outage/);
+});
+
 test("the first render holds the six chapter words in order and Pick a day, with the true-up net so far", async () => {
   const html = await served();
   const words = [...html.matchAll(/<h2[^>]*>([^<]+)<\/h2>/g)].map((m) => m[1]);

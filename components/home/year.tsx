@@ -35,14 +35,34 @@ function shade(t: number) {
   return `rgb(${from.map((c, k) => Math.round(c + (to[k] - c) * f))})`;
 }
 
+// A year's days, and the first and last with figures.
+function withFigures(year: number, days: SolarDay[]) {
+  const dates = yearDays(year);
+  const has = new Set(days.map((d) => d.day));
+  return { dates, first: Math.max(0, dates.findIndex((d) => has.has(d))), last: Math.max(0, dates.findLastIndex((d) => has.has(d))) };
+}
+
+// The shown date's month and day in another year (the 28th for February 29), kept within the days with figures:
+// October 22, 2021 before they begin. In the current year it can reach today, figures or not, as the page opens on it.
+function sameDate(shown: string, year: number, days: SolarDay[], today: string) {
+  const { dates, first, last } = withFigures(year, days);
+  const end = year === Number(today.slice(0, 4)) ? dates.indexOf(today) : last;
+  const at = dates.findLastIndex((d) => d <= `${year}-${shown.slice(5)}`);
+  return Math.min(Math.max(at, first), end);
+}
+
 export function Year({ year: servedYear, today, days: servedDays, shares: servedShares }: Props) {
   const [shown, setShown] = useState({ year: servedYear, days: servedDays, shares: servedShares });
   const [asked, setAsked] = useState<{ year: number; failed: boolean } | null>(null);
   const dates = yearDays(shown.year);
   const byDay = new Map(shown.days.map((d) => [d.day, d.kwh]));
-  const firstWithFigures = Math.max(0, dates.findIndex((d) => byDay.has(d)));
-  const lastWithFigures = Math.max(0, dates.findLastIndex((d) => byDay.has(d)));
-  const [index, setIndex] = useState(() => (shown.year === Number(today.slice(0, 4)) ? dates.indexOf(today) : lastWithFigures));
+  const { first: firstWithFigures, last: lastWithFigures } = withFigures(shown.year, shown.days);
+  const [index, setIndex] = useState(() => sameDate(today, shown.year, shown.days, today));
+  // The day shown when a year arrives, which a visitor may have moved while it loaded.
+  const shownIndex = useRef(index);
+  useEffect(() => {
+    shownIndex.current = index;
+  }, [index]);
   const canvas = useRef<HTMLCanvasElement>(null);
   const latest = useRef(0);
 
@@ -92,9 +112,11 @@ export function Year({ year: servedYear, today, days: servedDays, shares: served
       const [{ data: days }, { data: shares }] = await Promise.all([hours.json(), impact.json()]);
       if (request !== latest.current) return;
       setShown({ year, days, shares });
-      setIndex(year === Number(today.slice(0, 4)) ? yearDays(year).indexOf(today) : Math.max(0, yearDays(year).findLastIndex((d) => days.some((x: SolarDay) => x.day === d))));
+      setIndex(sameDate(dates[shownIndex.current], year, days, today));
       setAsked(null);
-      window.history.replaceState(null, "", `/?year=${year}`);
+      const params = new URLSearchParams(window.location.search);
+      params.set("year", String(year));
+      window.history.replaceState(null, "", `/?${params}`);
     } catch (error) {
       console.error(error);
       if (request === latest.current) setAsked({ year, failed: true });
@@ -127,7 +149,7 @@ export function Year({ year: servedYear, today, days: servedDays, shares: served
             ))}
           </div>
           <div role="slider" tabIndex={0} aria-label={summary} aria-valuemin={0} aria-valuemax={dates.length - 1} aria-valuenow={index} aria-valuetext={readout}
-            className={`relative touch-none outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 ${asked && !asked.failed ? "opacity-50" : ""}`}
+            className={`relative touch-none outline-none focus-visible:ring-[3px] focus-visible:ring-ring ${asked && !asked.failed ? "opacity-50" : ""}`}
             onKeyDown={onKey} onPointerDown={onPointer} onPointerMove={onPointer}>
             <canvas ref={canvas} width={24} height={dates.length} className="block aspect-[24/40] w-full rounded-sm [image-rendering:pixelated] max-sm:max-h-[50svh]" />
             <div aria-hidden className="absolute inset-x-0 h-0.5 bg-foreground" style={{ top: `${(index / dates.length) * 100}%` }} />

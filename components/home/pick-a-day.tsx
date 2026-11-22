@@ -28,19 +28,19 @@ export function PickADay({ today }: { today: string }) {
         <h2 id="pick" className="text-[28px] font-semibold tracking-[-0.02em]">Pick a day</h2>
         <p className="mt-2 text-[15px] text-muted-foreground">Any of the {span.toLocaleString("en-US")} days since October 22, 2021.</p>
       </div>
-      <form noValidate onSubmit={submit} className="flex flex-wrap items-end gap-3 max-sm:w-full max-sm:flex-col max-sm:items-stretch">
+      <form noValidate onSubmit={submit} className="relative flex flex-wrap items-end gap-3 max-sm:w-full max-sm:flex-col max-sm:items-stretch">
         <div className="flex items-end gap-2">
           <label className="flex flex-1 flex-col gap-1.5 text-[13px] text-muted-foreground">
             Date
             <input type="date" min={FIRST} max={today} value={day} onChange={(event) => setDay(event.target.value)}
               className="h-11 rounded-md border border-input bg-input/30 px-2.5 font-mono text-sm text-foreground [color-scheme:dark]" />
           </label>
-          <button type="submit" className="h-11 rounded-md border border-input bg-input/30 px-4 text-sm font-medium text-foreground">Go</button>
+          <button type="submit" className="h-11 rounded-md bg-foreground px-4 text-sm font-medium text-background">Go</button>
         </div>
-        <button type="button" onClick={() => open(shiftDay(FIRST, Math.floor(Math.random() * span)))} className="h-11 rounded-md bg-foreground px-4 text-sm font-medium text-background">
+        <button type="button" onClick={() => open(shiftDay(FIRST, Math.floor(Math.random() * span)))} className="h-11 rounded-md border border-input bg-input/30 px-4 text-sm font-medium text-foreground">
           Random day
         </button>
-        {refused && <p role="alert" className="w-full text-[13px] text-destructive">Pick a day from {longDay.format(Date.parse(FIRST))} to {longDay.format(Date.parse(today))}.</p>}
+        {refused && <p role="alert" className="max-sm:w-full sm:w-max text-[13px] text-destructive sm:absolute sm:top-full sm:right-0 sm:mt-2 sm:text-right">Pick a day from {longDay.format(Date.parse(FIRST))} to {longDay.format(Date.parse(today))}.</p>}
       </form>
     </section>
   );

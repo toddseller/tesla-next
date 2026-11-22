@@ -11,7 +11,7 @@ import { forecast, forecastCard } from "@/lib/forecast";
 import { solarHours } from "@/lib/home/solar-hours";
 import { impactByMonth, impactFigures } from "@/lib/impact";
 import { dayIntervals } from "@/lib/intervals/intervals";
-import { latest, siteState } from "@/lib/live";
+import { latest } from "@/lib/live";
 import { latestFigures, patterns, powerwallYears } from "@/lib/patterns";
 import { recordTabs } from "@/lib/home/records";
 import { PTO, siteToday } from "@/lib/scene/replay";
@@ -57,11 +57,11 @@ export default async function Page({ searchParams }: { searchParams: Promise<Par
       <h1 className="max-w-[48ch] pb-6 text-lg font-medium text-balance md:pt-2 md:pb-10 md:text-xl">
         One home&apos;s 12.24 kW of Tesla solar and three Powerwalls, live and since October 22, 2021.
       </h1>
-      <Now initialStatus={latest()} initialSite={siteState()} renderedAt={Date.now()} />
+      <Now initialStatus={latest()} renderedAt={Date.now()} />
       {[
         <Today key="today" today={today} forecast={forecastCard(stored, today, Date.now())} day={day} renderedAt={Date.now()} />,
         <Year key="year" year={year} today={today} days={hours} shares={shares} />,
-        <Records key="records" today={today} tabs={recordTabs(rankings, series)} />,
+        <Records key="records" today={today} tabs={recordTabs(rankings, series)} record={String(params.record)} />,
         <Habits key="habits" today={today} months={house.months} figures={latestFigures(house.months, today)} powerwallOut={powerwallOut} />,
         <Since key="since" today={today} months={months} solar={sinceFigures.total_solar} matched={sinceFigures.total_solar_percentage}
           net={trueUp.net} trueUpStart={trueUp.start} payback={paidBack} />,

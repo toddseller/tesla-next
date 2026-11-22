@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useEffect, useRef, useState } from "react";
 
+import { Measured } from "@/components/measured";
 import { useTween } from "@/components/use-tween";
 
 // Whether the page is on its first view. A new range brings new tiles, which mount like a first view's but mustn't count.
@@ -24,15 +25,15 @@ export function CountUp({ text }: { text: string }) {
   const match = first.match(FIGURE);
   const target = match ? Number(match[0].replaceAll(",", "")) : 0;
   const shown = useTween(target, counts ? 0 : target);
-  if (!match || !counts || text !== first) return <span>{text}</span>;
+  if (!match || !counts || text !== first) return <span><Measured text={text} /></span>;
   const decimals = match[1] ? match[1].length - 1 : 0;
   const figure = shown.toLocaleString("en-US", { minimumFractionDigits: decimals, maximumFractionDigits: decimals, useGrouping: match[0].includes(",") });
   const counting = first.replace(FIGURE, figure);
-  if (hydrated && counting === text) return <span>{text}</span>;
+  if (hydrated && counting === text) return <span><Measured text={text} /></span>;
   return (
     <span className="relative inline-block">
-      <span data-part="final" className="text-transparent">{text}</span>
-      <span data-part="counting" aria-hidden="true" className={`absolute inset-0 ${hydrated ? "" : "text-transparent"}`}>{hydrated ? counting : text}</span>
+      <span data-part="final" className="text-transparent"><Measured text={text} /></span>
+      <span data-part="counting" aria-hidden="true" className={`absolute inset-0 ${hydrated ? "" : "text-transparent"}`}><Measured text={hydrated ? counting : text} /></span>
     </span>
   );
 }

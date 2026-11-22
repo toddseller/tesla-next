@@ -77,7 +77,12 @@
 
 @layer base {
   * {
-    @apply border-border outline-ring/50;
+    @apply border-border outline-ring;
+  }
+  /* In the base layer, so a control that draws its own ring with outline-none still wins. */
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
   }
   body {
     @apply bg-background text-foreground font-sans;

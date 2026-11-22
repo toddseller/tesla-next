@@ -89,3 +89,15 @@ test("the savings card hints WestLight and NEM2, and Storm watch when a storm wa
   // Where a visitor first meets it: the estimates note, above the paid split.
   expect(screen.getByRole("button", { name: "WestLight" }).closest("p")!.textContent).toMatch(/^Estimates of PG&E's and WestLight Energy's charges\./);
 });
+
+// DESIGN.md's Mono Means Measured rule: the figures in mono, the words beside them in sans.
+test("the words beside the card's figures aren't monospace", () => {
+  reduced();
+  const { container } = render(<SavingsCard savings={SAVINGS_25_26} season={COST_25_26.vpp} current={false} />);
+  const walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT);
+  const inMono: string[] = [];
+  for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+    if (/\b(cost|saved|less)\b/.test(node.textContent!) && node.parentElement!.closest(".font-mono")) inMono.push(node.textContent!);
+  }
+  expect(inMono).toEqual([]);
+});

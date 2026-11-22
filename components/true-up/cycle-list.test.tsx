@@ -55,3 +55,10 @@ test("the current year has no metering note", () => {
   const { container } = render(<MeteringNote cycles={CURRENT} />);
   expect(container.innerHTML).toBe("");
 });
+
+// DESIGN.md's Mono Means Measured rule: the figures in mono, the words beside them in sans.
+test("a cycle's net and charges set their words in sans", () => {
+  const { container } = render(<CycleList cycles={YEAR_25_26} />);
+  const words = [...container.querySelectorAll(".font-mono")].map((e) => e.textContent).filter((t) => /[a-z]{2,}/.test(t!));
+  expect(words).toEqual([]);
+});
