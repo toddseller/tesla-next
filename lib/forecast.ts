@@ -156,16 +156,25 @@ export function forecastCard({ scale, rows, so_far, reading, hourly }: ForecastD
   const scales = hourly.days >= FEWEST_DAYS ? perWm2(hourly.scale) : null;
   const hoursOf = (day: string, madeUntil: string | null) => scales && byHour(scales, hourly.hours.filter((h) => h.day === day), madeUntil);
   const todayByHour = hoursOf(today, hourly.made_until);
+  // The hours are the finer model and the one the panel draws: a day they cover expects their sum, rounded up to the
+  // tile's whole kWh (after a tenth, as by now shows it), so the expected by now never passes the day's.
+  const dayExpected = (r: ForecastRow, hours: ByHour | null) =>
+    hours ? Math.ceil(Math.round(hours.hours.reduce((sum, h) => sum + h.expected, 0) * 10) / 10) : expected(r);
   return {
     today: {
       day: today,
       soFar: so_far,
-      expected: usable && todays ? expected(todays) : null,
+      expected: usable && todays ? dayExpected(todays, todayByHour) : null,
       code: current ? observedCode(current) : todays ? forecastCode(todays) : null,
       sky,
       temperature: current?.temperature ?? null,
     },
-    days: usable ? ahead.map((r) => ({ day: r.day, expected: expected(r), code: forecastCode(r), byHour: todayByHour && hoursOf(r.day, null), ...highLow(r) })) : null,
+    days: usable
+      ? ahead.map((r) => {
+          const byHour = todayByHour && hoursOf(r.day, null);
+          return { day: r.day, expected: dayExpected(r, byHour), code: forecastCode(r), byHour, ...highLow(r) };
+        })
+      : null,
     goodDay: scale.good_day === null ? null : Math.round(scale.good_day),
     staleSince: usable && newest && age(newest) > STALE_AFTER ? newest.fetched_at : null,
     byHour: todayByHour,

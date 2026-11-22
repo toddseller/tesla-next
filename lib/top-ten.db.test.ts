@@ -8,6 +8,7 @@ import { ownDatabase } from "@/test/true-up";
 
 let owner: Client;
 let topTen: typeof import("./top-ten").topTen;
+let recordSeries: typeof import("./top-ten").recordSeries;
 
 type Day = Partial<{ solar_generated: number | null; from_grid: number | null; to_grid: number; powerwall_to_grid: number; is_vpp: boolean }>;
 
@@ -32,7 +33,7 @@ async function rankings() {
 
 beforeAll(async () => {
   owner = await ownDatabase("tsr_top_ten");
-  ({ topTen } = await import("./top-ten"));
+  ({ topTen, recordSeries } = await import("./top-ten"));
 });
 
 beforeEach(async () => {
@@ -204,4 +205,18 @@ test("without VPP days, a month sums its other days, and a month of VPP days onl
   const months = async (withVpp: boolean) => (await topTen(withVpp, "corrected"))[2].to_grid_months.map((m) => [m.month, m.net_grid]);
   expect(await months(true)).toEqual([["2024-05", -90], ["2024-07", -49.6]]);
   expect(await months(false)).toEqual([["2024-05", -30]]);
+});
+
+// home-story, "How each record was beaten": the whole series each ranking ranks, for the record's steps.
+test("each ranking's whole series, oldest first, valued so a record is the highest: kWh sent, hours off the grid", async () => {
+  await seed("2024-05-09", { solar_generated: 70.2, from_grid: 1, to_grid: 42.4 });
+  await seed("2024-05-30", { solar_generated: 75, from_grid: 0, to_grid: 30, powerwall_to_grid: 30, is_vpp: true });
+  await seed("2024-06-01", { solar_generated: null, from_grid: 2, to_grid: 10 });
+  await storeOutage("2024-02-04 14:51:38", 52.27);
+  const series = await recordSeries(false, "corrected");
+  // VPP days leave the export series only, as they leave Top Ten's export rankings; solar counts every day.
+  expect(series.solar).toEqual([{ at: "2024-05-09", value: 70.2 }, { at: "2024-05-30", value: 75 }]);
+  expect(series.exportDays.map((p) => [p.at, Math.round(p.value * 10) / 10])).toEqual([["2024-05-09", 41.4], ["2024-06-01", 8]]);
+  expect(series.exportMonths.map((p) => [p.at, Math.round(p.value * 10) / 10])).toEqual([["2024-05", 41.4], ["2024-06", 8]]);
+  expect(series.outages.map((p) => [p.at, Math.round(p.value * 10) / 10])).toEqual([["2024-02-04", 52.3]]);
 });

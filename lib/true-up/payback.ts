@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import { backupHistory } from "@/lib/backup";
 import { db } from "@/lib/db";
 import { type Kept, keptFor, refreshKept } from "@/lib/kept";
+import { PTO } from "@/lib/scene/replay";
 import { vppSeason } from "@/lib/true-up/cost";
 import { trueUpYears } from "@/lib/true-up/reads";
 import { refreshSavings, trueUpSavings } from "@/lib/true-up/savings";
@@ -12,8 +13,6 @@ import { refreshSavings, trueUpSavings } from "@/lib/true-up/savings";
 
 export type Costs = { solar: number; powerwalls: number; sales_tax: number; credit_rate: number };
 
-// The day the system was approved to run; payback counts from it.
-export const PTO = "2021-10-22";
 const WARRANTY_YEARS = 10;
 const DAY = 86_400_000;
 

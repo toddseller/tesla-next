@@ -21,7 +21,7 @@ test("a solar day reads its figure, full date and Solar page link", () => {
   const [best] = solarEntries([{ date: "Jun 13, 2022", solar: 80.9, day: "2022-06-13" }]);
   expect(best).toMatchObject({
     rank: 1, value: "80.9", date: "Jun 13, 2022", long: "Monday, June 13, 2022", since: "2022-06-13",
-    href: "/?start=2022-06-01&end=2022-06-30&day=2022-06-13",
+    href: "/solar?start=2022-06-01&end=2022-06-30&day=2022-06-13",
   });
 });
 
@@ -35,7 +35,7 @@ test("an export day reads without a minus sign", () => {
 
 test("an export month reads its month, has stood from its last day, and opens that month", () => {
   const [best] = monthEntries([{ date: "May 2024", net_grid: -510.1, month: "2024-05" }]);
-  expect(best).toMatchObject({ value: "510.1", date: "May 2024", long: "May 2024", since: "2024-05-31", href: "/?start=2024-05-01&end=2024-05-31" });
+  expect(best).toMatchObject({ value: "510.1", date: "May 2024", long: "May 2024", since: "2024-05-31", href: "/solar?start=2024-05-01&end=2024-05-31" });
 });
 
 test("the lead over #2 is the difference of the figures as shown", () => {

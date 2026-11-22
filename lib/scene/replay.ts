@@ -5,6 +5,8 @@ import { ACTIVE_KW, type Link, type LiveInput } from "@/lib/scene/live-scene";
 
 // The site's first day of service: no history before it.
 export const FIRST_DAY = "2021-10-10";
+// Permission to operate: the system's first day in service.
+export const PTO = "2021-10-22";
 // The site's clock, whatever the viewer's own time zone.
 export const TIME_ZONE = "America/Los_Angeles";
 export const STEP_MS = 5 * 60 * 1000;

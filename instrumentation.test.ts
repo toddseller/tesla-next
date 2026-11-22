@@ -10,10 +10,12 @@ const patterns = vi.hoisted(() => vi.fn());
 const onRewrite = vi.hoisted(() => vi.fn());
 const subscribe = vi.hoisted(() => vi.fn());
 const refreshPayback = vi.hoisted(() => vi.fn());
+const refreshSolarHours = vi.hoisted(() => vi.fn());
 vi.mock("./lib/live", () => ({ startListening, onRewrite, subscribe }));
 vi.mock("./lib/car-charging", () => ({ carCharging }));
 vi.mock("./lib/true-up/payback", () => ({ payback, refreshPayback }));
 vi.mock("./lib/patterns", () => ({ patterns }));
+vi.mock("./lib/home/solar-hours", () => ({ refreshSolarHours }));
 
 vi.stubEnv("NEXT_RUNTIME", "nodejs");
 afterAll(() => vi.unstubAllEnvs());
@@ -70,6 +72,7 @@ test("a rewrite empties every kept figure and warms them again without waiting, 
   globalThis.trueUpGrids = new Map([["2024-10-01..2025-09-30", []]]);
   globalThis.paybackKept = new Map([["payback", { day: siteToday(), value: Promise.resolve(null) }]]);
   globalThis.savingsKept = new Map([["2026-10-01..2027-09-30", { day: siteToday(), value: Promise.resolve(null) }]]);
+  globalThis.solarHoursKept = new Map([["2026", { day: siteToday(), value: Promise.resolve([]) }]]);
   patterns.mockRejectedValue(new Error("connection refused"));
   carCharging.mockImplementation(pending);
   payback.mockImplementation(pending);
@@ -77,6 +80,7 @@ test("a rewrite empties every kept figure and warms them again without waiting, 
   expect([globalThis.chargingDays.size, globalThis.patternsMonths.size, globalThis.trueUpGrids.size]).toEqual([0, 0, 0]);
   expect(globalThis.paybackKept.size).toBe(0);
   expect(globalThis.savingsKept.size).toBe(0);
+  expect(globalThis.solarHoursKept.size).toBe(0);
   const today = siteToday();
   expect(carCharging).toHaveBeenCalledWith(FIRST_DAY, today, today, "corrected");
   expect(payback).toHaveBeenCalledWith(today);
@@ -84,7 +88,7 @@ test("a rewrite empties every kept figure and warms them again without waiting, 
 });
 
 // system-payback, "The day's payback is kept".
-test("today's totals refresh the kept payback; another day's, or another notice, don't", async () => {
+test("today's totals refresh the kept payback and the year's solar hours; another day's, or another notice, don't", async () => {
   carCharging.mockImplementation(pending);
   payback.mockImplementation(pending);
   patterns.mockImplementation(pending);
@@ -97,6 +101,7 @@ test("today's totals refresh the kept payback; another day's, or another notice,
   expect(refreshPayback).not.toHaveBeenCalled();
   listener(JSON.stringify({ date: today }), "totals_updated");
   expect(refreshPayback).toHaveBeenCalledExactlyOnceWith(today);
+  expect(refreshSolarHours).toHaveBeenCalledExactlyOnceWith(today);
 });
 
 test("a totals notice that isn't JSON is skipped, not thrown into the notice loop", async () => {

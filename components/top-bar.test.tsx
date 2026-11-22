@@ -60,10 +60,11 @@ const rings = () => document.querySelectorAll('[data-part="dot-ring"]');
 const wideNav = () => screen.getAllByRole("navigation", { name: "Pages" }).find((nav) => nav.className.includes("max-sm:hidden"))!;
 
 test.each([
-  ["/", "Solar"],
+  ["/", "Home"],
+  ["/solar", "Solar"],
   ["/true-up", "True-Up"],
   ["/patterns", "Patterns"],
-])("on %s, lists the six pages and marks only %s as current", (path, current) => {
+])("on %s, lists the seven pages and marks only %s as current", (path, current) => {
   vi.mocked(usePathname).mockReturnValue(path);
   render(bar());
 
@@ -73,7 +74,8 @@ test.each([
 
   const links = within(wideNav()).getAllByRole("link");
   expect(links.map((link) => [link.textContent, link.getAttribute("href")])).toEqual([
-    ["Solar", "/"],
+    ["Home", "/"],
+    ["Solar", "/solar"],
     ["Impact", "/impact"],
     ["Distribution", "/distribution"],
     ["True-Up", "/true-up"],
@@ -182,10 +184,10 @@ test("the live pill reads solar and home before the Powerwall, each after its co
   ]);
 });
 
-test("below 1360 px the flows are left out", () => {
+test("below 1440 px the flows are left out, so the seven links keep one row", () => {
   render(bar(FLOWING));
   expect(flows()).toHaveLength(2);
-  for (const flow of flows()) expect(flow.className).toContain("max-[1360px]:hidden");
+  for (const flow of flows()) expect(flow.className).toContain("max-[1440px]:hidden");
 });
 
 // jsdom lays nothing out, so this pins how the squares are centered; the zoomed browser check measures it.
@@ -257,8 +259,8 @@ test("a tab still loading brightens, while the current page keeps the highlight 
   const name = (tab: string) => link(tab).querySelector('[data-part="name"]')!.className;
   expect(name("True-Up")).toContain("text-white");
   expect(link("True-Up").getAttribute("aria-current")).toBeNull();
-  expect(link("Solar").getAttribute("aria-current")).toBe("page");
-  expect(link("Solar").querySelector('[data-view-transition="nav-highlight"]')).not.toBeNull();
+  expect(link("Home").getAttribute("aria-current")).toBe("page");
+  expect(link("Home").querySelector('[data-view-transition="nav-highlight"]')).not.toBeNull();
   expect(name("Impact")).not.toContain("text-white");
 });
 
@@ -275,13 +277,13 @@ test("on a phone the links are behind a Pages button, and on a wide screen in th
   expect(screen.queryByRole("dialog")).toBeNull();
 });
 
-test("the Pages button opens the six links in order, the current one marked", () => {
+test("the Pages button opens the seven links in order, the current one marked", () => {
   vi.mocked(usePathname).mockReturnValue("/impact");
   render(bar());
   fireEvent.click(pagesButton());
   expect(pagesButton().getAttribute("aria-expanded")).toBe("true");
-  expect(menuLinks().map((link) => link.textContent)).toEqual(["Solar", "Impact", "Distribution", "True-Up", "Top Ten", "Patterns"]);
-  expect(menuLinks().map((link) => link.getAttribute("aria-current"))).toEqual([null, "page", null, null, null, null]);
+  expect(menuLinks().map((link) => link.textContent)).toEqual(["Home", "Solar", "Impact", "Distribution", "True-Up", "Top Ten", "Patterns"]);
+  expect(menuLinks().map((link) => link.getAttribute("aria-current"))).toEqual([null, null, "page", null, null, null, null]);
   expect(document.querySelectorAll('[data-view-transition="nav-highlight"]')).toHaveLength(1);
 });
 

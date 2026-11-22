@@ -3,8 +3,8 @@ export async function register() {
   if (process.env.NEXT_RUNTIME !== "nodejs") return;
   const live = await import("./lib/live");
   live.startListening();
-  const [{ carCharging }, { payback, refreshPayback }, { patterns }, { FIRST_DAY, shiftDay, siteToday }] = await Promise.all([
-    import("./lib/car-charging"), import("./lib/true-up/payback"), import("./lib/patterns"), import("./lib/scene/replay"),
+  const [{ carCharging }, { payback, refreshPayback }, { patterns }, { FIRST_DAY, shiftDay, siteToday }, { refreshSolarHours }] = await Promise.all([
+    import("./lib/car-charging"), import("./lib/true-up/payback"), import("./lib/patterns"), import("./lib/scene/replay"), import("./lib/home/solar-hours"),
   ]);
   // A deploy starts the caches empty, and filling them on the first visit takes seconds; not awaited, so pages
   // aren't held back while they fill.
@@ -25,10 +25,12 @@ export async function register() {
     globalThis.savingsKept?.clear();
     globalThis.patternsMonths?.clear();
     globalThis.trueUpGrids?.clear();
+    globalThis.solarHoursKept?.clear();
     warmAll();
   });
-  // Today's totals, and the 00:15 notice finishing yesterday, move the unsettled years' savings and the payback; they're
-  // kept, so they're refreshed here, not on a visit. An older day's notice comes from a backfill, whose rewrite empties them.
+  // Today's totals, and the 00:15 notice finishing yesterday, move the unsettled years' savings, the payback and the
+  // current year's solar hours; they're kept, so they're refreshed here, not on a visit. An older day's notice comes
+  // from a backfill, whose rewrite empties them.
   // It runs inside the database client's notice handler, where a throw would stop every page's stream, or the server.
   live.subscribe((payload, channel) => {
     if (channel !== "totals_updated") return;
@@ -39,6 +41,8 @@ export async function register() {
       return;
     }
     const today = siteToday();
-    if (date === today || date === shiftDay(today, -1)) void refreshPayback(today);
+    if (date !== today && date !== shiftDay(today, -1)) return;
+    void refreshPayback(today);
+    void refreshSolarHours(today);
   });
 }

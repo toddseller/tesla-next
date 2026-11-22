@@ -13,7 +13,8 @@ import { gridPill, type LiveStatus, liveStatus, type SiteState } from "@/lib/liv
 import { kw } from "@/lib/scene/live-scene";
 
 const pages = [
-  { name: "Solar", href: "/" },
+  { name: "Home", href: "/" },
+  { name: "Solar", href: "/solar" },
   { name: "Impact", href: "/impact" },
   { name: "Distribution", href: "/distribution" },
   { name: "True-Up", href: "/true-up" },
@@ -67,9 +68,9 @@ function Status({ initialStatus, initialSite, renderedAt }: Props) {
       )}
       {/* Flex rows center the squares on the line, as the dot is; inline, they sat below the capitals' middle. */}
       <span data-part="pill" className="flex items-center rounded-full border border-input px-2.5 py-1 text-foreground">
-        {/* Left out below 1360 px: on a phone the pill doesn't fit under the brand, and on a laptop it wraps the links. */}
+        {/* Left out below 1440 px: on a phone the pill doesn't fit under the brand, and on a laptop it wraps the seven links. */}
         {([["SOLAR", solar, "bg-solar"], ["HOME", home, "bg-home"]] as const).map(([name, value, color]) => value != null && (
-          <span key={name} data-part="flow" className="flex items-center max-[1360px]:hidden">
+          <span key={name} data-part="flow" className="flex items-center max-[1440px]:hidden">
             <span data-part="swatch" aria-hidden="true" className={`mr-1.5 size-2 rounded-[2px] ${color}`} />
             <span>{name} <Rolling value={value} format={kw} /></span>
             {/* A flex item drops the spaces at its edges; these are the pill's spacing. */}

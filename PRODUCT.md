@@ -10,13 +10,18 @@ web
 
 The primary user is the home's owner, watching their own Tesla solar and Powerwall system: how much it made today, whether it is running right, and where the house stands for its PG&E true-up. They check it often, on a phone as much as a desktop, and use `/admin` to enter bills, payouts and VPP credits.
 
-The public is a secondary audience. Anyone can open teslasolar.report and every view's range lives in its address, so a link shows a visitor exactly what was shared. The site does not play to visitors; it lets them look at one real home's data.
+The site is also for other people, and should keep them exploring rather than land and leave:
+
+- **People weighing solar:** neighbors and friends considering panels or Powerwalls, who want to see what a real system does month after month, cloudy days and outages included.
+- **The curious and data-minded:** people who enjoy exploring a long, honest dataset: records, patterns, weather.
+
+Anyone can open teslasolar.report, and every view's range lives in its address, so a link shows exactly what was shared.
 
 ## Product Purpose
 
 Tesla Solar Report shows what one home's solar panels and Powerwalls have done since October 2021, live and over any range: generation, home use, grid import and export, battery use, outages, and the true-up in kWh and dollars. It replaces the Flask site in anton-tesla-api-ws, one page at a time, without changing a figure that site showed.
 
-Success: the owner can answer "is it working, how is it doing, and where do I stand with PG&E" in a glance, and trust every number to match the source.
+Success: the owner can answer "is it working, how is it doing, and where do I stand with PG&E" in a glance, and trust every number to match the source. A visitor follows the data as a story, from what the house is doing now out to the years since 2021, and goes on to explore the pages behind it.
 
 ## Positioning
 
@@ -56,8 +61,9 @@ It is built on this home's own recorded data, read straight from the database an
 
 1. Numbers match the source. A figure that differs from the original site or the bill is a bug, whatever the design gains.
 2. Live state reads at a glance. Distribution's flow and today's figures should be understood in seconds, on a phone.
-3. The owner's questions come first; a visitor sees the same truthful view, not a pitch.
-4. Private stays private: costs and credentials never reach the public site.
+3. Tell the story the data holds, never a pitch. The owner and a visitor read the same page; the narrative comes from real figures, including the unflattering ones (outages, cloudy months, the Tesla and PG&E meter gap).
+4. Every chapter is a doorway: a story beat leads to the page and range that hold its full data.
+5. Private stays private: costs and credentials never reach the public site.
 
 ## Accessibility & Inclusion
 

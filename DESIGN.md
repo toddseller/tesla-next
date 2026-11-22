@@ -17,6 +17,12 @@ colors:
   grid: "#8E8E93"
   vehicle: "#E8474F"
 typography:
+  chapter-word:
+    fontFamily: "IBM Plex Sans, ui-sans-serif, system-ui, sans-serif"
+    fontSize: "112px"
+    fontWeight: 600
+    lineHeight: 0.9
+    letterSpacing: "-0.04em"
   headline:
     fontFamily: "IBM Plex Sans, ui-sans-serif, system-ui, sans-serif"
     fontSize: "22px"
@@ -172,13 +178,14 @@ Tesla app colors, each bound to one flow on every page, every chart and legend s
 
 ## Typography
 
-**Display Font:** none; the largest type is a figure.
+**Display Font:** none, except the home page's chapter words; everywhere else the largest type is a figure.
 **Body Font:** IBM Plex Sans (with ui-sans-serif, system-ui), weights 400, 500, 600.
 **Label/Mono Font:** IBM Plex Mono (with ui-monospace), weights 400, 500.
 
 **Character:** Plex is an engineered family, which suits a panel: the sans is plain and legible, the mono gives readouts the look of a meter.
 
 ### Hierarchy
+- **Chapter word** (600, 112px desktop, 64px phone, -0.04em): the home page's one-word chapter headings (Now, Today, the year, Records, Habits, Since 2021), so the story's chapters tell apart at a glance. Home page only.
 - **Headline** (600, 22px): the page's h1 ("Impact", "Top Ten", "Solar by date range").
 - **Figure** (Mono 600, 28px on wide screens and 20 to 26px on phones; 34 to 36px for a page's lead figure): kWh, dollars, kW, percentages.
 - **Section label** (500, 14px, 0.06em tracking, uppercase, Dusk Gray): each card's h2 ("Solar forecast", "Always-on load").
@@ -187,13 +194,15 @@ Tesla app colors, each bound to one flow on every page, every chart and legend s
 - **Label** (500, 11px): chart axes and small legends.
 
 ### Named Rules
+**The Chapter Word Rule.** Oversized words head the home page's chapters and nothing else. A chapter word takes its chapter's flow color only when the chapter is about that flow (Today and the year in Solar amber, Habits in Home blue); otherwise Moonlight. "Now" is Moonlight, because it is about every flow.
+
 **The Mono Means Measured Rule.** A number that was measured or computed is set in Plex Mono; words around it are in Plex Sans. A date in running prose stays sans.
 
 ## Layout
 
 A single column inside a 1200px container, padded 16px on phones and 32px from 640px up, with the top bar and footer running full width on hairline borders. Pages stack cards with 16 to 24px gaps; cards pad 16px on phones and 24px from 640px. Two-up grids appear inside cards, not across the page.
 
-Breakpoints: 640px moves the page links from a menu button onto the bar and widens padding; 1360px brings the solar and home readings into the top bar's live pill (they hide below it so the bar never wraps). Touch targets for navigation are 44px tall; segmented choices are 40px.
+Breakpoints: 640px moves the page links from a menu button onto the bar and widens padding; 1440px brings the solar and home readings into the top bar's live pill (they hide below it so the bar never wraps). Touch targets for navigation are 44px tall; segmented choices are 40px.
 
 Spacing steps on a 4px base: 4, 8, 12, 16, 20, 24px, with 6 and 10px in tight clusters (pills, legend swatches).
 
@@ -240,6 +249,7 @@ The site's main control: readings (Tesla or PG&E), day views, range presets, VPP
 - **Top bar:** the sun-behind-the-T icon (24px) and "Tesla Solar Report" in sans 600 with wide tracking, then the six page links, then the live status.
 - **Links:** 14px, Dusk Gray, hover to Moonlight; the current page gets Raised Slate fill, white text and the selection line, which glides between tabs as a view transition.
 - **Phone (below 640px):** a 44px menu button (three bars that animate) opens a popover of the same links at 15px.
+- **Doorway links:** a link from a chapter or card into the page that holds more ("Every top ten", "Today, hour by hour") is a 44px outlined button, Input border on a faint Input fill, 14px medium, with a 16px arrow after its words that nudges right on hover. Bold text alone reads as a caption, never as a link.
 
 ### Live status
 A row in Plex Mono 13px: a Powerwall-green dot that rings once with each update (Dusk Gray when not live), the word and time, then pills. The live pill (Control Edge border, fully round) reads SOLAR, HOME and the Powerwall charge with flow-color swatches; an outage pill has a Tesla Red border and dot, a storm-watch pill is Solar-colored, a test pill is dashed.

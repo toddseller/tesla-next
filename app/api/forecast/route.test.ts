@@ -26,7 +26,7 @@ test("answers the card for today, as the page renders it", async () => {
   const response = await GET();
   expect(response.status).toBe(200);
   expect(await response.json()).toEqual({
-    data: { today: { day: "2026-11-10", soFar: 9.6, expected: null, code: 3, sky: "now", temperature: 14.6 }, days: [{ day: "2026-11-11", expected: 33, code: 0, byHour: { hours: [{ start: "2026-11-11T18:00:00Z", expected: 2.7, made: null }], byNow: null }, high: 17.8, low: 11.1 }],
+    data: { today: { day: "2026-11-10", soFar: 9.6, expected: null, code: 3, sky: "now", temperature: 14.6 }, days: [{ day: "2026-11-11", expected: 3, code: 0, byHour: { hours: [{ start: "2026-11-11T18:00:00Z", expected: 2.7, made: null }], byNow: null }, high: 17.8, low: 11.1 }],
       goodDay: 37, staleSince: null,
       byHour: {
         hours: [{ start: "2026-11-10T18:00:00Z", expected: 4.5, made: 2 }],

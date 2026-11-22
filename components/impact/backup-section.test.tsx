@@ -56,7 +56,7 @@ test("the summary gives the outages' number, time, longest with its day, and the
   expect(summary.getByText("2")).toBeTruthy();
   expect(summary.getByText("2 d 5 h")).toBeTruthy();
   expect(summary.getByText("2 d 4 h")).toBeTruthy();
-  expect(summary.getByRole("link", { name: "Feb 4, 2024" }).getAttribute("href")).toBe("/?start=2024-02-01&end=2024-02-29&day=2024-02-04");
+  expect(summary.getByRole("link", { name: "Feb 4, 2024" }).getAttribute("href")).toBe("/solar?start=2024-02-01&end=2024-02-29&day=2024-02-04");
   expect(summary.getByText("269.5 kWh")).toBeTruthy();
   expect(summary.getByText("Powerwalls 154.2 · Solar 114.6")).toBeTruthy();
 });
@@ -71,7 +71,7 @@ test("every event is listed newest first with its start, duration and kind, each
     "12:00 PM18 sBlip",
     "9:00 AM1 h 0 mOutage",
   ]);
-  expect(within(rows[1]).getByRole("link").getAttribute("href")).toBe("/?start=2024-02-01&end=2024-02-29&day=2024-02-04");
+  expect(within(rows[1]).getByRole("link").getAttribute("href")).toBe("/solar?start=2024-02-01&end=2024-02-29&day=2024-02-04");
 });
 
 test("each event's bar is its length against the year's longest event", () => {
@@ -112,7 +112,7 @@ test("the Closest call tile gives the year's lowest rebuilt charge and its day, 
   render(<BackupSection history={OUTAGES} year={YEAR_23_24} today={TODAY} onYear={() => {}} />);
   const summary = within(screen.getByRole("group", { name: "Outages" }));
   expect(summary.getByText("~36%")).toBeTruthy();
-  expect(summary.getByRole("link", { name: "Dec 15, 2024" }).getAttribute("href")).toBe("/?start=2024-12-01&end=2024-12-31&day=2024-12-15");
+  expect(summary.getByRole("link", { name: "Dec 15, 2024" }).getAttribute("href")).toBe("/solar?start=2024-12-01&end=2024-12-31&day=2024-12-15");
   cleanup();
   render(<BackupSection history={HISTORY} year={YEAR_23_24} today={TODAY} onYear={() => {}} />);
   expect(within(screen.getByRole("group", { name: "Outages" })).getByText("Closest call").parentElement!.textContent).toBe("Closest call—");

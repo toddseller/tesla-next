@@ -7,6 +7,7 @@ import { ownDatabase } from "@/test/true-up";
 
 let owner: Client;
 let impactFigures: typeof import("./impact").impactFigures;
+let impactByMonth: typeof import("./impact").impactByMonth;
 
 // anton's energy(): 20.9 kWh of solar, 10.1 in, 0.7 out, and 17.0 kWh of house use, 9.9 from the grid, 4.3 from solar
 // and 2.8 from the Powerwall.
@@ -28,7 +29,7 @@ async function seedDay(date: string, overrides: Partial<typeof PLAIN> = {}) {
 
 beforeAll(async () => {
   owner = await ownDatabase("tsr_impact");
-  ({ impactFigures } = await import("./impact"));
+  ({ impactFigures, impactByMonth } = await import("./impact"));
 });
 
 beforeEach(async () => {
@@ -73,4 +74,19 @@ test("a share on an exact half rounds to even, as Python's round does", async ()
   await seedDay("2026-03-03", { house_from_grid: 7, house_from_solar: 1, house_from_powerwall: 0, total_house_usage: 8 });
   const impact = await impactFigures("2026-03-03", "2026-03-03", "corrected");
   expect([impact.from_solar_percentage, impact.from_grid_percentage]).toEqual([12, 88]);
+});
+
+// home-story, "Since 2021": Impact's figures month by month, for the running totals.
+test("each month's solar and house use are Impact's figures for that month", async () => {
+  await seedDay("2026-02-27");
+  await seedDay("2026-03-01");
+  await seedDay("2026-03-02", { solar_generated: 30.1, total_house_usage: 20 });
+  await seedDay("2026-03-03", TESLA_WINTER);
+  const months = await impactByMonth("2026-02-01", "2026-03-31", "corrected");
+  expect(months.map((m) => m.month)).toEqual(["2026-02", "2026-03"]);
+  for (const [month, end] of [["2026-02", "2026-02-28"], ["2026-03", "2026-03-31"]]) {
+    const figures = await impactFigures(`${month}-01`, end, "corrected");
+    const row = months.find((m) => m.month === month)!;
+    expect([Math.round(row.solar * 10) / 10, Math.round(row.house * 10) / 10]).toEqual([figures.total_solar, figures.total_house]);
+  }
 });

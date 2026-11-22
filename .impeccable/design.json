@@ -1,45 +1,292 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-11-21T00:00:00Z",
+  "generatedAt": "2026-11-22T00:00:00Z",
   "title": "Design System: Tesla Solar Report",
   "extensions": {
     "colorMeta": {
-      "tesla-red": { "role": "primary", "displayName": "Tesla Red", "canonical": "#E82127", "tonalRamp": ["#1F0000", "#4E0003", "#810008", "#BA0010", "#E33C38", "#F8796E", "#FFADA3", "#FFDFD8"] },
-      "night-sky": { "role": "neutral", "displayName": "Night Sky", "canonical": "#0E1116", "tonalRamp": ["#0A0B0C", "#232528", "#404246", "#5E6167", "#7F8289", "#A2A5AA", "#C7C9CD", "#EDEEF1"] },
-      "slate-card": { "role": "neutral", "displayName": "Slate Card", "canonical": "#151A21", "tonalRamp": ["#0A0B0D", "#232529", "#3E4248", "#5C6269", "#7D838B", "#A1A5AC", "#C6C9CE", "#EDEFF1"] },
-      "raised-slate": { "role": "neutral", "displayName": "Raised Slate", "canonical": "#1A1F27", "tonalRamp": ["#0A0B0D", "#232529", "#3E4248", "#5C626A", "#7D838C", "#A1A5AD", "#C6C9CF", "#EDEEF2"] },
-      "hairline": { "role": "neutral", "displayName": "Hairline", "canonical": "#232831", "tonalRamp": ["#0A0B0D", "#232529", "#3E4249", "#5C616B", "#7D838C", "#A1A5AD", "#C6C9CF", "#EDEEF2"] },
-      "control-edge": { "role": "neutral", "displayName": "Control Edge", "canonical": "#2B313B", "tonalRamp": ["#0A0B0D", "#22252A", "#3E4249", "#5B626C", "#7C838D", "#A0A5AE", "#C6C9CF", "#ECEFF2"] },
-      "moonlight": { "role": "neutral", "displayName": "Moonlight", "canonical": "#E6E8EB", "tonalRamp": ["#0B0B0C", "#242526", "#414244", "#606164", "#818285", "#A4A5A7", "#C8C9CA", "#EEEEEF"] },
-      "dusk-gray": { "role": "neutral", "displayName": "Dusk Gray", "canonical": "#9AA3AD", "tonalRamp": ["#0A0B0D", "#222529", "#3D4348", "#5B626A", "#7B838C", "#A0A6AD", "#C5CACF", "#ECEFF2"] },
-      "alert-coral": { "role": "error", "displayName": "Alert Coral", "canonical": "#F87171", "tonalRamp": ["#1A0304", "#441012", "#732124", "#A53338", "#CC5858", "#E48784", "#F9B5B2", "#FFE3E1"] },
-      "solar": { "role": "flow", "displayName": "Solar", "canonical": "#F7B500", "tonalRamp": ["#140800", "#381F00", "#603900", "#8A5400", "#AE7600", "#C99D48", "#E3C58D", "#FEECCD"] },
-      "home": { "role": "flow", "displayName": "Home", "canonical": "#3E6AE1", "tonalRamp": ["#213C86", "#2F52B4", "#3E6AE1", "#6189E8", "#89AAEF", "#AFC6F5", "#D4E1FA"] },
-      "powerwall": { "role": "flow", "displayName": "Powerwall", "canonical": "#31B76B", "tonalRamp": ["#001004", "#002F12", "#005224", "#007737", "#239A58", "#6BB985", "#A3D8B2", "#D9F8E1"] },
-      "grid": { "role": "flow", "displayName": "Grid", "canonical": "#8E8E93", "tonalRamp": ["#0B0B0C", "#252527", "#424245", "#616165", "#828286", "#A5A5A8", "#C9C9CB", "#EEEEF0"] },
-      "vehicle": { "role": "flow", "displayName": "Vehicle", "canonical": "#E8474F", "tonalRamp": ["#1D0103", "#49080E", "#7A141E", "#AF212F", "#D84B4F", "#EE807E", "#FFB1AD", "#FFE1DE"] }
+      "tesla-red": {
+        "role": "primary",
+        "displayName": "Tesla Red",
+        "canonical": "#E82127",
+        "tonalRamp": [
+          "#1F0000",
+          "#4E0003",
+          "#810008",
+          "#BA0010",
+          "#E33C38",
+          "#F8796E",
+          "#FFADA3",
+          "#FFDFD8"
+        ]
+      },
+      "night-sky": {
+        "role": "neutral",
+        "displayName": "Night Sky",
+        "canonical": "#0E1116",
+        "tonalRamp": [
+          "#0A0B0C",
+          "#232528",
+          "#404246",
+          "#5E6167",
+          "#7F8289",
+          "#A2A5AA",
+          "#C7C9CD",
+          "#EDEEF1"
+        ]
+      },
+      "slate-card": {
+        "role": "neutral",
+        "displayName": "Slate Card",
+        "canonical": "#151A21",
+        "tonalRamp": [
+          "#0A0B0D",
+          "#232529",
+          "#3E4248",
+          "#5C6269",
+          "#7D838B",
+          "#A1A5AC",
+          "#C6C9CE",
+          "#EDEFF1"
+        ]
+      },
+      "raised-slate": {
+        "role": "neutral",
+        "displayName": "Raised Slate",
+        "canonical": "#1A1F27",
+        "tonalRamp": [
+          "#0A0B0D",
+          "#232529",
+          "#3E4248",
+          "#5C626A",
+          "#7D838C",
+          "#A1A5AD",
+          "#C6C9CF",
+          "#EDEEF2"
+        ]
+      },
+      "hairline": {
+        "role": "neutral",
+        "displayName": "Hairline",
+        "canonical": "#232831",
+        "tonalRamp": [
+          "#0A0B0D",
+          "#232529",
+          "#3E4249",
+          "#5C616B",
+          "#7D838C",
+          "#A1A5AD",
+          "#C6C9CF",
+          "#EDEEF2"
+        ]
+      },
+      "control-edge": {
+        "role": "neutral",
+        "displayName": "Control Edge",
+        "canonical": "#2B313B",
+        "tonalRamp": [
+          "#0A0B0D",
+          "#22252A",
+          "#3E4249",
+          "#5B626C",
+          "#7C838D",
+          "#A0A5AE",
+          "#C6C9CF",
+          "#ECEFF2"
+        ]
+      },
+      "moonlight": {
+        "role": "neutral",
+        "displayName": "Moonlight",
+        "canonical": "#E6E8EB",
+        "tonalRamp": [
+          "#0B0B0C",
+          "#242526",
+          "#414244",
+          "#606164",
+          "#818285",
+          "#A4A5A7",
+          "#C8C9CA",
+          "#EEEEEF"
+        ]
+      },
+      "dusk-gray": {
+        "role": "neutral",
+        "displayName": "Dusk Gray",
+        "canonical": "#9AA3AD",
+        "tonalRamp": [
+          "#0A0B0D",
+          "#222529",
+          "#3D4348",
+          "#5B626A",
+          "#7B838C",
+          "#A0A6AD",
+          "#C5CACF",
+          "#ECEFF2"
+        ]
+      },
+      "alert-coral": {
+        "role": "error",
+        "displayName": "Alert Coral",
+        "canonical": "#F87171",
+        "tonalRamp": [
+          "#1A0304",
+          "#441012",
+          "#732124",
+          "#A53338",
+          "#CC5858",
+          "#E48784",
+          "#F9B5B2",
+          "#FFE3E1"
+        ]
+      },
+      "solar": {
+        "role": "flow",
+        "displayName": "Solar",
+        "canonical": "#F7B500",
+        "tonalRamp": [
+          "#140800",
+          "#381F00",
+          "#603900",
+          "#8A5400",
+          "#AE7600",
+          "#C99D48",
+          "#E3C58D",
+          "#FEECCD"
+        ]
+      },
+      "home": {
+        "role": "flow",
+        "displayName": "Home",
+        "canonical": "#3E6AE1",
+        "tonalRamp": [
+          "#213C86",
+          "#2F52B4",
+          "#3E6AE1",
+          "#6189E8",
+          "#89AAEF",
+          "#AFC6F5",
+          "#D4E1FA"
+        ]
+      },
+      "powerwall": {
+        "role": "flow",
+        "displayName": "Powerwall",
+        "canonical": "#31B76B",
+        "tonalRamp": [
+          "#001004",
+          "#002F12",
+          "#005224",
+          "#007737",
+          "#239A58",
+          "#6BB985",
+          "#A3D8B2",
+          "#D9F8E1"
+        ]
+      },
+      "grid": {
+        "role": "flow",
+        "displayName": "Grid",
+        "canonical": "#8E8E93",
+        "tonalRamp": [
+          "#0B0B0C",
+          "#252527",
+          "#424245",
+          "#616165",
+          "#828286",
+          "#A5A5A8",
+          "#C9C9CB",
+          "#EEEEF0"
+        ]
+      },
+      "vehicle": {
+        "role": "flow",
+        "displayName": "Vehicle",
+        "canonical": "#E8474F",
+        "tonalRamp": [
+          "#1D0103",
+          "#49080E",
+          "#7A141E",
+          "#AF212F",
+          "#D84B4F",
+          "#EE807E",
+          "#FFB1AD",
+          "#FFE1DE"
+        ]
+      }
     },
     "typographyMeta": {
-      "headline": { "displayName": "Headline", "purpose": "The page's h1." },
-      "figure": { "displayName": "Figure", "purpose": "Measured and computed values: kWh, kW, dollars, percentages." },
-      "section-label": { "displayName": "Section label", "purpose": "Each card's uppercase h2 in Dusk Gray." },
-      "body": { "displayName": "Body", "purpose": "Controls, table rows, prose." },
-      "reading": { "displayName": "Reading", "purpose": "Live status line, chart notes, input text." },
-      "label": { "displayName": "Label", "purpose": "Chart axes and small legends." }
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "The page's h1."
+      },
+      "figure": {
+        "displayName": "Figure",
+        "purpose": "Measured and computed values: kWh, kW, dollars, percentages."
+      },
+      "section-label": {
+        "displayName": "Section label",
+        "purpose": "Each card's uppercase h2 in Dusk Gray."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Controls, table rows, prose."
+      },
+      "reading": {
+        "displayName": "Reading",
+        "purpose": "Live status line, chart notes, input text."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Chart axes and small legends."
+      },
+      "chapter-word": {
+        "displayName": "Chapter word",
+        "purpose": "The home page's one-word chapter headings, 112 px desktop and 64 px phone. Home page only."
+      }
     },
     "shadows": [
-      { "name": "float", "value": "0 20px 25px -5px rgb(0 0 0 / 0.45), 0 8px 10px -6px rgb(0 0 0 / 0.45)", "purpose": "Popovers and the page menu, the only things above the page." },
-      { "name": "selection-line", "value": "inset 0 -2px 0 #E82127", "purpose": "Marks the current tab and the selected segment." }
+      {
+        "name": "float",
+        "value": "0 20px 25px -5px rgb(0 0 0 / 0.45), 0 8px 10px -6px rgb(0 0 0 / 0.45)",
+        "purpose": "Popovers and the page menu, the only things above the page."
+      },
+      {
+        "name": "selection-line",
+        "value": "inset 0 -2px 0 #E82127",
+        "purpose": "Marks the current tab and the selected segment."
+      }
     ],
     "motion": [
-      { "name": "motion-enter", "value": "450ms", "purpose": "Charts drawing in on arrival." },
-      { "name": "motion-tween", "value": "400ms", "purpose": "A figure or chart moving to new values." },
-      { "name": "motion-ease", "value": "cubic-bezier(.2, .7, .2, 1)", "purpose": "Default easing for every site motion." },
-      { "name": "motion-stagger", "value": "min(calc(var(--i, 0) * 15ms), 200ms)", "purpose": "Per-mark delay as a chart draws in." }
+      {
+        "name": "motion-enter",
+        "value": "450ms",
+        "purpose": "Charts drawing in on arrival."
+      },
+      {
+        "name": "motion-tween",
+        "value": "400ms",
+        "purpose": "A figure or chart moving to new values."
+      },
+      {
+        "name": "motion-ease",
+        "value": "cubic-bezier(.2, .7, .2, 1)",
+        "purpose": "Default easing for every site motion."
+      },
+      {
+        "name": "motion-stagger",
+        "value": "min(calc(var(--i, 0) * 15ms), 200ms)",
+        "purpose": "Per-mark delay as a chart draws in."
+      }
     ],
     "breakpoints": [
-      { "name": "sm", "value": "640px" },
-      { "name": "status-flows", "value": "1360px" }
+      {
+        "name": "sm",
+        "value": "640px"
+      },
+      {
+        "name": "status-flows",
+        "value": "1440px"
+      }
     ]
   },
   "components": [
@@ -112,9 +359,26 @@
       "Controls stay quiet so the figures lead."
     ],
     "rules": [
-      { "name": "The One Flow, One Color Rule", "body": "A flow's color means that flow and nothing else. Never reuse Solar yellow for a warning or Powerwall green for \"success\" outside a flow, the live dot excepted.", "section": "colors" },
-      { "name": "The Red Marker Rule", "body": "Tesla Red is for marks, indicators and text of 24px or more. Body text, button labels and fills behind text use Moonlight or white instead; that is why Save is light, not red.", "section": "colors" },
-      { "name": "The Mono Means Measured Rule", "body": "A number that was measured or computed is set in Plex Mono; words around it are in Plex Sans. A date in running prose stays sans.", "section": "typography" }
+      {
+        "name": "The One Flow, One Color Rule",
+        "body": "A flow's color means that flow and nothing else. Never reuse Solar yellow for a warning or Powerwall green for \"success\" outside a flow, the live dot excepted.",
+        "section": "colors"
+      },
+      {
+        "name": "The Red Marker Rule",
+        "body": "Tesla Red is for marks, indicators and text of 24px or more. Body text, button labels and fills behind text use Moonlight or white instead; that is why Save is light, not red.",
+        "section": "colors"
+      },
+      {
+        "name": "The Mono Means Measured Rule",
+        "body": "A number that was measured or computed is set in Plex Mono; words around it are in Plex Sans. A date in running prose stays sans.",
+        "section": "typography"
+      },
+      {
+        "name": "The Chapter Word Rule",
+        "body": "Oversized words head the home page's chapters and nothing else. A chapter word takes its chapter's flow color only when the chapter is about that flow (Today and the year in Solar amber, Habits in Home blue); otherwise Moonlight. \"Now\" is Moonlight, because it is about every flow.",
+        "section": "typography"
+      }
     ],
     "dos": [
       "Do use the design tokens (`text-solar`, `bg-card`, `text-muted-foreground`), never raw hex in components.",
