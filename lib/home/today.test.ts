@@ -1,7 +1,7 @@
 // Today against the forecast (home-story spec): still to come is the forecast hours left after now.
 import { expect, test } from "vitest";
 
-import { stillToCome, todayRows } from "./today";
+import { solarWindow, stillToCome, todayRows } from "./today";
 
 // 2 and 3 PM PST, 2.4 and 0.4 kWh expected.
 const LEFT = [{ start: "2026-11-21T22:00:00.000Z", expected: 2.4, made: 2 }, { start: "2026-11-21T23:00:00.000Z", expected: 0.4, made: null }];
@@ -41,4 +41,20 @@ test("the chart: solar up to the latest record, the Powerwalls charging and expo
     forecast: [{ minute: 570, kw: 2.4 }, { minute: 630, kw: 3.6 }],
     latest: 610,
   });
+});
+
+// 7 AM to 4 PM PST (15:00 to 24:00 UTC), 20.5 kWh in all: 2.0 by 10 AM, 18.3 by 3 PM.
+const DAY_HOURS = [0.1, 0.5, 1.4, 2.6, 3.4, 3.8, 3.6, 2.9, 1.6, 0.6].map((expected, i) => ({ start: new Date(Date.UTC(2026, 10, 21, 15 + i)).toISOString(), expected }));
+
+test("most of the day's solar: from the start of the hour 10% comes in to the start of the hour 90% comes in", () => {
+  expect(solarWindow(DAY_HOURS)).toEqual({ start: "2026-11-21T18:00:00.000Z", end: "2026-11-21T23:00:00.000Z" });
+});
+
+test("no hours, or none expecting anything, give no window", () => {
+  expect(solarWindow([])).toBeNull();
+  expect(solarWindow(DAY_HOURS.map((h) => ({ ...h, expected: 0 })))).toBeNull();
+});
+
+test("a day whose solar all comes in one hour has no window to name", () => {
+  expect(solarWindow([{ start: "2026-11-21T20:00:00.000Z", expected: 5 }])).toBeNull();
 });

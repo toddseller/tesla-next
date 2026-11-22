@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 // The home page's Today chapter (home-story spec: today against the forecast, its totals, the days ahead, staying current).
 import { act, cleanup, render, screen } from "@testing-library/react";
+import { renderToString } from "react-dom/server";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import type { ForecastCard } from "@/lib/forecast";
 import { FakeStream } from "@/test/fake-event-source";
@@ -37,7 +38,7 @@ afterEach(() => {
 });
 
 test("leads with today's solar so far, then the day's expected, the expected by now and what is still to come", () => {
-  render(<Today today={TODAY} forecast={CARD} day={DAY} />);
+  render(<Today today={TODAY} forecast={CARD} day={DAY} renderedAt={Date.now()} />);
   expect(screen.getByRole("heading", { name: "Today" })).toBeTruthy();
   expect(figure("made, of 18.0 kWh expected")).toBe("21.7 kWh");
   expect(figure("expected by 3:35 PM")).toBe("17.8 kWh");
@@ -45,20 +46,20 @@ test("leads with today's solar so far, then the day's expected, the expected by 
 });
 
 test("the day's expected is the forecast card's, to a tenth as every page gives it", () => {
-  render(<Today today={TODAY} forecast={{ ...CARD, today: { ...CARD.today, expected: 7.7 }, byHour: { hours: [{ start: HOURS[0].start, expected: 7.68, made: null }], byNow: null } }} day={DAY} />);
+  render(<Today today={TODAY} forecast={{ ...CARD, today: { ...CARD.today, expected: 7.7 }, byHour: { hours: [{ start: HOURS[0].start, expected: 7.68, made: null }], byNow: null } }} day={DAY} renderedAt={Date.now()} />);
   expect(figure("made, of 7.7 kWh expected")).toBe("21.7 kWh");
   expect(figure("still to come")).toBe("7.7 kWh");
 });
 
 test("without a forecast, today's solar so far alone, and no days ahead", () => {
-  render(<Today today={TODAY} forecast={{ ...CARD, today: { ...CARD.today, expected: null }, days: null, byHour: null }} day={DAY} />);
+  render(<Today today={TODAY} forecast={{ ...CARD, today: { ...CARD.today, expected: null }, days: null, byHour: null }} day={DAY} renderedAt={Date.now()} />);
   expect(figure("made")).toBe("21.7 kWh");
   expect(screen.queryByText(/expected by/)).toBeNull();
   expect(screen.getByText("No forecast right now")).toBeTruthy();
 });
 
 test("today's six totals are the day view's, the car apart from the house, and the days ahead by name", () => {
-  render(<Today today={TODAY} forecast={CARD} day={DAY} />);
+  render(<Today today={TODAY} forecast={CARD} day={DAY} renderedAt={Date.now()} />);
   expect(figure("used by the house, car apart")).toBe("21.3 kWh");
   expect(figure("charged into the car")).toBe("3.1 kWh");
   expect(figure("from the grid")).toBe("14.4 kWh");
@@ -77,7 +78,7 @@ test("a totals event for today reloads the forecast and the day; one for another
     json: async () => (url.startsWith("/api/forecast") ? { data: { ...CARD, today: { ...CARD.today, soFar: 22.4 } } } : { ...DAY, totals: { ...TOTALS, grid_to_home: 12.5 } }),
   }));
   vi.stubGlobal("fetch", fetch);
-  render(<Today today={TODAY} forecast={CARD} day={DAY} />);
+  render(<Today today={TODAY} forecast={CARD} day={DAY} renderedAt={Date.now()} />);
   FakeStream.opened[0].send({ date: "2026-11-20" }, "totals");
   expect(fetch).not.toHaveBeenCalled();
   FakeStream.opened[0].send({ date: TODAY }, "totals");
@@ -91,7 +92,7 @@ test("a failed reload keeps the figures and says when they are from, until one s
   let ok = false;
   vi.stubGlobal("fetch", vi.fn(async (url: string) => ({ ok, json: async () => (url.startsWith("/api/forecast") ? { data: CARD } : DAY) })));
   vi.spyOn(console, "error").mockImplementation(() => {});
-  render(<Today today={TODAY} forecast={CARD} day={DAY} />);
+  render(<Today today={TODAY} forecast={CARD} day={DAY} renderedAt={Date.now()} />);
   FakeStream.opened[0].send({ date: TODAY }, "totals");
   await act(async () => {});
   expect(figure("made, of 18.0 kWh expected")).toBe("21.7 kWh");
@@ -105,7 +106,7 @@ test("a failed reload keeps the figures and says when they are from, until one s
 test("a tab left open past midnight follows the new day's totals, not the day it was served", async () => {
   const fetch = vi.fn(async (url: string) => ({ ok: true, json: async () => (url.startsWith("/api/forecast") ? { data: CARD } : { ...DAY, date: "2026-11-22" }) }));
   vi.stubGlobal("fetch", fetch);
-  render(<Today today={TODAY} forecast={CARD} day={DAY} />);
+  render(<Today today={TODAY} forecast={CARD} day={DAY} renderedAt={Date.now()} />);
   vi.setSystemTime(Date.parse("2026-11-22T08:30:00Z"));
   FakeStream.opened[0].send({ date: TODAY }, "totals");
   expect(fetch).not.toHaveBeenCalled();
@@ -118,14 +119,41 @@ test("a tab left open past midnight follows the new day's totals, not the day it
 test("without an hourly forecast, a failed reload still says when the figures are from", async () => {
   vi.stubGlobal("fetch", vi.fn(async () => ({ ok: false, json: async () => ({}) })));
   vi.spyOn(console, "error").mockImplementation(() => {});
-  render(<Today today={TODAY} forecast={{ ...CARD, byHour: null }} day={DAY} />);
+  render(<Today today={TODAY} forecast={{ ...CARD, byHour: null }} day={DAY} renderedAt={Date.now()} />);
   FakeStream.opened[0].send({ date: TODAY }, "totals");
   await act(async () => {});
   expect(screen.getByText("as of 3:35 PM")).toBeTruthy();
 });
 
 test("without car data the house's figure holds the charging, so it doesn't say the car is apart", () => {
-  render(<Today today={TODAY} forecast={CARD} day={{ ...DAY, vehicle_data: false }} />);
+  render(<Today today={TODAY} forecast={CARD} day={{ ...DAY, vehicle_data: false }} renderedAt={Date.now()} />);
   expect(screen.getByText("used by the house")).toBeTruthy();
   expect(screen.queryByText("used by the house, car apart")).toBeNull();
+});
+
+// home-story, "Today's morning sentence": 20.5 kWh from 7 AM to 4 PM PST, 10% by 10 AM, 90% in the 3 PM hour.
+const MORNING_HOURS = [0.1, 0.5, 1.4, 2.6, 3.4, 3.8, 3.6, 2.9, 1.6, 0.6].map((expected, i) => ({ start: new Date(Date.UTC(2026, 10, 21, 15 + i)).toISOString(), expected, made: null }));
+const morningCard: ForecastCard = { ...CARD, today: { ...CARD.today, soFar: 0.2, expected: 20.5 }, byHour: { hours: MORNING_HOURS, byNow: null } };
+const morning = () => document.querySelector<HTMLElement>('[data-part="morning"]')?.textContent ?? null;
+
+test("in the morning, when the sun rose and when most of the day's solar comes", () => {
+  vi.setSystemTime(Date.parse("2026-11-21T16:00:00Z"));
+  render(<Today today={TODAY} forecast={morningCard} day={DAY} renderedAt={Date.now()} />);
+  expect(morning()).toMatch(/^Sunrise [67]:\d\d AM\. Most of today's 20\.5 kWh is expected between 10 AM and 3 PM\.$/);
+});
+
+test("once that window begins, or without the forecast's hours, no morning sentence", () => {
+  vi.setSystemTime(Date.parse("2026-11-21T18:30:00Z"));
+  render(<Today today={TODAY} forecast={morningCard} day={DAY} renderedAt={Date.now()} />);
+  expect(morning()).toBeNull();
+  cleanup();
+  vi.setSystemTime(Date.parse("2026-11-21T16:00:00Z"));
+  render(<Today today={TODAY} forecast={{ ...morningCard, byHour: null }} day={DAY} renderedAt={Date.now()} />);
+  expect(morning()).toBeNull();
+});
+
+test("the first render reads the server's clock, so hydration finds the sentence the server sent", () => {
+  vi.setSystemTime(Date.parse("2026-11-21T19:00:00Z"));
+  const html = renderToString(<Today today={TODAY} forecast={morningCard} day={DAY} renderedAt={Date.parse("2026-11-21T16:00:00Z")} />);
+  expect(html).toContain("Most of today&#x27;s 20.5 kWh is expected between 10 AM and 3 PM.");
 });
