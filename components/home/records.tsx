@@ -7,7 +7,7 @@ import { Line, LineChart, XAxis, YAxis } from "recharts";
 import { Doorway } from "@/components/home/doorway";
 import { DetailsBox, type Hover } from "@/components/home/chart-details";
 import { ChartContainer, ChartTooltip } from "@/components/ui/chart";
-import { type recordTabs, setAgo } from "@/lib/home/records";
+import { type recordTabs, setAgo, tenthTick, valueTicks, yearTicks } from "@/lib/home/records";
 import { address, monthOf } from "@/lib/solar/ranges";
 
 type Props = { today: string; tabs: ReturnType<typeof recordTabs> };
@@ -36,8 +36,8 @@ export function Records({ today, tabs }: Props) {
   const rising = tab.steps;
   const chart = rising.length ? [...rising, { at: today, value: rising.at(-1)!.value }].map((p) => ({ t: Date.parse(p.at.length === 7 ? `${p.at}-01` : p.at), value: p.value })) : [];
 
-  // A tick at each January 1 the chart spans, so every year is named once.
-  const years = chart.length ? Array.from({ length: new Date(chart.at(-1)!.t).getUTCFullYear() - new Date(chart[0].t).getUTCFullYear() }, (_, i) => Date.UTC(new Date(chart[0].t).getUTCFullYear() + i + 1, 0, 1)) : [];
+  const years = chart.length ? yearTicks(chart[0].t, chart.at(-1)!.t) : [];
+  const values = valueTicks(chart.map((p) => p.value));
 
   return (
     <section aria-labelledby="records" className="flex flex-col gap-8">
@@ -57,7 +57,7 @@ export function Records({ today, tabs }: Props) {
             <ChartContainer config={{}} className="aspect-auto h-48 w-full">
               <LineChart data={chart} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
                 <XAxis dataKey="t" type="number" domain={["dataMin", "dataMax"]} ticks={years} tickFormatter={(t) => String(new Date(t).getUTCFullYear())} tickLine={false} axisLine={false} />
-                <YAxis domain={["dataMin", "dataMax"]} tickLine={false} axisLine={false} width={48} />
+                <YAxis domain={[values[0], values.at(-1)!]} ticks={values} tickFormatter={tenthTick} tickLine={false} axisLine={false} width={48} />
                 <ChartTooltip content={<RecordDetails unit={tab.unit} per={tab.per} />} />
                 <Line dataKey="value" type="stepAfter" stroke={tab.stroke} strokeWidth={2} dot={false} isAnimationActive={false} />
               </LineChart>

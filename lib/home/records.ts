@@ -51,3 +51,19 @@ export function recordTabs([{ solar }, { net_grid }, { to_grid_months }, { outag
     tab(outages.map((r) => ({ at: r.day, value: r.hours })), series.outages),
   ];
 }
+
+// Each January 1 after `from` up to `to`, so a time axis names every year once, at its start.
+export function yearTicks(from: number, to: number) {
+  const first = new Date(from).getUTCFullYear() + 1;
+  return Array.from({ length: Math.max(0, new Date(to).getUTCFullYear() - first + 1) }, (_, i) => Date.UTC(first + i, 0, 1));
+}
+
+export const tenthTick = (value: number) => String(Math.round(value * 10) / 10);
+
+// Only figures that mean something: 0, the record, and the lowest figure when a series starts below 0 (a month that
+// imported more than it sent). Ticks in between land on odd values whenever the axis starts below 0. The axis runs
+// from the first tick to the last, so 0 is always on it.
+export function valueTicks(values: number[]) {
+  if (!values.length) return [];
+  return [...new Set([Math.min(0, ...values), 0, Math.max(0, ...values)])];
+}
