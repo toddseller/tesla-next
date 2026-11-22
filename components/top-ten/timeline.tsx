@@ -35,7 +35,7 @@ export function Timeline({ label, entries, flow, today }: { label: string; entri
       <div aria-hidden className="relative border-b border-l border-input">
         {ticks.map((t) => <span key={t} className="absolute inset-x-0 border-t border-border" style={{ top: top(t) }} />)}
         {years.map((y) => <span key={y} className="absolute inset-y-0 border-l border-dashed border-border" style={{ left: left(`${y}-01-01`) }} />)}
-        <span title="This year" className="absolute inset-y-0 right-0 bg-primary/[0.06]" style={{ left: left(`${year}-01-01`) }} />
+        <span title="This year" className="absolute inset-y-0 right-0 bg-muted-foreground/[0.08]" style={{ left: left(`${year}-01-01`) }} />
         {entries.toReversed().map((e) => (
           <span
             key={e.rank}

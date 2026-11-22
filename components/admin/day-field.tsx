@@ -4,7 +4,7 @@ import { CalendarDays } from "lucide-react";
 import { useState } from "react";
 
 import { INPUT } from "@/components/admin/styles";
-import { Calendar } from "@/components/ui/calendar";
+import { Calendar, MARKER_SELECTED } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { longDate, toDate, toDay } from "@/lib/calendar-dates";
 
@@ -28,7 +28,7 @@ export function DayField({ name, label, first, last, marked = [], value }: Props
           </button>
         </PopoverTrigger>
         <PopoverContent className="w-auto p-0" align="start">
-          <Calendar mode="single" selected={day ? toDate(day) : undefined} defaultMonth={toDate(day ?? last)}
+          <Calendar mode="single" className={MARKER_SELECTED} selected={day ? toDate(day) : undefined} defaultMonth={toDate(day ?? last)}
             startMonth={toDate(first)} endMonth={toDate(last)} disabled={{ before: toDate(first), after: toDate(last) }}
             modifiers={{ marked: marked.map(toDate) }} modifiersClassNames={{ marked: "shadow-[inset_0_-2px_0_var(--color-powerwall)]" }}
             onSelect={(date) => {

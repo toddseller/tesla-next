@@ -71,3 +71,11 @@ test("the outage timeline's axis reads in days and hours, as its dots do", () =>
   expect(screen.getByRole("img").className).toContain("grid-cols-[72px_minmax(0,1fr)]");
   expect(document.body.textContent).not.toMatch(/(^|\D)40(\D|$)/);
 });
+
+// DESIGN.md: Tesla red is a marker, never a surface, so this year's band is a neutral shade.
+test("this year's band is shaded in the muted foreground, not red", () => {
+  solar();
+  const band = screen.getByTitle("This year");
+  expect(band.className).toContain("bg-muted-foreground/");
+  expect(band.className).not.toContain("bg-primary");
+});

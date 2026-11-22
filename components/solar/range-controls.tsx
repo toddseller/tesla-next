@@ -3,7 +3,7 @@
 import { CalendarDays, ChevronDown } from "lucide-react";
 import { Fragment, useState } from "react";
 
-import { Calendar } from "@/components/ui/calendar";
+import { Calendar, MARKER_SELECTED } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { toDate, toDay } from "@/lib/calendar-dates";
 import { FIRST_DAY } from "@/lib/scene/replay";
@@ -106,6 +106,7 @@ export function RangeControls({ today, range, presets, earlier, onRange }: Contr
         <PopoverContent className="w-auto p-0" align="end">
           <Calendar
             mode="range"
+            className={MARKER_SELECTED}
             selected={shown}
             numberOfMonths={months}
             // The calendar pulls this back within startMonth and endMonth, so a range ending past today opens on today's month.

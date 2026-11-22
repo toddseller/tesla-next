@@ -80,7 +80,7 @@ export function CycleChart({ cycles, cost, oneYear }: { cycles: Cycle[]; cost: C
         <li className="flex items-center gap-1.5"><Swatch className="size-2.5 rounded-[2px]" style={{ background: "var(--color-solar)" }} />Exported</li>
         <li className="flex items-center gap-1.5"><Swatch className="h-[3px] w-3.5 rounded-[2px] bg-primary" />Running net</li>
         {lastYear && <li className="flex items-center gap-1.5"><Swatch className="w-3.5 border-t-2 border-dashed border-muted-foreground" />{yearName(lastYear.label)}</li>}
-        {banded && <li className="flex items-center gap-1.5"><Swatch className="h-2.5 w-3.5 rounded-[2px] bg-primary/20" />Projected</li>}
+        {banded && <li className="flex items-center gap-1.5"><Swatch className="h-2.5 w-3.5 rounded-[2px] bg-muted-foreground/30" />Projected</li>}
       </ul>
       <ChartContainer config={{}} className="aspect-auto h-72 w-full md:h-80">
         <ComposedChart data={rows} stackOffset="sign" margin={{ top: 8, right: 0, bottom: 0, left: 8 }}>
@@ -91,7 +91,7 @@ export function CycleChart({ cycles, cost, oneYear }: { cycles: Cycle[]; cost: C
           <ChartTooltip cursor={{ className: "fill-white/5" }} content={<CycleDetails />} />
           {/* The day chart's reveal, from the left as the columns rise. */}
           {entering && <defs><clipPath id="motion-flows"><rect width="100%" height="100%" className="motion-draw-only" /></clipPath></defs>}
-          {banded && <Area dataKey="band" stroke="none" fill="var(--primary)" fillOpacity={0.18} isAnimationActive={false} activeDot={false} className={lines} />}
+          {banded && <Area dataKey="band" stroke="none" fill="var(--muted-foreground)" fillOpacity={0.2} isAnimationActive={false} activeDot={false} className={lines} />}
           <Bar dataKey="imported" stackId="flows" fill="var(--color-grid)" maxBarSize={48} isAnimationActive={false}
             shape={<Flow series="imported" domain={axis.domain} entering={entering} />} />
           <Bar dataKey="exported" stackId="flows" fill="var(--color-solar)" maxBarSize={48} isAnimationActive={false}

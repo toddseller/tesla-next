@@ -6,7 +6,7 @@ import { useEffect, useRef, useState, ViewTransition } from "react";
 
 import { ReadingsNote, ReadingsSwitch } from "@/components/readings-switch";
 import { type Day, DayView } from "@/components/solar/day-view";
-import { Calendar } from "@/components/ui/calendar";
+import { Calendar, MARKER_SELECTED } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { toDate, toDay } from "@/lib/calendar-dates";
 import { type Readings, withReadings } from "@/lib/meter";
@@ -70,7 +70,7 @@ export function DayPanel({ range, day, strip, today, modified, onDay, readings =
               </button>
             </PopoverTrigger>
             <PopoverContent className="w-auto p-0" align="center">
-              <Calendar mode="single" selected={toDate(date)} defaultMonth={toDate(date)}
+              <Calendar mode="single" className={MARKER_SELECTED} selected={toDate(date)} defaultMonth={toDate(date)}
                 disabled={{ before: toDate(FIRST_DAY), after: toDate(today) }}
                 onSelect={(picked) => {
                   if (!picked) return;
