@@ -3,7 +3,7 @@ import { expect, test } from "vitest";
 
 import type { TopTen } from "@/lib/top-ten";
 
-import { nearMisses, recordTabs, setAgo, steps } from "./records";
+import { nearMisses, recordTabs, setAgo, steps, tenthTick, valueTicks, yearTicks } from "./records";
 
 const SERIES = [
   { at: "2021-11-01", value: 30 },
@@ -69,4 +69,28 @@ test("figures that tie to a tenth: the record is the one that set it, the stairc
   const [solar] = recordTabs([{ solar: [{ date: "", solar: 80.91, day: "2025-06-21" }, { date: "", solar: 80.94, day: "2022-06-13" }] }, { net_grid: [] }, { to_grid_months: [] }, { outages: [] }], { solar: tie, exportDays: [], exportMonths: [], outages: [] });
   expect(solar.record).toEqual({ at: "2022-06-13", value: 80.94 });
   expect(solar.near).toBe(1);
+});
+
+test("a time axis is marked at each January 1 it spans, and a span inside one year at none", () => {
+  expect(yearTicks(Date.UTC(2021, 9, 1), Date.UTC(2028, 11, 31)).map((t) => new Date(t).toISOString().slice(0, 10)))
+    .toEqual(["2022-01-01", "2023-01-01", "2024-01-01", "2025-01-01", "2026-01-01", "2027-01-01", "2028-01-01"]);
+  expect(yearTicks(Date.UTC(2026, 2, 1), Date.UTC(2026, 10, 22))).toEqual([]);
+});
+
+test("an axis figure reads to a tenth, and a whole one without its .0", () => {
+  expect(tenthTick(52.3888)).toBe("52.4");
+  expect(tenthTick(25)).toBe("25");
+});
+
+test("a record's axis is marked at 0 and at the record, and at its lowest figure when that went below 0", () => {
+  expect(valueTicks([0.4, 38.2, 80.94])).toEqual([0, 80.94]);
+  expect(valueTicks([-136.3, 251.1, 479.2])).toEqual([-136.3, 0, 479.2]);
+  expect(valueTicks([])).toEqual([]);
+});
+
+test("the ticks span the whole axis, 0 always on it, each figure once", () => {
+  expect(valueTicks([20, 52.3])).toEqual([0, 52.3]);
+  expect(valueTicks([52.3])).toEqual([0, 52.3]);
+  expect(valueTicks([-5, -1])).toEqual([-5, 0]);
+  expect(valueTicks([0])).toEqual([0]);
 });

@@ -245,7 +245,7 @@ The Records chapter SHALL offer four tabs, Best solar day, Most sent to PG&E in 
 - **THEN** the Longest outage tab says the house has not been off the grid since October 2021
 
 ### Requirement: How each record was beaten
-Under its steps, each Records tab SHALL say how many days (or months) since the record was set have come within 2% of it, or that none has. Each Records tab SHALL chart its record over time since October 22, 2021, as steps: the highest figure up to each date, rising on each day or month that beat it. The current record SHALL be marked with its date and how long ago it was set, as "set 5 days ago" or "set 4 years ago".
+Under its steps, each Records tab SHALL say how many days (or months) since the record was set have come within 2% of it, or that none has. Each Records tab SHALL chart its record since October 22, 2021 as steps, the highest figure up to each date, its y-axis marked to a tenth at 0, the record and the lowest figure if below 0, and its x-axis at each January 1. The current record SHALL be marked with its date and how long ago it was set ("set 4 years ago").
 
 #### Scenario: A record that stands
 - **WHEN** June 13, 2022 at 80.9 kWh is the best solar day and nothing has beaten it
@@ -254,6 +254,14 @@ Under its steps, each Records tab SHALL say how many days (or months) since the 
 #### Scenario: A record set today
 - **WHEN** today has made more solar than any day before
 - **THEN** the last step rises today and is marked "set today"
+
+#### Scenario: An axis in hours
+- **WHEN** the longest outage lasted 52.3888 hours
+- **THEN** the y-axis of the outage tab reads 0 and 52.4, with no longer decimals
+
+#### Scenario: A series that starts below 0
+- **WHEN** October 2021 imported 136.3 kWh more than it sent and April 2024's 479.2 kWh is the record
+- **THEN** the month tab's y-axis reads -136.3, 0 and 479.2
 
 ### Requirement: Habits
 The Habits chapter SHALL chart the always-on load by month, one line per year on a January to December axis in watts, as Patterns gives each month's figure. The current year SHALL be in the home color and labelled; earlier years SHALL be gray. The chapter SHALL link to Patterns.
@@ -274,7 +282,7 @@ Beside its chart, the Habits chapter SHALL say since which month the always-on l
 - **THEN** the chapter says "Since July it has run above last year"
 
 ### Requirement: Since 2021
-The Since 2021 chapter SHALL chart, by month since October 2021, the running totals of solar made and of the house's use, as Impact gives each month's figures, each line named, with today marked, and mark the payback years from the Payback card on the same time axis, a projected year drawn apart from a past one. It SHALL link to True-Up.
+The Since 2021 chapter SHALL chart, by month since October 2021, the running totals of solar made and of the house's use, as Impact gives each month's figures, each line named, with today marked, and mark the payback years from the Payback card on the same time axis, a projected year drawn apart from a past one. The time axis SHALL be marked at each January 1 it spans, with that year. It SHALL link to True-Up.
 
 #### Scenario: With costs
 - **WHEN** the server has the costs file and the Payback card gives solar paid back in March 2025 and the whole system in 2028, projected
@@ -283,6 +291,10 @@ The Since 2021 chapter SHALL chart, by month since October 2021, the running tot
 #### Scenario: Without costs
 - **WHEN** the server has no costs file
 - **THEN** the chapter shows its chart and figures and no payback marks
+
+#### Scenario: The years on the axis
+- **WHEN** the chart runs from October 2021 to the end of 2028
+- **THEN** the axis reads 2022 to 2028, each at its January 1, so March 2025's payback mark falls just after "2025"
 
 ### Requirement: Since 2021's figures
 Beside its chart, the Since 2021 chapter SHALL give the solar since October 22, 2021, say whether solar has made as much as the house used and by what share, as Impact gives it for that range, and give the current true-up year's net so far as True-Up's net tile gives it, in words: imported or sent, more than the other, since the year began.

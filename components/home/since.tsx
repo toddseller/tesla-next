@@ -5,6 +5,7 @@ import { Line, LineChart, ReferenceArea, ReferenceLine, XAxis, YAxis } from "rec
 import { Doorway } from "@/components/home/doorway";
 import { DetailsBox, type Hover } from "@/components/home/chart-details";
 import { ChartContainer, ChartTooltip } from "@/components/ui/chart";
+import { yearTicks } from "@/lib/home/records";
 
 type Month = { month: string; solar: number; house: number };
 type Year = { year: number | null; projected: boolean };
@@ -37,7 +38,7 @@ export function Since({ today, months, solar, matched, net, trueUpStart, payback
       <div role="img" aria-label={label}>
         <ChartContainer config={{}} className="aspect-auto h-64 w-full">
           <LineChart data={rows} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
-            <XAxis dataKey="t" type="number" domain={[at("2021-10"), end]} tickFormatter={(t) => String(new Date(t).getUTCFullYear())} tickLine={false} axisLine={false} minTickGap={16} />
+            <XAxis dataKey="t" type="number" domain={[at("2021-10"), end]} ticks={yearTicks(at("2021-10"), end)} tickFormatter={(t) => String(new Date(t).getUTCFullYear())} tickLine={false} axisLine={false} />
             <YAxis tickFormatter={(v) => whole(v)} tickLine={false} axisLine={false} width={64} />
             <ChartTooltip content={<SinceDetails />} />
             {systemYear && <ReferenceArea x1={Date.UTC(systemYear, 0, 1)} x2={Date.UTC(systemYear, 11, 31)} fill="var(--muted-foreground)" fillOpacity={0.08} stroke={payback!.system.projected ? "var(--muted-foreground)" : "none"} strokeDasharray="5 4" />}
