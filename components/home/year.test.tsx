@@ -126,3 +126,9 @@ test("the shares say the house's energy here includes the car", () => {
   year();
   expect(screen.getByText("Where the house's energy came from in 2026, car included")).toBeTruthy();
 });
+
+// DESIGN.md's type scale: the readout is a Lede, 15px, not a one-off 17px.
+test("the day readout is set at the 15px Lede", () => {
+  year();
+  expect(document.querySelector('[data-part="day-readout"]')!.className).toContain("text-[15px]");
+});
