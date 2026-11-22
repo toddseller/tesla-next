@@ -147,7 +147,7 @@ export function Year({ year: servedYear, today, days: servedDays, shares: served
             </div>
             <Doorway href={address(monthOf(day), day)}>Open the day</Doorway>
           </div>
-          <div className="mt-auto flex flex-col gap-3">
+          <div className="flex flex-col gap-3">
             <p className="font-mono text-[13px] text-muted-foreground">Where the house&apos;s energy came from in {shown.year}, car included</p>
             <div aria-hidden className="flex h-3.5 overflow-hidden rounded">
               <div className="bg-solar" style={{ width: `${shown.shares.from_solar_percentage}%` }} />

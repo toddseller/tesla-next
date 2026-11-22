@@ -15,12 +15,13 @@ const Figure = ({ children }: { children: ReactNode }) => <span className="font-
 function Tile({ title, value, unit, children }: { title: ReactNode; value: string | null; unit: string | null; children: ReactNode }) {
   const id = useId();
   return (
-    <section aria-labelledby={id} className="flex flex-col gap-2 rounded-[10px] border bg-card px-[22px] py-5">
+    <section aria-labelledby={id} className="@container flex flex-col gap-2 rounded-[10px] border bg-card px-[22px] py-5">
       <h2 id={id} className="text-sm font-medium text-muted-foreground">{title}</h2>
       {value && (
         <p className="flex flex-wrap items-baseline gap-2">
-          {/* Mono means measured: words like "Not started" stay in the sans. */}
-          <span className={`${/\d/.test(value) ? "font-mono" : ""} text-[34px] leading-none font-semibold`}><CountUp text={value} /></span>
+          {/* Mono means measured: words like "Not started" stay in the sans. Five tiles to a row leave each about 168px of
+              content, too narrow for 34px figures; every other layout leaves at least 194px. */}
+          <span className={`${/\d/.test(value) ? "font-mono" : ""} text-[28px] @[180px]:text-[34px] leading-none font-semibold`}><CountUp text={value} /></span>
           {unit && <span className="text-sm text-muted-foreground">{unit}</span>}
         </p>
       )}
@@ -42,7 +43,7 @@ export function Tiles({ cycles, cost, year, today }: { cycles: Cycle[]; cost: Co
   const billed = year && billedText(started);
   const vpp = year && cost && vppText(cost.vpp, today);
   return (
-    <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,240px),1fr))] gap-4">
+    <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,240px),1fr))] gap-4 xl:auto-cols-fr xl:grid-flow-col xl:grid-cols-none">
       <Tile title={year?.current ? "Net so far" : year ? "Net for the year" : "Net"} value={kwh(sum.net)} unit={`kWh ${netLabel(sum.net).toLowerCase()}`}>
         <p>Imported <Figure>{kwh(sum.imported)}</Figure> · Exported <Figure>{kwh(sum.exported)}</Figure> kWh</p>
         <p><Term name="peak">Peak (4 to 9 p.m.)</Term> {withLabel(sum.peak)} · Off-peak {withLabel(sum.offPeak)}</p>

@@ -115,3 +115,15 @@ test("a past year that ended with a surplus hints Net Surplus Compensation", () 
   expect(hints()).toContain("Net Surplus Compensation");
   expect(hints()).not.toContain("NEM");
 });
+
+// true-up-tracker, "Layout": from 1280 pixels the tiles share one row, and a figure shrinks only when its tile is narrow.
+const grid = (container: HTMLElement) => container.firstElementChild as HTMLElement;
+
+test("the current year's tiles share one row on wide screens, each figure sized to its tile", () => {
+  const { container } = render(<Tiles cycles={CURRENT} cost={CURRENT_COST} year={yearOf(2027)} today={TODAY} />);
+  expect(grid(container).className).toContain("xl:grid-flow-col");
+  for (const tile of grid(container).children) {
+    expect(tile.className).toContain("@container");
+    expect(tile.querySelector("p > span")!.className).toMatch(/text-\[28px\] @\[180px\]:text-\[34px\]/);
+  }
+});
