@@ -79,7 +79,7 @@ function Length({ text }: { text: string }) {
       <span className="sr-only">{text}</span>
       <span aria-hidden="true">
         {parts.map((part, i) => (i % 2
-          ? <span key={i} className={`text-[0.4em] font-medium text-muted-foreground ${i < parts.length - 1 ? "mr-3" : ""}`}>{part}</span>
+          ? <span key={i} className={`ml-2.5 text-[0.4em] font-medium text-muted-foreground ${i < parts.length - 1 ? "mr-4" : ""}`}>{part}</span>
           : <span key={i}>{part}</span>))}
       </span>
     </>

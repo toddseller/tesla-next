@@ -54,6 +54,8 @@ test("the outage record reads in days and hours, as the Backup section does", ()
   const figure = card.querySelector(".text-\\[56px\\]")!;
   expect(figure.querySelector(".sr-only")!.textContent).toBe("2 d 4 h");
   expect([...figure.querySelectorAll('[aria-hidden="true"] .text-muted-foreground')].map((u) => u.textContent)).toEqual(["d", "h"]);
+  // Each unit sits as far from its number as kWh does from a figure (the card's gap-2.5).
+  expect([...figure.querySelectorAll('[aria-hidden="true"] .text-muted-foreground')].every((u) => u.className.includes("ml-2.5"))).toBe(true);
   expect(within(card).getByRole("link", { name: "Sunday, February 4, 2024" }).getAttribute("href")).toBe("/solar?start=2024-02-01&end=2024-02-29&day=2024-02-04");
   expect(card.textContent).toContain("Record for 2 years, 9 months");
   expect(card.textContent).toContain("16 h 54 m ahead of #2");
