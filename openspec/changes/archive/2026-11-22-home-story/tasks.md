@@ -55,7 +55,7 @@ Each code task goes test-first: write the test, run it and see it fail for the r
 - [x] 10.0 DESIGN.md and `.impeccable/design.json`: record the oversized chapter words as the home page's pattern (an exception to "the largest type is a figure") and the chapter words' colors (no flow color but its flow's). Verify by reading both against the built page
 
 - [x] 10.1 Full suite (`yarn vitest run`) and `yarn build && yarn start`: `/`, `/?year=2023` and `/solar` render under the production CSP with no console errors, and `/?day=2026-10-14&start=2026-10-01&end=2026-10-31` answers 308 to `/solar` with the same query (curl). Verify by the commands' output
-- [ ] 10.2 On an onyx branch container against the production database: time `/` (over one second means keeping the slow reads per site day, design's Risks), then zoomed screenshots at 390 by 844 and 1440 wide, and the top bar at 1366 and 1440, compared with the approved mockup; verify by your OK on the screenshots before pushing
+- [x] 10.2 On an onyx branch container against the production database: time `/` (over one second means keeping the slow reads per site day, design's Risks), then zoomed screenshots at 390 by 844 and 1440 wide, and the top bar at 1366 and 1440, compared with the approved mockup; verify by your OK on the screenshots before pushing
 - [x] 10.3 README: the page list, the new `/api/solar-hours` route and any mention of the Solar page at `/`. Verify by grepping README for `` `/` `` and "Solar page"
 - [x] 10.4 Run `ponytail:ponytail-review` on the uncommitted diff in a fresh subagent, report the findings and wait for the pick before committing (all fourteen fixed, test-first, with still to come after sundown)
 

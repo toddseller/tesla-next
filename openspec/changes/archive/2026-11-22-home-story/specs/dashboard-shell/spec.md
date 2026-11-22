@@ -3,7 +3,11 @@
 ## MODIFIED Requirements
 
 ### Requirement: Navigation among the pages
-Every page SHALL have a top bar with the site's icon and name, "Tesla Solar Report", linking to `/`, and the seven pages as links in this order: Home (`/`), Solar (`/solar`), Impact (`/impact`), Distribution (`/distribution`), True-Up (`/true-up`), Top Ten (`/top`) and Patterns (`/patterns`). In a window narrower than 640 pixels the links SHALL be in the page menu instead of on the bar. The current page's link SHALL be marked for sight, with a red underline, and for assistive technology, as the current page.
+Every page SHALL have a top bar with the site's icon and name, "Tesla Solar Report", linking to `/`, and the seven pages as links in this order: Home, Solar, Impact, Distribution, True-Up, Top Ten and Patterns. In a window narrower than 640 pixels the links SHALL be in the page menu instead of on the bar. The current page's link SHALL be marked for sight, with a red underline, and for assistive technology, as the current page.
+
+#### Scenario: The links
+- **WHEN** a viewer reads the top bar
+- **THEN** its links open `/`, `/solar`, `/impact`, `/distribution`, `/true-up`, `/top` and `/patterns`, in that order
 
 #### Scenario: Moving between pages
 - **WHEN** a viewer on `/` chooses "Impact" in the top bar

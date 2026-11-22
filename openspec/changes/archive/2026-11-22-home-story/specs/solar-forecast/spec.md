@@ -37,7 +37,7 @@ When the card shows Today by hour, each of the next three days with forecast hou
 - **THEN** Friday's row is raised and the chart shows Friday's hours, with no horizontal scrolling
 
 ### Requirement: Expected kWh
-A day's expected kWh SHALL be the sum of its hours' expected kWh when the hourly forecast covers that day, so a day's figure, its hours and the expected by now never disagree; otherwise it SHALL be its stored forecast sunlight times the scale: the solar kWh over the forecast sunlight summed across the last 30 days before today that have both a solar total and a stored forecast. It SHALL be shown as a whole kWh, a sum of hours rounded up after rounding it to a tenth, so the expected by now never passes it. With fewer than 7 such days there SHALL be no expected kWh.
+A day's expected kWh SHALL be the sum of its hours' expected kWh when the hourly forecast covers that day, rounded up to a whole kWh so the expected by now never passes it; otherwise its stored forecast sunlight times the scale (the solar kWh over the forecast sunlight across the last 30 days before today with both), as a whole kWh. With fewer than 7 such days there SHALL be no expected kWh.
 
 #### Scenario: Scaling by the last 30 days
 - **WHEN** the last 30 days made 900 kWh under 360 MJ/m² of forecast sunlight, tomorrow's forecast is 13.2 MJ/m², and tomorrow has no hourly forecast

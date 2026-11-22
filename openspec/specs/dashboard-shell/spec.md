@@ -7,11 +7,19 @@ The frame and design system every dashboard page shares: navigation among the pa
 ## Requirements
 
 ### Requirement: Navigation among the pages
-Every page SHALL have a top bar with the site's icon and name, "Tesla Solar Report", linking to `/`, and the six pages as links in this order: Solar (`/`), Impact (`/impact`), Distribution (`/distribution`), True-Up (`/true-up`), Top Ten (`/top`) and Patterns (`/patterns`). In a window narrower than 640 pixels the links SHALL be in the page menu instead of on the bar. The current page's link SHALL be marked for sight, with a red underline, and for assistive technology, as the current page.
+Every page SHALL have a top bar with the site's icon and name, "Tesla Solar Report", linking to `/`, and the seven pages as links in this order: Home, Solar, Impact, Distribution, True-Up, Top Ten and Patterns. In a window narrower than 640 pixels the links SHALL be in the page menu instead of on the bar. The current page's link SHALL be marked for sight, with a red underline, and for assistive technology, as the current page.
+
+#### Scenario: The links
+- **WHEN** a viewer reads the top bar
+- **THEN** its links open `/`, `/solar`, `/impact`, `/distribution`, `/true-up`, `/top` and `/patterns`, in that order
 
 #### Scenario: Moving between pages
 - **WHEN** a viewer on `/` chooses "Impact" in the top bar
-- **THEN** `/impact` opens without a full page reload, and "Impact" is marked as the current page while "Solar" is not
+- **THEN** `/impact` opens without a full page reload, and "Impact" is marked as the current page while "Home" is not
+
+#### Scenario: The Solar page
+- **WHEN** a viewer opens `/solar?start=2026-10-01&end=2026-10-31`
+- **THEN** the page loads with "Solar" marked as the current page and "Home" not
 
 #### Scenario: Opening a page directly
 - **WHEN** a viewer opens `/true-up` from a bookmark
@@ -19,11 +27,11 @@ Every page SHALL have a top bar with the site's icon and name, "Tesla Solar Repo
 
 #### Scenario: A screen reader
 - **WHEN** a screen reader lists the page's navigation
-- **THEN** it finds a navigation landmark with the six links, and announces the current one as the current page
+- **THEN** it finds a navigation landmark with the seven links, and announces the current one as the current page
 
 #### Scenario: A screen reader on a phone
 - **WHEN** a screen reader lists the navigation of a page in a 390-pixel-wide window
-- **THEN** it finds a navigation landmark holding the Pages button, and once opened, the six links with the current one announced as the current page
+- **THEN** it finds a navigation landmark holding the Pages button, and once opened, the seven links with the current one announced as the current page
 
 ### Requirement: The frame fits any screen
 At any window width from 320 pixels up, every page's frame SHALL fit the window with no sideways scrolling. From 640 pixels up, the top bar's links and its live status SHALL wrap onto more lines rather than overflow; below 640 pixels the brand and the page menu's button SHALL share one row, with the live status under them. Each link and the page menu's button SHALL be at least 44 pixels tall so it can be tapped.
@@ -38,7 +46,7 @@ At any window width from 320 pixels up, every page's frame SHALL fit the window 
 
 #### Scenario: A wide window
 - **WHEN** a viewer opens the site in a 1512 pixel wide window
-- **THEN** the top bar holds the name, all six links and the live status on one line, and the page's content is centered at no more than 1200 pixels wide
+- **THEN** the top bar holds the name, all seven links and the live status on one line, and the page's content is centered at no more than 1200 pixels wide
 
 ### Requirement: The dashboard's design system
 Every page SHALL use one dark design system: a near-black background (`#0E1116`), raised panels (`#151A21`) with a fine border (`#232831`), light text (`#E6E8EB`) and muted gray labels (`#9AA3AD`). Text SHALL be set in IBM Plex Sans and figures in IBM Plex Mono, both served by the site itself. Tesla red (`#E82127`) SHALL mark the current page and indicators, and SHALL NOT be used for text smaller than 24 pixels, because it falls short of 4.5:1 contrast on the background.
@@ -201,11 +209,11 @@ When the viewer's system asks for reduced motion, or the browser can't animate p
 - **THEN** the clicked tab brightens on the click, and when Impact arrives the underline and the content change at once
 
 ### Requirement: The page menu on a phone
-In a window narrower than 640 pixels, the top bar SHALL end its brand row with a 44-pixel square button of three bars, named "Pages" for assistive technology and reporting whether its menu is open. It SHALL open a menu of the six page links in their order, the current one marked. Choosing a page, tapping outside the menu or pressing Escape SHALL close it.
+In a window narrower than 640 pixels, the top bar SHALL end its brand row with a 44-pixel square button of three bars, named "Pages" for assistive technology and reporting whether its menu is open. It SHALL open a menu of the seven page links in their order, the current one marked. Choosing a page, tapping outside the menu or pressing Escape SHALL close it.
 
 #### Scenario: Opening the menu
 - **WHEN** a viewer on Impact, on a 390 pixel wide screen, taps the Pages button
-- **THEN** a menu lists Solar, Impact, Distribution, True-Up, Top Ten and Patterns, each at least 44 pixels tall, with Impact underlined in red and marked as the current page
+- **THEN** a menu lists Home, Solar, Impact, Distribution, True-Up, Top Ten and Patterns, each at least 44 pixels tall, with Impact underlined in red and marked as the current page
 
 #### Scenario: Closing without choosing
 - **WHEN** the menu is open and the viewer taps outside it or presses Escape
@@ -213,7 +221,7 @@ In a window narrower than 640 pixels, the top bar SHALL end its brand row with a
 
 #### Scenario: A wide window
 - **WHEN** a viewer opens the site in a 640 pixel wide window
-- **THEN** the top bar shows the six links and no Pages button
+- **THEN** the top bar shows the seven links and no Pages button
 
 ### Requirement: Range presets on a phone
 In a window narrower than 640 pixels, each group of range presets SHALL be one button naming the selected preset, or "Custom" when none matches, that opens a menu of the group's presets in order, any Earlier years in Earlier's place, newest first. The selected one SHALL be marked. Choosing one SHALL close the menu and do what its button does. The dates button SHALL sit beside the menu's button.
@@ -303,7 +311,7 @@ The live pill SHALL hold solar from sunrise to sunset at the site, whatever the 
 - **THEN** the pill reads HOME 0.8 kW · PW 64% · DISCHARGING, with no SOLAR, until sunrise
 
 ### Requirement: The live pill in a narrower window
-In a window narrower than 1360 pixels, the live pill SHALL leave out solar and home and read the Powerwall part alone. On a phone the whole pill doesn't fit the row under the brand, and below 1360 pixels it would push the page links onto a second row.
+In a window narrower than 1440 pixels, the live pill SHALL leave out solar and home and read the Powerwall part alone. On a phone the whole pill doesn't fit the row under the brand, and below 1440 pixels it would push the seven page links onto a second row.
 
 #### Scenario: A phone at midday
 - **WHEN** a viewer opens a page on a 390 pixel wide screen while a status reports 6.2 kW of solar, 1.4 kW of home use, 92% and Charging
@@ -311,8 +319,12 @@ In a window narrower than 1360 pixels, the live pill SHALL leave out solar and h
 
 #### Scenario: A 1280 pixel laptop
 - **WHEN** the same status shows in a 1280 pixel wide window
-- **THEN** the pill reads PW 92% · CHARGING alone, and the six links stay on one row as before
+- **THEN** the pill reads PW 92% · CHARGING alone, and the seven links stay on one row as before
 
 #### Scenario: A wide window
 - **WHEN** the same status shows in a 1366 pixel wide window
-- **THEN** the pill reads SOLAR 6.2 kW · HOME 1.4 kW · PW 92% · CHARGING, on one line with the name and the six links
+- **THEN** the pill reads PW 92% · CHARGING alone, and the seven links stay on one row
+
+#### Scenario: A 1440 pixel window
+- **WHEN** the same status shows in a 1440 pixel wide window
+- **THEN** the pill reads SOLAR 6.2 kW · HOME 1.4 kW · PW 92% · CHARGING, on one line with the name and the seven links
