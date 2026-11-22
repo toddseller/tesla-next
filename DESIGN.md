@@ -250,6 +250,7 @@ The site's main control: readings (Tesla or PG&E), day views, range presets, VPP
 - **Links:** 14px, Dusk Gray, hover to Moonlight; the current page gets Raised Slate fill, white text and the selection line, which glides between tabs as a view transition.
 - **Phone (below 640px):** a 44px menu button (three bars that animate) opens a popover of the same links at 15px.
 - **Doorway links:** a link from a chapter or card into the page that holds more ("Every top ten", "Today, hour by hour") is a 44px outlined button, Input border on a faint Input fill, 14px medium, with a 16px arrow after its words that nudges right on hover. Bold text alone reads as a caption, never as a link.
+- **Hinted terms:** a term a newcomer won't know (true-up, NEM, VPP, storm watch) keeps its sentence's type and gets a dotted underline in Dusk Gray, offset below the text. Tapping, clicking or focusing it opens a popover on the card surface, 13px, with the term's one or two sentences from `lib/terms.ts`. It never navigates, so it never looks like a doorway link. One hint per term per page, at its first appearance.
 
 ### Live status
 A row in Plex Mono 13px: a Powerwall-green dot that rings once with each update (Dusk Gray when not live), the word and time, then pills. The live pill (Control Edge border, fully round) reads SOLAR, HOME and the Powerwall charge with flow-color swatches; an outage pill has a Tesla Red border and dot, a storm-watch pill is Solar-colored, a test pill is dashed.

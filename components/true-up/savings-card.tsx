@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 
 import { CountUp } from "@/components/count-up";
+import { WithTerm } from "@/components/term";
 
 import type { Savings } from "@/lib/true-up/savings";
 import { type Cost, savingsText } from "@/lib/true-up/text";
@@ -33,7 +34,7 @@ export function SavingsCard({ savings, season, current }: { savings: Savings; se
             <span className="text-sm text-muted-foreground">{text.unit}</span>
           </p>
         </div>
-        <p className="max-w-[460px] text-[13px] text-muted-foreground">{text.estimates}</p>
+        <p className="max-w-[460px] text-[13px] text-muted-foreground"><WithTerm text={text.estimates} terms={["westlight"]} /></p>
       </div>
       <div role="img" aria-label={text.bar.label} className="motion-uncover flex h-7 gap-0.5 overflow-hidden rounded-md">
         {text.bar.parts.map(([part, dollars]) => <div key={part} className={COLORS[part]} style={{ flexGrow: dollars, flexBasis: 0 }} />)}
@@ -49,12 +50,12 @@ export function SavingsCard({ savings, season, current }: { savings: Savings; se
           </span>
           <span className="font-mono text-xl font-semibold"><CountUp text={powerwalls.bill} /></span>
           {powerwalls.vpp && <p className="text-[13px] text-muted-foreground">{powerwalls.vpp}</p>}
-          {!powerwalls.whatIf && powerwalls.nem2 && <p className="text-[13px] text-muted-foreground">{powerwalls.nem2}</p>}
+          {!powerwalls.whatIf && powerwalls.nem2 && <p className="text-[13px] text-muted-foreground"><WithTerm text={powerwalls.nem2} terms={["nem2"]} /></p>}
         </div>
         <div className="flex flex-col gap-2.5">
           {powerwalls.parts.map(([label, value]) => (
             <div key={label} className="flex items-baseline justify-between gap-3 sm:flex-col sm:gap-1">
-              <span className="text-[13px] text-muted-foreground">{label}</span>
+              <span className="text-[13px] text-muted-foreground"><WithTerm text={label} terms={["storm-watch"]} /></span>
               <span className="font-mono text-lg font-semibold"><CountUp text={value} /></span>
             </div>
           ))}
@@ -63,7 +64,7 @@ export function SavingsCard({ savings, season, current }: { savings: Savings; se
           <div role="group" aria-label="What if (simulation)" className="flex flex-col gap-1.5 rounded-lg border border-dashed px-3.5 py-3">
             <span aria-hidden className="text-[13px] text-muted-foreground">What if (simulation)</span>
             <span className="font-mono text-lg font-semibold"><CountUp text={powerwalls.whatIf.value} /></span>
-            <p className="text-[13px] text-muted-foreground">{[powerwalls.whatIf.line, powerwalls.nem2].filter(Boolean).join(" ")}</p>
+            <p className="text-[13px] text-muted-foreground"><WithTerm text={[powerwalls.whatIf.line, powerwalls.nem2].filter(Boolean).join(" ")} terms={["nem2"]} /></p>
           </div>
         )}
       </div>

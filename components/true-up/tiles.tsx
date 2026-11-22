@@ -1,6 +1,8 @@
 import { type ReactNode, useId } from "react";
 
 import { CountUp } from "@/components/count-up";
+import { Term, WithTerm } from "@/components/term";
+import type { TermName } from "@/lib/terms";
 
 import type { TrueUpYear } from "@/lib/true-up/reads";
 import {
@@ -10,7 +12,7 @@ import {
 
 const Figure = ({ children }: { children: ReactNode }) => <span className="font-mono text-foreground">{children}</span>;
 
-function Tile({ title, value, unit, children }: { title: string; value: string | null; unit: string | null; children: ReactNode }) {
+function Tile({ title, value, unit, children }: { title: ReactNode; value: string | null; unit: string | null; children: ReactNode }) {
   const id = useId();
   return (
     <section aria-labelledby={id} className="flex flex-col gap-2 rounded-[10px] border bg-card px-[22px] py-5">
@@ -27,8 +29,8 @@ function Tile({ title, value, unit, children }: { title: string; value: string |
   );
 }
 
-const TextTile = ({ title, text }: { title: string; text: TileText }) => (
-  <Tile title={title} value={text.value} unit={text.unit}><p>{text.line}</p></Tile>
+const TextTile = ({ title, text, terms = [] }: { title: ReactNode; text: TileText; terms?: TermName[] }) => (
+  <Tile title={title} value={text.value} unit={text.unit}><p><WithTerm text={text.line} terms={terms} /></p></Tile>
 );
 
 const withLabel = (value: number) => <><Figure>{kwh(value)}</Figure> {netLabel(value).toLowerCase()}</>;
@@ -43,14 +45,14 @@ export function Tiles({ cycles, cost, year, today }: { cycles: Cycle[]; cost: Co
     <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,240px),1fr))] gap-4">
       <Tile title={year?.current ? "Net so far" : year ? "Net for the year" : "Net"} value={kwh(sum.net)} unit={`kWh ${netLabel(sum.net).toLowerCase()}`}>
         <p>Imported <Figure>{kwh(sum.imported)}</Figure> · Exported <Figure>{kwh(sum.exported)}</Figure> kWh</p>
-        <p>Peak (4 to 9 p.m.) {withLabel(sum.peak)} · Off-peak {withLabel(sum.offPeak)}</p>
+        <p><Term name="peak">Peak (4 to 9 p.m.)</Term> {withLabel(sum.peak)} · Off-peak {withLabel(sum.offPeak)}</p>
       </Tile>
       {year && cost && (year.current
-        ? cost.charges_so_far !== null && <TextTile title="Charges so far" text={chargesSoFarText(cost, started)} />
-        : <TextTile title="True-up" text={trueUpText(cost)} />)}
+        ? cost.charges_so_far !== null && <TextTile title="Charges so far" text={chargesSoFarText(cost, started)} terms={["nem"]} />
+        : <TextTile title="True-up" text={trueUpText(cost)} terms={["nem", "nsc"]} />)}
       {year?.current && cost?.kwh_projection && <TextTile title="Projected true-up" text={projectionText(cost.kwh_projection, cost.projections)} />}
       {billed && <TextTile title="Billed against estimate" text={billed} />}
-      {vpp && <TextTile title="Tesla VPP credit" text={vpp} />}
+      {vpp && <TextTile title={<>Tesla <Term name="vpp">VPP</Term> credit</>} text={vpp} />}
     </div>
   );
 }

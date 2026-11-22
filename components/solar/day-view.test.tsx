@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 // Ported from anton-tesla-api-ws components/DayView.test.jsx with its values; it mocked Chart.js, these draw with
 // Recharts. The estimate note tests are dropped with the notes (solar-day-view, "Flows drawn without estimate markings").
-import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, test, vi } from "vitest";
 
 import { DayDetails, DayView } from "@/components/solar/day-view";
@@ -248,12 +248,19 @@ describe("off-grid and storm watch spans", () => {
   };
   const shading = (container: HTMLElement, selector: string) => container.querySelectorAll(`${selector} .recharts-reference-area`).length;
 
+  test("a day with two storm watch spans hints storm watch once", () => {
+    render(<DayView day={{ ...spans, storm_watch: [{ start: "2026-10-16T15:00:00Z", end: "2026-10-16T17:00:00Z" }, { start: "2026-10-16T19:00:00Z", end: null }] }} />);
+    expect(within(screen.getByRole("list", { name: "Off grid and storm watch" })).getAllByRole("button").map((b) => b.textContent)).toEqual(["Storm watch"]);
+  });
+
   test("every view shades them and lists them under the charts", () => {
     const { container } = render(<DayView day={spans} />);
     expect(shading(container, '[data-testid="day-chart"]')).toBe(2);
     expect(screen.getByRole("list", { name: "Off grid and storm watch" }).textContent).toBe(
       "Off grid (outage) 2:51 PM to midnightStorm watch 12:00 PM to now, 0.0 kWh charged from the grid",
     );
+    // term-hints: a newcomer can open what storm watch means.
+    expect(within(screen.getByRole("list", { name: "Off grid and storm watch" })).getAllByRole("button").map((b) => b.textContent)).toEqual(["Storm watch"]);
     fireEvent.click(screen.getByRole("tab", { name: "Powerwall" }));
     expect(shading(container, '[data-testid="day-chart"]')).toBe(2);
   });
