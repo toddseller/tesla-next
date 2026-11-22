@@ -101,3 +101,17 @@ test("a tile whose value is words, not a figure, sets it in sans: mono means mea
   const value = screen.getByText("Not started");
   expect(value.closest(".font-mono")).toBeNull();
 });
+
+// term-hints: the True-Up page's terms, each a hint once, the words as they were.
+const hints = () => screen.queryAllByRole("button").map((b) => b.textContent);
+
+test("the current year's tiles hint the peak, NEM and VPP", () => {
+  render(<Tiles cycles={CURRENT} cost={CURRENT_COST} year={yearOf(2027)} today={TODAY} />);
+  expect(hints()).toEqual(["Peak (4 to 9 p.m.)", "NEM", "VPP"]);
+});
+
+test("a past year that ended with a surplus hints Net Surplus Compensation", () => {
+  render(<Tiles cycles={YEAR_25_26} cost={{ ...COST_25_26, amount_due: 0, net_exported_kwh: 412, nsc_estimate: 18 }} year={yearOf(2026)} today={TODAY} />);
+  expect(hints()).toContain("Net Surplus Compensation");
+  expect(hints()).not.toContain("NEM");
+});

@@ -5,6 +5,7 @@ import { Area, AreaChart, CartesianGrid, ComposedChart, Line, ReferenceArea, Ref
 
 import { AxisTick } from "@/components/solar/axis-tick";
 import { Rolling } from "@/components/rolling";
+import { WithTerm } from "@/components/term";
 import { ChartContainer, ChartTooltip } from "@/components/ui/chart";
 import { useEntering } from "@/components/use-entering";
 import {
@@ -328,9 +329,10 @@ export function DayView({ day, today }: { day: Day; today?: string }) {
           {viewKey === "powerwall" && <ChargeLevel day={day} spans={spans} />}
           {spans.length > 0 && (
             <ul aria-label="Off grid and storm watch" className="flex flex-col gap-1.5 text-sm text-muted-foreground">
+              {/* Storm watch is hinted once, on its first span. */}
               {spans.map(({ kind, text }, i) => (
                 <li key={i} className="flex items-center gap-2">
-                  <span aria-hidden className={`size-2.5 rounded-xs ${kind === "off_grid" ? "bg-grid/60" : "bg-powerwall/40"}`} />{text}
+                  <span aria-hidden className={`size-2.5 rounded-xs ${kind === "off_grid" ? "bg-grid/60" : "bg-powerwall/40"}`} /><span><WithTerm text={text} terms={i === spans.findIndex((s) => s.kind !== "off_grid") ? ["storm-watch"] : []} /></span>
                 </li>
               ))}
             </ul>

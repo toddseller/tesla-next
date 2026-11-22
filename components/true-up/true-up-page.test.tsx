@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 // The True-Up Tracker in the browser: its year picker and staying current, from the true-up-tracker spec.
-import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 
 import { COST_25_26, CURRENT, CURRENT_COST, CURRENT_SAVINGS, SAVINGS_25_26, YEAR_25_26, YEARS } from "@/components/true-up/fixtures";
@@ -179,4 +179,10 @@ test("figures count up on the page's first view, and not after a range change br
   act(() => vi.advanceTimersByTime(1000));
   rerender(page(YEAR_25, YEAR_25_26, COST_25_26, SAVINGS_25_26));
   expect(document.querySelectorAll("[data-part=counting]").length).toBe(0);
+});
+
+test("the title hints the true-up", () => {
+  render(page());
+  expect(within(screen.getByRole("heading", { level: 1 })).getByRole("button", { name: "True-Up" })).toBeTruthy();
+  expect(screen.getByRole("heading", { level: 1 }).textContent).toBe("True-Up Tracker");
 });

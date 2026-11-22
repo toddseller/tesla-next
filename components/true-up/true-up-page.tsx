@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { FirstView } from "@/components/count-up";
 import { RangeControls } from "@/components/solar/range-controls";
 import { useReload } from "@/components/solar/use-reload";
+import { Term } from "@/components/term";
 import { CycleChart } from "@/components/true-up/cycle-chart";
 import { CycleList, MeteringNote } from "@/components/true-up/cycle-list";
 import { PaybackCard } from "@/components/true-up/payback-card";
@@ -63,7 +64,7 @@ export function TrueUpPage({ range, years, cycles: served, cost: servedCost, sav
       <div className="flex flex-col gap-5">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex flex-col gap-0.5">
-            <h1 className="text-[22px] font-semibold">True-Up Tracker</h1>
+            <h1 className="text-[22px] font-semibold"><Term name="true-up">True-Up</Term> Tracker</h1>
             <p className="text-sm text-muted-foreground">Grid energy by PG&amp;E billing cycle</p>
           </div>
           <RangeControls today={today} range={range} presets={presets} earlier={earlier} onRange={(next) => router.push(address(next), { scroll: false })} />

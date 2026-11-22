@@ -81,3 +81,11 @@ test("the card's figures count up from zero when the page is first seen", () => 
   expect(finals.length).toBeGreaterThanOrEqual(4);
   for (const counting of document.querySelectorAll("[data-part=counting]")) expect(counting.textContent).toMatch(/0/);
 });
+
+// term-hints: the savings card's terms, each a hint once.
+test("the savings card hints WestLight and NEM2, and Storm watch when a storm watch day is counted", () => {
+  render(<SavingsCard savings={{ ...SAVINGS_25_26, storm_days: 3, powerwalls_storm: -18.4 }} season={COST_25_26.vpp} current={false} />);
+  expect(screen.getAllByRole("button").map((b) => b.textContent).sort()).toEqual(["NEM2", "Storm watch", "WestLight"]);
+  // Where a visitor first meets it: the estimates note, above the paid split.
+  expect(screen.getByRole("button", { name: "WestLight" }).closest("p")!.textContent).toMatch(/^Estimates of PG&E's and WestLight Energy's charges\./);
+});
