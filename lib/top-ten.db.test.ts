@@ -65,11 +65,10 @@ test("the longest outages by hours, with the day they began in the site's time; 
   await storeOutage("2025-01-05 10:00:00", 0.005);
   await storeOutage("2026-11-09 08:36:41", 2);
   await owner.query("INSERT INTO site_state VALUES ('2026-11-09 08:36:00-08', '2026-11-09 10:40:00-08', 'off_grid_intentional', false)");
-  expect((await topTen(false, "corrected"))[3].outages).toEqual([
-    { date: "Feb 4, 2024", hours: 52.3, day: "2024-02-04" },
-    { date: "Dec 14, 2024", hours: 35.4, day: "2024-12-14" },
-    { date: "Dec 31, 2024", hours: 2, day: "2024-12-31" },
-  ]);
+  // Each length exact, so its minutes read as Impact reads them; the ranking still goes by the tenth.
+  const outages = (await topTen(false, "corrected"))[3].outages;
+  expect(outages.map((o) => [o.date, o.day])).toEqual([["Feb 4, 2024", "2024-02-04"], ["Dec 14, 2024", "2024-12-14"], ["Dec 31, 2024", "2024-12-31"]]);
+  expect(outages.map((o) => o.hours)).toEqual([expect.closeTo(52.27, 6), expect.closeTo(35.44, 6), expect.closeTo(2, 6)]);
 });
 
 test("outages that read the same to a tenth of an hour rank the newer first, and the newer wins 10th place", async () => {

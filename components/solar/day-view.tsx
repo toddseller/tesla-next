@@ -236,7 +236,7 @@ function ExpectedTotal({ generated, expected, past }: { generated: number; expec
   return (
     // Wrapped inside the 4xl line on a phone, it would leave a 4xl gap; its own line keeps its own size.
     <span className="text-base leading-normal text-muted-foreground max-sm:block">
-      {" "}of {Math.round(expected)} kWh expected
+      {" "}of {expected.toFixed(1)} kWh expected
       {/* Today's share would compare part of a day with all of it. */}
       {past && <> <span className={share < SHORT_OF_EXPECTED ? "text-destructive" : undefined}>({share}%)</span></>}
     </span>

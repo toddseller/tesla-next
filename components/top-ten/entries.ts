@@ -1,3 +1,4 @@
+import { hoursLength } from "@/lib/backup-figures";
 import { pyRound } from "@/lib/intervals/python";
 import { address, monthOf } from "@/lib/solar/ranges";
 import type { GridDay, GridMonth, OutageDay, SolarDay } from "@/lib/top-ten";
@@ -7,18 +8,19 @@ import { kwh } from "@/lib/true-up/text";
 export type Flow = "solar" | "grid" | "powerwall";
 export const FLOW_DOT: Record<Flow, string> = { solar: "bg-solar", grid: "bg-grid", powerwall: "bg-powerwall" };
 
-export type Entry = { rank: number; figure: number; value: string; unit: "kWh" | "h"; date: string; long: string; when: string; since: string; href: string };
+export type Entry = { rank: number; figure: number; value: string; unit: "kWh" | ""; date: string; long: string; when: string; since: string; href: string };
 
 const full = (day: string, options: Intl.DateTimeFormatOptions) => new Date(`${day}T00:00:00Z`).toLocaleDateString("en-US", { ...options, timeZone: "UTC" });
 
+// An outage's length reads in days and hours, as the Backup section reads it; the words carry its units.
 const day = (date: string, iso: string, figure: number, i: number, unit: Entry["unit"] = "kWh"): Entry => ({
-  rank: i + 1, figure, value: kwh(figure), unit, date, when: iso, since: iso, href: address(monthOf(iso), iso),
+  rank: i + 1, figure, value: unit ? kwh(figure) : hoursLength(figure), unit, date, when: iso, since: iso, href: address(monthOf(iso), iso),
   long: full(iso, { weekday: "long", month: "long", day: "numeric", year: "numeric" }),
 });
 
 export const solarEntries = (rows: SolarDay[]) => rows.map((r, i) => day(r.date, r.day, pyRound(r.solar, 1), i));
 export const dayEntries = (rows: GridDay[]) => rows.map((r, i) => day(r.date, r.day, -r.net_grid, i));
-export const outageEntries = (rows: OutageDay[]) => rows.map((r, i) => day(r.date, r.day, r.hours, i, "h"));
+export const outageEntries = (rows: OutageDay[]) => rows.map((r, i) => day(r.date, r.day, r.hours, i, ""));
 export const monthEntries = (rows: GridMonth[]) =>
   rows.map((r, i): Entry => {
     const range = monthOf(`${r.month}-01`);
@@ -28,7 +30,9 @@ export const monthEntries = (rows: GridMonth[]) =>
     };
   });
 
-export const lead = ([first, second]: Entry[]) => kwh(first.figure - second.figure);
+// None when #1 and #2 read the same.
+export const lead = ([first, second]: Entry[]) => (first.value === second.value ? null : (first.unit ? kwh : hoursLength)(first.figure - second.figure));
+export const withUnit = (e: Entry) => (e.unit ? `${e.value} ${e.unit}` : e.value);
 
 const plural = (n: number, unit: string) => `${n} ${unit}${n === 1 ? "" : "s"}`;
 

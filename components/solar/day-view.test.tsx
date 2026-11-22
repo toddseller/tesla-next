@@ -483,13 +483,13 @@ describe("the expected total beside Total Generated", () => {
 
   test("a past day well short of it shows its percentage in red", () => {
     render(<DayView day={solarDay("2026-04-16", 25.7, 64.4)} today="2026-11-10" />);
-    expect(screen.getByText("of 64 kWh expected", { exact: false })).toBeTruthy();
+    expect(screen.getByText("of 64.4 kWh expected", { exact: false })).toBeTruthy();
     expect(screen.getByText("(40%)").className).toContain("text-destructive");
   });
 
   test("on a phone it takes a line of its own under the kWh, in its own type size", () => {
     render(<DayView day={solarDay("2026-04-10", 36.4, 43.1)} today="2026-11-10" />);
-    const figure = screen.getByText("of 43 kWh expected", { exact: false });
+    const figure = screen.getByText("of 43.1 kWh expected", { exact: false });
     expect(figure.className).toContain("max-sm:block");
     expect(figure.className).toContain("leading-normal");
   });
@@ -500,8 +500,8 @@ describe("the expected total beside Total Generated", () => {
   });
 
   test("today shows the day's expected total without a percentage", () => {
-    render(<DayView day={solarDay("2026-11-10", 18.8, 34)} today="2026-11-10" />);
-    expect(screen.getByText("of 34 kWh expected", { exact: false })).toBeTruthy();
+    render(<DayView day={solarDay("2026-11-10", 18.8, 34.2)} today="2026-11-10" />);
+    expect(screen.getByText("of 34.2 kWh expected", { exact: false })).toBeTruthy();
     expect(screen.queryByText(/%\)/)).toBeNull();
   });
 

@@ -85,7 +85,7 @@ test("a partial first month opens from the range's first day", () => {
 
 test("a legend names the flows, a note explains grid below zero, and the axis is in kWh", () => {
   const { container } = render(<RangeChart items={OCTOBER} range={OCTOBER_RANGE} onOpenDay={() => {}} onOpenRange={() => {}} />);
-  for (const name of ["Solar", "Grid", "House"]) expect(screen.getByText(name)).toBeTruthy();
+  for (const name of ["Solar", "Grid", "House, car included"]) expect(screen.getByText(name)).toBeTruthy();
   expect(screen.getByText(/grid below zero/i).textContent).toMatch(/more energy sent to the grid than taken from it/);
   expect(container.querySelector("svg.recharts-surface")?.textContent).toMatch(/\d kWh/);
 });
@@ -96,6 +96,7 @@ test("a day's details show its values and that clicking opens it", () => {
   expect(screen.getByText("44.4 kWh")).toBeTruthy();
   expect(screen.getByText("-8.3 kWh")).toBeTruthy();
   expect(screen.getByText("34.0 kWh")).toBeTruthy();
+  expect(screen.getByText("House, car included")).toBeTruthy();
   expect(screen.getByText(/click to open the day/i)).toBeTruthy();
 });
 

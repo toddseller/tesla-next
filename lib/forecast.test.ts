@@ -178,11 +178,12 @@ test("a day ahead's hours expect their sunlight times today's scale, from its fi
   expect(thu.byNow).toBeNull();
 });
 
-test("a day its hours cover expects their sum, to a whole kWh, so the expected by now never passes it; other days keep the daily scale", () => {
+test("a day its hours cover expects their sum, so the expected by now never passes it; other days keep the daily scale", () => {
   const card = forecastCard(data({ hourly: hourly("2026-11-11T01:30:00Z") }), TODAY, NOW);
-  expect(card.today.expected).toBe(33);
-  expect(card.days!.map((d) => [d.day, d.expected])).toEqual([["2026-11-11", 33], ["2026-11-12", 17], ["2026-11-13", 27]]);
-  expect(card.byHour!.byNow!.expected).toBeLessThanOrEqual(card.today.expected!);
+  expect(card.today.expected).toBe(32.8);
+  expect(card.days!.map((d) => [d.day, d.expected])).toEqual([["2026-11-11", 33], ["2026-11-12", 16.9], ["2026-11-13", 27]]);
+  // Both are shown to a tenth, and rounding keeps their order, so the shown expected by now never passes the day's.
+  expect(Math.round(card.byHour!.byNow!.expected * 10) / 10).toBeLessThanOrEqual(card.today.expected!);
 });
 
 test("a day ahead without forecast hours has none, and no day ahead has hours when today has none", () => {
@@ -219,12 +220,16 @@ test("fog needs an overcast low sky; rain keeps its code", () => {
   expect(observedCode(sample(61, 100, 44))).toBe(61);
 });
 
-test("a day its hours cover rounds their sum up, so a sum like 18.4 never shows below the expected by now", () => {
-  // Scales a hundredth apart move the sum about a third of a kWh, so some of them round down.
+test("a day its hours cover expects their sum to a tenth, the figure every page shows, so a sum like 18.4 reads 18.4", () => {
+  // Scales a hundredth apart move the sum about a third of a kWh, so some of them would round down to a whole kWh.
   for (const f of Array.from({ length: 20 }, (_, i) => 0.8 + i / 100)) {
     const rows = NOV_8.map(([hour, wm2, made]) => [hour, wm2 * f, made]) as typeof NOV_8;
     const card = forecastCard(data({ hourly: hourly(null, 30, rows) }), TODAY, NOW);
-    const sum = Math.round(card.byHour!.hours.reduce((total, h) => total + h.expected, 0) * 10) / 10;
-    expect(card.today.expected).toBe(Math.ceil(sum));
+    expect(card.today.expected).toBe(Math.round(card.byHour!.hours.reduce((total, h) => total + h.expected, 0) * 10) / 10);
   }
+});
+
+test("a day without hours expects its daily model's figure to a tenth", () => {
+  const rows = data().rows.map((r) => (r.day === "2026-11-12" ? { ...r, radiation_mj: 5.63 } : r));
+  expect(forecastCard(data({ rows }), TODAY, NOW).days!.find((d) => d.day === "2026-11-12")!.expected).toBe(14.1);
 });

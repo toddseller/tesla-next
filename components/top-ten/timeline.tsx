@@ -1,6 +1,7 @@
 import type { CSSProperties } from "react";
 
-import { type Entry, FLOW_DOT, type Flow } from "@/components/top-ten/entries";
+import { type Entry, FLOW_DOT, type Flow, withUnit } from "@/components/top-ten/entries";
+import { outageTick } from "@/lib/backup-figures";
 import { niceAxis } from "@/lib/solar/day-views";
 
 const utc = (day: string) => Date.parse(`${day}T00:00:00Z`);
@@ -14,6 +15,8 @@ export function Timeline({ label, entries, flow, today }: { label: string; entri
   const left = (day: string) => percent((utc(day) - from) / (to - from));
   const figures = entries.map((e) => e.figure);
   // At least 1 kWh (or hour) tall, so a single entry still has an axis.
+  // Outages read in days and hours, as their dots do; the rest in their figures' own unit.
+  const tick = entries[0]?.unit === "" ? outageTick : (t: number) => t.toLocaleString("en-US");
   const { domain: [low, high], ticks } = niceAxis(Math.min(...figures), Math.max(...figures, Math.min(...figures) + 1));
   const top = (figure: number) => percent((high - figure) / (high - low));
   const years = Array.from({ length: year - 2021 }, (_, i) => 2022 + i);
@@ -21,12 +24,12 @@ export function Timeline({ label, entries, flow, today }: { label: string; entri
   return (
     <div
       role="img"
-      aria-label={`${label}: ${entries.map((e) => `#${e.rank} ${e.value} ${e.unit} ${e.date}`).join("; ")}`}
-      className="grid grid-cols-[44px_minmax(0,1fr)] grid-rows-[200px_22px] font-mono text-xs text-muted-foreground"
+      aria-label={`${label}: ${entries.map((e) => `#${e.rank} ${withUnit(e)} ${e.date}`).join("; ")}`}
+      className={`grid ${entries[0]?.unit === "" ? "grid-cols-[72px_minmax(0,1fr)]" : "grid-cols-[44px_minmax(0,1fr)]"} grid-rows-[200px_22px] font-mono text-xs text-muted-foreground`}
     >
       <div aria-hidden className="relative">
         {ticks.map((t) => (
-          <span key={t} className="absolute right-2 -translate-y-1/2" style={{ top: top(t) }}>{t.toLocaleString("en-US")}</span>
+          <span key={t} className="absolute right-2 -translate-y-1/2 whitespace-nowrap" style={{ top: top(t) }}>{tick(t)}</span>
         ))}
       </div>
       <div aria-hidden className="relative border-b border-l border-input">
@@ -36,7 +39,7 @@ export function Timeline({ label, entries, flow, today }: { label: string; entri
         {entries.toReversed().map((e) => (
           <span
             key={e.rank}
-            title={`#${e.rank}: ${e.value} ${e.unit}, ${e.date}`}
+            title={`#${e.rank}: ${withUnit(e)}, ${e.date}`}
             className={`motion-pop absolute flex -translate-1/2 items-center justify-center rounded-full text-[11px] font-semibold text-background ${FLOW_DOT[flow]} ${dotSize(e.rank)} ${e.rank === 1 ? "ring-2 ring-primary ring-offset-[3px] ring-offset-card" : "ring-2 ring-card"}`}
             style={{ left: left(e.when), top: top(e.figure), "--i": e.rank - 1 } as CSSProperties}
           >

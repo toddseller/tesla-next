@@ -50,8 +50,7 @@ export function Today({ today, forecast, day }: Props) {
   useLiveStream({ onTotals: (date) => date === siteToday() && void reload(date), onReopen: () => void reload() });
 
   const soFar = card?.today.soFar ?? 0;
-  // The hours' sum to a tenth, as still to come counts them, rather than the forecast tile's whole kWh.
-  const expected = card?.today.expected == null ? null : card.byHour ? card.byHour.hours.reduce((sum, h) => sum + h.expected, 0) : card.today.expected;
+  const expected = card?.today.expected ?? null;
   const byNow = card?.byHour?.byNow ?? null;
   const rows = todayRows(shownDay, card?.byHour?.hours ?? []);
   const total = (view: string, i = 0) => viewSummary(view, shownDay.totals, { vehicleData: shownDay.vehicle_data }).headlines[i].value.toFixed(1);
@@ -83,7 +82,7 @@ export function Today({ today, forecast, day }: Props) {
         </ComposedChart>
       </ChartContainer>
       <div className="grid grid-cols-2 gap-x-4 gap-y-5 border-t pt-5 md:grid-cols-4">
-        <Figure value={total("home")} unit="kWh" label="used by the house" />
+        <Figure value={total("home")} unit="kWh" label={shownDay.vehicle_data ? "used by the house, car apart" : "used by the house"} />
         <Figure value={total("vehicle")} unit="kWh" label="charged into the car" className="text-vehicle" />
         <Figure value={total("grid")} unit="kWh" label="from the grid" className="text-grid" />
         <Figure value={total("grid", 1)} unit="kWh" label="sent to PG&E" className="text-grid" />
@@ -92,7 +91,7 @@ export function Today({ today, forecast, day }: Props) {
         {card?.days
           ? <Figure wide label="expected over the next three days" className="text-[15px] md:text-lg" value={card.days.map((d, i) => (
               // A day breaks only between days, never inside one.
-              <Fragment key={d.day}>{i ? " · " : ""}<span data-part="day-ahead" className="whitespace-nowrap">{weekday.format(Date.parse(`${d.day}T12:00:00Z`))} {d.expected}<Unit unit="kWh" /></span></Fragment>
+              <Fragment key={d.day}>{i ? " · " : ""}<span data-part="day-ahead" className="whitespace-nowrap">{weekday.format(Date.parse(`${d.day}T12:00:00Z`))} {d.expected.toFixed(1)}<Unit unit="kWh" /></span></Fragment>
             ))} />
           : <p className="col-span-2 text-[13px] text-muted-foreground">No forecast right now</p>}
       </div>

@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
 
-import { blipsPerYear, duration, outageBattery, stormDays, weatherLabel } from "./backup-figures";
+import { blipsPerYear, duration, outageBattery, stormDays, weatherLabel, hoursLength } from "./backup-figures";
 
 const MIN = 60_000;
 const STEP = 5 * MIN;
@@ -169,4 +169,9 @@ test("a length of time reads in days and hours from a day up, and as before unde
   expect(duration(52 * 3600 + 16 * 60 + 12)).toBe("2 d 4 h");
   expect(duration(4 * 60 + 30)).toBe("4 m 30 s");
   expect(duration(42)).toBe("42 s");
+});
+
+test("a length in hours reads as duration() reads seconds, whole seconds first so float noise can't drop a minute", () => {
+  expect(hoursLength(52.3)).toBe("2 d 4 h");
+  expect(hoursLength(52.3 - 35.4)).toBe("16 h 54 m");
 });

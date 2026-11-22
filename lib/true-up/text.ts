@@ -137,6 +137,8 @@ export function vppText(season: Cost["vpp"], today: string): TileText | null {
   const apart = "Tesla pays it, apart from PG&E's true-up.";
   if (season.payout !== null)
     return { value: dollars(season.payout), unit: `${season.season} season`, line: `Paid ${date(season.paid_on!, { month: "long", year: "numeric" })}. ${apart}` };
+  if (!season.estimate && today < `${season.season}-05-01`)
+    return { value: "Not started", unit: `${season.season} season`, line: `The season runs May 1 to October 31. ${apart}` };
   if (!season.estimate)
     return { value: "$0", unit: `${season.season} season`, line: `No events marked yet; the season runs May 1 to October 31. ${apart}` };
   const soFar = today <= `${season.season}-10-31` ? " so far" : "";
@@ -156,10 +158,16 @@ const yearAfter = (iso: string) => `${Number(iso.slice(0, 4)) + 1}${iso.slice(4)
 export function savingsText(savings: Savings, season: Cost["vpp"], current: boolean) {
   const { actual, no_system: noSystem, solar_saved: solar, powerwalls_added: powerwalls } = savings;
   const saved = Math.round((noSystem.total - actual.total) * 100) / 100;
-  const bar: [string, number][] = powerwalls < 0 ? [["paid", actual.total], ["saved", saved]] : [["paid", actual.total], ["powerwalls", powerwalls], ["solar", solar]];
-  const spoken = powerwalls < 0
-    ? `${wholeDollars(saved)} saved`
-    : `${wholeDollars(powerwalls)} saved by the Powerwalls, ${wholeDollars(solar)} saved by solar`;
+  // Whole dollars that add up on the card: the saving is the shown no-system cost less the shown paid, and the
+  // Powerwalls' amount is what takes the shown solar saving to it, which can be a dollar off theirs rounded alone.
+  const shownSaved = Math.round(noSystem.total) - Math.round(actual.total);
+  const shownPowerwalls = shownSaved - Math.round(solar);
+  // Cost or saved, from the dollars shown, so the card's words and figures agree when the effect is under a dollar.
+  const costs = shownPowerwalls < 0;
+  const bar: [string, number][] = costs ? [["paid", actual.total], ["saved", saved]] : [["paid", actual.total], ["powerwalls", Math.max(0, powerwalls)], ["solar", solar]];
+  const spoken = costs
+    ? `${wholeDollars(shownSaved)} saved`
+    : `${wholeDollars(shownPowerwalls)} saved by the Powerwalls, ${wholeDollars(solar)} saved by solar`;
 
   const vpp = season && (season.payout ?? (season.estimate || null));
   const vppText = season && vpp
@@ -178,7 +186,7 @@ export function savingsText(savings: Savings, season: Cost["vpp"], current: bool
       line: `Covering only 4 to 9 p.m. on ${savings.used_days === 1 ? "that day" : `those ${savings.used_days} days`}.`,
     }
     : null;
-  const nem2 = powerwalls < 0 ? "Under NEM2, exporting solar earns about what importing it later costs, so storing it pays only between 4 and 9 p.m." : null;
+  const nem2 = costs ? "Under NEM2, exporting solar earns about what importing it later costs, so storing it pays only between 4 and 9 p.m." : null;
 
   const { rebuilt_days: rebuilt, uncorrected_days: uncorrected } = savings;
   const days = rebuilt && uncorrected
@@ -190,13 +198,15 @@ export function savingsText(savings: Savings, season: Cost["vpp"], current: bool
     : null;
 
   return {
-    saved: wholeDollars(saved),
+    saved: wholeDollars(shownSaved),
     unit: `estimate${current ? " so far" : ""}, of ${wholeDollars(noSystem.total)} without solar or Powerwalls`,
     bar: { parts: bar, label: `Of ${wholeDollars(noSystem.total)}: ${wholeDollars(actual.total)} paid, ${spoken}` },
     paid: wholeCredit(actual.total),
     paidSplit: `PG&E ${wholeCredit(actual.pge)} · WestLight ${wholeCredit(actual.westlight)}`,
     solar: wholeDollars(solar),
-    powerwalls: { bill: `${effect(powerwalls)} on the bill`, vpp: vppText, parts, whatIf, nem2 },
+    powerwallsCost: costs,
+    solarLess: costs ? `Less the Powerwalls' ${wholeDollars(shownPowerwalls)} on the bill: ${wholeDollars(shownSaved)} saved` : null,
+    powerwalls: { bill: `${effect(shownPowerwalls)} on the bill`, vpp: vppText, parts, whatIf, nem2 },
     estimates: [
       "Estimates of PG&E's and WestLight Energy's charges.", days, stale,
       savings.estimated_rates && "WestLight's generation rates this year are estimated from PG&E's.",

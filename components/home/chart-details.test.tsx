@@ -24,11 +24,11 @@ test("Since 2021: the month and both running totals", () => {
 });
 
 test("Records: when, and the record as it stood then, a month tab by its month", () => {
-  render(<RecordDetails active unit="kWh" per="day" payload={[{ payload: { t: Date.parse("2022-06-13"), value: 80.9 } }]} />);
+  render(<RecordDetails active show={(v) => `${v.toFixed(1)} kWh`} per="day" payload={[{ payload: { t: Date.parse("2022-06-13"), value: 80.9 } }]} />);
   expect(screen.getByText("June 13, 2022")).toBeTruthy();
   expect(rows()).toEqual(["Record80.9 kWh"]);
   cleanup();
-  render(<RecordDetails active unit="kWh" per="month" payload={[{ payload: { t: Date.parse("2024-04-01"), value: 479.2 } }]} />);
+  render(<RecordDetails active show={(v) => `${v.toFixed(1)} kWh`} per="month" payload={[{ payload: { t: Date.parse("2024-04-01"), value: 479.2 } }]} />);
   expect(screen.getByText("April 2024")).toBeTruthy();
 });
 

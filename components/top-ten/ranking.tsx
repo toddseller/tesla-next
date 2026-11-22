@@ -28,7 +28,7 @@ export function Ranking({ record, chart, subtitle, flow, entries, today }: Props
           {best ? (
             <>
               <p className="flex items-baseline gap-2.5">
-                <span className="font-mono text-[56px] leading-none font-semibold tracking-[-0.02em]">{best.value}</span>
+                <span className="font-mono text-[56px] leading-none font-semibold tracking-[-0.02em]">{best.unit ? best.value : <Length text={best.value} />}</span>
                 <span className="text-muted-foreground">{best.unit}</span>
               </p>
               <Link href={best.href} className="flex min-h-8 w-fit items-center gap-1.5 font-medium hover:text-white">
@@ -36,7 +36,9 @@ export function Ranking({ record, chart, subtitle, flow, entries, today }: Props
               </Link>
               <div className="flex flex-col gap-1 text-[13px] text-muted-foreground">
                 <span>Record for <span className="text-foreground">{held(best.since, today)}</span></span>
-                {rest.length > 0 && <span><span className="font-mono text-foreground">{lead(entries)}</span> {best.unit} ahead of #2</span>}
+                {rest.length > 0 && (lead(entries) === null
+                  ? <span>Tied with #2</span>
+                  : <span><span className="font-mono text-foreground">{lead(entries)}</span>{best.unit && ` ${best.unit}`} ahead of #2</span>)}
                 <span>{subtitle}</span>
               </div>
             </>
@@ -66,5 +68,20 @@ export function Ranking({ record, chart, subtitle, flow, entries, today }: Props
         </ol>
       )}
     </section>
+  );
+}
+
+// An outage's length at figure size: its numbers large, each unit small beside its number as kWh sits, read out whole.
+function Length({ text }: { text: string }) {
+  const parts = text.split(" ");
+  return (
+    <>
+      <span className="sr-only">{text}</span>
+      <span aria-hidden="true">
+        {parts.map((part, i) => (i % 2
+          ? <span key={i} className={`text-[0.4em] font-medium text-muted-foreground ${i < parts.length - 1 ? "mr-3" : ""}`}>{part}</span>
+          : <span key={i}>{part}</span>))}
+      </span>
+    </>
   );
 }

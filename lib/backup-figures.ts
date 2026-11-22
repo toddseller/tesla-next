@@ -124,3 +124,8 @@ export function duration(seconds: number) {
   if (s < 86400) return `${Math.floor(s / 3600)} h ${Math.floor((s % 3600) / 60)} m`;
   return `${Math.floor(s / 86400)} d ${Math.floor((s % 86400) / 3600)} h`;
 }
+
+// A length kept in hours (Top Ten's), read the same way; whole seconds first, or 16.9 h's float noise reads 16 h 53 m.
+export const hoursLength = (hours: number) => duration(Math.round(hours * 3600));
+// An axis mark: a whole hour leaves off its " 0 m".
+export const outageTick = (hours: number) => (hours ? hoursLength(hours).replace(/ 0 m$/, "") : "0");

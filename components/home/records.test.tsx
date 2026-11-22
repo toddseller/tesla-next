@@ -68,3 +68,11 @@ test("a tab with no figures yet says so, and only the outage tab talks about the
   expect(within(panel()).getByText("No days with figures yet.")).toBeTruthy();
   expect(within(panel()).queryByText(/off the grid/)).toBeNull();
 });
+
+test("the outage tab reads lengths in days and hours, as Top Ten and the Backup section do", () => {
+  const outages = [{ date: "", hours: 52.3, day: "2024-02-04" }, { date: "", hours: 35.4, day: "2024-12-14" }];
+  render(<Records today={TODAY} tabs={recordTabs([RANKINGS[0], RANKINGS[1], RANKINGS[2], { outages }], { ...SERIES, outages: [{ at: "2024-02-04", value: 52.3 }, { at: "2024-12-14", value: 35.4 }] })} />);
+  fireEvent.click(screen.getByRole("tab", { name: "Longest outage" }));
+  expect(within(panel()).getByText("2 d 4 h on February 4, 2024 · set 2 years ago")).toBeTruthy();
+  expect(within(panel()).getAllByRole("link").map((row) => row.textContent)).toEqual(["1February 4, 20242 d 4 h", "2December 14, 20241 d 11 h"]);
+});

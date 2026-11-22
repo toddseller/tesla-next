@@ -3,6 +3,8 @@ import { expect, test } from "vitest";
 
 import type { TopTen } from "@/lib/top-ten";
 
+import { outageTick } from "@/lib/backup-figures";
+
 import { nearMisses, recordTabs, setAgo, steps, tenthTick, valueTicks, yearTicks } from "./records";
 
 const SERIES = [
@@ -93,4 +95,12 @@ test("the ticks span the whole axis, 0 always on it, each figure once", () => {
   expect(valueTicks([52.3])).toEqual([0, 52.3]);
   expect(valueTicks([-5, -1])).toEqual([-5, 0]);
   expect(valueTicks([0])).toEqual([0]);
+});
+
+test("an outage axis reads its lengths in days and hours, and 0 as 0", () => {
+  expect(outageTick(52.3888)).toBe("2 d 4 h");
+  expect(outageTick(0)).toBe("0");
+  // An axis mark on a whole hour leaves off its 0 minutes.
+  expect(outageTick(20)).toBe("20 h");
+  expect(outageTick(40)).toBe("1 d 16 h");
 });

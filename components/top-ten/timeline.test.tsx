@@ -45,7 +45,7 @@ test("solar days are drawn in the solar color, exports in the grid color", () =>
   cleanup();
   render(<Timeline label="Top ten outages" entries={outageEntries(OUTAGES)} flow="powerwall" today="2026-11-09" />);
   expect(dot(2).className).toContain("bg-powerwall");
-  expect(dot(2).getAttribute("title")).toBe("#2: 35.4 h, Dec 14, 2024");
+  expect(dot(2).getAttribute("title")).toBe("#2: 1 d 11 h, Dec 14, 2024");
 });
 
 test("the timeline is described in words", () => {
@@ -61,4 +61,13 @@ test("each dot fades and grows in, in rank order", () => {
   expect(dot(1).classList.contains("motion-pop")).toBe(true);
   expect(dot(1).style.getPropertyValue("--i")).toBe("0");
   expect(dot(10).style.getPropertyValue("--i")).toBe("9");
+});
+
+test("the outage timeline's axis reads in days and hours, as its dots do", () => {
+  render(<Timeline label="Top ten outages" entries={outageEntries(OUTAGES)} flow="powerwall" today="2026-11-09" />);
+  expect(document.body.textContent).toContain("1 d 16 h");
+  expect(document.body.textContent).not.toContain("0 m");
+  // Wide enough for "2 d 12 h" on one line.
+  expect(screen.getByRole("img").className).toContain("grid-cols-[72px_minmax(0,1fr)]");
+  expect(document.body.textContent).not.toMatch(/(^|\D)40(\D|$)/);
 });
