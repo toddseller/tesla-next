@@ -30,7 +30,7 @@ Under its chart, the year chapter SHALL say how much of the house's energy in th
 - **THEN** the chapter gives the three shares under "Where the house's energy came from in 2026, car included" and links to `/impact?start=2026-01-01&end=2026-11-21`
 
 ### Requirement: The records
-The Records chapter SHALL offer four tabs, Best solar day, Most sent to PG&E in a day, Most sent to PG&E in a month, and Longest outage, Best solar day chosen by default, as tabs for assistive technology, all four shown in full without sideways scrolling at any width. Each tab SHALL list the top five of that Top Ten ranking as Top Ten shows it by default, each linked to its day or month on the Solar page, an outage's length read in days and hours as Top Ten reads it, and the chapter SHALL link to Top Ten.
+The Records chapter SHALL offer four tabs, Best solar day, Most sent to PG&E in a day, Most sent to PG&E in a month, and Longest outage, Best solar day chosen by default, as tabs for assistive technology, all four shown in full without sideways scrolling at any width. Each tab SHALL list the top five of that Top Ten ranking as Top Ten shows it by default (an outage's length in days and hours), each linked to its day or month on the Solar page, and the chapter SHALL link to Top Ten.
 
 #### Scenario: The best solar days
 - **WHEN** a visitor opens `/` and June 13, 2022 is Top Ten's best solar day at 80.9 kWh

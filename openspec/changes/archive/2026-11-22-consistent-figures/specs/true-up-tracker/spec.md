@@ -24,7 +24,7 @@ With one true-up year shown that has a VPP season, the page SHALL add a Tesla VP
 - **THEN** there is no VPP tile
 
 ### Requirement: Savings card
-With one true-up year from '23 - '24 on shown, the page SHALL show a card below the tiles, "What the system saved" (see true-up-savings): the saving (no-system cost less actual cost) in whole dollars, "so far" for the current year, and the no-system cost it comes out of; and a key giving what was paid, split into PG&E and WestLight Energy, what solar saved, and the Powerwalls. The shown whole dollars SHALL add up: the saving is the rounded no-system cost less the rounded paid, and the Powerwalls' amount is the rounded solar saving less the shown saving. Whether the Powerwalls cost or saved money SHALL be read from that shown amount, so the card's words and figures agree when their effect is under a dollar. When they cost money, the key SHALL add under solar's saving that the saving is solar's less the Powerwalls' cost.
+With one true-up year from '23 - '24 on shown, a card below the tiles, "What the system saved" (see true-up-savings), SHALL show the saving in whole dollars ("so far" for the current year) of the no-system cost, and a key giving what was paid (PG&E and WestLight Energy), what solar saved, and the Powerwalls. The shown dollars SHALL add up, the Powerwalls' amount being solar's saving less the saving, and cost or saved read from it; a cost SHALL be shown as taken from solar's saving.
 
 #### Scenario: '25 - '26
 - **WHEN** '25 - '26 is shown, costing $6,693.86 with no system, $966.56 with solar only and $1,118.07 actual ($825.00 PG&E, $293.07 WestLight)
