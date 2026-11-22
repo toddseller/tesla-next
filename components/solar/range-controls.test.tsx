@@ -5,6 +5,7 @@ import { afterEach, beforeEach, expect, test, vi } from "vitest";
 
 import { PresetGroup, RangeControls } from "@/components/solar/range-controls";
 import { presets } from "@/lib/solar/ranges";
+import { MARKER_SELECTED } from "@/components/ui/calendar";
 
 const october = { start: "2026-10-01", end: "2026-10-31" };
 
@@ -134,6 +135,8 @@ test("the picker says which day to pick, and starts over when opened again", () 
   expect(screen.getByText("Pick an end day")).toBeTruthy();
   const selected = screen.getAllByRole("gridcell").filter((cell) => cell.dataset.selected).map((cell) => cell.dataset.day);
   expect(selected).toEqual(["2026-10-10"]);
+  // DESIGN.md: red marks a selection, it never fills one; the shared calendar's red fill is overridden here.
+  expect(document.querySelector('[data-slot="calendar"]')!.className).toContain(MARKER_SELECTED);
   openPicker();
   openPicker();
   expect(screen.getByText("Pick a start day")).toBeTruthy();

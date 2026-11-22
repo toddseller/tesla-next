@@ -7,6 +7,7 @@ import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import { SolarPage } from "@/components/solar/solar-page";
 import type { RangeItem } from "@/lib/range";
 import { FakeStream } from "@/test/fake-event-source";
+import { MARKER_SELECTED } from "@/components/ui/calendar";
 
 const router = vi.hoisted(() => ({ push: vi.fn(), replace: vi.fn() }));
 vi.mock("next/navigation", () => ({ useRouter: () => router }));
@@ -108,6 +109,8 @@ test("the arrow keys step a day, unless a modifier is held or a field has focus"
 test("the calendar opens a day, and arrow keys inside it move the calendar, not the day", () => {
   render(page("2026-10-14"));
   act(() => fireEvent.click(button("Day")));
+  // DESIGN.md: red marks a selection, it never fills one; the shared calendar's red fill is overridden here.
+  expect(document.querySelector('[data-slot="calendar"]')!.className).toContain(MARKER_SELECTED);
   // react-day-picker names each day button by its full date, e.g. "Saturday, October 3rd, 2026".
   fireEvent.keyDown(button(/October 3rd, 2026/), { key: "ArrowRight" });
   expect(router.replace).not.toHaveBeenCalled();

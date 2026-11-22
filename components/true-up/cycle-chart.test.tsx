@@ -80,3 +80,14 @@ test("on first view each cycle's column rises from zero and the lines draw in; a
   expect(container.querySelectorAll(".motion-rise, .motion-clip-flows, clipPath#motion-flows")).toHaveLength(0);
   vi.useRealTimers();
 });
+
+// DESIGN.md: Tesla red is a marker, never a surface: the projection is a neutral shade, the running net stays red.
+test("the projected band and its key are a neutral shade; only the running-net line is red", () => {
+  const { container } = render(<CycleChart cycles={CURRENT} cost={CURRENT_COST} oneYear />);
+  const band = container.querySelector(".recharts-area-area");
+  expect(band?.getAttribute("fill")).toBe("var(--muted-foreground)");
+  const swatch = screen.getByText("Projected").querySelector("span")!;
+  expect(swatch.className).toContain("bg-muted-foreground/");
+  expect(swatch.className).not.toContain("bg-primary");
+  expect(screen.getByText("Running net").querySelector("span")!.className).toContain("bg-primary");
+});

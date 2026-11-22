@@ -217,4 +217,12 @@ function CalendarDayButton({
   )
 }
 
-export { Calendar, CalendarDayButton }
+// The site's selection, for its own pickers: Tesla red marks a chosen day with its underline on the raised slate, it never
+// fills it (DESIGN.md). Distribution's replay calendar keeps the default, as the scene keeps its styling. Written out in
+// full, since Tailwind only builds classes it finds in the source.
+const MARKER_SELECTED =
+  "[&_button[data-selected-single=true]]:bg-secondary [&_button[data-selected-single=true]]:text-white [&_button[data-selected-single=true]]:shadow-[inset_0_-2px_0_var(--primary)] " +
+  "[&_button[data-range-start=true]]:bg-secondary [&_button[data-range-start=true]]:text-white [&_button[data-range-start=true]]:shadow-[inset_0_-2px_0_var(--primary)] " +
+  "[&_button[data-range-end=true]]:bg-secondary [&_button[data-range-end=true]]:text-white [&_button[data-range-end=true]]:shadow-[inset_0_-2px_0_var(--primary)]"
+
+export { Calendar, CalendarDayButton, MARKER_SELECTED }
