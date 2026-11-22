@@ -68,3 +68,11 @@ test("the grid has no motion", () => {
   const { container } = render(<HouseUseSection hours={HOURS} today="2026-11-10" />);
   expect(container.querySelector('[class*="motion-"]')).toBeNull();
 });
+
+// DESIGN.md's type scale: the smallest size is the 11px Label.
+test("the hour labels are 11px on phones", () => {
+  render(<HouseUseSection hours={HOURS} today="2026-11-10" />);
+  const hour = grid("The last 12 months").getAllByRole("columnheader")[0];
+  expect(hour.className).toContain("text-[11px]");
+  expect(hour.className).not.toContain("text-[10px]");
+});

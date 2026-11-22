@@ -16,7 +16,7 @@ function Grid({ caption, months }: { caption: string; months: HourMonth[] }) {
         <tr>
           <td className="w-[52px] sm:w-14" />
           {Array.from({ length: 24 }, (_, hour) => (
-            <th key={hour} scope="col" className="p-0 text-left font-mono text-[10px] font-normal whitespace-nowrap text-muted-foreground sm:text-xs">
+            <th key={hour} scope="col" className="p-0 text-left font-mono text-[11px] font-normal whitespace-nowrap text-muted-foreground sm:text-xs">
               <span className="sr-only">{hourName(hour)}</span>
               {AXIS[hour] && (
                 <span aria-hidden>

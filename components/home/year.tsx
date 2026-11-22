@@ -142,7 +142,7 @@ export function Year({ year: servedYear, today, days: servedDays, shares: served
             <p className="font-mono text-[13px] text-muted-foreground">Point at, drag across or tap a day; or focus the chart and use Up and Down.</p>
             <div className="flex items-center gap-2.5">
               <button type="button" aria-label="Previous day" className="flex size-11 shrink-0 items-center justify-center rounded-lg border border-input" onClick={() => step(index - 1)}><ChevronLeft size={16} aria-hidden /></button>
-              <p data-part="day-readout" aria-live="polite" className="flex-1 text-center text-[17px] font-medium">{readout}</p>
+              <p data-part="day-readout" aria-live="polite" className="flex-1 text-center text-[15px] font-medium">{readout}</p>
               <button type="button" aria-label="Next day" className="flex size-11 shrink-0 items-center justify-center rounded-lg border border-input" onClick={() => step(index + 1)}><ChevronRight size={16} aria-hidden /></button>
             </div>
             <Doorway href={address(monthOf(day), day)}>Open the day</Doorway>

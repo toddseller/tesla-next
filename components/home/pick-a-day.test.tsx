@@ -39,3 +39,11 @@ test("Random day opens a day picked from the span", () => {
   expect(push).toHaveBeenCalledWith("/solar?start=2024-05-01&end=2024-05-31&day=2024-05-07");
   vi.restoreAllMocks();
 });
+
+// DESIGN.md's type scale: the heading is 28px everywhere, the size of the figures around it, not a one-off 32px.
+test("the heading is 28px at every width", () => {
+  render(<PickADay today={TODAY} />);
+  const heading = screen.getByRole("heading", { name: "Pick a day" });
+  expect(heading.className).toContain("text-[28px]");
+  expect(heading.className).not.toMatch(/md:text-\[/);
+});

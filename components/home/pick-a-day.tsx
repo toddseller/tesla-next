@@ -25,7 +25,7 @@ export function PickADay({ today }: { today: string }) {
   return (
     <section aria-labelledby="pick" className="flex flex-wrap items-end justify-between gap-8">
       <div>
-        <h2 id="pick" className="text-[28px] font-semibold tracking-[-0.02em] md:text-[32px]">Pick a day</h2>
+        <h2 id="pick" className="text-[28px] font-semibold tracking-[-0.02em]">Pick a day</h2>
         <p className="mt-2 text-[15px] text-muted-foreground">Any of the {span.toLocaleString("en-US")} days since October 22, 2021.</p>
       </div>
       <form noValidate onSubmit={submit} className="flex flex-wrap items-end gap-3 max-sm:w-full max-sm:flex-col max-sm:items-stretch">

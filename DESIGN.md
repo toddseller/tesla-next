@@ -23,6 +23,12 @@ typography:
     fontWeight: 600
     lineHeight: 0.9
     letterSpacing: "-0.04em"
+  chapter-word-phone:
+    fontFamily: "IBM Plex Sans, ui-sans-serif, system-ui, sans-serif"
+    fontSize: "64px"
+    fontWeight: 600
+    lineHeight: 0.9
+    letterSpacing: "-0.04em"
   headline:
     fontFamily: "IBM Plex Sans, ui-sans-serif, system-ui, sans-serif"
     fontSize: "22px"
@@ -32,6 +38,10 @@ typography:
     fontSize: "28px"
     fontWeight: 600
     lineHeight: 1
+  lede:
+    fontFamily: "IBM Plex Sans, ui-sans-serif, system-ui, sans-serif"
+    fontSize: "15px"
+    fontWeight: 400
   section-label:
     fontFamily: "IBM Plex Sans, ui-sans-serif, system-ui, sans-serif"
     fontSize: "14px"
@@ -49,7 +59,11 @@ typography:
   label:
     fontFamily: "IBM Plex Sans, ui-sans-serif, system-ui, sans-serif"
     fontSize: "11px"
-    fontWeight: 500
+    fontWeight: 600
+  axis:
+    fontFamily: "IBM Plex Mono, ui-monospace, monospace"
+    fontSize: "12px"
+    fontWeight: 400
 rounded:
   swatch: "2px"
   sm: "6px"
@@ -186,12 +200,17 @@ Tesla app colors, each bound to one flow on every page, every chart and legend s
 
 ### Hierarchy
 - **Chapter word** (600, 112px desktop, 64px phone, -0.04em): the home page's one-word chapter headings (Now, Today, the year, Records, Habits, Since 2021), so the story's chapters tell apart at a glance. Home page only.
-- **Headline** (600, 22px): the page's h1 ("Impact", "Top Ten", "Solar by date range").
-- **Figure** (Mono 600, 28px on wide screens and 20 to 26px on phones; 34 to 36px for a page's lead figure): kWh, dollars, kW, percentages.
+- **Headline** (600, 22px): the page's h1 ("Impact", "Top Ten", "Solar by date range"). Pick a day, the heading that ends the home page, is a larger 28px, the Figure size in sans.
+- **Lead sentence** (500, 18 to 22px): the home page's few sentences that carry a chapter: the intro (18px, 20px from 768px), Now's sentence (20px, 22px from 768px), Since 2021's sentence (20px).
+- **Figure** (Mono 600, 28px on wide screens and 20 to 26px on phones): kWh, dollars, kW, percentages.
+  - **Lead figure** (34 to 56px): a page's or chapter's one leading figure: home Today's kWh 40px, Habits' 30px, Impact's ring percentages 52px, Top Ten's #1 56px, the Solar day view's 36px, whose subtitle and units beside the figures are 16px (as ported from anton-tesla-api-ws).
+  - **Secondary figure** (15 to 24px): figures beside a chart or under a lead one: the home chapters' 24px figures, True-Up's savings figures and Today's three-day forecast (18px), the Payback card's years (15px).
+- **Lede** (400, or 500 as a heading or readout, 15px): the supporting sentence under a home chapter's figures, a small heading inside a card ("The last 12 months"), the top bar's links, the year chapter's day readout.
 - **Section label** (500, 14px, 0.06em tracking, uppercase, Dusk Gray): each card's h2 ("Solar forecast", "Always-on load").
 - **Body** (400, 14px): controls, table rows, prose.
 - **Reading** (Mono 400, 13px): the live status line, notes under charts, input text.
-- **Label** (500, 11px): chart axes and small legends.
+- **Label** (600, 11px): the smallest marks: Top Ten's "this year" tag and the ranks inside its timeline dots. The Solar day panel's day numbers are 11px too, in Mono 400.
+- **Axis** (Mono 400, 12px): chart axes; Patterns' grids drop to 11px below 640px, where 24 hours share a phone's width. The footer and admin's field hints use the same 12px, in sans.
 
 ### Named Rules
 **The Chapter Word Rule.** Oversized words head the home page's chapters and nothing else. A chapter word takes its chapter's flow color only when the chapter is about that flow (Today and the year in Solar amber, Habits in Home blue); otherwise Moonlight. "Now" is Moonlight, because it is about every flow.
