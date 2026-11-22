@@ -3,6 +3,7 @@
 import { type PointerEvent, useEffect, useMemo, useRef, useState } from "react";
 
 import ReplayBar, { DEFAULT_SPEED } from "@/components/scene/replay-bar";
+import { TodaySoFar } from "@/components/scene/today-so-far";
 import LiveScene from "@/components/scene/live-scene";
 import { useSiteData } from "@/components/scene/use-site-data";
 import { useLiveWeather } from "@/components/scene/live-weather";
@@ -266,6 +267,7 @@ const Distribution = ({ initialStatus, search, renderedAt }: { initialStatus: st
           </div>
         </div>
       </div>
+      <TodaySoFar />
     </div>
   );
 };

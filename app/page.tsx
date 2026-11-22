@@ -59,7 +59,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<Par
       </h1>
       <Now initialStatus={latest()} initialSite={siteState()} renderedAt={Date.now()} />
       {[
-        <Today key="today" today={today} forecast={forecastCard(stored, today, Date.now())} day={day} />,
+        <Today key="today" today={today} forecast={forecastCard(stored, today, Date.now())} day={day} renderedAt={Date.now()} />,
         <Year key="year" year={year} today={today} days={hours} shares={shares} />,
         <Records key="records" today={today} tabs={recordTabs(rankings, series)} />,
         <Habits key="habits" today={today} months={house.months} figures={latestFigures(house.months, today)} powerwallOut={powerwallOut} />,

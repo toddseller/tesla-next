@@ -34,3 +34,15 @@ export function todayRows(day: { data: Kw[] }, hours: { start: string; expected:
     latest: records.length ? records.at(-1)!.minute + RECORD_MINUTES : 0,
   };
 }
+
+// Most of the day's solar, its middle 80%: from the start of the hour the first 10% comes in to the start of the hour the
+// last 10% begins in. The morning sentence names it.
+export function solarWindow(hours: { start: string; expected: number }[]) {
+  let sum = 0;
+  const running = hours.map((h) => (sum += h.expected));
+  if (!sum) return null;
+  const crossing = (share: number) => hours[running.findIndex((kwh) => kwh >= sum * share)].start;
+  const [start, end] = [crossing(0.1), crossing(0.9)];
+  // All of it in one hour would read "between 12 PM and 12 PM".
+  return start === end ? null : { start, end };
+}

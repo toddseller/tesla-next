@@ -5,6 +5,7 @@ import { beforeEach, expect, test, vi } from "vitest";
 const live = vi.hoisted(() => ({ current: null as string | null }));
 vi.mock("@/lib/live", () => ({ latest: () => live.current }));
 
+
 const { default: Page } = await import("./page");
 
 const served = async (searchParams: Record<string, string> = {}) => renderToString(await Page({ searchParams: Promise.resolve(searchParams) }));
@@ -34,4 +35,10 @@ test("before the server's first status, the served labels show dashes", async ()
 test("a shared moment is served as that replay", async () => {
   const html = await served({ at: "2026-10-19T18:35" });
   expect(html).toContain('data-part="replay-tag"');
+});
+
+// live-flow-scene, "Today's totals under the scene on a phone": the browser fetches them, so the page reads no database.
+test("the page is served from the live status alone, with no totals block in its HTML", async () => {
+  const html = await served();
+  expect(html).not.toContain("Today so far");
 });

@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, type ReactNode, useState } from "react";
+import { Fragment, type ReactNode, useEffect, useState } from "react";
 import { Area, ComposedChart, Line, ReferenceArea, XAxis, YAxis } from "recharts";
 
 import { useReload } from "@/components/solar/use-reload";
@@ -9,15 +9,17 @@ import { DetailsBox, type Hover } from "@/components/home/chart-details";
 import { ChartContainer, ChartTooltip } from "@/components/ui/chart";
 import { useLiveStream } from "@/components/use-live-stream";
 import type { ForecastCard } from "@/lib/forecast";
-import { stillToCome, todayRows } from "@/lib/home/today";
+import { solarWindow, stillToCome, todayRows } from "@/lib/home/today";
 import { siteToday, TIME_ZONE } from "@/lib/scene/replay";
+import { sunTimes } from "@/lib/scene/sun";
 import { TIME_TICKS, timeTick, type Interval, viewSummary } from "@/lib/solar/day-views";
 import { address, monthOf } from "@/lib/solar/ranges";
 
-type Day = { date: string; vehicle_data: boolean; totals: Record<string, number>; data: Interval[] };
-type Props = { today: string; forecast: ForecastCard | null; day: Day };
+export type Day = { date: string; vehicle_data: boolean; totals: Record<string, number>; data: Interval[] };
+type Props = { today: string; forecast: ForecastCard | null; day: Day; renderedAt: number };
 
 const clock = new Intl.DateTimeFormat("en-US", { hour: "numeric", minute: "2-digit", timeZone: TIME_ZONE });
+const hour = new Intl.DateTimeFormat("en-US", { hour: "numeric", timeZone: TIME_ZONE });
 const weekday = new Intl.DateTimeFormat("en-US", { weekday: "short", timeZone: "UTC" });
 const DAY_MINUTES = 1440;
 
@@ -32,7 +34,31 @@ export const Figure = ({ value, unit, label, className = "", wide = false }: Fig
   </div>
 );
 
-export function Today({ today, forecast, day }: Props) {
+// Today's six totals as the day view gives them, the house without the car on a day with car data. Distribution shows
+// the same six under its scene on a phone.
+export function TodayTotals({ day }: { day: Pick<Day, "totals" | "vehicle_data"> }) {
+  const total = (view: string, i = 0) => viewSummary(view, day.totals, { vehicleData: day.vehicle_data }).headlines[i].value.toFixed(1);
+  return (
+    <>
+      <Figure value={total("home")} unit="kWh" label={day.vehicle_data ? "used by the house, car apart" : "used by the house"} />
+      <Figure value={total("vehicle")} unit="kWh" label="charged into the car" className="text-vehicle" />
+      <Figure value={total("grid")} unit="kWh" label="from the grid" className="text-grid" />
+      <Figure value={total("grid", 1)} unit="kWh" label="sent to PG&E" className="text-grid" />
+      <Figure value={total("powerwall", 1)} unit="kWh" label="into the Powerwalls" className="text-powerwall" />
+      <Figure value={total("powerwall")} unit="kWh" label="out of the Powerwalls" className="text-powerwall" />
+    </>
+  );
+}
+
+// `renderedAt` is when the server rendered the page, so hydration finds the morning sentence it sent; the browser's
+// clock takes over after, once a minute.
+export function Today({ today, forecast, day, renderedAt }: Props) {
+  const [now, setNow] = useState(renderedAt);
+  useEffect(() => {
+    setNow(Date.now());
+    const timer = setInterval(() => setNow(Date.now()), 60_000);
+    return () => clearInterval(timer);
+  }, []);
   const [card, reloadCard] = useReload(today, forecast);
   const [shownDay, reloadDay] = useReload(today, day);
   // Only shown once a reload fails, after hydration, so the server's clock never has to match.
@@ -53,7 +79,12 @@ export function Today({ today, forecast, day }: Props) {
   const expected = card?.today.expected ?? null;
   const byNow = card?.byHour?.byNow ?? null;
   const rows = todayRows(shownDay, card?.byHour?.hours ?? []);
-  const total = (view: string, i = 0) => viewSummary(view, shownDay.totals, { vehicleData: shownDay.vehicle_data }).headlines[i].value.toFixed(1);
+
+  // Until most of the day's solar is under way, say when the sun rose and when that solar comes.
+  const most = card?.byHour && expected !== null ? solarWindow(card.byHour.hours) : null;
+  const morning = most && now < Date.parse(most.start)
+    ? `Sunrise ${clock.format(sunTimes(new Date(now)).sunrise)}. Most of today's ${expected!.toFixed(1)} kWh is expected between ${hour.format(Date.parse(most.start))} and ${hour.format(Date.parse(most.end))}.`
+    : null;
 
   return (
     <section aria-labelledby="today" className="flex flex-col gap-6">
@@ -66,6 +97,7 @@ export function Today({ today, forecast, day }: Props) {
         </div>
       </div>
       {failed && <p className="font-mono text-[13px] text-muted-foreground">as of {clock.format(new Date(loadedAt))}</p>}
+      {morning && <p data-part="morning" className="max-w-[60ch] text-[15px] text-pretty">{morning}</p>}
       <p className="max-w-[60ch] text-[15px] text-pretty text-muted-foreground">
         Solar by the hour against the forecast&apos;s dashed line. Below the line: energy sent to PG&amp;E and into the Powerwalls.
       </p>
@@ -82,12 +114,7 @@ export function Today({ today, forecast, day }: Props) {
         </ComposedChart>
       </ChartContainer>
       <div className="grid grid-cols-2 gap-x-4 gap-y-5 border-t pt-5 md:grid-cols-4">
-        <Figure value={total("home")} unit="kWh" label={shownDay.vehicle_data ? "used by the house, car apart" : "used by the house"} />
-        <Figure value={total("vehicle")} unit="kWh" label="charged into the car" className="text-vehicle" />
-        <Figure value={total("grid")} unit="kWh" label="from the grid" className="text-grid" />
-        <Figure value={total("grid", 1)} unit="kWh" label="sent to PG&E" className="text-grid" />
-        <Figure value={total("powerwall", 1)} unit="kWh" label="into the Powerwalls" className="text-powerwall" />
-        <Figure value={total("powerwall")} unit="kWh" label="out of the Powerwalls" className="text-powerwall" />
+        <TodayTotals day={shownDay} />
         {card?.days
           ? <Figure wide label="expected over the next three days" className="text-[15px] md:text-lg" value={card.days.map((d, i) => (
               // A day breaks only between days, never inside one.
