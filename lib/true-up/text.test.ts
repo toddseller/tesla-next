@@ -173,8 +173,13 @@ describe("the VPP credit", () => {
     expect(vppText(season({}), "2026-10-22")!.line).toBe("2026 season so far: 183.8 kWh in VPP events at $2.00. Paid by Tesla around spring 2027, apart from PG&E's true-up.");
   });
 
-  test("a season without marked events", () => {
+  test("a season that hasn't begun says so rather than $0", () => {
     expect(vppText(season({ season: 2027, kwh: 0, estimate: 0 }), "2026-11-08"))
+      .toEqual({ value: "Not started", unit: "2027 season", line: `The season runs May 1 to October 31. ${tesla}` });
+  });
+
+  test("a season under way without marked events", () => {
+    expect(vppText(season({ season: 2027, kwh: 0, estimate: 0 }), "2027-06-10"))
       .toEqual({ value: "$0", unit: "2027 season", line: `No events marked yet; the season runs May 1 to October 31. ${tesla}` });
   });
 
@@ -199,16 +204,27 @@ describe("savingsText", () => {
   test("'25 - '26: the Powerwalls cost money, beside their VPP credit estimate", () => {
     const text = savingsText(YEAR_25_26, SEASON_2026, false);
 
-    expect(text).toMatchObject({ saved: "$5,577", unit: "estimate, of $6,695 without solar or Powerwalls", paid: "$1,118", paidSplit: "PG&E $825 · WestLight $293", solar: "$5,727" });
+    // Every shown dollar adds up: $1,118 + $5,577 = $6,695, and $5,727 less the Powerwalls' $150 = $5,577, so the
+    // Powerwalls show $150 though their $150.84 would round alone to $151.
+    expect(text).toMatchObject({ saved: "$5,577", unit: "estimate, of $6,695 without solar or Powerwalls", paid: "$1,118", paidSplit: "PG&E $825 · WestLight $293", solar: "$5,727",
+      solarLess: "Less the Powerwalls' $150 on the bill: $5,577 saved" });
     expect(text.bar).toEqual({ parts: [["paid", 1118.07], ["saved", 5576.6]], label: "Of $6,695: $1,118 paid, $5,577 saved" });
     expect(text.powerwalls).toEqual({
-      bill: "$151 cost on the bill",
+      bill: "$150 cost on the bill",
       vpp: "$368 VPP credit, an estimate for the 2026 season.",
       parts: [["Keeping charge, 129 days", "$83 cost"], ["Storing solar, 232 days", "$110 cost"], ["VPP events, 6 days", "$43 saved"]],
       whatIf: { value: "About $133 less", line: "Covering only 4 to 9 p.m. on those 232 days." },
       nem2: "Under NEM2, exporting solar earns about what importing it later costs, so storing it pays only between 4 and 9 p.m.",
     });
     expect(text.estimates).toBe("Estimates of PG&E's and WestLight Energy's charges. 205 days before April 27, 2026 rebuilt from PG&E's meter, 1 as Tesla read it.");
+  });
+
+  test("the Powerwalls' effect under a dollar: cost or saved is decided by the dollars shown, so the card can't contradict itself", () => {
+    const year = { ...YEAR_25_26, actual: { pge: 100.4, westlight: 0, total: 100.4 }, no_system: { pge: 200.6, westlight: 0, total: 200.6 }, solar_saved: 100.4, powerwalls_added: -0.2 };
+    const text = savingsText(year, null, false);
+    // $201 less $100 paid is $101 saved; solar's $100 leaves the Powerwalls $1 saved, not a cost.
+    expect([text.saved, text.solar, text.powerwalls.bill, text.solarLess, text.powerwallsCost]).toEqual(["$101", "$100", "$1 saved on the bill", null, false]);
+    expect(text.bar.parts.every(([, dollars]) => dollars >= 0)).toBe(true);
   });
 
   test("a year the Powerwalls saved money splits the bar three ways", () => {
@@ -222,6 +238,8 @@ describe("savingsText", () => {
       label: "Of $3,410: $905 paid, $216 saved by the Powerwalls, $2,289 saved by solar",
     });
     expect([text.powerwalls.bill, text.powerwalls.vpp, text.powerwalls.nem2]).toEqual(["$216 saved on the bill", null, null]);
+    expect(text.solarLess).toBeNull();
+    expect(text.powerwallsCost).toBe(false);
   });
 
   test("a WestLight credit reads as a credit, not a charge", () => {

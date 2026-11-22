@@ -25,7 +25,7 @@ test("the current year: its net so far, charges so far, projected true-up and VP
   expect(tile("Net so far")).toBe("Net so far408.6kWh importedImported 660.1 · Exported 251.4 kWhPeak (4 to 9 p.m.) 15.8 exported · Off-peak 424.4 imported");
   expect(tile("Charges so far")).toBe("Charges so far$106.46estimateNEM charges for 2 cycles, before taxes. No PG&E bill in yet.");
   expect(tile("Projected true-up")).toBe("Projected true-up$593–$652Year-end 2,032 to 2,362 kWh imported, if the rest of the year goes like '24 - '25 or '25 - '26");
-  expect(tile("Tesla VPP credit")).toBe("Tesla VPP credit$02027 seasonNo events marked yet; the season runs May 1 to October 31. Tesla pays it, apart from PG&E's true-up.");
+  expect(tile("Tesla VPP credit")).toBe("Tesla VPP creditNot started2027 seasonThe season runs May 1 to October 31. Tesla pays it, apart from PG&E's true-up.");
 });
 
 test("'25 - '26: its net for the year, true-up from the statement, bills against the estimate and VPP estimate", () => {
@@ -94,4 +94,10 @@ test("the tiles' values count up from zero when the page is first seen", () => {
   const charges = screen.getByRole("region", { name: "Charges so far" });
   expect(charges.querySelector("[data-part=counting]")!.textContent).toBe("$0.00");
   expect(charges.querySelector("[data-part=final]")!.textContent).toBe("$106.46");
+});
+
+test("a tile whose value is words, not a figure, sets it in sans: mono means measured", () => {
+  render(<Tiles cycles={CURRENT} cost={CURRENT_COST} year={yearOf(2027)} today={TODAY} />);
+  const value = screen.getByText("Not started");
+  expect(value.closest(".font-mono")).toBeNull();
 });

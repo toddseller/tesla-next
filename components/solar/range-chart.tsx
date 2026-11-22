@@ -14,7 +14,7 @@ import { isDaily, periods, type Range } from "@/lib/solar/ranges";
 const FLOWS = [
   { key: "solar", label: "Solar", color: "var(--color-solar)" },
   { key: "grid", label: "Grid", color: "var(--color-grid)" },
-  { key: "house", label: "House", color: "var(--color-home)" },
+  { key: "house", label: "House, car included", color: "var(--color-home)" },
 ] as const;
 
 type Row = Totals & { label: string; day?: string; period?: Range };

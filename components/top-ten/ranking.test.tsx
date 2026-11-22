@@ -47,12 +47,23 @@ test("an empty ranking says there is nothing to rank yet", () => {
   expect(within(card).queryByRole("list")).toBeNull();
 });
 
-test("the outage record reads in hours", () => {
+test("the outage record reads in days and hours, as the Backup section does", () => {
   render(<Ranking record="Longest outage" chart="Top ten outages" subtitle="Longest time off the grid" flow="powerwall" entries={outageEntries(OUTAGES)} today="2026-11-09" />);
   const card = screen.getByRole("region", { name: "Longest outage" });
-  expect(card.textContent).toContain("52.3h");
+  // Read out whole; on screen the d and h sit small beside their numbers, as kWh does.
+  const figure = card.querySelector(".text-\\[56px\\]")!;
+  expect(figure.querySelector(".sr-only")!.textContent).toBe("2 d 4 h");
+  expect([...figure.querySelectorAll('[aria-hidden="true"] .text-muted-foreground')].map((u) => u.textContent)).toEqual(["d", "h"]);
+  // Each unit sits as far from its number as kWh does from a figure (the card's gap-2.5).
+  expect([...figure.querySelectorAll('[aria-hidden="true"] .text-muted-foreground')].every((u) => u.className.includes("ml-2.5"))).toBe(true);
   expect(within(card).getByRole("link", { name: "Sunday, February 4, 2024" }).getAttribute("href")).toBe("/solar?start=2024-02-01&end=2024-02-29&day=2024-02-04");
   expect(card.textContent).toContain("Record for 2 years, 9 months");
-  expect(card.textContent).toContain("16.9 h ahead of #2");
-  expect(within(card).getByRole("img", { name: /^Top ten outages: #1 52\.3 h Feb 4, 2024; #2 35\.4 h/ })).toBeTruthy();
+  expect(card.textContent).toContain("16 h 54 m ahead of #2");
+  expect(within(card).getByRole("img", { name: /^Top ten outages: #1 2 d 4 h Feb 4, 2024; #2 1 d 11 h/ })).toBeTruthy();
+});
+
+test("a tie for #1 says so rather than 0 ahead", () => {
+  const tied = solarEntries([{ date: "Jun 13, 2022", solar: 80.94, day: "2022-06-13" }, { date: "Jun 21, 2025", solar: 80.91, day: "2025-06-21" }]);
+  render(<Ranking record="Best solar day" chart="Top ten solar days" subtitle="" flow="solar" entries={tied} today="2026-11-09" />);
+  expect(screen.getByRole("region", { name: "Best solar day" }).textContent).toContain("Tied with #2");
 });

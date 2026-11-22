@@ -69,10 +69,10 @@ function Today({ today, pick }: { today: Card["today"]; pick?: { chosen: boolean
       {today.expected !== null && (
         <>
           <p className="flex items-baseline gap-1.5">
-            <span className="font-mono text-[26px] font-semibold sm:text-[28px]">{today.expected}</span>
+            <span className="font-mono text-[26px] font-semibold sm:text-[28px]">{today.expected.toFixed(1)}</span>
             <span className="text-sm text-muted-foreground">kWh expected</span>
           </p>
-          <Bar label={`${soFar.toFixed(1)} of about ${today.expected} kWh so far`} part={soFar} whole={today.expected} estimate />
+          <Bar label={`${soFar.toFixed(1)} of about ${today.expected.toFixed(1)} kWh so far`} part={soFar} whole={today.expected} estimate />
         </>
       )}
       <span className="flex items-baseline justify-between gap-2">
@@ -217,12 +217,12 @@ export function ForecastCard({ card }: { card: Card }) {
                   <Sky code={code} className="flex sm:hidden" />
                 </span>
                 <span className="order-3 text-right font-mono text-sm sm:order-2 sm:flex sm:items-baseline sm:gap-1.5 sm:text-left">
-                  <span className="sm:text-[28px] sm:font-semibold">{expected}</span>
+                  <span className="sm:text-[28px] sm:font-semibold">{expected.toFixed(1)}</span>
                   <span className="sm:text-sm sm:text-muted-foreground"> kWh</span>
                   {high !== null && low !== null && <HighLow high={high} low={low} className="block text-xs text-muted-foreground sm:hidden" />}
                 </span>
                 <span className="order-2 sm:order-3">
-                  <Bar label={`${expected} kWh against a good day of ${goodDay}`} part={expected} whole={goodDay} />
+                  <Bar label={`${expected.toFixed(1)} kWh against a good day of ${goodDay}`} part={expected} whole={goodDay} />
                 </span>
                 <span className="hidden items-center justify-between gap-2 sm:order-4 sm:mt-auto sm:flex">
                   <Sky code={code} className="flex" />

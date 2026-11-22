@@ -21,7 +21,8 @@ test("'25 - '26: the saving of the no-system bill, the key, and the Powerwalls b
 
   const card = screen.getByRole("region", { name: "What the system saved" }).textContent;
   for (const text of ["$5,577", "estimate, of $6,695 without solar or Powerwalls", "Paid", "$1,118", "PG&E $825 · WestLight $293", "Solar saved", "$5,727",
-    "$151 cost on the bill", "$368 VPP credit", "Under NEM2, exporting solar earns about what importing it later costs",
+    "$150 cost on the bill", "$368 VPP credit", "Under NEM2, exporting solar earns about what importing it later costs",
+    "Less the Powerwalls' $150 on the bill: $5,577 saved",
     "205 days before April 27, 2026 rebuilt from PG&E's meter, 1 as Tesla read it."])
     expect(card).toContain(text);
   expect(screen.getByRole("img").getAttribute("aria-label")).toBe("Of $6,695: $1,118 paid, $5,577 saved");
@@ -32,7 +33,7 @@ test("'25 - '26: the Powerwalls' row splits their cost, and the what-if sits in 
   render(<SavingsCard savings={SAVINGS_25_26} season={COST_25_26.vpp} current={false} />);
 
   const row = screen.getByRole("group", { name: "Powerwalls" }).textContent;
-  for (const text of ["$151 cost on the bill", "$368 VPP credit, an estimate for the 2026 season.", "Keeping charge, 129 days", "$83 cost", "Storing solar, 232 days", "$110 cost", "VPP events, 6 days", "$43 saved"])
+  for (const text of ["$150 cost on the bill", "$368 VPP credit, an estimate for the 2026 season.", "Keeping charge, 129 days", "$83 cost", "Storing solar, 232 days", "$110 cost", "VPP events, 6 days", "$43 saved"])
     expect(row).toContain(text);
   const whatIf = screen.getByRole("group", { name: "What if (simulation)" }).textContent;
   expect(whatIf).toContain("About $133 less");

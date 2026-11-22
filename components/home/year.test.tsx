@@ -121,3 +121,8 @@ test("the readout's figure never wraps away from its unit", () => {
   year();
   expect(readout()).toContain("21.7 kWh");
 });
+
+test("the shares say the house's energy here includes the car", () => {
+  year();
+  expect(screen.getByText("Where the house's energy came from in 2026, car included")).toBeTruthy();
+});

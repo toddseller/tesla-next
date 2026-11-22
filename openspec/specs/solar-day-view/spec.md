@@ -39,7 +39,7 @@ The Solar view SHALL stack solar to home, solar to vehicle, solar to Powerwall a
 - **THEN** Used By lists Vehicle 3.4 kWh between Home and Powerwall, and Home excludes it
 
 ### Requirement: Home view
-The Home view SHALL stack solar to home, Powerwall to home and grid to home as filled areas whose top edge is total home usage excluding vehicle charging, headed by Total Usage, with a Powered By breakdown.
+The Home view SHALL stack solar to home, Powerwall to home and grid to home as filled areas whose top edge is total home usage excluding vehicle charging, headed by Total Usage, with a Powered By breakdown. On a day with vehicle data the headline SHALL read "Total Usage, car apart", so it isn't taken for the house figures elsewhere that include the car.
 
 #### Scenario: Night on battery
 - **WHEN** the home runs from the Powerwall overnight
@@ -47,7 +47,11 @@ The Home view SHALL stack solar to home, Powerwall to home and grid to home as f
 
 #### Scenario: Charging is not home usage
 - **WHEN** a day with vehicle data had 9.1 kWh of charging
-- **THEN** Total Usage excludes those 9.1 kWh
+- **THEN** Total Usage excludes those 9.1 kWh, and its headline reads "Total Usage, car apart"
+
+#### Scenario: Before vehicle data
+- **WHEN** a day has no vehicle data
+- **THEN** the headline reads "Total Usage"
 
 ### Requirement: Vehicle view
 The Vehicle view SHALL stack solar to vehicle, Powerwall to vehicle and grid to vehicle as filled areas whose top edge is total charging power, headed by Charged, with a Charged From breakdown (Solar, Powerwall, Grid). It SHALL NOT identify which car charged. A day without vehicle data SHALL show a note instead of a chart.
@@ -317,19 +321,19 @@ When the day has expected hours, the Solar view's chart SHALL draw an expected l
 - **THEN** the chart shows the flows alone, with no expected line or key
 
 ### Requirement: The expected total
-When the day has expected hours, Total Generated SHALL show beside its kWh the day's expected kWh, the sum of its hours' rounded to a whole kWh, as "of 64 kWh expected", followed for a day before today by the generated kWh as a whole percentage of it, in red under 60%. Today SHALL show the expected kWh without a percentage.
+When the day has expected hours, Total Generated SHALL show beside its kWh the day's expected kWh, the sum of its hours' to a tenth, as the forecast card gives it, as "of 64.4 kWh expected", followed for a day before today by the generated kWh as a whole percentage of it, in red under 60%. Today SHALL show the expected kWh without a percentage.
 
 #### Scenario: A fault day
 - **WHEN** April 16, 2026 generated 25.7 kWh against 64.4 kWh expected
-- **THEN** Total Generated reads 25.7 kWh, of 64 kWh expected (40%), the 40% in red
+- **THEN** Total Generated reads 25.7 kWh, of 64.4 kWh expected (40%), the 40% in red
 
 #### Scenario: A clear day
 - **WHEN** April 3, 2026 generated 63.1 kWh against 63.1 kWh expected
-- **THEN** Total Generated reads 63.1 kWh, of 63 kWh expected (100%), not in red
+- **THEN** Total Generated reads 63.1 kWh, of 63.1 kWh expected (100%), not in red
 
 #### Scenario: Today
-- **WHEN** a visitor opens today at noon, with 18.8 kWh generated and 34 kWh expected for the day
-- **THEN** Total Generated reads 18.8 kWh, of 34 kWh expected, with no percentage
+- **WHEN** a visitor opens today at noon, with 18.8 kWh generated and 34.2 kWh expected for the day
+- **THEN** Total Generated reads 18.8 kWh, of 34.2 kWh expected, with no percentage
 
 ### Requirement: Expected in the chart details
 When the day has expected hours, pointing at the Solar view's chart, or touching it, SHALL also show an Expected row after the flows: the expected kWh of the hour holding the pointed step as average kW, to one decimal.

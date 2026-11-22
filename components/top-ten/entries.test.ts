@@ -38,6 +38,10 @@ test("an export month reads its month, has stood from its last day, and opens th
   expect(best).toMatchObject({ value: "510.1", date: "May 2024", long: "May 2024", since: "2024-05-31", href: "/solar?start=2024-05-01&end=2024-05-31" });
 });
 
+test("a tie for #1 has no lead", () => {
+  expect(lead(solarEntries([{ date: "a", solar: 80.94, day: "2022-06-13" }, { date: "b", solar: 80.91, day: "2025-06-21" }]))).toBeNull();
+});
+
 test("the lead over #2 is the difference of the figures as shown", () => {
   expect(lead(solarEntries([{ date: "a", solar: 80.9, day: "2022-06-13" }, { date: "b", solar: 80.2, day: "2025-06-21" }]))).toBe("0.7");
   expect(lead(monthEntries([{ date: "a", net_grid: -510.1, month: "2024-05" }, { date: "b", net_grid: -479.2, month: "2024-04" }]))).toBe("30.9");

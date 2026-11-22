@@ -82,7 +82,7 @@ export function SolarOffset({ figures }: { figures: ImpactFigures }) {
   const scale = Math.max(figures.total_solar, figures.total_house);
   const bars = [
     { label: "Solar", kwh: figures.total_solar, fill: "bg-solar" },
-    { label: "Home", kwh: figures.total_house, fill: "bg-home" },
+    { label: "Home, car included", kwh: figures.total_house, fill: "bg-home" },
   ];
   // Uncovers as it first shows; after that a bar moves by its clip from its old length to its new one.
   const entering = useEntering(ENTER_MS);

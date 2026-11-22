@@ -7,6 +7,7 @@ import { Line, LineChart, XAxis, YAxis } from "recharts";
 import { Doorway } from "@/components/home/doorway";
 import { DetailsBox, type Hover } from "@/components/home/chart-details";
 import { ChartContainer, ChartTooltip } from "@/components/ui/chart";
+import { hoursLength, outageTick } from "@/lib/backup-figures";
 import { type recordTabs, setAgo, tenthTick, valueTicks, yearTicks } from "@/lib/home/records";
 import { address, monthOf } from "@/lib/solar/ranges";
 
@@ -21,12 +22,16 @@ const link = (at: string) => (at.length === 7 ? address(monthOf(`${at}-01`)) : a
 const misses = (count: number, unit: string) =>
   count === 0 ? `No ${unit} since has come within 2% of it.` : `${WORDS[count] ?? count} ${unit}${count === 1 ? "" : "s"} since ${count === 1 ? "has" : "have"} come within 2% of it.`;
 
+// kWh to a tenth, or an outage's length in days and hours, as Top Ten and the Backup section read it.
+const KWH = { cell: (v: number) => v.toFixed(1), figure: (v: number) => `${v.toFixed(1)} kWh`, tick: tenthTick };
+const LENGTH = { cell: hoursLength, figure: hoursLength, tick: outageTick };
+
 // In recordTabs' order.
 const TABS = [
-  { name: "Best solar day", unit: "kWh", per: "day", color: "text-solar", stroke: "var(--color-solar)" },
-  { name: "Most sent to PG&E in a day", unit: "kWh", per: "day", color: "", stroke: "var(--color-grid)" },
-  { name: "Most sent to PG&E in a month", unit: "kWh", per: "month", color: "", stroke: "var(--color-grid)" },
-  { name: "Longest outage", unit: "hours", per: "outage", color: "text-powerwall", stroke: "var(--color-powerwall)" },
+  { name: "Best solar day", ...KWH, per: "day", color: "text-solar", stroke: "var(--color-solar)" },
+  { name: "Most sent to PG&E in a day", ...KWH, per: "day", color: "", stroke: "var(--color-grid)" },
+  { name: "Most sent to PG&E in a month", ...KWH, per: "month", color: "", stroke: "var(--color-grid)" },
+  { name: "Longest outage", ...LENGTH, per: "outage", color: "text-powerwall", stroke: "var(--color-powerwall)" },
 ];
 
 export function Records({ today, tabs }: Props) {
@@ -53,12 +58,12 @@ export function Records({ today, tabs }: Props) {
       <div role="tabpanel" id="record-panel" aria-labelledby={`record-tab-${chosen}`} className="grid gap-x-14 gap-y-8 md:grid-cols-[minmax(0,1fr)_22rem]">
         {record ? (
           <div className="flex flex-col gap-3">
-            <p className="font-mono text-[13px] text-foreground">{`${record.value.toFixed(1)} ${tab.unit} ${tab.per === "month" ? "in" : "on"} ${when(record.at)} · ${setAgo(record.at, today)}`}</p>
+            <p className="font-mono text-[13px] text-foreground">{`${tab.figure(record.value)} ${tab.per === "month" ? "in" : "on"} ${when(record.at)} · ${setAgo(record.at, today)}`}</p>
             <ChartContainer config={{}} className="aspect-auto h-48 w-full">
               <LineChart data={chart} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
                 <XAxis dataKey="t" type="number" domain={["dataMin", "dataMax"]} ticks={years} tickFormatter={(t) => String(new Date(t).getUTCFullYear())} tickLine={false} axisLine={false} />
-                <YAxis domain={[values[0], values.at(-1)!]} ticks={values} tickFormatter={tenthTick} tickLine={false} axisLine={false} width={48} />
-                <ChartTooltip content={<RecordDetails unit={tab.unit} per={tab.per} />} />
+                <YAxis domain={[values[0], values.at(-1)!]} ticks={values} tickFormatter={tab.tick} tickLine={false} axisLine={false} width={48} />
+                <ChartTooltip content={<RecordDetails show={tab.figure} per={tab.per} />} />
                 <Line dataKey="value" type="stepAfter" stroke={tab.stroke} strokeWidth={2} dot={false} isAnimationActive={false} />
               </LineChart>
             </ChartContainer>
@@ -73,7 +78,7 @@ export function Records({ today, tabs }: Props) {
               <Link href={link(row.at)} className="grid min-h-11 grid-cols-[1.75rem_minmax(0,1fr)_auto] items-baseline gap-3 border-t py-2 text-sm hover:bg-secondary/40">
                 <span className={`font-mono ${i ? "text-muted-foreground" : "font-semibold"}`}>{i + 1}</span>
                 <span>{when(row.at)}</span>
-                <b className={`font-mono ${i ? "" : tab.color}`}>{row.value.toFixed(1)}</b>
+                <b className={`font-mono ${i ? "" : tab.color}`}>{tab.cell(row.value)}</b>
               </Link>
             </li>
           ))}
@@ -84,9 +89,9 @@ export function Records({ today, tabs }: Props) {
   );
 }
 
-type RecordHover = Hover<{ t: number; value: number }> & { unit: string; per: string };
-export function RecordDetails({ active, payload, unit, per }: RecordHover) {
+type RecordHover = Hover<{ t: number; value: number }> & { show: (value: number) => string; per: string };
+export function RecordDetails({ active, payload, show, per }: RecordHover) {
   const row = payload?.[0]?.payload;
   if (!active || !row) return null;
-  return <DetailsBox title={(per === "month" ? longMonth : longDay).format(row.t)} details={[{ name: "Record", value: `${row.value.toFixed(1)} ${unit}` }]} />;
+  return <DetailsBox title={(per === "month" ? longMonth : longDay).format(row.t)} details={[{ name: "Record", value: show(row.value) }]} />;
 }

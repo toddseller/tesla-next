@@ -49,7 +49,8 @@ export async function topTen(withVpp: boolean, readings: Readings): Promise<TopT
     { solar: ten(solar.rows.map((r) => ({ date: dayLabel(r.date), solar: r.solar_generated, day: r.date })), (r) => -pyRound(r.solar, 1), (r) => r.day) },
     { net_grid: ten(days.rows.map((r) => ({ date: dayLabel(r.date), net_grid: dailyItem(r, readings).grid!, day: r.date })), (r) => r.net_grid, (r) => r.day) },
     { to_grid_months: ten(months.rows.map((r) => ({ date: monthLabel(r.month), net_grid: pyRound(r.net, 1), month: r.month })), (r) => r.net_grid, (r) => r.month) },
-    { outages: ten(outages.rows.map((r) => ({ date: dayLabel(r.day), hours: pyRound(r.hours, 1), day: r.day })), (r) => -r.hours, (r) => r.day) },
+    // Exact hours, so a length reads to the minute as Impact reads it; ranked as Top Ten shows them, to a tenth.
+    { outages: ten(outages.rows.map((r) => ({ date: dayLabel(r.day), hours: r.hours, day: r.day })), (r) => -pyRound(r.hours, 1), (r) => r.day) },
   ];
 }
 

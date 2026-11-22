@@ -407,3 +407,8 @@ test("each lit hour's expected kW sits at the hour's middle, zero at the lit hou
     [780, 0, null],
   ]);
 });
+
+test("the Home view says Total Usage leaves out the car on a day with car data, and plain Total Usage before it", () => {
+  expect(viewSummary("home", {}, { vehicleData: true }).headline).toBe("Total Usage, car apart");
+  expect(viewSummary("home", {}, { vehicleData: false }).headline).toBe("Total Usage");
+});

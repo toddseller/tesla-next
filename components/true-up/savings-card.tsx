@@ -22,7 +22,7 @@ function Key({ swatch, label, value, children }: { swatch: string; label: string
 export function SavingsCard({ savings, season, current }: { savings: Savings; season: Cost["vpp"]; current: boolean }) {
   const text = savingsText(savings, season, current);
   const { powerwalls } = text;
-  const cost = savings.powerwalls_added < 0;
+  const cost = text.powerwallsCost;
   return (
     <section aria-labelledby="savings" className="flex flex-col gap-4 rounded-[10px] border bg-card px-4 py-5 sm:px-6">
       <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-2">
@@ -40,7 +40,7 @@ export function SavingsCard({ savings, season, current }: { savings: Savings; se
       </div>
       <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:gap-x-10">
         <Key swatch="bg-grid" label="Paid" value={text.paid}>{text.paidSplit}</Key>
-        <Key swatch="bg-solar" label="Solar saved" value={text.solar}>Against buying it all from the grid</Key>
+        <Key swatch="bg-solar" label="Solar saved" value={text.solar}>Against buying it all from the grid{text.solarLess && <><br />{text.solarLess}</>}</Key>
       </div>
       <div role="group" aria-labelledby="powerwalls" className="grid gap-4 border-t pt-4 sm:grid-cols-3 sm:gap-6">
         <div className="flex flex-col gap-1">

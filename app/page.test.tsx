@@ -89,5 +89,6 @@ test("the first render holds the six chapter words in order and Pick a day, with
   const html = await served();
   const words = [...html.matchAll(/<h2[^>]*>([^<]+)<\/h2>/g)].map((m) => m[1]);
   expect(words).toEqual(["Now", "Today", "2026", "Records", "Habits", "Since 2021", "Pick a day"]);
-  expect(html).toContain("This true-up year so far: 609.3 kWh more imported than sent since October 1");
+  expect(html).toContain(">609.3<");
+  expect(html).toContain("more imported than sent this true-up year, since October 1");
 });

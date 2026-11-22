@@ -149,17 +149,18 @@ export function forecastCard({ scale, rows, so_far, reading, hourly }: ForecastD
   const newest = rows.reduce<ForecastRow | null>((a, r) => (!a || r.fetched_at > a.fetched_at ? r : a), null);
   const ahead = [1, 2, 3].flatMap((n) => row(shiftDay(today, n)) ?? []);
   const usable = scale.days >= FEWEST_DAYS && scale.radiation_mj > 0 && ahead.some((r) => age(r) <= GONE_AFTER);
-  const expected = (r: ForecastRow) => Math.round((r.radiation_mj * scale.solar_kwh) / scale.radiation_mj);
+  const tenth = (kwh: number) => Math.round(kwh * 10) / 10;
+  const expected = (r: ForecastRow) => tenth((r.radiation_mj * scale.solar_kwh) / scale.radiation_mj);
   const todays = row(today);
   const current = reading && now - Date.parse(reading.sampled_at) < READING_FOR ? reading : null;
   const sky: SkyWhen = current ? (skyAt(new Date(now)) === "day" ? "now" : "night") : "forecast";
   const scales = hourly.days >= FEWEST_DAYS ? perWm2(hourly.scale) : null;
   const hoursOf = (day: string, madeUntil: string | null) => scales && byHour(scales, hourly.hours.filter((h) => h.day === day), madeUntil);
   const todayByHour = hoursOf(today, hourly.made_until);
-  // The hours are the finer model and the one the panel draws: a day they cover expects their sum, rounded up to the
-  // tile's whole kWh (after a tenth, as by now shows it), so the expected by now never passes the day's.
+  // The hours are the finer model and the one the panel draws: a day they cover expects their sum, so its tile and its
+  // expected by now can't disagree. To a tenth, the figure every page shows for the day.
   const dayExpected = (r: ForecastRow, hours: ByHour | null) =>
-    hours ? Math.ceil(Math.round(hours.hours.reduce((sum, h) => sum + h.expected, 0) * 10) / 10) : expected(r);
+    hours ? tenth(hours.hours.reduce((sum, h) => sum + h.expected, 0)) : expected(r);
   return {
     today: {
       day: today,

@@ -50,7 +50,7 @@ test("Solar Offset explains itself and shows the offset and labeled bars on one 
   expect(offset.textContent).toContain("Solar generated against home use");
   expect(offset.textContent).toContain("77%energy offset");
   const bars = within(offset).getAllByRole("meter");
-  expect(bars.map((bar) => [bar.getAttribute("aria-label"), bar.getAttribute("aria-valuetext")])).toEqual([["Solar", "23.8 kWh"], ["Home", "30.8 kWh"]]);
+  expect(bars.map((bar) => [bar.getAttribute("aria-label"), bar.getAttribute("aria-valuetext")])).toEqual([["Solar", "23.8 kWh"], ["Home, car included", "30.8 kWh"]]);
   expect(shown(bars[0])).toBeCloseTo(77.3, 5);
   expect(shown(bars[1])).toBe(100);
 });

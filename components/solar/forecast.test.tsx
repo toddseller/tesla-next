@@ -10,10 +10,10 @@ import type { ForecastCard as Card } from "@/lib/forecast";
 afterEach(cleanup);
 
 const CARD: Card = {
-  today: { day: "2026-11-10", soFar: 9.6, expected: 31, code: 0, sky: "forecast", temperature: null },
+  today: { day: "2026-11-10", soFar: 9.6, expected: 31.4, code: 0, sky: "forecast", temperature: null },
   days: [
     { day: "2026-11-11", expected: 33, code: 0, byHour: null, high: null, low: null },
-    { day: "2026-11-12", expected: 14, code: 45, byHour: null, high: null, low: null },
+    { day: "2026-11-12", expected: 14.2, code: 45, byHour: null, high: null, low: null },
     { day: "2026-11-13", expected: 27, code: 2, byHour: null, high: null, low: null },
   ],
   goodDay: 37,
@@ -38,16 +38,17 @@ test("a fill uncovers to the share it shows, not to the whole track", () => {
 
 test("today's expected kWh, its kWh so far as a bar against it, and its sky", () => {
   render(<ForecastCard card={CARD} />);
-  expect(today().getByText("31")).toBeTruthy();
   expect(today().getByText("kWh expected")).toBeTruthy();
-  expect(fill(today().getByRole("img", { name: "9.6 of about 31 kWh so far" }))).toBe("31%");
+  // To a tenth, as every page gives a day's expected kWh.
+  expect(today().getByText("31.4")).toBeTruthy();
+  expect(fill(today().getByRole("img", { name: "9.6 of about 31.4 kWh so far" }))).toBe("30.6%");
   expect(card().getByRole("group", { name: "Today" }).textContent).toContain("9.6 kWh so far");
   expect(today().getAllByText("Sunny").length).toBeGreaterThan(0);
 });
 
 test("past the expected kWh today's bar is full", () => {
   render(<ForecastCard card={{ ...CARD, today: { ...CARD.today, soFar: 34.2 } }} />);
-  expect(fill(today().getByRole("img", { name: "34.2 of about 31 kWh so far" }))).toBe("100%");
+  expect(fill(today().getByRole("img", { name: "34.2 of about 31.4 kWh so far" }))).toBe("100%");
 });
 
 test("the next three days, each with its kWh, a bar against the good day and its sky", () => {
@@ -57,9 +58,9 @@ test("the next three days, each with its kWh, a bar against the good day and its
     [true, false, false], [false, true, false], [false, false, true],
   ]);
   const thursday = within(days[1]);
-  expect(thursday.getByText("14")).toBeTruthy();
+  expect(thursday.getByText("14.2")).toBeTruthy();
   expect(thursday.getAllByText("Fog likely").length).toBeGreaterThan(0);
-  expect(fill(thursday.getByRole("img", { name: "14 kWh against a good day of 37" }))).toBe("37.8%");
+  expect(fill(thursday.getByRole("img", { name: "14.2 kWh against a good day of 37" }))).toBe("38.4%");
   expect(card().getByText(/Bars run to a good day, 37 kWh, the best of those 30\./)).toBeTruthy();
 });
 
@@ -278,7 +279,7 @@ test("an hour not yet started shows only what is expected", () => {
 test("today's bar: the expected track uncovers at an even pace, then what was made grows into it from halfway", () => {
   vi.useFakeTimers();
   render(<ForecastCard card={CARD} />);
-  const bar = today().getByRole("img", { name: "9.6 of about 31 kWh so far" });
+  const bar = today().getByRole("img", { name: "9.6 of about 31.4 kWh so far" });
   const made = bar.firstElementChild!;
   expect([...bar.classList]).toEqual(expect.arrayContaining(["motion-uncover", "motion-even"]));
   expect([...made.classList]).toEqual(expect.arrayContaining(["motion-uncover", "motion-second", "motion-tween"]));
@@ -316,4 +317,11 @@ test("choosing another day draws the chart in again; a reload of the same day do
   press("Today");
   expect(rising()).toBe(BY_HOUR.hours.length);
   vi.useRealTimers();
+});
+
+test("each day ahead gives its expected kWh to a tenth, a whole figure with its .0", () => {
+  render(<ForecastCard card={CARD} />);
+  const label = (name: string) => screen.getByRole("img", { name }).getAttribute("aria-label");
+  expect(label("14.2 kWh against a good day of 37")).toBeTruthy();
+  expect(label("33.0 kWh against a good day of 37")).toBeTruthy();
 });

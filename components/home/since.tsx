@@ -33,7 +33,7 @@ export function Since({ today, months, solar, matched, net, trueUpStart, payback
       <p className="max-w-[60ch] text-[15px] text-pretty text-muted-foreground">Everything the panels have made, against everything the house has used, month by month since the system started.</p>
       <div className="flex flex-wrap gap-x-5 gap-y-1 font-mono text-[13px]">
         <span className="flex items-center gap-2"><span aria-hidden className="h-[3px] w-3.5 rounded-sm bg-solar" />solar made</span>
-        <span className="flex items-center gap-2"><span aria-hidden className="h-[3px] w-3.5 rounded-sm bg-home" />house used</span>
+        <span className="flex items-center gap-2"><span aria-hidden className="h-[3px] w-3.5 rounded-sm bg-home" />house used, car included</span>
       </div>
       <div role="img" aria-label={label}>
         <ChartContainer config={{}} className="aspect-auto h-64 w-full">
@@ -67,7 +67,7 @@ export function Since({ today, months, solar, matched, net, trueUpStart, payback
         <div className="flex flex-col gap-4">
           <div className="flex flex-col gap-1">
             <b className="font-mono text-2xl font-semibold">{tenth(net)} kWh</b>
-            <span className="text-[13px] text-muted-foreground">{tenth(net) === "0.0" ? `This true-up year so far: as much sent as imported since ${startName(trueUpStart)}` : `This true-up year so far: ${tenth(net)} kWh more ${net > 0 ? "imported than sent" : "sent than imported"} since ${startName(trueUpStart)}`}</span>
+            <span className="text-[13px] text-muted-foreground">{`${tenth(net) === "0.0" ? "as much sent as imported" : `more ${net > 0 ? "imported than sent" : "sent than imported"}`} this true-up year, since ${startName(trueUpStart)}`}</span>
           </div>
           {(solarPaid || powerwalls) && <p className="text-[15px] text-pretty">{[solarPaid, powerwalls].filter(Boolean).join(" ")}</p>}
         </div>
