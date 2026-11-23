@@ -11,7 +11,7 @@ vi.mock("@/lib/true-up/savings", () => ({ trueUpSavings: mocks.trueUpSavings }))
 vi.mock("@/lib/true-up/payback", () => ({ payback: mocks.payback }));
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn() }) }));
 
-const { default: Page } = await import("./page");
+const { default: Page, generateMetadata } = await import("./page");
 
 const served = async (searchParams: Record<string, string> = {}) => renderToString(await Page({ searchParams: Promise.resolve(searchParams) }));
 const at = (instant: string) => vi.setSystemTime(Date.parse(instant));
@@ -96,4 +96,12 @@ test("a finished year is served with its headline against the year before; the c
   mocks.trueUpCost.mockClear();
   await served();
   expect(mocks.trueUpCost).toHaveBeenCalledTimes(1);
+});
+
+// dashboard-shell, "Each page's title".
+test("the title names the true-up year shown", async () => {
+  at("2026-11-23T12:00:00-08:00");
+  const title = async (params: Record<string, string>) => (await generateMetadata({ searchParams: Promise.resolve(params) })).title;
+  expect(await title({})).toBe("True-Up · '26\u00a0-\u00a0'27");
+  expect(await title({ start: "2025-10-01", end: "2026-09-30" })).toBe("True-Up · '25\u00a0-\u00a0'26");
 });

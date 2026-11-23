@@ -16,7 +16,7 @@ vi.mock("@/lib/scene/replay", () => ({ siteToday: () => "2026-11-14" }));
 vi.mock("@/app/admin/actions", () => ({ saveBill: vi.fn(), markVppDay: vi.fn(), unmarkVppDay: vi.fn(), savePayout: vi.fn() }));
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn() }) }));
 
-const { default: Page } = await import("./page");
+const { default: Page, metadata } = await import("./page");
 
 const served = async (searchParams: Record<string, string> = {}) => renderToString(await Page({ searchParams: Promise.resolve(searchParams) }));
 
@@ -70,4 +70,9 @@ test("a picked year is read", async () => {
 test.each(["2019", "next", ""])("an unknown year (%s) falls back to the current one", async (year) => {
   await served({ year });
   expect(mocks.storedBill).toHaveBeenCalledWith(2027);
+});
+
+// dashboard-shell, "Each page's title".
+test("the page's title names it", () => {
+  expect(metadata.title).toBe("Admin");
 });

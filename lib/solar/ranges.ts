@@ -135,6 +135,15 @@ export function comparedDays(range: Range, today: string): { now: Range; then: R
 
 const trueUpName = (start: string) => `'${start.slice(2, 4)} - '${String(Number(start.slice(2, 4)) + 1).padStart(2, "0")}`;
 
+// A whole calendar year or true-up year by name, as both a title and a sentence call it.
+const yearName = ({ start, end }: Range) =>
+  start.endsWith("-01-01") && end === `${start.slice(0, 4)}-12-31` ? start.slice(0, 4)
+  : start.endsWith("-10-01") && end === `${Number(start.slice(0, 4)) + 1}-09-30` ? trueUpName(start)
+  : null;
+
+// How a page's title names its range: a whole year by name, or else as the range buttons show it.
+export const rangeTitle = (range: Range) => yearName(range) ?? rangeLabel(range);
+
 // How a lead sentence names the range, and the year-earlier days by name when they're a finished whole period.
 export function rangeNames(range: Range, today: string): { name: string; earlier: string | null } {
   const { start, end } = range;
@@ -143,8 +152,8 @@ export function rangeNames(range: Range, today: string): { name: string; earlier
   const month = monthOf(start);
   if (month.start === start && month.end === end)
     return soFar ? { name: `in ${part(start, "long").month} so far`, earlier: null } : named(rangeLabel(range), `${part(start, "long").month} ${Number(start.slice(0, 4)) - 1}`);
-  if (start.endsWith("-01-01") && end === `${start.slice(0, 4)}-12-31`) return named(start.slice(0, 4), String(Number(start.slice(0, 4)) - 1));
-  if (start.endsWith("-10-01") && end === `${Number(start.slice(0, 4)) + 1}-09-30`) return named(trueUpName(start), trueUpName(yearBefore(start)));
+  const year = yearName(range);
+  if (year) return named(year, yearName({ start: yearBefore(start), end: yearBefore(end) })!);
   if (start === end)
     return { name: start === today ? "today" : start === shiftDay(today, -1) ? "yesterday" : `on ${datesLabel(range, "short")}`, earlier: null };
   if (soFar && end === shiftDay(start, 6) && new Date(`${start}T00:00:00Z`).getUTCDay() === 0) return { name: "this week so far", earlier: null };

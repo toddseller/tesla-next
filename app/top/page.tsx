@@ -3,6 +3,8 @@ import { readingsOf } from "@/lib/meter";
 import { siteToday } from "@/lib/scene/replay";
 import { topTen } from "@/lib/top-ten";
 
+export const metadata = { title: "Top Ten" };
+
 export default async function Page({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const params = await searchParams;
   const withVpp = params.vpp === "with";

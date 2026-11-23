@@ -11,7 +11,7 @@ vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn(), replace: 
 const forecast = vi.hoisted(() => vi.fn());
 vi.mock("@/lib/forecast", async (original) => ({ ...(await original<typeof import("@/lib/forecast")>()), forecast }));
 
-const { default: Page } = await import("./page");
+const { default: Page, generateMetadata } = await import("./page");
 
 const served = async (searchParams: Record<string, string> = {}) => renderToString(await Page({ searchParams: Promise.resolve(searchParams) }));
 
@@ -121,4 +121,12 @@ test("a finished range is compared without asking for its own days again", async
 test("a range with no year before it is served without asking for one", async () => {
   await served({ start: "2022-01-01", end: "2022-06-30" });
   expect(rangeTotals).toHaveBeenCalledTimes(1);
+});
+
+// dashboard-shell, "Each page's title".
+test("the title names the range shown, or the open day", async () => {
+  const title = async (params: Record<string, string>) => (await generateMetadata({ searchParams: Promise.resolve(params) })).title;
+  expect(await title({})).toBe("Solar · November 2026");
+  expect(await title({ start: "2025-01-01", end: "2025-12-31" })).toBe("Solar · 2025");
+  expect(await title({ start: "2026-10-01", end: "2026-10-31", day: "2026-10-14" })).toBe("Solar · Oct 14, 2026");
 });
