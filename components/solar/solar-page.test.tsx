@@ -46,6 +46,8 @@ test("a preset and a picked day each push their address", () => {
   const { container } = render(<SolarPage range={november} items={[item("2026-11-07", 12.1)]} today="2026-11-07" initialStatus={null} />);
   fireEvent.click(screen.getByRole("button", { name: "This year" }));
   expect(router.push).toHaveBeenCalledWith("/solar?start=2026-01-01&end=2026-12-31", { scroll: false });
+  fireEvent.click(screen.getByRole("button", { name: "All time" }));
+  expect(router.push).toHaveBeenLastCalledWith("/solar?start=2021-10-10&end=2026-11-07", { scroll: false });
   fireEvent.click(solarOf(container, "Nov 7")!);
   expect(router.push).toHaveBeenLastCalledWith("/solar?start=2026-11-01&end=2026-11-30&day=2026-11-07");
 });

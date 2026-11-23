@@ -50,6 +50,7 @@ export const presets = (today: string): Preset[] => {
     { label: "This month", range: monthOf(today) },
     { label: "This year", range: { start: `${year}-01-01`, end: `${year}-12-31` } },
     { label: "True-up year", range: { start: `${trueUpStart}-10-01`, end: `${trueUpStart + 1}-09-30` } },
+    { label: "All time", range: { start: FIRST_DAY, end: today } },
   ];
 };
 
@@ -60,19 +61,17 @@ export const impactPresets = (today: string): Preset[] => {
     { label: "Today", range: { start: today, end: today } },
     { label: "This week", range: { start: sunday, end: shiftDay(sunday, 6) } },
     ...presets(today),
-    { label: "All time", range: { start: FIRST_DAY, end: today } },
   ];
 };
 
-// The True-Up Tracker's years, from /api/true-up-years (oldest first, the current one last): the row keeps its size as
-// years pass, with older years in an Earlier menu.
-export function trueUpPresets(years: { label: string; start_date: string; end_date: string }[]) {
-  const newestFirst = years.map(({ label, start_date: start, end_date: end }) => ({ label, range: { start, end } })).reverse();
-  const [current, ...past] = newestFirst;
-  return {
-    presets: [{ ...current, label: "This year" }, ...past.slice(0, 2), { label: "All time", range: { start: years[0].start_date, end: current.range.end } }],
-    earlier: past.slice(2),
-  };
+// The True-Up Tracker's years, from /api/true-up-years (oldest first, the current one last). Its current year turns at the
+// October read, not on October 1, so it comes from the list rather than from today.
+export function trueUpPresets(years: { start_date: string; end_date: string }[]): Preset[] {
+  const current = years.at(-1)!;
+  return [
+    { label: "True-up year", range: { start: current.start_date, end: current.end_date } },
+    { label: "All time", range: { start: years[0].start_date, end: current.end_date } },
+  ];
 }
 
 const single = (value: Param) => (typeof value === "string" ? value : null);
@@ -157,6 +156,20 @@ const yearName = ({ start, end }: Range) =>
   : start.endsWith("-10-01") && end === `${Number(start.slice(0, 4)) + 1}-09-30` ? trueUpName(start)
   : null;
 
+const isWeek = ({ start, end }: Range) => end === shiftDay(start, 6) && new Date(`${start}T00:00:00Z`).getUTCDay() === 0;
+
+// The range's shape, not the preset last picked, sets the step, so a shared address steps as the page it came from did.
+export function step(range: Range, by: 1 | -1): { name: string; range: Range } | null {
+  const { start, end } = range;
+  if (start === end) return { name: "day", range: { start: shiftDay(start, by), end: shiftDay(start, by) } };
+  if (isWeek(range)) return { name: "week", range: { start: shiftDay(start, 7 * by), end: shiftDay(end, 7 * by) } };
+  const month = monthOf(start);
+  if (month.start === start && month.end === end) return { name: "month", range: monthOf(by > 0 ? shiftDay(end, 1) : shiftDay(start, -1)) };
+  if (!yearName(range)) return null;
+  const shift = (date: string) => `${Number(date.slice(0, 4)) + by}${date.slice(4)}`;
+  return { name: start.endsWith("-01-01") ? "year" : "true-up year", range: { start: shift(start), end: shift(end) } };
+}
+
 // How a page's title names its range: a whole year by name, or else as the range buttons show it.
 export const rangeTitle = (range: Range) => yearName(range) ?? rangeLabel(range);
 
@@ -172,6 +185,6 @@ export function rangeNames(range: Range, today: string): { name: string; earlier
   if (year) return named(year, yearName({ start: yearBefore(start), end: yearBefore(end) })!);
   if (start === end)
     return { name: start === today ? "today" : start === shiftDay(today, -1) ? "yesterday" : `on ${datesLabel(range, "short")}`, earlier: null };
-  if (soFar && end === shiftDay(start, 6) && new Date(`${start}T00:00:00Z`).getUTCDay() === 0) return { name: "this week so far", earlier: null };
+  if (soFar && isWeek(range)) return { name: "this week so far", earlier: null };
   return { name: `from ${datesLabel(range, "short").replace(" – ", " to ")}`, earlier: null };
 }

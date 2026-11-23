@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 // The presets and picker of the solar-range-chart spec, driven as a visitor would.
-import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 
 import { PresetGroup, RangeControls } from "@/components/solar/range-controls";
@@ -8,6 +8,8 @@ import { presets } from "@/lib/solar/ranges";
 import { MARKER_SELECTED } from "@/components/ui/calendar";
 
 const october = { start: "2026-10-01", end: "2026-10-31" };
+// No preset has this range's shape, so it is the custom range.
+const tenDays = { start: "2026-10-10", end: "2026-10-20" };
 
 beforeEach(() => {
   vi.useFakeTimers({ toFake: ["Date"] });
@@ -36,7 +38,7 @@ test("each preset sets its range, and the one matching the shown range is marked
 });
 
 test("a range no preset gives marks none", () => {
-  render(<RangeControls today="2026-11-07" range={october} presets={presets("2026-11-07")} onRange={() => {}} />);
+  render(<RangeControls today="2026-11-07" range={tenDays} presets={presets("2026-11-07")} onRange={() => {}} />);
   expect([pressed("This month"), pressed("This year"), pressed("True-up year")]).toEqual(["false", "false", "false"]);
 });
 
@@ -51,14 +53,11 @@ test("the dates button is an icon named and titled with the shown dates", () => 
   expect(datesButton().getAttribute("title")).toBe("Choose dates, Oct 1 – 31, 2026");
 });
 
-test("the dates button is marked on a range no preset gives, and not on a preset's or an earlier year's", () => {
-  render(<RangeControls today="2026-11-07" range={october} presets={presets("2026-11-07")} onRange={() => {}} />);
+test("the dates button is marked on a range no preset gives, and not on a preset's", () => {
+  render(<RangeControls today="2026-11-07" range={tenDays} presets={presets("2026-11-07")} onRange={() => {}} />);
   expect(marked(datesButton())).toBe(true);
   cleanup();
   render(<RangeControls today="2026-11-07" range={{ start: "2026-11-01", end: "2026-11-30" }} presets={presets("2026-11-07")} onRange={() => {}} />);
-  expect(marked(datesButton())).toBe(false);
-  cleanup();
-  render(<RangeControls today="2026-11-07" range={year(2023).range} presets={yearPresets} earlier={earlier} onRange={() => {}} />);
   expect(marked(datesButton())).toBe(false);
 });
 
@@ -80,7 +79,7 @@ test("the picker offers nothing before the first day of service, and its months 
   openPicker();
   expect(dayButton(/October 9th, 2021/).disabled).toBe(true);
   expect(dayButton(/October 10th, 2021/).disabled).toBe(false);
-  expect(monthOff(/previous month/i)).toBe(true);
+  expect(monthOff(/go to the previous month/i)).toBe(true);
 });
 
 test("the picker offers nothing after the site's today, and its months stop at today's", () => {
@@ -88,7 +87,7 @@ test("the picker offers nothing after the site's today, and its months stop at t
   openPicker();
   expect(dayButton(/November 7th, 2026/).disabled).toBe(false);
   expect(dayButton(/November 8th, 2026/).disabled).toBe(true);
-  expect(monthOff(/next month/i)).toBe(true);
+  expect(monthOff(/go to the next month/i)).toBe(true);
 });
 
 test("the site's today bounds the picker even when the viewer's clock is a day ahead", () => {
@@ -96,7 +95,7 @@ test("the site's today bounds the picker even when the viewer's clock is a day a
   render(<RangeControls today="2026-11-30" range={{ start: "2026-11-01", end: "2026-11-30" }} presets={presets("2026-11-30")} onRange={() => {}} />);
   openPicker();
   expect(dayButton(/November 30th, 2026/).disabled).toBe(false);
-  expect(monthOff(/next month/i)).toBe(true);
+  expect(monthOff(/go to the next month/i)).toBe(true);
   expect(screen.getAllByRole("gridcell").filter((cell) => cell.dataset.today).map((cell) => cell.dataset.day)).toEqual(["2026-11-30"]);
 });
 
@@ -163,15 +162,15 @@ test("a day after today inside the range keeps its fill, and one outside it fade
   expect(outside.className).toContain("opacity-50");
 });
 
-// The True-Up Tracker's year picker: older years in an Earlier menu, before the last preset.
+// The Backup section's year picker: older years in an Earlier menu, before the last preset.
 const year = (end: number) => ({ label: `'${String(end - 1).slice(2)} - '${String(end).slice(2)}`, range: { start: `${end - 1}-10-01`, end: `${end}-09-30` } });
 const yearPresets = [{ label: "This year", range: year(2027).range }, year(2026), year(2025), { label: "All time", range: { start: "2021-10-01", end: "2027-09-30" } }];
 const earlier = [year(2024), year(2023), year(2022)];
 const earlierButton = () => screen.getByRole("button", { name: /^(earlier|'2\d - '2\d)$/i, expanded: false });
 
 test("the Earlier menu sits before the last preset and lists the older years in order", () => {
-  render(<RangeControls today="2026-11-07" range={year(2027).range} presets={yearPresets} earlier={earlier} onRange={() => {}} />);
-  const group = screen.getByRole("group", { name: "Preset ranges" });
+  render(<PresetGroup label="Backup years" range={year(2027).range} presets={yearPresets} earlier={earlier} onRange={() => {}} />);
+  const group = screen.getByRole("group", { name: "Backup years" });
   expect([...group.querySelectorAll("button")].map((b) => b.textContent)).toEqual(["This year", "'25 - '26", "'24 - '25", "Earlier", "All time"]);
   expect(earlierButton().getAttribute("aria-pressed")).toBe("false");
   act(() => fireEvent.click(earlierButton()));
@@ -180,7 +179,7 @@ test("the Earlier menu sits before the last preset and lists the older years in 
 
 test("picking an earlier year sets its range and closes the menu", () => {
   const onRange = vi.fn();
-  render(<RangeControls today="2026-11-07" range={year(2027).range} presets={yearPresets} earlier={earlier} onRange={onRange} />);
+  render(<PresetGroup label="Backup years" range={year(2027).range} presets={yearPresets} earlier={earlier} onRange={onRange} />);
   act(() => fireEvent.click(earlierButton()));
   act(() => fireEvent.click(screen.getByRole("menuitemradio", { name: "'22 - '23" })));
   expect(onRange).toHaveBeenCalledWith({ start: "2022-10-01", end: "2023-09-30" });
@@ -188,7 +187,7 @@ test("picking an earlier year sets its range and closes the menu", () => {
 });
 
 test("an earlier year that holds the shown range names the button, which is marked", () => {
-  render(<RangeControls today="2026-11-07" range={year(2023).range} presets={yearPresets} earlier={earlier} onRange={() => {}} />);
+  render(<PresetGroup label="Backup years" range={year(2023).range} presets={yearPresets} earlier={earlier} onRange={() => {}} />);
   expect(earlierButton().textContent).toBe("'22 - '23");
   expect(earlierButton().getAttribute("aria-pressed")).toBe("true");
   act(() => fireEvent.click(earlierButton()));
@@ -210,7 +209,7 @@ test("on a phone the presets are one menu naming the preset shown, and on a wide
   expect(phoneButton("This month").className).toContain("sm:hidden");
   act(() => fireEvent.click(phoneButton("This month")));
   const items = screen.getAllByRole("menuitemradio");
-  expect(items.map((item) => [item.textContent, item.getAttribute("aria-checked")])).toEqual([["This month", "true"], ["This year", "false"], ["True-up year", "false"]]);
+  expect(items.map((item) => [item.textContent, item.getAttribute("aria-checked")])).toEqual([["This month", "true"], ["This year", "false"], ["True-up year", "false"], ["All time", "false"]]);
 });
 
 test("choosing from the phone menu sets the range and closes it", () => {
@@ -223,18 +222,116 @@ test("choosing from the phone menu sets the range and closes it", () => {
 });
 
 test("a range no preset gives names the phone menu Custom, with nothing checked", () => {
-  render(<RangeControls today="2026-11-07" range={october} presets={presets("2026-11-07")} onRange={() => {}} />);
+  render(<RangeControls today="2026-11-07" range={tenDays} presets={presets("2026-11-07")} onRange={() => {}} />);
   act(() => fireEvent.click(phoneButton("Custom")));
   expect(screen.getAllByRole("menuitemradio").every((item) => item.getAttribute("aria-checked") === "false")).toBe(true);
 });
 
 test("on a phone the earlier years join the menu before All time", () => {
-  render(<RangeControls today="2026-11-07" range={year(2023).range} presets={yearPresets} earlier={earlier} onRange={() => {}} />);
-  act(() => fireEvent.click(phoneButton("'22 - '23")));
+  render(<PresetGroup label="Backup years" range={year(2023).range} presets={yearPresets} earlier={earlier} onRange={() => {}} />);
+  act(() => fireEvent.click(screen.getByRole("button", { name: "Backup years: '22 - '23" })));
   expect(screen.getAllByRole("menuitemradio").map((item) => item.textContent)).toEqual(["This year", "'25 - '26", "'24 - '25", "'23 - '24", "'22 - '23", "'21 - '22", "All time"]);
 });
 
 test("the Backup group's phone menu carries its own name", () => {
   render(<PresetGroup label="Backup years" range={year(2027).range} presets={yearPresets} earlier={earlier} onRange={() => {}} />);
   expect(screen.getByRole("button", { name: "Backup years: This year" })).not.toBeNull();
+});
+
+// dashboard-shell, "Stepping the range", "A stepped preset names its range" and "Steps stay within the data".
+const row = () => within(screen.getByRole("group", { name: "Preset ranges" }));
+const rowButton = (name: string) => row().getByRole("button", { name }) as HTMLButtonElement;
+
+test("the selected preset holds the step buttons, named for its shape, and stays selected for the range stepped to", () => {
+  const onRange = vi.fn();
+  render(<RangeControls today="2026-11-23" range={october} presets={presets("2026-11-23")} onRange={onRange} />);
+  const lit = rowButton("October 2026");
+  expect(lit.getAttribute("aria-pressed")).toBe("true");
+  expect([lit.previousElementSibling, lit.nextElementSibling]).toEqual([rowButton("Previous month"), rowButton("Next month")]);
+  fireEvent.click(rowButton("Previous month"));
+  expect(onRange).toHaveBeenCalledWith({ start: "2026-09-01", end: "2026-09-30" });
+  fireEvent.click(rowButton("Next month"));
+  expect(onRange).toHaveBeenLastCalledWith({ start: "2026-11-01", end: "2026-11-30" });
+  expect(row().queryByRole("button", { name: "Previous year" })).toBeNull();
+});
+
+test("a stepped preset reads the range's name, and choosing it brings back its own range", () => {
+  const onRange = vi.fn();
+  render(<RangeControls today="2026-11-23" range={{ start: "2025-10-01", end: "2026-09-30" }} presets={presets("2026-11-23")} onRange={onRange} />);
+  expect(rowButton("'25\u00a0-\u00a0'26").getAttribute("title")).toBe("Back to true-up year");
+  fireEvent.click(rowButton("'25\u00a0-\u00a0'26"));
+  expect(onRange).toHaveBeenCalledWith({ start: "2026-10-01", end: "2027-09-30" });
+  expect(marked(datesButton())).toBe(false);
+});
+
+test("a preset on its own range keeps its label", () => {
+  render(<RangeControls today="2026-11-23" range={{ start: "2026-11-01", end: "2026-11-30" }} presets={presets("2026-11-23")} onRange={() => {}} />);
+  expect(rowButton("This month").getAttribute("aria-pressed")).toBe("true");
+  expect(rowButton("This month").getAttribute("title")).toBeNull();
+});
+
+test("a range no preset's shape fits selects none, lights the dates button and has no step buttons", () => {
+  render(<RangeControls today="2026-11-23" range={{ start: "2026-10-10", end: "2026-10-20" }} presets={presets("2026-11-23")} onRange={() => {}} />);
+  expect(marked(datesButton())).toBe(true);
+  expect(screen.queryByRole("button", { name: /^(previous|next)/i })).toBeNull();
+  cleanup();
+  render(<RangeControls today="2026-11-23" range={{ start: "2026-11-22", end: "2026-11-22" }} presets={presets("2026-11-23")} onRange={() => {}} />);
+  expect(screen.queryByRole("button", { name: /^previous day/i })).toBeNull();
+});
+
+test("next stops at the span holding today, and previous at the first day of service", () => {
+  render(<RangeControls today="2026-11-07" range={{ start: "2026-11-01", end: "2026-11-30" }} presets={presets("2026-11-07")} onRange={() => {}} />);
+  expect([rowButton("Previous month").disabled, rowButton("Next month").disabled]).toEqual([false, true]);
+  cleanup();
+  render(<RangeControls today="2026-11-07" range={{ start: "2021-10-01", end: "2021-10-31" }} presets={presets("2026-11-07")} onRange={() => {}} />);
+  expect(rowButton("Previous month").disabled).toBe(true);
+  cleanup();
+  render(<RangeControls today="2026-11-07" range={{ start: "2021-10-01", end: "2022-09-30" }} presets={presets("2026-11-07")} onRange={() => {}} />);
+  expect([rowButton("Previous true-up year").disabled, rowButton("Next true-up year").disabled]).toEqual([true, false]);
+});
+
+test("on a phone the menu button names the stepped range, with the step buttons either side of it", () => {
+  const onRange = vi.fn();
+  render(<RangeControls today="2026-11-23" range={october} presets={presets("2026-11-23")} onRange={onRange} />);
+  const menu = phoneButton("October 2026");
+  const [before, after] = [menu.previousElementSibling as HTMLButtonElement, menu.nextElementSibling as HTMLButtonElement];
+  expect([before.getAttribute("aria-label"), after.getAttribute("aria-label")]).toEqual(["Previous month", "Next month"]);
+  expect(before.className).toContain("sm:hidden");
+  fireEvent.click(before);
+  expect(onRange).toHaveBeenCalledWith({ start: "2026-09-01", end: "2026-09-30" });
+});
+
+test("a preset group without today selects only an exact range and has no step buttons", () => {
+  render(<PresetGroup label="Year" range={{ start: "2025-01-01", end: "2025-12-31" }} presets={[{ label: "2026", range: { start: "2026-01-01", end: "2026-12-31" } }]} onRange={() => {}} />);
+  expect(pressed("2026")).toBe("false");
+  expect(screen.queryByRole("button", { name: /previous/i })).toBeNull();
+});
+
+// dashboard-shell, "Month and year lists in the picker".
+test("each month's caption is a month list and a year list, so a year is one choice away", () => {
+  wide(false);
+  render(<RangeControls today="2026-11-07" range={{ start: "2026-11-01", end: "2026-11-30" }} presets={presets("2026-11-07")} onRange={() => {}} />);
+  openPicker();
+  const years = screen.getByRole("combobox", { name: /year/i }) as HTMLSelectElement;
+  expect([...years.options].map((o) => o.textContent)).toEqual(["2021", "2022", "2023", "2024", "2025", "2026"]);
+  act(() => fireEvent.change(years, { target: { value: "2022" } }));
+  expect(screen.getByRole("grid").getAttribute("aria-label")).toBe("November 2022");
+});
+
+test("the first year's month list offers October to December only", () => {
+  wide(false);
+  render(<RangeControls today="2026-11-07" range={{ start: "2021-11-01", end: "2021-11-30" }} presets={presets("2026-11-07")} onRange={() => {}} />);
+  openPicker();
+  const months = screen.getByRole("combobox", { name: /month/i }) as HTMLSelectElement;
+  expect([...months.options].filter((o) => !o.disabled).map((o) => o.textContent)).toEqual(["Oct", "Nov", "Dec"]);
+});
+
+// impact-report, "Range controls beside the heading": the range presets alone narrow below 1280 px, so a stepped name and
+// the readings switch still fit one row at 1024; the readings switch and Top Ten keep the shared padding.
+test("the range presets narrow below 1280 px, and other preset groups don't", () => {
+  render(<RangeControls today="2026-11-23" range={tenDays} presets={presets("2026-11-23")} onRange={() => {}} />);
+  expect(rowButton("This year").className).toContain("max-xl:px-1.5");
+  cleanup();
+  render(<PresetGroup label="Year" range={{ start: "2025-01-01", end: "2025-12-31" }} presets={[{ label: "2026", range: { start: "2026-01-01", end: "2026-12-31" } }]} onRange={() => {}} />);
+  expect(screen.getByRole("button", { name: "2026" }).className).not.toContain("max-xl:px-1.5");
 });

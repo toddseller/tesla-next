@@ -4,6 +4,7 @@ import { act, cleanup, fireEvent, render, screen, within } from "@testing-librar
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 
 import { COST_25_26, CURRENT, CURRENT_COST, CURRENT_SAVINGS, SAVINGS_25_26, YEAR_25_26, YEARS } from "@/components/true-up/fixtures";
+import { LEAD } from "@/components/lead";
 import { TrueUpPage } from "@/components/true-up/true-up-page";
 import type { Payback } from "@/lib/true-up/payback";
 import { FakeStream } from "@/test/fake-event-source";
@@ -52,15 +53,15 @@ const RELOADS = (range: { start: string; end: string }) =>
   ["cycles", "true-up-cost", "true-up-savings"].map((route) => `/api/${route}?start_date=${range.start}&end_date=${range.end}`);
 const savingsCard = () => screen.getByRole("region", { name: "What the system saved" }).textContent;
 
-test("This year is marked, and the presets and Earlier menu push their addresses", () => {
+test("True-up year is marked, and the presets and step buttons push their addresses", () => {
   render(page());
   expect(screen.getByRole("heading", { level: 1 }).textContent).toBe("True-Up Tracker");
-  expect(["This year", "'25 - '26", "'24 - '25", "All time"].map(pressed)).toEqual(["true", "false", "false", "false"]);
+  expect(["True-up year", "All time"].map(pressed)).toEqual(["true", "false"]);
+  expect(screen.queryByRole("button", { name: /Earlier/ })).toBeNull();
   fireEvent.click(screen.getByRole("button", { name: "All time" }));
   expect(router.push).toHaveBeenLastCalledWith("/true-up?start=2021-10-01&end=2027-09-30", { scroll: false });
-  act(() => fireEvent.click(screen.getByRole("button", { name: /Earlier/ })));
-  act(() => fireEvent.click(screen.getByRole("menuitemradio", { name: "'22 - '23" })));
-  expect(router.push).toHaveBeenLastCalledWith("/true-up?start=2022-10-01&end=2023-09-30", { scroll: false });
+  fireEvent.click(within(screen.getByRole("group", { name: "Preset ranges" })).getByRole("button", { name: "Previous true-up year" }));
+  expect(router.push).toHaveBeenLastCalledWith("/true-up?start=2025-10-01&end=2026-09-30", { scroll: false });
 });
 
 test("the served data shows with no request of its own", async () => {
@@ -187,22 +188,26 @@ test("the title hints the true-up", () => {
   expect(screen.getByRole("heading", { level: 1 }).textContent).toBe("True-Up Tracker");
 });
 
-// true-up-tracker, "The headline": what the tiles don't say leads the page, the title shrinking to a label above it.
-test("the current year leads with its projection, the title a label above it", () => {
+// true-up-tracker, "The headline": what the tiles don't say is the page's lead, under the full-size title as on Solar and Impact.
+const leads = () => [...screen.getByRole("heading", { level: 1 }).parentElement!.querySelectorAll("p")];
+
+test("the current year leads with its projection, under the full-size title", () => {
   render(page());
   const title = screen.getByRole("heading", { level: 1 });
-  const [headline, line] = [title.nextElementSibling!, title.nextElementSibling!.nextElementSibling!];
+  const [headline, line] = leads();
   expect(headline.textContent).toBe("On track to owe $593 to $652 at the October 2027 true\u2011up; $106 in charges so far.");
   expect(line.textContent!.replace(/\u00a0/g, " ")).toBe("Year-end 2,032 to 2,362 kWh imported, if the rest of the year goes like '24 - '25 or '25 - '26");
   expect(line.textContent).toContain("'24\u00a0-\u00a0'25");
-  expect(title.className).toContain("uppercase");
+  expect(title.className).toContain("text-[22px]");
+  expect(title.className).not.toContain("uppercase");
+  expect(headline.className).toContain(LEAD);
   expect(screen.queryByText("Grid energy by PG&E billing cycle")).toBeNull();
 });
 
 test("a past year leads with its amount due against the year before's", () => {
   render(<TrueUpPage range={YEAR_25} years={YEARS} cycles={YEAR_25_26} cost={COST_25_26} savings={SAVINGS_25_26} payback={null} today="2026-11-08"
     before={{ label: "'24 - '25", amount_due: 554.83 }} />);
-  expect(screen.getByRole("heading", { level: 1 }).nextElementSibling!.textContent!.replace(/\u00a0/g, " ")).toBe("'25 - '26 ended owing $768 at the true\u2011up, $213 more than '24 - '25.");
+  expect(leads()[0].textContent!.replace(/\u00a0/g, " ")).toBe("'25 - '26 ended owing $768 at the true\u2011up, $213 more than '24 - '25.");
 });
 
 test("without a headline, the title and subtitle stay", () => {

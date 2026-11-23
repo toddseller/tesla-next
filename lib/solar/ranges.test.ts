@@ -5,7 +5,7 @@ import { siteToday } from "@/lib/scene/replay";
 const redirect = vi.hoisted(() => vi.fn(() => { throw new Error("NEXT_REDIRECT"); }));
 vi.mock("next/navigation", () => ({ redirect }));
 
-import { address, comparedDays, datesLabel, dropUnshown, impactPresets, isDaily, parseDay, parseRange, periods, presets, rangeIncludes, rangeLabel, rangeNames, rangeTitle, stripRange, trueUpPresets } from "./ranges";
+import { address, comparedDays, datesLabel, dropUnshown, impactPresets, isDaily, parseDay, parseRange, periods, presets, rangeIncludes, rangeLabel, rangeNames, rangeTitle, step, stripRange, trueUpPresets } from "./ranges";
 
 const march = { start: "2026-03-01", end: "2026-03-31" };
 
@@ -25,12 +25,14 @@ describe("rangeIncludes", () => {
 describe("presets", () => {
   const byLabel = (today: string) => Object.fromEntries(presets(today).map(({ label, range }) => [label, range]));
 
-  test("this month, this year and the true-up year containing today", () => {
+  test("this month, this year, the true-up year containing today and all time, in that order", () => {
     expect(byLabel("2026-11-07")).toEqual({
       "This month": { start: "2026-11-01", end: "2026-11-30" },
       "This year": { start: "2026-01-01", end: "2026-12-31" },
       "True-up year": { start: "2026-10-01", end: "2027-09-30" },
+      "All time": { start: "2021-10-10", end: "2026-11-07" },
     });
+    expect(presets("2026-11-07").map(({ label }) => label)).toEqual(["This month", "This year", "True-up year", "All time"]);
   });
 
   test("the true-up year's last day still belongs to it", () => {
@@ -184,23 +186,44 @@ const trueUpYearsTo = (current: number) =>
     return { label: `'${String(end - 1).slice(2)} - '${String(end).slice(2)}`, start_date: `${end - 1}-10-01`, end_date: `${end}-09-30`, last_read_date: `${end}-10-05`, current: end === current };
   });
 
-test("in 2026: This year and the two before it, Earlier newest first, and All time to the current year's end", () => {
-  const { presets, earlier } = trueUpPresets(trueUpYearsTo(2027));
-  expect(presets).toEqual([
-    { label: "This year", range: { start: "2026-10-01", end: "2027-09-30" } },
-    { label: "'25 - '26", range: { start: "2025-10-01", end: "2026-09-30" } },
-    { label: "'24 - '25", range: { start: "2024-10-01", end: "2025-09-30" } },
+test("True-Up offers the core's tail: its current year and All time to that year's end", () => {
+  expect(trueUpPresets(trueUpYearsTo(2027))).toEqual([
+    { label: "True-up year", range: { start: "2026-10-01", end: "2027-09-30" } },
     { label: "All time", range: { start: "2021-10-01", end: "2027-09-30" } },
   ]);
-  expect(earlier.map((year) => year.label)).toEqual(["'23 - '24", "'22 - '23", "'21 - '22"]);
-  expect(earlier[1].range).toEqual({ start: "2022-10-01", end: "2023-09-30" });
 });
 
-test("in 2036 there are still three year buttons, and Earlier holds the thirteen older years", () => {
-  const { presets, earlier } = trueUpPresets(trueUpYearsTo(2037));
-  expect(presets.map((p) => p.label)).toEqual(["This year", "'35 - '36", "'34 - '35", "All time"]);
-  expect(earlier).toHaveLength(13);
-  expect([earlier[0].label, earlier.at(-1)!.label]).toEqual(["'33 - '34", "'21 - '22"]);
+test("in 2036 there are still just the two", () => {
+  expect(trueUpPresets(trueUpYearsTo(2037)).map((p) => p.label)).toEqual(["True-up year", "All time"]);
+});
+
+// dashboard-shell, "Stepping the range": the shape of the range, not the preset last picked, sets the step.
+describe("stepping a range", () => {
+  test("a day steps a day, across a month end", () => {
+    expect(step({ start: "2026-10-31", end: "2026-10-31" }, 1)).toEqual({ name: "day", range: { start: "2026-11-01", end: "2026-11-01" } });
+    expect(step({ start: "2026-11-01", end: "2026-11-01" }, -1)).toEqual({ name: "day", range: { start: "2026-10-31", end: "2026-10-31" } });
+  });
+
+  test("a Sunday to Saturday week steps a week, and a Monday to Sunday one doesn't", () => {
+    expect(step({ start: "2026-11-08", end: "2026-11-14" }, 1)).toEqual({ name: "week", range: { start: "2026-11-15", end: "2026-11-21" } });
+    expect(step({ start: "2026-11-09", end: "2026-11-15" }, 1)).toBeNull();
+  });
+
+  test("a whole month steps to the whole month beside it, whatever its length", () => {
+    expect(step({ start: "2026-10-01", end: "2026-10-31" }, -1)).toEqual({ name: "month", range: { start: "2026-09-01", end: "2026-09-30" } });
+    expect(step({ start: "2028-01-01", end: "2028-01-31" }, 1)).toEqual({ name: "month", range: { start: "2028-02-01", end: "2028-02-29" } });
+    expect(step({ start: "2026-12-01", end: "2026-12-31" }, 1)).toEqual({ name: "month", range: { start: "2027-01-01", end: "2027-01-31" } });
+  });
+
+  test("a calendar year and a true-up year each step a year", () => {
+    expect(step({ start: "2026-01-01", end: "2026-12-31" }, -1)).toEqual({ name: "year", range: { start: "2025-01-01", end: "2025-12-31" } });
+    expect(step({ start: "2026-10-01", end: "2027-09-30" }, -1)).toEqual({ name: "true-up year", range: { start: "2025-10-01", end: "2026-09-30" } });
+  });
+
+  test("any other range has no step", () => {
+    expect(step({ start: "2026-10-10", end: "2026-10-20" }, -1)).toBeNull();
+    expect(step({ start: "2021-10-10", end: "2026-11-23" }, 1)).toBeNull();
+  });
 });
 
 const lengths = (list: [string, string][]) =>

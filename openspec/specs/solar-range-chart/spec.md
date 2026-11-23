@@ -36,7 +36,7 @@ When `start` and `end` are both missing, the page SHALL show the current month i
 - **THEN** the visitor is redirected to `/solar`
 
 ### Requirement: Range presets
-The page SHALL offer three presets, each changing the address to its range: This month (the current month), This year (January 1 to December 31 of the current year) and True-up year (October 1 to September 30 of the true-up year containing today), all in the site's time zone. A preset matching the shown range SHALL be marked as selected.
+The page SHALL offer the dashboard shell's four core presets, each changing the address to its range: This month (the current month), This year (January 1 to December 31 of the current year), True-up year (October 1 to September 30 of the true-up year containing today) and All time (2021-10-10, the site's first day of service, to today), all in the site's time zone. A preset matching the shown range SHALL be marked as selected.
 
 #### Scenario: True-up year in November
 - **WHEN** a visitor picks True-up year on 2026-11-07
@@ -49,6 +49,10 @@ The page SHALL offer three presets, each changing the address to its range: This
 #### Scenario: Late in the evening
 - **WHEN** a visitor whose computer is in New York picks This month at 1:00 AM on 2026-12-01 there, which is still November 30 at the site
 - **THEN** the page shows November 2026
+
+#### Scenario: All time
+- **WHEN** a visitor picks All time on 2026-11-23
+- **THEN** the address becomes `/solar?start=2021-10-10&end=2026-11-23`, the page shows that range in periods, and All time is marked as selected
 
 ### Requirement: Custom range picker
 The page SHALL offer a date-range picker, opened from the dates button over the page, showing the current range, from which a visitor picks a start and an end day in either order. It SHALL offer no day before 2021-10-10, the site's first day of service, and none after today in the site's time zone, and its months SHALL page no earlier than October 2021 and no later than the current month. It SHALL say "Pick a start day" until a day is picked, then "Pick an end day".

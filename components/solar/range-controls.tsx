@@ -1,34 +1,40 @@
 "use client";
 
-import { CalendarDays, ChevronDown } from "lucide-react";
+import { CalendarDays, ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
 import { Fragment, useState } from "react";
 
 import { Calendar, MARKER_SELECTED } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { toDate, toDay } from "@/lib/calendar-dates";
 import { FIRST_DAY } from "@/lib/scene/replay";
-import { datesLabel, type Preset, type Range } from "@/lib/solar/ranges";
+import { datesLabel, type Preset, type Range, rangeTitle, step } from "@/lib/solar/ranges";
 
 const holds = (preset: Preset, range: Range) => preset.range.start === range.start && preset.range.end === range.end;
+const shape = (range: Range) => step(range, 1)?.name;
+
+// With `today`, a preset stays selected for a range of its shape, so stepping keeps the viewer on the preset that moved.
+const selected = (presets: Preset[], range: Range, today?: string) =>
+  presets.find((preset) => holds(preset, range)) ?? (today && shape(range) ? presets.find((preset) => shape(preset.range) === shape(range)) : undefined);
 
 const SELECTED = "bg-secondary text-white shadow-[inset_0_-2px_0_var(--primary)]";
 
 export const presetStyle = (selected: boolean) =>
   `min-h-10 whitespace-nowrap rounded-md px-3.5 text-sm font-medium ${selected ? SELECTED : "text-muted-foreground hover:text-foreground"}`;
 
-type Menu = { label: string; empty: string; items: Preset[]; range: Range; onRange: (range: Range) => void; phone?: boolean };
+type Menu = { label: string; empty: string; items: Preset[]; range: Range; onRange: (range: Range) => void; phone?: boolean; lit?: Preset; litName?: string };
 
 // A menu of presets whose button names the one picked, or `empty` when none matches the range. On a phone it holds the
 // whole group, so its button carries the group's name and its items are full tap height.
-function PresetMenu({ label, empty, items, range, onRange, phone }: Menu) {
+function PresetMenu({ label, empty, items, range, onRange, phone, lit, litName }: Menu) {
   const [open, setOpen] = useState(false);
-  const picked = items.find((item) => holds(item, range));
+  const picked = lit ?? items.find((item) => holds(item, range));
+  const shown = litName ?? picked?.label ?? empty;
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <button type="button" aria-haspopup="menu" aria-label={phone ? `${label}: ${picked?.label ?? empty}` : undefined} aria-pressed={phone ? undefined : Boolean(picked)}
+        <button type="button" aria-haspopup="menu" aria-label={phone ? `${label}: ${shown}` : undefined} aria-pressed={phone ? undefined : Boolean(picked)}
           className={`flex items-center gap-1.5 ${phone ? "min-h-11 justify-between rounded-lg border border-input bg-card px-3.5 text-sm font-medium whitespace-nowrap sm:hidden max-sm:flex-1" : `justify-center ${presetStyle(Boolean(picked))}`}`}>
-          {picked?.label ?? empty}
+          {shown}
           <ChevronDown size={14} aria-hidden />
         </button>
       </PopoverTrigger>
@@ -46,12 +52,30 @@ function PresetMenu({ label, empty, items, range, onRange, phone }: Menu) {
   );
 }
 
-type Group = { label: string; range: Range; presets: Preset[]; earlier?: Preset[]; onRange: (range: Range) => void };
+type Step = { by: 1 | -1; range: Range; today: string; onRange: (range: Range) => void; phone?: boolean };
+
+function StepButton({ by, range, today, onRange, phone }: Step) {
+  const next = step(range, by)!;
+  const usable = by > 0 ? next.range.start <= today : next.range.end >= FIRST_DAY;
+  const label = `${by > 0 ? "Next" : "Previous"} ${next.name}`;
+  return (
+    <button type="button" aria-label={label} title={label} disabled={!usable} onClick={() => onRange(next.range)}
+      className={`flex shrink-0 items-center justify-center disabled:opacity-40 ${phone ? "size-11 rounded-lg border border-input bg-card sm:hidden" : "min-h-10 w-8 rounded-md"}`}>
+      {by > 0 ? <ChevronRight size={phone ? 16 : 14} aria-hidden /> : <ChevronLeft size={phone ? 16 : 14} aria-hidden />}
+    </button>
+  );
+}
+
+type Group = { label: string; range: Range; presets: Preset[]; earlier?: Preset[]; onRange: (range: Range) => void; today?: string };
 
 // The preset buttons, with an Earlier menu of older true-up years before the last, All time, when there are any; on a
-// phone, one menu of them all.
-export function PresetGroup({ label, range, presets, earlier, onRange }: Group) {
+// phone, one menu of them all. Given `today`, the selected preset holds step buttons and names a range it was stepped to.
+export function PresetGroup({ label, range, presets, earlier, onRange, today }: Group) {
   const all = earlier ? [...presets.slice(0, -1), ...earlier, ...presets.slice(-1)] : presets;
+  const lit = selected(presets, range, today);
+  const steps = Boolean(today && lit && shape(range));
+  const stepped = lit && !holds(lit, range) ? rangeTitle(range) : undefined;
+  const back = lit && stepped ? `Back to ${lit.label[0].toLowerCase()}${lit.label.slice(1)}` : undefined;
   return (
     <>
       <div role="group" aria-label={label} className="flex gap-0.5 rounded-lg border border-input bg-card p-[3px] max-sm:hidden">
@@ -60,20 +84,32 @@ export function PresetGroup({ label, range, presets, earlier, onRange }: Group) 
             {earlier && i === presets.length - 1 && (
               <PresetMenu label="Earlier true-up years" empty="Earlier" items={earlier} range={range} onRange={onRange} />
             )}
-            <button type="button" aria-pressed={holds(preset, range)} onClick={() => onRange(preset.range)} className={presetStyle(holds(preset, range))}>
-              {preset.label}
-            </button>
+            {preset === lit && steps ? (
+              <div className={`flex items-center rounded-md ${SELECTED}`}>
+                <StepButton by={-1} range={range} today={today!} onRange={onRange} />
+                <button type="button" aria-pressed title={back} onClick={() => onRange(preset.range)} className="min-h-10 whitespace-nowrap px-1 text-sm font-medium">
+                  {stepped ?? preset.label}
+                </button>
+                <StepButton by={1} range={range} today={today!} onRange={onRange} />
+              </div>
+            ) : (
+              <button type="button" aria-pressed={preset === lit} onClick={() => onRange(preset.range)} className={`${presetStyle(preset === lit)} ${today ? "max-xl:px-1.5" : ""}`}>
+                {preset.label}
+              </button>
+            )}
           </Fragment>
         ))}
       </div>
-      <PresetMenu label={label} empty="Custom" items={all} range={range} onRange={onRange} phone />
+      {steps && <StepButton by={-1} range={range} today={today!} onRange={onRange} phone />}
+      <PresetMenu label={label} empty="Custom" items={all} range={range} onRange={onRange} phone lit={lit} litName={stepped} />
+      {steps && <StepButton by={1} range={range} today={today!} onRange={onRange} phone />}
     </>
   );
 }
 
-type Controls = { today: string; range: Range; presets: Preset[]; earlier?: Preset[]; onRange: (range: Range) => void };
+type Controls = { today: string; range: Range; presets: Preset[]; onRange: (range: Range) => void };
 
-export function RangeControls({ today, range, presets, earlier, onRange }: Controls) {
+export function RangeControls({ today, range, presets, onRange }: Controls) {
   const [open, setOpen] = useState(false);
   const [first, setFirst] = useState<string | null>(null);
   const [months, setMonths] = useState(1);
@@ -91,11 +127,11 @@ export function RangeControls({ today, range, presets, earlier, onRange }: Contr
   };
   const shown = first ? { from: toDate(first), to: toDate(first) } : { from: toDate(range.start), to: toDate(range.end) };
   const name = `Choose dates, ${datesLabel(range, "short")}`;
-  const custom = ![...presets, ...(earlier ?? [])].some((preset) => holds(preset, range));
+  const custom = !selected(presets, range, today);
   const end = toDate(range.end);
   return (
     <div className="flex flex-wrap items-center gap-2 max-sm:w-full">
-      <PresetGroup label="Preset ranges" range={range} presets={presets} earlier={earlier} onRange={onRange} />
+      <PresetGroup label="Preset ranges" range={range} presets={presets} onRange={onRange} today={today} />
       <Popover open={open} onOpenChange={onOpen}>
         <PopoverTrigger asChild>
           <button type="button" aria-label={name} title={name}
@@ -106,6 +142,7 @@ export function RangeControls({ today, range, presets, earlier, onRange }: Contr
         <PopoverContent className="w-auto p-0" align="end">
           <Calendar
             mode="range"
+            captionLayout="dropdown"
             className={MARKER_SELECTED}
             selected={shown}
             numberOfMonths={months}
