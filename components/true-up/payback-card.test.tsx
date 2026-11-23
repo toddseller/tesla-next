@@ -45,7 +45,7 @@ test("the timeline runs from PTO to the end of the Powerwall warranty, marking s
   render(<PaybackCard payback={PAYBACK} today="2026-11-09" />);
   const timeline = card().getByRole("img", { name: /^Timeline/ });
   expect(timeline.getAttribute("aria-label")).toBe(
-    "Timeline from October 22, 2021, when the system went in: solar paid for itself in June 2025, today is 2026, solar is projected to pay for the whole system in 2030, the Powerwall warranty ends in 2031",
+    "Timeline from October 22, 2021, when the system was approved to run: solar paid for itself in June 2025, today is 2026, solar is projected to pay for the whole system in 2030, the Powerwall warranty ends in 2031",
   );
 });
 

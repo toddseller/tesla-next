@@ -50,7 +50,7 @@ test("the month tab links its month, and the outage tab with no outages says so"
   expect(within(panel()).getByText("No month since has come within 2% of it.")).toBeTruthy();
   fireEvent.click(screen.getByRole("tab", { name: "Longest outage" }));
   expect(screen.getByRole("tab", { name: "Longest outage" }).getAttribute("aria-selected")).toBe("true");
-  expect(within(panel()).getByText("The house hasn't been off the grid since October 22, 2021.")).toBeTruthy();
+  expect(within(panel()).getByText("The house hasn't been off the grid since it was approved to run on October 22, 2021.")).toBeTruthy();
 });
 
 test("two top outages on the same day both list, each its own row", () => {

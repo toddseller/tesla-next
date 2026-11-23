@@ -6,13 +6,13 @@ import { type KeyboardEvent, type PointerEvent, useEffect, useRef, useState } fr
 import { Doorway } from "@/components/home/doorway";
 import { PresetGroup } from "@/components/solar/range-controls";
 import type { SolarDay } from "@/lib/home/solar-hours";
-import { PTO } from "@/lib/scene/replay";
+import { FIRST_DAY } from "@/lib/scene/replay";
 import { address, monthOf } from "@/lib/solar/ranges";
 
 type Shares = { from_solar_percentage: number; from_powerwall_percentage: number; from_grid_percentage: number; total_solar: number };
 type Props = { year: number; today: string; days: SolarDay[]; shares: Shares };
 
-const FIRST_YEAR = Number(PTO.slice(0, 4));
+const FIRST_YEAR = Number(FIRST_DAY.slice(0, 4));
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 const longDay = new Intl.DateTimeFormat("en-US", { month: "long", day: "numeric", year: "numeric", timeZone: "UTC" });
 const shortDay = new Intl.DateTimeFormat("en-US", { month: "long", day: "numeric", timeZone: "UTC" });
@@ -43,7 +43,7 @@ function withFigures(year: number, days: SolarDay[]) {
 }
 
 // The shown date's month and day in another year (the 28th for February 29), kept within the days with figures:
-// October 22, 2021 before they begin. In the current year it can reach today, figures or not, as the page opens on it.
+// the first of them before they begin. In the current year it can reach today, figures or not, as the page opens on it.
 function sameDate(shown: string, year: number, days: SolarDay[], today: string) {
   const { dates, first, last } = withFigures(year, days);
   const end = year === Number(today.slice(0, 4)) ? dates.indexOf(today) : last;

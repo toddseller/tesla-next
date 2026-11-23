@@ -8,7 +8,9 @@ import { Doorway } from "@/components/home/doorway";
 import { DetailsBox, type Hover } from "@/components/home/chart-details";
 import { ChartContainer, ChartTooltip } from "@/components/ui/chart";
 import { hoursLength, outageTick } from "@/lib/backup-figures";
+import { longDate } from "@/lib/calendar-dates";
 import { type recordTabs, setAgo, tenthTick, valueTicks, yearTicks } from "@/lib/home/records";
+import { PTO } from "@/lib/scene/replay";
 import { address, monthOf } from "@/lib/solar/ranges";
 
 type Props = { today: string; tabs: ReturnType<typeof recordTabs>; record?: string };
@@ -76,7 +78,7 @@ export function Records({ today, tabs, record: served }: Props) {
             <p className="text-[15px] text-pretty text-muted-foreground">{misses(tab.near, tab.per)}</p>
           </div>
         ) : (
-          <p className="text-[15px] text-muted-foreground">{tab.per === "outage" ? "The house hasn't been off the grid since October 22, 2021." : `No ${tab.per}s with figures yet.`}</p>
+          <p className="text-[15px] text-muted-foreground">{tab.per === "outage" ? `The house hasn't been off the grid since it was approved to run on ${longDate(PTO)}.` : `No ${tab.per}s with figures yet.`}</p>
         )}
         <ol className="m-0 flex list-none flex-col p-0">
           {tab.top.map((row, i) => (

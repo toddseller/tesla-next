@@ -2,11 +2,13 @@ import Link from "next/link";
 import { type CSSProperties, useEffect, useRef, useState } from "react";
 
 import { duration } from "@/lib/backup-figures";
+import { longDate } from "@/lib/calendar-dates";
+import { PTO } from "@/lib/scene/replay";
 import type { Payback } from "@/lib/true-up/payback";
 
 // The timeline runs from PTO through the end of the Powerwalls' 10-year warranty, or a later year it has to show, with a
 // tick every other year.
-const FROM = Date.parse("2021-10-22T00:00:00Z");
+const FROM = Date.parse(PTO);
 const WARRANTY = Date.parse("2031-10-22T00:00:00Z");
 const WARRANTY_ENDS = 2031;
 const yearStart = (year: number) => Date.parse(`${year}-01-01T00:00:00Z`);
@@ -126,7 +128,7 @@ export function PaybackCard({ payback, today }: { payback: Payback; today: strin
     return () => clearTimeout(timer);
   }, [phase, length]);
   const spoken = [
-    "Timeline from October 22, 2021, when the system went in",
+    `Timeline from ${longDate(PTO)}, when the system was approved to run`,
     solar.year !== null && `solar ${solar.projected ? "is projected to pay" : "paid"} for itself in ${solar.month ? `${monthName(solar.month, "long")} ${solar.year}` : solar.year}`,
     `today is ${thisYear}`,
     system.year !== null && `solar ${system.projected ? "is projected to pay" : "paid"} for the whole system in ${system.year}`,
@@ -189,7 +191,7 @@ export function PaybackCard({ payback, today }: { payback: Payback; today: strin
           </div>
         </div>
         <ol aria-hidden className="flex flex-col sm:hidden">
-          {[{ label: "System went in (PTO)", year: 2021, ms: FROM, style: "bg-muted-foreground", ring: "bg-muted-foreground" } as Mark, ...marks]
+          {[{ label: "Approved to run (PTO)", year: 2021, ms: FROM, style: "bg-muted-foreground", ring: "bg-muted-foreground" } as Mark, ...marks]
             .map((step, i, steps) => {
               // The step's stop, PTO's being the story's start; the rail below it draws on to the next step's stop.
               const stop = i === 0 ? START_MS : stops[i - 1];

@@ -26,7 +26,7 @@ afterEach(cleanup);
 test("the running totals, named, with today and the payback marked, and the figures in words", () => {
   since();
   expect(screen.getByRole("heading", { name: "Since 2021" })).toBeTruthy();
-  expect(screen.getByRole("img", { name: /^Running totals since October 22, 2021: solar 1,900 kWh against the house's 2,100 kWh/ })).toBeTruthy();
+  expect(screen.getByRole("img", { name: /^Running totals since October 10, 2021: solar 1,900 kWh against the house's 2,100 kWh/ })).toBeTruthy();
   expect(screen.getByText("solar generated")).toBeTruthy();
   expect(document.body.textContent).toContain("Solar has generated as much as the house used: 75,611 kWh, 100%.");
   expect(screen.getByText("more imported than sent this true-up year, since October 1")).toBeTruthy();

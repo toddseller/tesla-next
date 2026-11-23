@@ -15,9 +15,9 @@ afterEach(() => {
   push.mockClear();
 });
 
-test("an empty date field from October 22, 2021 to today; changing it alone opens nothing, submitting it opens the day", () => {
+test("an empty date field from October 10, 2021, the first day of data, to today; changing it alone opens nothing, submitting it opens the day", () => {
   render(<PickADay today={TODAY} />);
-  expect([field().value, field().min, field().max]).toEqual(["", "2021-10-22", TODAY]);
+  expect([field().value, field().min, field().max]).toEqual(["", "2021-10-10", TODAY]);
   fireEvent.change(field(), { target: { value: "2024-02-04" } });
   expect(push).not.toHaveBeenCalled();
   fireEvent.click(screen.getByRole("button", { name: "Go" }));
@@ -29,14 +29,14 @@ test("a date outside the span is refused with a message naming it", () => {
   fireEvent.change(field(), { target: { value: "2021-01-01" } });
   fireEvent.click(screen.getByRole("button", { name: "Go" }));
   expect(push).not.toHaveBeenCalled();
-  expect(screen.getByRole("alert").textContent).toBe("Pick a day from October 22, 2021 to November 21, 2026.");
+  expect(screen.getByRole("alert").textContent).toBe("Pick a day from October 10, 2021 to November 21, 2026.");
 });
 
 test("Random day opens a day picked from the span", () => {
   vi.spyOn(Math, "random").mockReturnValue(0.5);
   render(<PickADay today={TODAY} />);
   fireEvent.click(screen.getByRole("button", { name: "Random day" }));
-  expect(push).toHaveBeenCalledWith("/solar?start=2024-05-01&end=2024-05-31&day=2024-05-07");
+  expect(push).toHaveBeenCalledWith("/solar?start=2024-05-01&end=2024-05-31&day=2024-05-01");
   vi.restoreAllMocks();
 });
 
@@ -73,4 +73,10 @@ test("a refused date's message keeps to one line on wide screens", () => {
   fireEvent.change(field(), { target: { value: "2021-01-01" } });
   fireEvent.click(screen.getByRole("button", { name: "Go" }));
   expect(screen.getByRole("alert").className).toMatch(/max-sm:w-full sm:w-max/);
+});
+
+// dashboard-shell, "The start date": the span counts from the first day of data.
+test("the span is counted from October 10, 2021", () => {
+  render(<PickADay today={TODAY} />);
+  expect(screen.getByText("Any of the 1,869 days since October 10, 2021.")).toBeTruthy();
 });

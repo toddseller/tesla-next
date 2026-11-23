@@ -1,9 +1,9 @@
 import { solarHours } from "@/lib/home/solar-hours";
-import { PTO, siteToday } from "@/lib/scene/replay";
+import { FIRST_DAY, siteToday } from "@/lib/scene/replay";
 
 export const dynamic = "force-dynamic";
 
-const FIRST_YEAR = Number(PTO.slice(0, 4));
+const FIRST_YEAR = Number(FIRST_DAY.slice(0, 4));
 
 export async function GET(request: Request) {
   const today = siteToday();

@@ -18,7 +18,7 @@ test("it says the visitor has gone off-grid, names the address, and leads back i
   expect(html).toMatch(/<h1 class="[^"]*text-\[28px\][^"]*">You(&#x27;|')ve gone off-grid<\/h1>/);
   expect(html).toMatch(/\/nope(<!-- -->)? isn(&#x27;|')t a page on the site, so nothing is flowing here\.<\/p>/);
   expect(html).toContain("Pick a day");
-  expect(html).toMatch(/Any of the (<!-- -->)?1,859(<!-- -->)? days since October 22, 2021\./);
+  expect(html).toMatch(/Any of the (<!-- -->)?1,871(<!-- -->)? days since (<!-- -->)?October 10, 2021(<!-- -->)?\./);
   expect(html).toMatch(/<a[^>]*href="\/"[^>]*>[^<]*home/);
 });
 

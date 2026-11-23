@@ -62,7 +62,7 @@ test.each<Record<string, string>>([{}, { year: "2023" }])("%o is the home page, 
   const html = await served(params);
   expect(permanentRedirect).not.toHaveBeenCalled();
   expect(html.match(/<h1/g)).toHaveLength(1);
-  expect(html).toContain("One home&#x27;s 12.24 kW of Tesla solar and three Powerwalls, live and since October 22, 2021.");
+  expect(html).toContain("One home&#x27;s 12.24 kW of Tesla solar and three Powerwalls, live and recorded since October 10, 2021.");
 });
 
 test("each reader is called as its linked page calls it, corrected readings throughout", async () => {
@@ -71,8 +71,8 @@ test("each reader is called as its linked page calls it, corrected readings thro
   expect(readers.dayIntervals).toHaveBeenCalledWith(TODAY, "corrected");
   expect(readers.solarHours).toHaveBeenCalledWith(2026, TODAY);
   expect(readers.impactFigures).toHaveBeenCalledWith("2026-01-01", TODAY, "corrected");
-  expect(readers.impactFigures).toHaveBeenCalledWith("2021-10-22", TODAY, "corrected");
-  expect(readers.impactByMonth).toHaveBeenCalledWith("2021-10-22", TODAY, "corrected");
+  expect(readers.impactFigures).toHaveBeenCalledWith("2021-10-10", TODAY, "corrected");
+  expect(readers.impactByMonth).toHaveBeenCalledWith("2021-10-10", TODAY, "corrected");
   expect(readers.topTen).toHaveBeenCalledWith(false, "corrected");
   expect(readers.recordSeries).toHaveBeenCalledWith(false, "corrected");
   expect(readers.patterns).toHaveBeenCalledWith(TODAY, "corrected");
