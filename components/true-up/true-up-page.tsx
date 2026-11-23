@@ -60,7 +60,6 @@ export function TrueUpPage({ range, years, cycles: served, cost: servedCost, sav
       reloadPaybackFor(siteToday());
     },
   });
-  const { presets, earlier } = trueUpPresets(years);
 
   // Figures count up only while the page is first seen; a new range's tiles are new, but this isn't a first view.
   const firstView = useEntering(ENTER_MS);
@@ -70,20 +69,23 @@ export function TrueUpPage({ range, years, cycles: served, cost: servedCost, sav
     <FirstView value={firstView}>
       <div className="flex flex-col gap-5">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex flex-col gap-0.5">
-            <h1 className={headline ? "text-sm font-medium tracking-[0.06em] text-muted-foreground uppercase" : "text-[22px] font-semibold"}>
-              <Term name="true-up">True-Up</Term> Tracker
-            </h1>
+          <h1 className="text-[22px] font-semibold">
+            <Term name="true-up">True-Up</Term> Tracker
+          </h1>
+          <div className="max-sm:order-last max-sm:w-full">
+            <RangeControls today={today} range={range} presets={trueUpPresets(years)} onRange={(next) => router.push(address(next), { scroll: false })} />
+          </div>
+          {/* A wrapper, since the lead's 46ch cap would otherwise let it sit beside the controls on a wide row. */}
+          <div className="-mt-2 flex basis-full flex-col gap-1">
             {headline ? (
               <>
-                <Lead text={headline} className="mt-1 max-w-[30ch] text-[26px] leading-tight font-semibold tracking-[-0.02em] text-pretty sm:text-[32px]" />
-                {projection && <Lead text={projection.line} className="mt-1 text-sm text-muted-foreground" />}
+                <Lead text={headline} />
+                {projection && <Lead text={projection.line} className="text-sm text-muted-foreground" />}
               </>
             ) : (
               <p className="text-sm text-muted-foreground">Grid energy by PG&amp;E billing cycle</p>
             )}
           </div>
-          <RangeControls today={today} range={range} presets={presets} earlier={earlier} onRange={(next) => router.push(address(next), { scroll: false })} />
         </div>
         <Tiles cycles={cycles} cost={year && cost} year={year} today={today} />
         <MeteringNote cycles={cycles} />
