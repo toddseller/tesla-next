@@ -78,9 +78,9 @@ const plugged = ([px, py]: Point) => {
   return { path: curve([WALL_CONNECTOR, [126, 590], [hx - 16, hy + 14], [hx, hy]]), plug: [at(hx, hy), at(px, py)] };
 };
 export const CAR_CABLES = {
-  modelY: plugged([148.5, 596.5]),
+  modelY: plugged([178.5, 580.7]),
   model3: plugged([153, 612]),
-  starDestroyer: plugged([152.3, 619.9]),
+  starDestroyer: plugged([178.3, 590.7]),
 };
 
 // The Powerwall's charge bar at 100%, on the lower piece of its dark side face:

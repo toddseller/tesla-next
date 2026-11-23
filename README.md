@@ -179,3 +179,7 @@ It needs PostgreSQL 18's binaries. On the Mac, `brew install postgresql@18` (the
 ```sh
 PG_BIN=/usr/lib/postgresql/18/bin yarn vitest run
 ```
+
+## Credits
+
+R2D2's render in `public/scene/model-y.webp` is made from ["2021 Tesla Model Y"](https://sketchfab.com/3d-models/59e2ead369984b1a85c800ff6cf6789d) by tonielpro520, licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). The model was modified: new materials and paint, 19" aero covers in place of its wheels, and its own lighting and camera.
