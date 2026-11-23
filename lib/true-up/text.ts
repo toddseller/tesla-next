@@ -85,23 +85,41 @@ export function billedText(cycles: Billed[]): TileText | null {
   };
 }
 
-// The projected true-up: dollars when the year has them, and the year-end net, naming the years they come from.
-export function projectionText({ years }: NonNullable<Cost["kwh_projection"]>, projections: Cost["projections"]): TileText {
+// The current year's headline, its figures marked {like this} for the page's Lead: the projected true-up in dollars when
+// the year has them, or else its year-end net; the line under it names the years the projection comes from.
+export function currentHeadline(cost: Pick<Cost, "kwh_projection" | "projections" | "charges_so_far">, label: string, end: string) {
+  if (!cost.kwh_projection) return null;
+  const { years } = cost.kwh_projection;
   const nets = years.map((y) => y.net);
   const [low, high] = [Math.min(...nets), Math.max(...nets)];
-  let range: string;
-  if (low < 0 && high > 0) range = `between ${wholeKwh(low)} kWh exported and ${wholeKwh(high)} kWh imported`;
-  else {
-    const [a, b] = [Math.abs(low), Math.abs(high)].sort((x, y) => x - y);
-    range = `${a === b ? "" : `${wholeKwh(a)} to `}${wholeKwh(b)} kWh ${netLabel(high).toLowerCase()}`;
-  }
-  const amounts = projections?.map((p) => Math.round(p.amount)) ?? [];
+  const crossing = low < 0 && high > 0;
+  const [a, b] = [Math.abs(low), Math.abs(high)].sort((x, y) => x - y);
+  const net = crossing
+    ? `between {${wholeKwh(low)}} kWh exported and {${wholeKwh(high)}} kWh imported`
+    : `${a === b ? "" : `{${wholeKwh(a)}} to `}{${wholeKwh(b)}} kWh ${netLabel(high).toLowerCase()}`;
+  const yearsLike = like(years.map((y) => y.label));
+  const amounts = cost.projections?.map((p) => Math.round(p.amount)) ?? [];
+  if (!amounts.length)
+    return { headline: `On track to end ${yearName(label)} ${crossing ? "" : "with "}${net}.`, line: `${yearsLike[0].toUpperCase()}${yearsLike.slice(1)}` };
   const [lowest, highest] = [Math.min(...amounts), Math.max(...amounts)];
+  const owe = lowest === highest ? `{${wholeDollars(lowest)}}` : `{${wholeDollars(lowest)}} to {${wholeDollars(highest)}}`;
+  const charges = cost.charges_so_far === null ? "" : `; {${wholeDollars(cost.charges_so_far)}} in charges so far`;
   return {
-    value: !amounts.length ? null : lowest === highest ? wholeDollars(lowest) : `${wholeDollars(lowest)}–${wholeDollars(highest)}`,
-    unit: null,
-    line: `Year-end ${range}, ${like(years.map((y) => y.label))}`,
+    headline: `On track to owe ${owe} at the October ${end.slice(0, 4)} true\u2011up${charges}.`,
+    line: `Year-end ${net}, ${yearsLike}`,
   };
+}
+
+type Due = { label: string; amount_due: number | null };
+
+// A finished year's headline: its amount due against the year before's, which no tile gives. Its "true-up" holds a
+// non-breaking hyphen, as the current year's does, so a headline never breaks the word.
+export function pastHeadline(year: Due, before: Due | null) {
+  if (year.amount_due === null || before?.amount_due == null) return null;
+  const gap = Math.round(year.amount_due - before.amount_due);
+  const ended = year.amount_due === 0 ? "ended with nothing due" : `ended owing {${wholeDollars(year.amount_due)}}`;
+  const than = gap ? `{${wholeDollars(gap)}} ${gap > 0 ? "more" : "less"} than` : "the same as";
+  return `${yearName(year.label)} ${ended} at the true\u2011up, ${than} ${yearName(before.label)}.`;
 }
 
 type Dollars = Pick<Cost, "charges_so_far" | "amount_due" | "source" | "minimum_delivery" | "net_exported_kwh" | "unused_credit" | "nsc_estimate">;

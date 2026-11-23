@@ -86,3 +86,14 @@ test("the Payback card is served with the page when there are payback years, for
   mocks.payback.mockResolvedValue(null);
   expect(await served()).not.toContain("Payback");
 });
+
+test("a finished year is served with its headline against the year before; the current year asks for no other", async () => {
+  at("2026-11-08T20:00:00Z");
+  mocks.trueUpCost.mockImplementation(async (start: string) => (start === "2025-10-01" ? COST_25_26 : start === "2024-10-01" ? { ...COST_25_26, amount_due: 554.83 } : CURRENT_COST));
+  const html = await served({ start: "2025-10-01", end: "2026-09-30" });
+  expect(mocks.trueUpCost).toHaveBeenCalledWith("2024-10-01", "2025-09-30", "2026-11-08");
+  expect(html.replace(/<[^>]+>/g, "").replace(/&#x27;/g, "'").replace(/ /g, " ")).toContain("'25 - '26 ended owing $768 at the true\u2011up, $213 more than '24 - '25.");
+  mocks.trueUpCost.mockClear();
+  await served();
+  expect(mocks.trueUpCost).toHaveBeenCalledTimes(1);
+});

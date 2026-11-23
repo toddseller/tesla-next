@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
 import { siteToday } from "@/lib/scene/replay";
-import { address, datesLabel, impactPresets, isDaily, parseDay, parseRange, periods, presets, rangeIncludes, rangeLabel, stripRange, trueUpPresets } from "./ranges";
+import { address, comparedDays, datesLabel, impactPresets, isDaily, parseDay, parseRange, periods, presets, rangeIncludes, rangeLabel, rangeNames, stripRange, trueUpPresets } from "./ranges";
 
 const march = { start: "2026-03-01", end: "2026-03-31" };
 
@@ -213,5 +213,56 @@ describe("periods", () => {
     ["2026-12-15", "2027-03-14", [31, 31, 28]],
   ])("periods from %s to %s clamp to the month's length", (start, end, expected) => {
     expect(lengths(periods(start, end))).toEqual(expected);
+  });
+});
+
+describe("the days compared with a year earlier", () => {
+  test("a past month", () => {
+    const october = { start: "2026-10-01", end: "2026-10-31" };
+    expect(comparedDays(october, "2026-11-22")).toEqual({ now: october, then: { start: "2025-10-01", end: "2025-10-31" } });
+  });
+
+  test("a range under way compares the days before today on both sides", () => {
+    expect(comparedDays({ start: "2026-11-01", end: "2026-11-30" }, "2026-11-22")).toEqual({
+      now: { start: "2026-11-01", end: "2026-11-21" }, then: { start: "2025-11-01", end: "2025-11-21" },
+    });
+  });
+
+  test("today alone compares with the whole of that date", () => {
+    expect(comparedDays({ start: "2026-11-22", end: "2026-11-22" }, "2026-11-22")).toEqual({
+      now: { start: "2026-11-22", end: "2026-11-22" }, then: { start: "2025-11-22", end: "2025-11-22" },
+    });
+  });
+
+  test("a range starting today has nothing to compare yet", () => {
+    expect(comparedDays({ start: "2026-12-01", end: "2026-12-31" }, "2026-12-01")).toBeNull();
+  });
+
+  test("February 29 becomes February 28", () => {
+    expect(comparedDays({ start: "2028-02-29", end: "2028-02-29" }, "2028-03-05")?.then).toEqual({ start: "2027-02-28", end: "2027-02-28" });
+  });
+
+  test("none before the first day", () => {
+    expect(comparedDays({ start: "2022-01-01", end: "2022-06-30" }, "2026-11-22")).toBeNull();
+    expect(comparedDays({ start: "2022-10-10", end: "2022-10-31" }, "2026-11-22")?.then).toEqual({ start: "2021-10-10", end: "2021-10-31" });
+  });
+});
+
+describe("naming a range", () => {
+  const today = "2026-11-22";
+  test.each([
+    [{ start: "2026-11-01", end: "2026-11-30" }, "in November so far", null],
+    [{ start: "2026-10-01", end: "2026-10-31" }, "in October 2026", "October 2025"],
+    [{ start: "2026-01-01", end: "2026-12-31" }, "in 2026 so far", null],
+    [{ start: "2025-01-01", end: "2025-12-31" }, "in 2025", "2024"],
+    [{ start: "2026-10-01", end: "2027-09-30" }, "in '26\u00a0-\u00a0'27 so far", null],
+    [{ start: "2025-10-01", end: "2026-09-30" }, "in '25\u00a0-\u00a0'26", "'24\u00a0-\u00a0'25"],
+    [{ start: "2026-11-22", end: "2026-11-28" }, "this week so far", null],
+    [{ start: "2026-11-22", end: "2026-11-22" }, "today", null],
+    [{ start: "2026-11-21", end: "2026-11-21" }, "yesterday", null],
+    [{ start: "2026-11-03", end: "2026-11-03" }, "on Nov 3, 2026", null],
+    [{ start: "2026-03-03", end: "2026-04-09" }, "from Mar 3 to Apr 9, 2026", null],
+  ])("%o", (range, name, earlier) => {
+    expect(rangeNames(range, today)).toEqual({ name, earlier });
   });
 });

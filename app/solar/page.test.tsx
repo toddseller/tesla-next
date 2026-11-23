@@ -84,12 +84,12 @@ test("a day outside the range has its own month in the strip", async () => {
   expect(rangeTotals).toHaveBeenCalledWith("2026-11-01", "2026-11-07", "corrected");
 });
 
-test("the range view is served with the forecast card above its title; a day's view without it", async () => {
+test("the range view is served with the forecast card after its chart; a day's view without it", async () => {
   const html = await served();
   expect(forecast).toHaveBeenCalledWith("2026-11-07");
   expect(html).toContain("Solar forecast");
   expect(html).toContain("kWh expected");
-  expect(html.indexOf("Solar forecast")).toBeLessThan(html.indexOf("Solar by date range"));
+  expect(html.indexOf("Solar forecast")).toBeGreaterThan(html.indexOf("Solar by date range"));
   expect(html).toContain("Today by hour");
   forecast.mockClear();
   dayIntervals.mockResolvedValue({ date: "2026-10-14", vehicle_data: false, totals: { solar_to_home: 12.27 }, data: [], off_grid: [], storm_watch: [] });
@@ -100,5 +100,25 @@ test("the range view is served with the forecast card above its title; a day's v
 // meter-correction: the address's readings reach the range's and the strip's figures.
 test("readings=tesla in the address asks for Tesla's figures", async () => {
   await Page({ searchParams: Promise.resolve({ start: "2025-10-01", end: "2025-10-31", readings: "tesla" }) });
-  expect(rangeTotals).toHaveBeenLastCalledWith("2025-10-01", "2025-10-31", "tesla");
+  expect(rangeTotals).toHaveBeenCalledWith("2025-10-01", "2025-10-31", "tesla");
+});
+
+test("the sentence comes with the page, against the year-earlier days in the same readings", async () => {
+  rangeTotals.mockResolvedValueOnce([{ date: "Nov 1", day: "2026-11-01", solar: 60.4, grid: 1, house: 30 }]);
+  rangeTotals.mockResolvedValueOnce([{ date: "Nov 1", day: "2025-11-01", solar: 50.0, grid: 1, house: 30 }]);
+  rangeTotals.mockResolvedValueOnce([{ date: "Nov 1", day: "2026-11-01", solar: 55.0, grid: 1, house: 30 }]);
+  const html = await served({ readings: "tesla" });
+  expect(rangeTotals).toHaveBeenCalledWith("2025-11-01", "2025-11-06", "tesla");
+  expect(rangeTotals).toHaveBeenCalledWith("2026-11-01", "2026-11-06", "tesla");
+  expect(html.replace(/<[^>]+>/g, "")).toContain("Solar made 60 kWh in November so far, 10% more than the same days last year.");
+});
+
+test("a finished range is compared without asking for its own days again", async () => {
+  await served({ start: "2026-10-01", end: "2026-10-31" });
+  expect(rangeTotals.mock.calls).toEqual([["2026-10-01", "2026-10-31", "corrected"], ["2025-10-01", "2025-10-31", "corrected"]]);
+});
+
+test("a range with no year before it is served without asking for one", async () => {
+  await served({ start: "2022-01-01", end: "2022-06-30" });
+  expect(rangeTotals).toHaveBeenCalledTimes(1);
 });

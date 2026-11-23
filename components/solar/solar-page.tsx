@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
+import { LEAD, Lead } from "@/components/lead";
 import { ReadingsNote, ReadingsSwitch } from "@/components/readings-switch";
 import { DayPanel } from "@/components/solar/day-panel";
 import { ForecastCard } from "@/components/solar/forecast";
@@ -12,6 +13,7 @@ import { RangeControls } from "@/components/solar/range-controls";
 import { useReload } from "@/components/solar/use-reload";
 import { useLiveStream } from "@/components/use-live-stream";
 import type { ForecastCard as Card } from "@/lib/forecast";
+import { solarLead, solarTotal } from "@/lib/lead";
 import { type Readings, reachesCorrected, withReadings } from "@/lib/meter";
 import type { RangeItem } from "@/lib/range";
 import { siteToday } from "@/lib/scene/replay";
@@ -37,9 +39,11 @@ type Props = {
   day?: { data: Day; strip: { range: Range; items: RangeItem[] } } | null;
   forecast?: Card | null;
   readings?: Readings;
+  // The year-earlier days' solar, or null when there are none to compare.
+  before?: { then: number; now: number | null } | null;
 };
 
-export function SolarPage({ range, items, today, initialStatus, day, forecast, readings = "corrected" }: Props) {
+export function SolarPage({ range, items, today, initialStatus, day, forecast, readings = "corrected", before = null }: Props) {
   const router = useRouter();
   // Every address the page goes to keeps the readings it shows; reloads ask for them too.
   const at = (shown: Range, open?: string | null) => withReadings(address(shown, open), readings);
@@ -79,13 +83,13 @@ export function SolarPage({ range, items, today, initialStatus, day, forecast, r
   }
   return (
     <div className="flex flex-col gap-5">
-      {card && <ForecastCard card={card} />}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-[22px] font-semibold">Solar by date range</h1>
-        <div className="flex flex-wrap items-center gap-2 max-sm:w-full">
+        <div className="flex flex-wrap items-center gap-2 max-sm:order-last max-sm:w-full">
           {corrected && <ReadingsSwitch readings={readings} addresses={both(range)} />}
           <RangeControls today={today} range={range} presets={presets(today)} onRange={(next) => router.push(at(next), { scroll: false })} />
         </div>
+        <Lead className={`${LEAD} -mt-2 basis-full`} text={solarLead(range, today, solarTotal(bars), before)} />
       </div>
       <section aria-labelledby="range-title" className="flex flex-col gap-4 rounded-[10px] border bg-card p-4 sm:p-6">
         <div className="flex flex-wrap items-baseline justify-between gap-2">
@@ -97,6 +101,7 @@ export function SolarPage({ range, items, today, initialStatus, day, forecast, r
         <RangeChart key={at(range)} items={bars} range={range} onOpenDay={(next) => router.push(at(range, next))} onOpenRange={(next) => router.push(at(next), { scroll: false })} />
         {corrected && <ReadingsNote readings={readings} />}
       </section>
+      {card && <ForecastCard card={card} />}
     </div>
   );
 }

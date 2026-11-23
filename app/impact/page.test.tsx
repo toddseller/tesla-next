@@ -68,7 +68,7 @@ test("the range's car charging is served with the page, counted up to today at t
 // meter-correction: the address's readings reach the figures.
 test("readings=tesla in the address asks for Tesla's figures", async () => {
   await served({ start: "2025-10-01", end: "2025-10-31", readings: "tesla" });
-  expect(impactFigures).toHaveBeenLastCalledWith("2025-10-01", "2025-10-31", "tesla");
+  expect(impactFigures).toHaveBeenCalledWith("2025-10-01", "2025-10-31", "tesla");
 });
 
 // impact-report, "Default and invalid ranges": early in the day, a whole day rather than nothing.
@@ -78,7 +78,7 @@ test("with no range, before today has made a tenth of a kWh of solar, yesterday 
     total_solar_percentage: 0, total_solar: start === "2026-11-08" ? 0.04 : 22.1, from_solar: 0, from_powerwall: 0, from_grid: 1, total_house: 1,
   }));
   const html = await served();
-  expect(impactFigures).toHaveBeenLastCalledWith("2026-11-07", "2026-11-07", "corrected");
+  expect(impactFigures).toHaveBeenCalledWith("2026-11-07", "2026-11-07", "corrected");
   expect(html).toContain("November 7, 2026");
 });
 
@@ -88,13 +88,32 @@ test("a range in the address is served as asked, even before any solar today", a
     total_solar_percentage: 0, total_solar: 0, from_solar: 0, from_powerwall: 0, from_grid: 1, total_house: 1,
   }));
   await served({ start: "2026-11-08", end: "2026-11-08" });
-  expect(impactFigures).toHaveBeenCalledTimes(1);
-  expect(impactFigures).toHaveBeenCalledWith("2026-11-08", "2026-11-08", "corrected");
+  expect(impactFigures.mock.calls).toEqual([["2026-11-08", "2026-11-08", "corrected"], ["2025-11-08", "2025-11-08", "corrected"]]);
 });
 
 test("with no range, once today has solar, today is served from the one read", async () => {
   const html = await served();
-  expect(impactFigures).toHaveBeenCalledTimes(1);
-  expect(impactFigures).toHaveBeenCalledWith("2026-11-08", "2026-11-08", "corrected");
+  expect(impactFigures.mock.calls).toEqual([["2026-11-08", "2026-11-08", "corrected"], ["2025-11-08", "2025-11-08", "corrected"]]);
   expect(html).toContain("November 8, 2026");
+});
+
+test("the sentence comes with the page, against the year-earlier days in the same readings", async () => {
+  impactFigures.mockImplementation(async (start: string) => ({
+    from_solar_percentage: 0, from_powerwall_percentage: 0, from_grid_percentage: 0, self_powered_percentage: start.startsWith("2025") ? 27 : 35,
+    total_solar_percentage: 0, total_solar: 1, from_solar: 0, from_powerwall: 0, from_grid: 1, total_house: 1,
+  }));
+  const html = await served({ start: "2026-11-01", end: "2026-11-30", readings: "tesla" });
+  expect(impactFigures).toHaveBeenCalledWith("2025-11-01", "2025-11-07", "tesla");
+  expect(html.replace(/<[^>]+>/g, "")).toContain("35% self-powered in November so far, up from 27% over the same days last year.");
+});
+
+test("year-earlier days without home use, or before the first day, give no sentence", async () => {
+  impactFigures.mockImplementation(async (start: string) => ({
+    from_solar_percentage: 0, from_powerwall_percentage: 0, from_grid_percentage: 0, self_powered_percentage: 0,
+    total_solar_percentage: 0, total_solar: 1, from_solar: 0, from_powerwall: 0, from_grid: 1, total_house: start.startsWith("2025") ? 0 : 1,
+  }));
+  expect(await served({ start: "2026-11-01", end: "2026-11-30" })).not.toContain("self-powered in November");
+  impactFigures.mockClear();
+  await served({ start: "2022-01-01", end: "2022-12-31" });
+  expect(impactFigures).toHaveBeenCalledTimes(1);
 });

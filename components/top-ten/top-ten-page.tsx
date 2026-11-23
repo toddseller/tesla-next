@@ -2,12 +2,14 @@
 
 import { useRouter } from "next/navigation";
 
+import { Lead } from "@/components/lead";
 import { ReadingsNote, ReadingsSwitch } from "@/components/readings-switch";
 import { presetStyle } from "@/components/solar/range-controls";
 import { useReload } from "@/components/solar/use-reload";
 import { dayEntries, monthEntries, outageEntries, solarEntries } from "@/components/top-ten/entries";
 import { Ranking } from "@/components/top-ten/ranking";
 import { useLiveStream } from "@/components/use-live-stream";
+import { topTenLead } from "@/lib/lead";
 import { type Readings, withReadings } from "@/lib/meter";
 import type { TopTen } from "@/lib/top-ten";
 
@@ -17,7 +19,9 @@ const at = (path: string, withVpp: boolean, readings: Readings) => withReadings(
 
 export function TopTenPage({ topTen: served, withVpp, today, readings = "corrected" }: { topTen: TopTen; withVpp: boolean; today: string; readings?: Readings }) {
   const router = useRouter();
-  const [[{ solar }, { net_grid: days }, { to_grid_months: months }, { outages }], reload] = useReload(at("/top", withVpp, readings), served);
+  const [shown, reload] = useReload(at("/top", withVpp, readings), served);
+  const [{ solar }, { net_grid: days }, { to_grid_months: months }, { outages }] = shown;
+  const lead = topTenLead(shown, today);
   const reloadAll = () => void reload(at("/api/top-ten", withVpp, readings), (body: { data: TopTen }) => body.data);
   useLiveStream({ onTotals: reloadAll, onOutages: reloadAll, onReopen: reloadAll });
 
@@ -26,7 +30,7 @@ export function TopTenPage({ topTen: served, withVpp, today, readings = "correct
       <div className="flex flex-wrap items-end justify-between gap-x-4 gap-y-3">
         <div className="flex flex-col gap-0.5">
           <h1 className="text-[22px] font-semibold">Top Ten</h1>
-          <p className="text-sm text-muted-foreground">The records since October 2021, and the days and months closest to them</p>
+          {lead ? <Lead text={lead} /> : <p className="text-sm text-muted-foreground">The records since October 2021, and the days and months closest to them</p>}
         </div>
         <div className="flex flex-wrap gap-2 max-sm:w-full">
         <ReadingsSwitch readings={readings} addresses={{ corrected: at("/top", withVpp, "corrected"), tesla: at("/top", withVpp, "tesla") }} />
