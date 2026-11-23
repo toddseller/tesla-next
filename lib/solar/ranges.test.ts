@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
 import { siteToday } from "@/lib/scene/replay";
-import { address, comparedDays, datesLabel, impactPresets, isDaily, parseDay, parseRange, periods, presets, rangeIncludes, rangeLabel, rangeNames, stripRange, trueUpPresets } from "./ranges";
+import { address, comparedDays, datesLabel, impactPresets, isDaily, parseDay, parseRange, periods, presets, rangeIncludes, rangeLabel, rangeNames, rangeTitle, stripRange, trueUpPresets } from "./ranges";
 
 const march = { start: "2026-03-01", end: "2026-03-31" };
 
@@ -265,4 +265,13 @@ describe("naming a range", () => {
   ])("%o", (range, name, earlier) => {
     expect(rangeNames(range, today)).toEqual({ name, earlier });
   });
+});
+
+// dashboard-shell, "Each page's title".
+test("a page's title names its range in short", () => {
+  expect(rangeTitle({ start: "2026-11-01", end: "2026-11-30" })).toBe("November 2026");
+  expect(rangeTitle({ start: "2025-01-01", end: "2025-12-31" })).toBe("2025");
+  expect(rangeTitle({ start: "2026-10-01", end: "2027-09-30" })).toBe("'26\u00a0-\u00a0'27");
+  expect(rangeTitle({ start: "2026-11-14", end: "2026-11-14" })).toBe("Nov 14, 2026");
+  expect(rangeTitle({ start: "2026-10-01", end: "2026-10-15" })).toBe("Oct 1 – 15, 2026");
 });

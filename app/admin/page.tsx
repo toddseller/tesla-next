@@ -8,6 +8,8 @@ import { siteToday } from "@/lib/scene/replay";
 import { FIRST_SEASON } from "@/lib/true-up/cost";
 import { trueUpEndYear, trueUpLabel } from "@/lib/true-up/reads";
 
+export const metadata = { title: "Admin" };
+
 // The owner's page, linked from nowhere. Nothing is read before the owner check, which answers not found otherwise.
 export default async function Page({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   await owner();

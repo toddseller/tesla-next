@@ -53,6 +53,8 @@ export function DayPanel({ range, day, strip, today, modified, onDay, readings =
   const step = "flex size-11 items-center justify-center rounded-lg border border-input bg-card disabled:opacity-30";
   return (
     <div className="flex flex-col gap-5">
+      {/* The day button shows the date on screen; the page still needs a top heading naming it. */}
+      <h1 className="sr-only">Solar on {dayLabel.format(new Date(`${date}T00:00:00Z`))}</h1>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <Link href={withReadings(address(range), readings)} className="flex min-h-11 items-center gap-1.5 rounded-md pr-2.5 text-sm text-[#C4CAD1] hover:text-foreground">
           <ChevronLeft size={18} aria-hidden />

@@ -211,6 +211,8 @@ const Distribution = ({ initialStatus, search, renderedAt }: { initialStatus: st
 
   return (
     <div>
+      {/* The scene speaks for itself on screen; the page still needs a top heading for assistive technology. */}
+      <h1 className="sr-only">Distribution</h1>
       {!replaying && <StaleWarning liveReceived={liveReceived} modifiedAt={modifiedAt} renderedAt={renderedAt} />}
       {/* On a desktop window, as wide as fits the window's height, up to 80rem,
           centered and wider than the 1200px frame around the rest of the page

@@ -219,3 +219,12 @@ test("after a day reloads, switching the readings shows the server's day in the 
   rerender(shown("tesla", 5));
   expect(generated()).toContain("5.0");
 });
+
+// dashboard-shell, "Each page's top heading": the day button shows the date, so the h1 naming it is hidden.
+test("the day view has one h1 naming its day, visually hidden", () => {
+  render(page("2026-10-14"));
+  const [h1, ...others] = screen.getAllByRole("heading", { level: 1 });
+  expect(others).toHaveLength(0);
+  expect(h1.textContent).toBe("Solar on Wed, Oct 14, 2026");
+  expect(h1.className).toBe("sr-only");
+});

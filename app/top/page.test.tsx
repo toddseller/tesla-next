@@ -7,7 +7,7 @@ import { TOP_TEN, WITHOUT_VPP } from "@/components/top-ten/fixtures";
 vi.mock("next/navigation", () => ({ useRouter: () => ({}) }));
 const asked = vi.hoisted(() => [] as unknown[][]);
 vi.mock("@/lib/top-ten", () => ({ topTen: async (...args: [boolean, string]) => (asked.push(args), args[0] ? TOP_TEN : WITHOUT_VPP) }));
-const { default: Page } = await import("./page");
+const { default: Page, metadata } = await import("./page");
 const served = async (vpp?: string) => renderToString(await Page({ searchParams: Promise.resolve(vpp ? { vpp } : {}) }));
 
 afterEach(() => vi.useRealTimers());
@@ -33,4 +33,9 @@ test("/top and an unknown vpp are served without VPP days, vpp=with with them", 
 test("readings=tesla in the address ranks by Tesla's figures", async () => {
   await Page({ searchParams: Promise.resolve({ vpp: "with", readings: "tesla" }) });
   expect(asked.at(-1)).toEqual([true, "tesla"]);
+});
+
+// dashboard-shell, "Each page's title".
+test("the page's title names it", () => {
+  expect(metadata.title).toBe("Top Ten");
 });

@@ -6,7 +6,7 @@ const live = vi.hoisted(() => ({ current: null as string | null }));
 vi.mock("@/lib/live", () => ({ latest: () => live.current }));
 
 
-const { default: Page } = await import("./page");
+const { default: Page, metadata } = await import("./page");
 
 const served = async (searchParams: Record<string, string> = {}) => renderToString(await Page({ searchParams: Promise.resolve(searchParams) }));
 
@@ -41,4 +41,16 @@ test("a shared moment is served as that replay", async () => {
 test("the page is served from the live status alone, with no totals block in its HTML", async () => {
   const html = await served();
   expect(html).not.toContain("Today so far");
+});
+
+// dashboard-shell, "Each page's title".
+test("the page's title names it", () => {
+  expect(metadata.title).toBe("Distribution");
+});
+
+// dashboard-shell, "Each page's top heading": named for assistive technology, hidden so the scene looks as it does.
+test("the page has one h1, Distribution, visually hidden", async () => {
+  const html = await served();
+  expect(html.match(/<h1[ >]/g)).toHaveLength(1);
+  expect(html).toContain('<h1 class="sr-only">Distribution</h1>');
 });

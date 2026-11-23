@@ -13,7 +13,7 @@ const carCharging = vi.hoisted(() => vi.fn(async () => ({
 vi.mock("@/lib/car-charging", () => ({ carCharging }));
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn() }) }));
 
-const { default: Page } = await import("./page");
+const { default: Page, generateMetadata } = await import("./page");
 
 const served = async (searchParams: Record<string, string> = {}) => renderToString(await Page({ searchParams: Promise.resolve(searchParams) }));
 
@@ -116,4 +116,16 @@ test("year-earlier days without home use, or before the first day, give no sente
   impactFigures.mockClear();
   await served({ start: "2022-01-01", end: "2022-12-31" });
   expect(impactFigures).toHaveBeenCalledTimes(1);
+});
+
+// dashboard-shell, "Each page's title": the range the page shows, yesterday before any solar today.
+test("the title names the range shown", async () => {
+  const title = async (params: Record<string, string>) => (await generateMetadata({ searchParams: Promise.resolve(params) })).title;
+  expect(await title({ start: "2026-10-18", end: "2026-10-18" })).toBe("Impact · Oct 18, 2026");
+  expect(await title({})).toBe("Impact · Nov 8, 2026");
+  impactFigures.mockResolvedValueOnce({
+    from_solar_percentage: 0, from_powerwall_percentage: 60, from_grid_percentage: 40, self_powered_percentage: 60,
+    total_solar_percentage: 0, total_solar: 0.0, from_solar: 0, from_powerwall: 1.2, from_grid: 0.8, total_house: 2.0,
+  });
+  expect(await title({})).toBe("Impact · Nov 7, 2026");
 });

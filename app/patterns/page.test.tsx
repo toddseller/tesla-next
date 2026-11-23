@@ -8,7 +8,7 @@ vi.mock("next/navigation", () => ({ useRouter: () => ({}) }));
 
 const asked = vi.hoisted(() => [] as unknown[][]);
 vi.mock("@/lib/patterns", async (original) => ({ ...(await original<typeof import("@/lib/patterns")>()), patterns: async (...args: unknown[]) => (asked.push(args), PATTERNS) }));
-const { default: Page } = await import("./page");
+const { default: Page, metadata } = await import("./page");
 
 afterEach(() => vi.useRealTimers());
 
@@ -29,4 +29,9 @@ test("readings=tesla in the address asks for Tesla's figures; none asks for corr
   expect(asked.at(-1)?.[1]).toBe("tesla");
   await Page({ searchParams: Promise.resolve({}) });
   expect(asked.at(-1)?.[1]).toBe("corrected");
+});
+
+// dashboard-shell, "Each page's title".
+test("the page's title names it", () => {
+  expect(metadata.title).toBe("Patterns");
 });

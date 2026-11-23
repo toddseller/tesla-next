@@ -1,3 +1,5 @@
+import { cache } from "react";
+
 import { SolarPage } from "@/components/solar/solar-page";
 import { forecast, forecastCard } from "@/lib/forecast";
 import { solarTotal } from "@/lib/lead";
@@ -6,12 +8,23 @@ import { latest } from "@/lib/live";
 import { readingsOf } from "@/lib/meter";
 import { rangeTotals } from "@/lib/range";
 import { siteToday } from "@/lib/scene/replay";
-import { monthOf, parseDay, parseRange, stripRange, comparedDays } from "@/lib/solar/ranges";
+import { comparedDays, monthOf, parseDay, parseRange, rangeTitle, stripRange } from "@/lib/solar/ranges";
+
+type Params = Record<string, string | string[] | undefined>;
+
+// The title and the page read the date once per request, so a request at the site's midnight can't name two days.
+const requestToday = cache(() => siteToday());
+
+export async function generateMetadata({ searchParams }: { searchParams: Promise<Params> }) {
+  const params = await searchParams;
+  const day = parseDay(params.day);
+  return { title: `Solar · ${rangeTitle(day ? { start: day, end: day } : parseRange(params, monthOf(requestToday())))}` };
+}
 
 // The range and the open day live in the address, so a link or a reload shows the same page, rendered with its data.
-export default async function Page({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
+export default async function Page({ searchParams }: { searchParams: Promise<Params> }) {
   const params = await searchParams;
-  const today = siteToday();
+  const today = requestToday();
   const readings = readingsOf(params.readings);
   const range = parseRange(params, monthOf(today));
   const day = parseDay(params.day);

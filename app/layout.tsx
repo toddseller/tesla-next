@@ -12,7 +12,7 @@ import "./globals.css";
 const sans = IBM_Plex_Sans({ subsets: ["latin"], weight: ["400", "500", "600"], variable: "--font-plex-sans" });
 const mono = IBM_Plex_Mono({ subsets: ["latin"], weight: ["400", "500"], variable: "--font-plex-mono" });
 
-export const metadata = { title: "Tesla Solar Report" };
+export const metadata = { title: { default: "Tesla Solar Report", template: "%s · Tesla Solar Report" } };
 
 // A nonce is per request, so no page may be prerendered without one.
 export const dynamic = "force-dynamic";

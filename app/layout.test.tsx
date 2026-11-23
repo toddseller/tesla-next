@@ -17,7 +17,7 @@ vi.mock("react", async (original) => ({
   ),
 }));
 
-const { default: RootLayout } = await import("./layout");
+const { default: RootLayout, metadata } = await import("./layout");
 const serve = async (children: React.ReactNode = <p>page</p>) => renderToString(await RootLayout({ children }));
 
 test("the top bar is served with the status the server holds, before any script runs", async () => {
@@ -74,4 +74,9 @@ test("a Skip to content link comes first, pointing at the main content", async (
   expect(html).toMatch(/<main id="content" tabindex="-1"/);
   // not-sr-only resets padding to 0, so the link's padding must come with its focus state.
   expect(body).toMatch(/<a href="#content" class="[^"]*focus:px-4 focus:py-3/);
+});
+
+// dashboard-shell, "Each page's title": the home page's is the site's name, and every other page's ends with it.
+test("the site's name is the home page's title and ends every other page's", () => {
+  expect(metadata.title).toEqual({ default: "Tesla Solar Report", template: "%s · Tesla Solar Report" });
 });
