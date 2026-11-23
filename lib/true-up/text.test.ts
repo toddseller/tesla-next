@@ -2,7 +2,7 @@
 import { describe, expect, test } from "vitest";
 import {
   billedText, chargesSoFarText, type Cycle, chargesText, cycleDates, currentHeadline, estimateText, kwh, netLabel, pastHeadline, runningNet,
-  savingsText, startedCycles, totals, trueUpText, uncorrectedDays, vppText, yearName,
+  savingsText, startedCycles, totals, trueUpText, uncorrectedDays, vppText, yearExplained, yearName,
 } from "./text";
 
 const cycle = (first_day: string, last_day: string, true_up: string, net: number, extra = {}) => ({
@@ -356,6 +356,40 @@ describe("savingsText", () => {
 
     expect(text.estimates).toBe(
       "Estimates of PG&E's and WestLight Energy's charges. 361 days before April 27, 2026 rebuilt from PG&E's meter, 5 as Tesla read it. WestLight's generation rates this year are estimated from PG&E's.",
+    );
+  });
+});
+
+// true-up-tracker, "The year explained": what share of the house's use solar covered, and what that left with PG&E.
+describe("a true-up year explained", () => {
+  const year = (label: string) => yearName(label);
+  test("short of the house's use", () => {
+    expect(yearExplained({ label: "'25 - '26", current: false, share: 89, net: 2422.7 })).toBe(
+      `In ${year("'25 - '26")} solar covered 89% of the house's use, so the house drew 2,423 kWh more from PG&E than it sent.`,
+    );
+  });
+
+  test("above the house's use, yet importing", () => {
+    expect(yearExplained({ label: "'22 - '23", current: false, share: 103, net: 231.3 })).toBe(
+      `In ${year("'22 - '23")} solar covered 103% of the house's use, yet the house drew 231 kWh more from PG&E than it sent: the Powerwalls lose some of what they store, so solar needs a margin over use to break even.`,
+    );
+  });
+
+  test("sending more than drawn", () => {
+    expect(yearExplained({ label: "'23 - '24", current: false, share: 109, net: -412.3 })).toBe(
+      `In ${year("'23 - '24")} solar covered 109% of the house's use, and the house sent 412 kWh more to PG&E than it drew.`,
+    );
+  });
+
+  test("the year under way", () => {
+    expect(yearExplained({ label: "'26 - '27", current: true, share: 73, net: 671.3 })).toBe(
+      "This true-up year solar has covered 73% of the house's use so far, so the house has drawn 671 kWh more from PG&E than it sent.",
+    );
+  });
+
+  test("as much sent as drawn", () => {
+    expect(yearExplained({ label: "'26 - '27", current: true, share: 100, net: 0.2 })).toBe(
+      "This true-up year solar has covered 100% of the house's use so far, and the house has sent as much to PG&E as it drew.",
     );
   });
 });

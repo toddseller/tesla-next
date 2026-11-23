@@ -4,13 +4,18 @@ import { Line, LineChart, ReferenceArea, ReferenceLine, XAxis, YAxis } from "rec
 
 import { Doorway } from "@/components/home/doorway";
 import { DetailsBox, type Hover } from "@/components/home/chart-details";
+import { dollarRange, yearExplained } from "@/lib/true-up/text";
 import { ChartContainer, ChartTooltip } from "@/components/ui/chart";
 import { yearTicks } from "@/lib/home/records";
 
 type Month = { month: string; solar: number; house: number };
 type Year = { year: number | null; projected: boolean };
 type Payback = { solar: Year & { month: string | null }; system: Year; powerwalls: { year: number | null; wont?: boolean } };
-type Props = { today: string; months: Month[]; solar: number; matched: number; net: number; trueUpStart: string; payback: Payback | null };
+type Props = {
+  today: string; months: Month[]; solar: number; matched: number; payback: Payback | null;
+  // The current true-up year: its net, solar's share of the house's use so far, and True-Up's estimate of what it will owe.
+  net: number; share: number | null; owed: readonly [number, number] | null; trueUpStart: string; trueUpEnd: string;
+};
 
 const whole = (value: number) => Math.round(value).toLocaleString("en-US");
 const tenth = (value: number) => Math.abs(value).toLocaleString("en-US", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
@@ -18,7 +23,7 @@ const monthName = (month: string) => new Date(`${month}-01T00:00:00Z`).toLocaleS
 const startName = (day: string) => new Date(`${day}T00:00:00Z`).toLocaleString("en-US", { month: "long", day: "numeric", timeZone: "UTC" });
 const at = (month: string) => Date.parse(`${month}-01T00:00:00Z`);
 
-export function Since({ today, months, solar, matched, net, trueUpStart, payback }: Props) {
+export function Since({ today, months, solar, matched, net, share, owed, trueUpStart, trueUpEnd, payback }: Props) {
   let [made, used] = [0, 0];
   const rows = months.map((m) => ({ t: at(m.month), solar: (made += m.solar), house: (used += m.house) }));
   const systemYear = payback?.system.year ?? null;
@@ -66,13 +71,24 @@ export function Since({ today, months, solar, matched, net, trueUpStart, payback
               ? <>Solar has generated as much as the house used: <span className="font-mono text-solar">{whole(solar)} kWh</span>, {matched}%.</>
               : <>Solar has generated <span className="font-mono text-solar">{whole(solar)} kWh</span>, {matched}% of what the house used.</>}
           </p>
-          <p className="text-[15px] text-pretty text-muted-foreground">Most of it comes at midday, when the surplus goes to PG&amp;E; at night the house draws from the grid. The true-up nets the two once a year.</p>
+          {share !== null && (
+            <p className="text-[15px] text-pretty text-muted-foreground">
+              {matched >= 100 && share < 100 && `That ${matched}% rests on the early years, when solar covered more than the house used. `}
+              {yearExplained({ label: "", current: true, share, net })}
+            </p>
+          )}
         </div>
         <div className="flex flex-col gap-4">
           <div className="flex flex-col gap-1">
             <b className="font-mono text-2xl font-semibold">{tenth(net)} kWh</b>
             <span className="text-[13px] text-muted-foreground">{`${tenth(net) === "0.0" ? "as much sent as imported" : `more ${net > 0 ? "imported than sent" : "sent than imported"}`} this true-up year, since ${startName(trueUpStart)}`}</span>
           </div>
+          {owed && (
+            <div className="flex flex-col gap-1">
+              <b className="font-mono text-2xl font-semibold">{dollarRange(owed)}</b>
+              <span className="text-[13px] text-muted-foreground">{`on track to owe at the October ${trueUpEnd.slice(0, 4)} true-up`}</span>
+            </div>
+          )}
           {(solarPaid || powerwalls) && <p className="text-[15px] text-pretty">{[solarPaid, powerwalls].filter(Boolean).join(" ")}</p>}
         </div>
       </div>

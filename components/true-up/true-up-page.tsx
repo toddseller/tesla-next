@@ -19,7 +19,7 @@ import { datesLabel, type Range, rangeIncludes, trueUpPresets } from "@/lib/sola
 import type { Payback } from "@/lib/true-up/payback";
 import type { TrueUpYear } from "@/lib/true-up/reads";
 import type { Savings } from "@/lib/true-up/savings";
-import { type Cost, currentHeadline, type Cycle, pastHeadline, yearName } from "@/lib/true-up/text";
+import { type Cost, currentHeadline, type Cycle, pastHeadline, startedCycles, totals, yearExplained, yearName } from "@/lib/true-up/text";
 
 const address = ({ start, end }: Range) => `/true-up?start=${start}&end=${end}`;
 const query = ({ start, end }: Range) => `start_date=${start}&end_date=${end}`;
@@ -28,9 +28,11 @@ type Props = {
   range: Range; years: TrueUpYear[]; cycles: Cycle[]; cost: Cost | null; savings: Savings | null; payback: Payback | null; today: string;
   // For a finished year, the year before's amount due, which its headline compares with.
   before?: { label: string; amount_due: number | null } | null;
+  // For a true-up year, solar's share of the house's use over its days so far.
+  share?: number | null;
 };
 
-export function TrueUpPage({ range, years, cycles: served, cost: servedCost, savings: servedSavings, payback: servedPayback, today, before = null }: Props) {
+export function TrueUpPage({ range, years, cycles: served, cost: servedCost, savings: servedSavings, payback: servedPayback, today, before = null, share = null }: Props) {
   const router = useRouter();
   const [cycles, reloadCycles] = useReload(address(range), served);
   const [cost, reloadCost] = useReload(address(range), servedCost);
@@ -84,6 +86,11 @@ export function TrueUpPage({ range, years, cycles: served, cost: servedCost, sav
               </>
             ) : (
               <p className="text-sm text-muted-foreground">Grid energy by PG&amp;E billing cycle</p>
+            )}
+            {year && share !== null && (
+              <p className="mt-2 max-w-[62ch] text-[15px] text-pretty text-muted-foreground">
+                {yearExplained({ label: year.label, current: year.current, share, net: totals(startedCycles(cycles)).net })}
+              </p>
             )}
           </div>
         </div>

@@ -85,6 +85,14 @@ export function billedText(cycles: Billed[]): TileText | null {
   };
 }
 
+// The current year's projected amounts due, lowest and highest in whole dollars, as its headline and Home give them.
+export function owedRange(cost: Pick<Cost, "projections">): readonly [number, number] | null {
+  const amounts = cost.projections?.map((p) => Math.round(p.amount)) ?? [];
+  return amounts.length ? [Math.min(...amounts), Math.max(...amounts)] : null;
+}
+
+export const dollarRange = ([low, high]: readonly [number, number]) => (low === high ? wholeDollars(low) : `${wholeDollars(low)} to ${wholeDollars(high)}`);
+
 // The current year's headline, its figures marked {like this} for the page's Lead: the projected true-up in dollars when
 // the year has them, or else its year-end net; the line under it names the years the projection comes from.
 export function currentHeadline(cost: Pick<Cost, "kwh_projection" | "projections" | "charges_so_far">, label: string, end: string) {
@@ -98,10 +106,10 @@ export function currentHeadline(cost: Pick<Cost, "kwh_projection" | "projections
     ? `between {${wholeKwh(low)}} kWh exported and {${wholeKwh(high)}} kWh imported`
     : `${a === b ? "" : `{${wholeKwh(a)}} to `}{${wholeKwh(b)}} kWh ${netLabel(high).toLowerCase()}`;
   const yearsLike = like(years.map((y) => y.label));
-  const amounts = cost.projections?.map((p) => Math.round(p.amount)) ?? [];
-  if (!amounts.length)
+  const owed = owedRange(cost);
+  if (!owed)
     return { headline: `On track to end ${yearName(label)} ${crossing ? "" : "with "}${net}.`, line: `${yearsLike[0].toUpperCase()}${yearsLike.slice(1)}` };
-  const [lowest, highest] = [Math.min(...amounts), Math.max(...amounts)];
+  const [lowest, highest] = owed;
   const owe = lowest === highest ? `{${wholeDollars(lowest)}}` : `{${wholeDollars(lowest)}} to {${wholeDollars(highest)}}`;
   const charges = cost.charges_so_far === null ? "" : `; {${wholeDollars(cost.charges_so_far)}} in charges so far`;
   return {
@@ -230,4 +238,20 @@ export function savingsText(savings: Savings, season: Cost["vpp"], current: bool
       savings.estimated_rates && "WestLight's generation rates this year are estimated from PG&E's.",
     ].filter(Boolean).join(" "),
   };
+}
+
+type Explained = { label: string; current: boolean; share: number; net: number };
+
+// Why a year owed or didn't, from its own figures. A year above 100% can import only through what the Powerwalls lose
+// in storing, so that case names it.
+export function yearExplained({ label, current, share, net }: Explained) {
+  const covered = current ? `This true-up year solar has covered ${share}% of the house's use so far` : `In ${yearName(label)} solar covered ${share}% of the house's use`;
+  const [drew, sent] = current ? ["has drawn", "has sent"] : ["drew", "sent"];
+  const amount = wholeKwh(net);
+  if (amount === "0") return `${covered}, and the house ${sent} as much to PG&E as it drew.`;
+  if (net < 0) return `${covered}, and the house ${sent} ${amount} kWh more to PG&E than it drew.`;
+  const imported = `the house ${drew} ${amount} kWh more from PG&E than it sent`;
+  return share < 100
+    ? `${covered}, so ${imported}.`
+    : `${covered}, yet ${imported}: the Powerwalls lose some of what they store, so solar needs a margin over use to break even.`;
 }

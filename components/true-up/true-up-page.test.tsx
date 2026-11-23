@@ -215,3 +215,17 @@ test("without a headline, the title and subtitle stay", () => {
   expect(screen.getByRole("heading", { level: 1 }).className).not.toContain("uppercase");
   expect(screen.getByText("Grid energy by PG&E billing cycle")).toBeTruthy();
 });
+
+// true-up-tracker, "The year explained": under the lead for a true-up year, and not for other ranges.
+test("a true-up year explains what its share of solar left with PG&E, under the lead", () => {
+  render(<TrueUpPage range={YEAR_25} years={YEARS} cycles={YEAR_25_26} cost={COST_25_26} savings={SAVINGS_25_26} payback={null} today="2026-11-08" share={89}
+    before={{ label: "'24 - '25", amount_due: 554.83 }} />);
+  const [lead, why] = leads();
+  expect(lead.textContent).toContain("ended owing");
+  expect(why.textContent).toMatch(/^In '25.-.'26 solar covered 89% of the house's use, so the house drew [\d,]+ kWh more from PG&E than it sent\.$/);
+});
+
+test("All time has no explanation", () => {
+  render(page({ start: "2021-10-01", end: "2026-11-08" }, [...YEAR_25_26, ...CURRENT], CURRENT_COST, null));
+  expect(screen.queryByText(/solar (has )?covered/)).toBeNull();
+});

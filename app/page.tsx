@@ -16,10 +16,11 @@ import { latestFigures, patterns, powerwallYears } from "@/lib/patterns";
 import { recordTabs } from "@/lib/home/records";
 import { PTO, siteToday } from "@/lib/scene/replay";
 import { recordSeries, topTen } from "@/lib/top-ten";
-import { cycleRows } from "@/lib/true-up/cost";
+import { cycleRows, trueUpCost } from "@/lib/true-up/cost";
 import { payback } from "@/lib/true-up/payback";
 import { trueUpYears } from "@/lib/true-up/reads";
-import { startedCycles, totals } from "@/lib/true-up/text";
+import { cyclesShare } from "@/lib/true-up/share";
+import { owedRange, startedCycles, totals } from "@/lib/true-up/text";
 
 type Params = Record<string, string | string[] | undefined>;
 
@@ -46,7 +47,9 @@ export default async function Page({ searchParams }: { searchParams: Promise<Par
     impactFigures(PTO, today, READINGS),
     trueUpYears(today).then(async (years) => {
       const current = years.at(-1)!;
-      return { start: current.start_date, net: totals(startedCycles(await cycleRows(current.start_date, current.end_date))).net };
+      const rows = cycleRows(current.start_date, current.end_date);
+      const [cycles, cost, share] = await Promise.all([rows, trueUpCost(current.start_date, current.end_date, today), rows.then(cyclesShare)]);
+      return { start: current.start_date, end: current.end_date, net: totals(startedCycles(cycles)).net, share, owed: owedRange(cost) };
     }),
     payback(today),
   ]);
@@ -64,7 +67,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<Par
         <Records key="records" today={today} tabs={recordTabs(rankings, series)} record={String(params.record)} />,
         <Habits key="habits" today={today} months={house.months} figures={latestFigures(house.months, today)} powerwallOut={powerwallOut} />,
         <Since key="since" today={today} months={months} solar={sinceFigures.total_solar} matched={sinceFigures.total_solar_percentage}
-          net={trueUp.net} trueUpStart={trueUp.start} payback={paidBack} />,
+          net={trueUp.net} share={trueUp.share} owed={trueUp.owed} trueUpStart={trueUp.start} trueUpEnd={trueUp.end} payback={paidBack} />,
         <PickADay key="pick" today={today} />,
       ].map((chapter) => <div key={chapter.key} className="mt-8 border-t pt-8 md:mt-20 md:pt-20">{chapter}</div>)}
     </div>

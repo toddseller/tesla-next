@@ -10,7 +10,7 @@ vi.mock("@/components/scene/cloud-renderer", () => ({ createCloudRenderer: () =>
 const TODAY = "2026-11-21";
 const readers = vi.hoisted(() => ({
   forecast: vi.fn(), dayIntervals: vi.fn(), solarHours: vi.fn(), impactFigures: vi.fn(), impactByMonth: vi.fn(),
-  topTen: vi.fn(), recordSeries: vi.fn(), patterns: vi.fn(), trueUpYears: vi.fn(), cycleRows: vi.fn(), payback: vi.fn(),
+  topTen: vi.fn(), recordSeries: vi.fn(), patterns: vi.fn(), trueUpYears: vi.fn(), cycleRows: vi.fn(), trueUpCost: vi.fn(), payback: vi.fn(),
 }));
 vi.mock("@/lib/scene/replay", async (original) => ({ ...(await original<typeof import("@/lib/scene/replay")>()), siteToday: () => TODAY }));
 vi.mock("@/lib/live", () => ({ latest: () => JSON.stringify({ home_power: 1, grid_power: 1, modified: "2026-11-21T23:39:00Z" }), siteState: () => null }));
@@ -21,7 +21,7 @@ vi.mock("@/lib/impact", () => ({ impactFigures: readers.impactFigures, impactByM
 vi.mock("@/lib/top-ten", () => ({ topTen: readers.topTen, recordSeries: readers.recordSeries }));
 vi.mock("@/lib/patterns", async (original) => ({ ...(await original<typeof import("@/lib/patterns")>()), patterns: readers.patterns }));
 vi.mock("@/lib/true-up/reads", () => ({ trueUpYears: readers.trueUpYears }));
-vi.mock("@/lib/true-up/cost", () => ({ cycleRows: readers.cycleRows }));
+vi.mock("@/lib/true-up/cost", () => ({ cycleRows: readers.cycleRows, trueUpCost: readers.trueUpCost }));
 vi.mock("@/lib/true-up/payback", () => ({ payback: readers.payback }));
 
 const { default: Page } = await import("./page");
@@ -40,7 +40,11 @@ beforeEach(() => {
   readers.recordSeries.mockResolvedValue({ solar: [], exportDays: [], exportMonths: [], outages: [] });
   readers.patterns.mockResolvedValue({ months: [{ month: "2026-11", watts: 864 }], years: [{ year: 2026, out_wh: 4417000, in_wh: 5000000, first_day: "2026-01-01" }], hours: [] });
   readers.trueUpYears.mockResolvedValue([{ label: "'26 - '27", start_date: "2026-10-01", end_date: "2027-09-30", last_read_date: "2027-10-04", current: true }]);
-  readers.cycleRows.mockResolvedValue([{ net: 369.8, imported: 576.6, exported: 206.7, peak_net: 0, off_peak_net: 0 }, { net: 239.5, imported: 449.7, exported: 210.2, peak_net: 0, off_peak_net: 0 }, { net: null }]);
+  readers.cycleRows.mockResolvedValue([
+    { first_day: "2026-10-05", through: "2026-11-02", net: 369.8, imported: 576.6, exported: 206.7, peak_net: 0, off_peak_net: 0 },
+    { first_day: "2026-11-03", through: "2026-11-21", net: 239.5, imported: 449.7, exported: 210.2, peak_net: 0, off_peak_net: 0 }, { net: null },
+  ]);
+  readers.trueUpCost.mockResolvedValue({ projections: [{ amount: 610.4 }, { amount: 653.9 }] });
   readers.payback.mockResolvedValue(null);
 });
 
@@ -73,6 +77,8 @@ test("each reader is called as its linked page calls it, corrected readings thro
   expect(readers.recordSeries).toHaveBeenCalledWith(false, "corrected");
   expect(readers.patterns).toHaveBeenCalledWith(TODAY, "corrected");
   expect(readers.cycleRows).toHaveBeenCalledWith("2026-10-01", "2027-09-30");
+  expect(readers.impactFigures).toHaveBeenCalledWith("2026-10-05", "2026-11-21", "corrected");
+  expect(readers.trueUpCost).toHaveBeenCalledWith("2026-10-01", "2027-09-30", TODAY);
   expect(readers.payback).toHaveBeenCalledWith(TODAY);
 });
 
@@ -95,4 +101,18 @@ test("the first render holds the six chapter words in order and Pick a day, with
   expect(words).toEqual(["Now", "Today", "2026", "Records", "Habits", "Since 2021", "Pick a day"]);
   expect(html).toContain(">609.3<");
   expect(html).toContain("more imported than sent this true-up year, since October 1");
+});
+
+// home-story, "Since 2021's dollar estimate": True-Up's estimate for the current year, as its headline rounds it.
+test("Since 2021 gives True-Up's estimate under the net", async () => {
+  const html = await served();
+  expect(html).toContain("$610 to $654");
+  expect(html).toContain("on track to owe at the October 2027 true-up");
+});
+
+test("a true-up year without house use yet gives no explanation", async () => {
+  readers.impactFigures.mockImplementation(async (start: string) => (start === "2026-10-05" ? { ...SHARES, total_house: 0, total_solar_percentage: 0 } : SHARES));
+  const html = await served();
+  expect(html).not.toContain("This true-up year solar");
+  expect(html).not.toContain("rests on the early years");
 });

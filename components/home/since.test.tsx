@@ -19,7 +19,7 @@ const PAYBACK = {
   powerwalls: { year: null, wont: true },
 };
 const since = (over: Partial<Parameters<typeof Since>[0]> = {}) =>
-  render(<Since today={TODAY} months={MONTHS} solar={75611.4} matched={100} net={609.3} trueUpStart="2026-10-01" payback={PAYBACK} {...over} />);
+  render(<Since today={TODAY} months={MONTHS} solar={75611.4} matched={100} net={609.3} share={73} owed={null} trueUpStart="2026-10-01" trueUpEnd="2027-09-30" payback={PAYBACK} {...over} />);
 
 afterEach(cleanup);
 
@@ -29,7 +29,6 @@ test("the running totals, named, with today and the payback marked, and the figu
   expect(screen.getByRole("img", { name: /^Running totals since October 22, 2021: solar 1,900 kWh against the house's 2,100 kWh/ })).toBeTruthy();
   expect(screen.getByText("solar generated")).toBeTruthy();
   expect(document.body.textContent).toContain("Solar has generated as much as the house used: 75,611 kWh, 100%.");
-  expect(screen.getByText(/midday, when the surplus goes to PG&E; at night the house draws from the grid/)).toBeTruthy();
   expect(screen.getByText("more imported than sent this true-up year, since October 1")).toBeTruthy();
   expect(screen.getByText(/Solar paid for itself in March 2025\. The Powerwalls won't pay for themselves within their warranty\./)).toBeTruthy();
   expect(screen.getByRole("link", { name: "The true-up and payback" }).getAttribute("href")).toBe("/true-up");
@@ -76,4 +75,36 @@ test("a projected whole-system year draws no box", () => {
   areas.length = 0;
   since();
   expect(areas).toEqual([]);
+});
+
+// home-story, "Since 2021 explains the true-up": this year's figures, as True-Up explains them.
+test("a matched 100% rests on the early years, and this year's sentence says what it left with PG&E", () => {
+  since();
+  expect(screen.getByText(/^That 100% rests on/).textContent).toBe(
+    "That 100% rests on the early years, when solar covered more than the house used. This true-up year solar has covered 73% of the house's use so far, so the house has drawn 609 kWh more from PG&E than it sent.",
+  );
+  expect(screen.queryByText(/midday/)).toBeNull();
+});
+
+test("not yet matched, this year's sentence stands alone", () => {
+  since({ matched: 96 });
+  expect(screen.queryByText(/rests on the early years/)).toBeNull();
+  expect(screen.getByText(/^This true-up year solar has covered 73%/)).toBeTruthy();
+});
+
+// home-story, "Since 2021's dollar estimate".
+test("True-Up's estimate sits under the net, with its true-up month", () => {
+  since({ owed: [610, 654] });
+  expect(screen.getByText("$610 to $654")).toBeTruthy();
+  expect(screen.getByText("on track to owe at the October 2027 true-up")).toBeTruthy();
+});
+
+test("one projected amount reads alone", () => {
+  since({ owed: [610, 610] });
+  expect(screen.getByText("$610")).toBeTruthy();
+});
+
+test("without this year's share there is no explanation", () => {
+  since({ share: null });
+  expect(screen.queryByText(/rests on the early years|This true-up year/)).toBeNull();
 });
