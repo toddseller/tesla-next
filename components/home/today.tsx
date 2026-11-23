@@ -23,8 +23,9 @@ const hour = new Intl.DateTimeFormat("en-US", { hour: "numeric", timeZone: TIME_
 const weekday = new Intl.DateTimeFormat("en-US", { weekday: "short", timeZone: "UTC" });
 const DAY_MINUTES = 1440;
 
-// The space is inside the small text, so the gap is the unit's size, not the figure's.
-const Unit = ({ unit }: { unit: string }) => <span className="text-[0.6em] font-medium text-muted-foreground">{` ${unit}`}</span>;
+// The space is inside the small text, so the gap is the unit's size, not the figure's. Under the days ahead's small
+// figures, 0.6em would fall below DESIGN.md's 11px floor.
+const Unit = ({ unit }: { unit: string }) => <span className="text-[max(11px,0.6em)] font-medium text-muted-foreground">{` ${unit}`}</span>;
 
 type FigureProps = { value: ReactNode; unit?: string; label: string; className?: string; wide?: boolean };
 export const Figure = ({ value, unit, label, className = "", wide = false }: FigureProps) => (

@@ -45,7 +45,7 @@ test("the timeline runs from PTO to the end of the Powerwall warranty, marking s
   render(<PaybackCard payback={PAYBACK} today="2026-11-09" />);
   const timeline = card().getByRole("img", { name: /^Timeline/ });
   expect(timeline.getAttribute("aria-label")).toBe(
-    "Timeline from October 2021, when the system went in: solar paid for itself in June 2025, today is 2026, solar is projected to pay for the whole system in 2030, the Powerwall warranty ends in 2031",
+    "Timeline from October 22, 2021, when the system went in: solar paid for itself in June 2025, today is 2026, solar is projected to pay for the whole system in 2030, the Powerwall warranty ends in 2031",
   );
 });
 
@@ -133,7 +133,7 @@ test("on a phone a rail joins the steps: solar up to today, dashed to the whole 
 });
 
 // site-motion, "The Payback card tells its story": once half the timeline is in view, after 200 ms, the line crosses
-// the track at an even 6 s for the whole of it, stopping 900 ms at each mark while it lands. Styles keep about a tenth
+// the track at an even 3 s for the whole of it, stopping 600 ms at each mark while it lands. Styles keep about a tenth
 // of a millisecond, so delays are compared to that.
 const ms = (value: string) => parseFloat(value);
 const delay = (element: Element) => ms((element as HTMLElement).style.animationDelay);
@@ -164,12 +164,12 @@ test("in view, the line draws stop by stop: solid to solar, on to today, dashed 
 
   expect(delay(toSolar)).toBe(200);
   expect(solar).toBeCloseTo(200 + lasts(toSolar), 1);
-  expect(delay(toToday)).toBeCloseTo(solar + 900, 1);
+  expect(delay(toToday)).toBeCloseTo(solar + 600, 1);
   expect(today).toBeCloseTo(delay(toToday) + lasts(toToday), 1);
-  expect(delay(toSystem)).toBeCloseTo(today + 900, 1);
+  expect(delay(toSystem)).toBeCloseTo(today + 600, 1);
   expect(system).toBeCloseTo(delay(toSystem) + lasts(toSystem), 1);
-  expect(warranty).toBeCloseTo(system + 900, 1);
-  expect(lasts(toSolar) + lasts(toToday) + lasts(toSystem)).toBeCloseTo(6000 * share("2030-07-01"), 1);
+  expect(warranty).toBeCloseTo(system + 600, 1);
+  expect(lasts(toSolar) + lasts(toToday) + lasts(toSystem)).toBeCloseTo(3000 * share("2030-07-01"), 1);
 });
 
 test("a mark lands: its dot pops in and rings, its connector draws up, and its label grows past its size, solar's most", () => {
@@ -201,7 +201,7 @@ test("on a phone the same story runs down the steps, each rail drawing from one 
   const stops = [...container.querySelectorAll('[data-part="timeline"] [data-part="dot"]')].map(delay);
   const steps = [...container.querySelectorAll<HTMLElement>("ol > li")];
   const rails = steps.map((step) => step.querySelector('[data-part="rail"]'));
-  const starts = [200, ...stops.map((stop) => stop + 900)];
+  const starts = [200, ...stops.map((stop) => stop + 600)];
   for (const i of [0, 1, 2]) {
     expect(delay(rails[i]!)).toBeCloseTo(starts[i], 1);
     expect(delay(rails[i]!) + lasts(rails[i]!)).toBeCloseTo(stops[i], 1);
@@ -282,6 +282,22 @@ test("a browser without IntersectionObserver skips the story and shows the timel
   vi.stubGlobal("IntersectionObserver", undefined);
   const { container } = render(<PaybackCard payback={PAYBACK} today="2026-11-09" />);
   expect(container.querySelector('[class*="motion-"]')).toBeNull();
+});
+
+// The story ends only once the last mark's label has grown and settled, 920 ms after its stop; ending at the stop's
+// 600 ms would snap the warranty label mid-grow.
+test("the story keeps playing until the last label has settled", () => {
+  vi.useFakeTimers();
+  const { container } = render(<PaybackCard payback={PAYBACK} today="2026-11-09" />);
+  inView();
+  const marks = [...container.querySelectorAll('[data-part="timeline"] [data-part="mark"]')];
+  const last = marks.at(-1)!;
+  const stop = delay(last.querySelector('[data-part="dot"]')!);
+  act(() => vi.advanceTimersByTime(stop + 800));
+  expect(last.querySelector('[data-part="label"]')!.className).toContain("motion-grow");
+  act(() => vi.advanceTimersByTime(200));
+  expect(container.querySelector('[class*="motion-"]')).toBeNull();
+  vi.useRealTimers();
 });
 
 test("it plays once: when it's over, a re-render with new figures carries no motion and doesn't wait again", () => {

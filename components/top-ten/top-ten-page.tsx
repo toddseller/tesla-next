@@ -47,9 +47,9 @@ export function TopTenPage({ topTen: served, withVpp, today, readings = "correct
       <Ranking record="Best export day" chart="Top ten export days" subtitle="Most energy sent to PG&E in a day" flow="grid" entries={dayEntries(days)} today={today} />
       <Ranking record="Best export month" chart="Top ten export months" subtitle="Most energy sent to PG&E in a month" flow="grid" entries={monthEntries(months)} today={today} />
       <Ranking record="Longest outage" chart="Top ten outages" subtitle="Longest time off the grid, on the Powerwalls and solar" flow="powerwall" entries={outageEntries(outages)} today={today} />
-      <p className="text-[13px] text-muted-foreground">
+      <p className="max-w-[75ch] text-[13px] text-muted-foreground">
         Exports are net of imports. Equal figures rank the newer date first. Days before April 27, 2026 use PG&amp;E&apos;s meter
-        readings where they exist. Every date opens its day or month on the Solar page. Outages count from October 23, 2021, the day after the system was approved to run, and last a minute or more, Go Off-Grid tests left out. The export rankings {withVpp ? "include" : "leave out"} VPP
+        readings where they exist. Every date opens its day or month on the Solar page. Outages count after October 22, 2021, the day the system was approved to run, and last a minute or more, Go Off-Grid tests left out. The export rankings {withVpp ? "include" : "leave out"} VPP
         event days, when Tesla discharged the Powerwalls to the grid for PG&amp;E.
       </p>
       <ReadingsNote readings={readings} />
