@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 
 import { FirstView } from "@/components/count-up";
+import { Lead } from "@/components/lead";
 import { RangeControls } from "@/components/solar/range-controls";
 import { useReload } from "@/components/solar/use-reload";
 import { Term } from "@/components/term";
@@ -18,14 +19,18 @@ import { datesLabel, type Range, rangeIncludes, trueUpPresets } from "@/lib/sola
 import type { Payback } from "@/lib/true-up/payback";
 import type { TrueUpYear } from "@/lib/true-up/reads";
 import type { Savings } from "@/lib/true-up/savings";
-import { type Cost, type Cycle, yearName } from "@/lib/true-up/text";
+import { type Cost, currentHeadline, type Cycle, pastHeadline, yearName } from "@/lib/true-up/text";
 
 const address = ({ start, end }: Range) => `/true-up?start=${start}&end=${end}`;
 const query = ({ start, end }: Range) => `start_date=${start}&end_date=${end}`;
 
-type Props = { range: Range; years: TrueUpYear[]; cycles: Cycle[]; cost: Cost | null; savings: Savings | null; payback: Payback | null; today: string };
+type Props = {
+  range: Range; years: TrueUpYear[]; cycles: Cycle[]; cost: Cost | null; savings: Savings | null; payback: Payback | null; today: string;
+  // For a finished year, the year before's amount due, which its headline compares with.
+  before?: { label: string; amount_due: number | null } | null;
+};
 
-export function TrueUpPage({ range, years, cycles: served, cost: servedCost, savings: servedSavings, payback: servedPayback, today }: Props) {
+export function TrueUpPage({ range, years, cycles: served, cost: servedCost, savings: servedSavings, payback: servedPayback, today, before = null }: Props) {
   const router = useRouter();
   const [cycles, reloadCycles] = useReload(address(range), served);
   const [cost, reloadCost] = useReload(address(range), servedCost);
@@ -59,13 +64,24 @@ export function TrueUpPage({ range, years, cycles: served, cost: servedCost, sav
 
   // Figures count up only while the page is first seen; a new range's tiles are new, but this isn't a first view.
   const firstView = useEntering(ENTER_MS);
+  const projection = year?.current && cost ? currentHeadline(cost, year.label, year.end_date) : null;
+  const headline = projection?.headline ?? (year && !year.current && cost ? pastHeadline({ label: year.label, amount_due: cost.amount_due }, before) : null);
   return (
     <FirstView value={firstView}>
       <div className="flex flex-col gap-5">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex flex-col gap-0.5">
-            <h1 className="text-[22px] font-semibold"><Term name="true-up">True-Up</Term> Tracker</h1>
-            <p className="text-sm text-muted-foreground">Grid energy by PG&amp;E billing cycle</p>
+            <h1 className={headline ? "text-sm font-medium tracking-[0.06em] text-muted-foreground uppercase" : "text-[22px] font-semibold"}>
+              <Term name="true-up">True-Up</Term> Tracker
+            </h1>
+            {headline ? (
+              <>
+                <Lead text={headline} className="mt-1 max-w-[30ch] text-[26px] leading-tight font-semibold tracking-[-0.02em] text-pretty sm:text-[32px]" />
+                {projection && <Lead text={projection.line} className="mt-1 text-sm text-muted-foreground" />}
+              </>
+            ) : (
+              <p className="text-sm text-muted-foreground">Grid energy by PG&amp;E billing cycle</p>
+            )}
           </div>
           <RangeControls today={today} range={range} presets={presets} earlier={earlier} onRange={(next) => router.push(address(next), { scroll: false })} />
         </div>

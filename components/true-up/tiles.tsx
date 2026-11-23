@@ -6,7 +6,7 @@ import type { TermName } from "@/lib/terms";
 
 import type { TrueUpYear } from "@/lib/true-up/reads";
 import {
-  billedText, chargesSoFarText, type Cost, type Cycle, kwh, netLabel, projectionText, startedCycles, type TileText, totals,
+  billedText, chargesSoFarText, type Cost, type Cycle, kwh, netLabel, startedCycles, type TileText, totals,
   trueUpText, vppText,
 } from "@/lib/true-up/text";
 
@@ -36,7 +36,8 @@ const TextTile = ({ title, text, terms = [] }: { title: ReactNode; text: TileTex
 
 const withLabel = (value: number) => <><Figure>{kwh(value)}</Figure> {netLabel(value).toLowerCase()}</>;
 
-// The range's tiles: its net always, and with one true-up year shown, its dollars and VPP credit.
+// The range's tiles: its net always, and with one true-up year shown, its dollars and VPP credit. The current year's
+// projection is the page's headline.
 export function Tiles({ cycles, cost, year, today }: { cycles: Cycle[]; cost: Cost | null; year: TrueUpYear | null; today: string }) {
   const started = startedCycles(cycles);
   const sum = totals(started);
@@ -51,7 +52,6 @@ export function Tiles({ cycles, cost, year, today }: { cycles: Cycle[]; cost: Co
       {year && cost && (year.current
         ? cost.charges_so_far !== null && <TextTile title="Charges so far" text={chargesSoFarText(cost, started)} terms={["nem"]} />
         : <TextTile title="True-up" text={trueUpText(cost)} terms={["nem", "nsc"]} />)}
-      {year?.current && cost?.kwh_projection && <TextTile title="Projected true-up" text={projectionText(cost.kwh_projection, cost.projections)} />}
       {billed && <TextTile title="Billed against estimate" text={billed} />}
       {vpp && <TextTile title={<>Tesla <Term name="vpp">VPP</Term> credit</>} text={vpp} />}
     </div>

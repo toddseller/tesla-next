@@ -119,3 +119,19 @@ test("the readings sit beside the VPP choice, each keeping the other, and a relo
   await act(() => new Promise((resolve) => setTimeout(resolve, 0)));
   expect(fetches.at(-1)).toBe("/api/top-ten?vpp=with&readings=tesla");
 });
+
+// top-ten, "The year's lead sentence": it takes the subtitle's place and follows the rankings as they reload.
+test("under the heading, a sentence says what this year placed, following a reload", async () => {
+  render(<TopTenPage topTen={TOP_TEN} withVpp today="2026-11-08" />);
+  const lead = () => screen.getByRole("heading", { level: 1 }).nextElementSibling!.textContent;
+  expect(lead()).toMatch(/^2026 hasn't set a record, but it put /);
+  expect(screen.queryByText(/The records since October 2021/)).toBeNull();
+  FakeStream.opened[0].send({ date: "2026-11-08" }, "totals");
+  await settle();
+  expect(lead()).toMatch(/^2026 set the record for the best export day, and put /);
+});
+
+test("with nothing ranked, the subtitle stays", () => {
+  render(<TopTenPage topTen={[{ solar: [] }, { net_grid: [] }, { to_grid_months: [] }, { outages: [] }]} withVpp={false} today="2026-11-08" />);
+  expect(screen.getByRole("heading", { level: 1 }).nextElementSibling!.textContent).toBe("The records since October 2021, and the days and months closest to them");
+});

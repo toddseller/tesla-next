@@ -119,3 +119,34 @@ export function stripRange(range: Range, day: string, today: string): Range {
   const month = monthOf(day);
   return { start: month.start, end: month.end < today ? month.end : today };
 }
+
+const yearBefore = (date: string) => {
+  const [y, m, d] = parts(date);
+  return day(y - 1, m - 1, Math.min(d, monthLength(y - 1, m - 1)));
+};
+
+// Today is only partly over, so a longer range reaching it compares the days before it on both sides; a lone day
+// compares with the whole of that date. A year before the first day has nothing to compare.
+export function comparedDays(range: Range, today: string): { now: Range; then: Range } | null {
+  const end = range.start === range.end || range.end < today ? range.end : shiftDay(today, -1);
+  const then = { start: yearBefore(range.start), end: yearBefore(end) };
+  return end < range.start || then.start < FIRST_DAY ? null : { now: { start: range.start, end }, then };
+}
+
+const trueUpName = (start: string) => `'${start.slice(2, 4)} - '${String(Number(start.slice(2, 4)) + 1).padStart(2, "0")}`;
+
+// How a lead sentence names the range, and the year-earlier days by name when they're a finished whole period.
+export function rangeNames(range: Range, today: string): { name: string; earlier: string | null } {
+  const { start, end } = range;
+  const soFar = rangeIncludes(range, today);
+  const named = (name: string, earlier: string) => (soFar ? { name: `in ${name} so far`, earlier: null } : { name: `in ${name}`, earlier });
+  const month = monthOf(start);
+  if (month.start === start && month.end === end)
+    return soFar ? { name: `in ${part(start, "long").month} so far`, earlier: null } : named(rangeLabel(range), `${part(start, "long").month} ${Number(start.slice(0, 4)) - 1}`);
+  if (start.endsWith("-01-01") && end === `${start.slice(0, 4)}-12-31`) return named(start.slice(0, 4), String(Number(start.slice(0, 4)) - 1));
+  if (start.endsWith("-10-01") && end === `${Number(start.slice(0, 4)) + 1}-09-30`) return named(trueUpName(start), trueUpName(yearBefore(start)));
+  if (start === end)
+    return { name: start === today ? "today" : start === shiftDay(today, -1) ? "yesterday" : `on ${datesLabel(range, "short")}`, earlier: null };
+  if (soFar && end === shiftDay(start, 6) && new Date(`${start}T00:00:00Z`).getUTCDay() === 0) return { name: "this week so far", earlier: null };
+  return { name: `from ${datesLabel(range, "short").replace(" – ", " to ")}`, earlier: null };
+}

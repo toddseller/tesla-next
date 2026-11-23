@@ -186,3 +186,27 @@ test("the title hints the true-up", () => {
   expect(within(screen.getByRole("heading", { level: 1 })).getByRole("button", { name: "True-Up" })).toBeTruthy();
   expect(screen.getByRole("heading", { level: 1 }).textContent).toBe("True-Up Tracker");
 });
+
+// true-up-tracker, "The headline": what the tiles don't say leads the page, the title shrinking to a label above it.
+test("the current year leads with its projection, the title a label above it", () => {
+  render(page());
+  const title = screen.getByRole("heading", { level: 1 });
+  const [headline, line] = [title.nextElementSibling!, title.nextElementSibling!.nextElementSibling!];
+  expect(headline.textContent).toBe("On track to owe $593 to $652 at the October 2027 true\u2011up; $106 in charges so far.");
+  expect(line.textContent!.replace(/\u00a0/g, " ")).toBe("Year-end 2,032 to 2,362 kWh imported, if the rest of the year goes like '24 - '25 or '25 - '26");
+  expect(line.textContent).toContain("'24\u00a0-\u00a0'25");
+  expect(title.className).toContain("uppercase");
+  expect(screen.queryByText("Grid energy by PG&E billing cycle")).toBeNull();
+});
+
+test("a past year leads with its amount due against the year before's", () => {
+  render(<TrueUpPage range={YEAR_25} years={YEARS} cycles={YEAR_25_26} cost={COST_25_26} savings={SAVINGS_25_26} payback={null} today="2026-11-08"
+    before={{ label: "'24 - '25", amount_due: 554.83 }} />);
+  expect(screen.getByRole("heading", { level: 1 }).nextElementSibling!.textContent!.replace(/\u00a0/g, " ")).toBe("'25 - '26 ended owing $768 at the true\u2011up, $213 more than '24 - '25.");
+});
+
+test("without a headline, the title and subtitle stay", () => {
+  render(page({ start: "2021-10-01", end: "2026-11-08" }, [...YEAR_25_26, ...CURRENT], CURRENT_COST, null));
+  expect(screen.getByRole("heading", { level: 1 }).className).not.toContain("uppercase");
+  expect(screen.getByText("Grid energy by PG&E billing cycle")).toBeTruthy();
+});

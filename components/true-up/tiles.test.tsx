@@ -18,13 +18,12 @@ const TODAY = "2026-11-08";
 const titles = () => screen.getAllByRole("region").map((tile) => within(tile).getByRole("heading").textContent);
 const tile = (name: string) => screen.getByRole("region", { name }).textContent!.replace(/ /g, " ");
 
-test("the current year: its net so far, charges so far, projected true-up and VPP credit", () => {
+test("the current year: its net so far, charges so far and VPP credit; the projection is the headline's", () => {
   render(<Tiles cycles={CURRENT} cost={CURRENT_COST} year={yearOf(2027)} today={TODAY} />);
 
-  expect(titles()).toEqual(["Net so far", "Charges so far", "Projected true-up", "Tesla VPP credit"]);
+  expect(titles()).toEqual(["Net so far", "Charges so far", "Tesla VPP credit"]);
   expect(tile("Net so far")).toBe("Net so far408.6kWh importedImported 660.1 · Exported 251.4 kWhPeak (4 to 9 p.m.) 15.8 exported · Off-peak 424.4 imported");
   expect(tile("Charges so far")).toBe("Charges so far$106.46estimateNEM charges for 2 cycles, before taxes. No PG&E bill in yet.");
-  expect(tile("Projected true-up")).toBe("Projected true-up$593–$652Year-end 2,032 to 2,362 kWh imported, if the rest of the year goes like '24 - '25 or '25 - '26");
   expect(tile("Tesla VPP credit")).toBe("Tesla VPP creditNot started2027 seasonThe season runs May 1 to October 31. Tesla pays it, apart from PG&E's true-up.");
 });
 
@@ -56,11 +55,10 @@ test("a year without dollars or a VPP season says why, and has no VPP tile", () 
   expect(tile("True-up")).toBe("True-upNot shownPG&E's statement for this year isn't available, and the rates it was billed at aren't stored.");
 });
 
-test("the projection without dollars gives the year-end net alone", () => {
+test("without dollars, the current year has no charges tile", () => {
   render(<Tiles cycles={CURRENT} cost={{ ...CURRENT_COST, charges_so_far: null, projections: null }} year={yearOf(2027)} today={TODAY} />);
 
-  expect(titles()).toEqual(["Net so far", "Projected true-up", "Tesla VPP credit"]);
-  expect(tile("Projected true-up")).toBe("Projected true-upYear-end 2,032 to 2,362 kWh imported, if the rest of the year goes like '24 - '25 or '25 - '26");
+  expect(titles()).toEqual(["Net so far", "Tesla VPP credit"]);
 });
 
 test("a paid VPP season", () => {
@@ -79,12 +77,6 @@ test("ahead in summer, the net reads exported", () => {
   render(<Tiles cycles={[{ ...YEAR_25_26[8], imported: 50, exported: 450, net: -400, peak_net: -100, off_peak_net: -300 }]} cost={NO_COST} year={null} today={TODAY} />);
 
   expect(tile("Net")).toContain("400.0kWh exported");
-});
-
-test("year names never break", () => {
-  render(<Tiles cycles={CURRENT} cost={CURRENT_COST} year={yearOf(2027)} today={TODAY} />);
-
-  expect(screen.getByRole("region", { name: "Projected true-up" }).textContent).toContain("'24 - '25");
 });
 
 // site-motion, "True-Up's figures count up when first seen".

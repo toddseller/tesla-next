@@ -213,3 +213,17 @@ test("a range after the fix offers no readings", () => {
   render(<ImpactPage range={today} figures={figures(95)} today="2026-11-08" backup={NO_BACKUP} charging={CHARGING} backupYear={THIS_YEAR} />);
   expect(screen.queryByRole("group", { name: "Readings" })).toBeNull();
 });
+
+test("under the heading, a sentence compares the self-powered share with a year earlier and follows reloaded figures", async () => {
+  render(<ImpactPage range={today} figures={figures(40)} before={29} today="2026-11-08" backup={NO_BACKUP} backupYear={THIS_YEAR} charging={null} />);
+  const lead = screen.getByRole("heading", { level: 1 }).parentElement!.querySelector(":scope > p")!;
+  expect(lead.textContent).toBe("40% self-powered today; this day last year was 29%.");
+  FakeStream.opened[0].send({ date: "2026-11-08" }, "totals");
+  await settle();
+  expect(lead.textContent).toBe("97% self-powered today; this day last year was 29%.");
+});
+
+test("without a year earlier, the heading has no sentence", () => {
+  render(<ImpactPage range={today} figures={figures(40)} before={null} today="2026-11-08" backup={NO_BACKUP} backupYear={THIS_YEAR} charging={null} />);
+  expect(screen.getByRole("heading", { level: 1 }).parentElement!.querySelector(":scope > p")).toBeNull();
+});

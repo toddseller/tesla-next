@@ -1,7 +1,7 @@
 // Ported from anton-tesla-api-ws's utils/trueUp.test.js, with the wording mockup A changed.
 import { describe, expect, test } from "vitest";
 import {
-  billedText, chargesSoFarText, type Cycle, chargesText, cycleDates, estimateText, kwh, netLabel, projectionText, runningNet,
+  billedText, chargesSoFarText, type Cycle, chargesText, cycleDates, currentHeadline, estimateText, kwh, netLabel, pastHeadline, runningNet,
   savingsText, startedCycles, totals, trueUpText, uncorrectedDays, vppText, yearName,
 } from "./text";
 
@@ -92,26 +92,65 @@ describe("cycle charges", () => {
   });
 });
 
-describe("the projection", () => {
+describe("the current year's headline", () => {
   const years = (...nets: number[]) => ({ years: nets.map((net, i) => ({ label: `'2${i + 4} - '2${i + 5}`, net })), band: { low: [], high: [] } });
+  const headline = (kwh_projection: ReturnType<typeof years> | null, projections: { label: string; amount: number }[] | null, charges_so_far: number | null = 180.23) =>
+    currentHeadline({ kwh_projection, projections, charges_so_far }, "'26 - '27", "2027-09-30");
 
-  test("dollars to the dollar, and the year-end net naming the years", () => {
-    const text = projectionText(years(2031.9, 2361.5), [{ label: "'24 - '25", amount: 592.92 }, { label: "'25 - '26", amount: 652.39 }]);
-    expect(text.value).toBe("$593–$652");
-    expect(plain(text.line)).toBe("Year-end 2,032 to 2,362 kWh imported, if the rest of the year goes like '24 - '25 or '25 - '26");
+  test("dollars to the dollar, the true-up's month and the charges so far, over the year-end net naming the years", () => {
+    const text = headline(years(2092.1, 2376.1), [{ label: "'24 - '25", amount: 611.45 }, { label: "'25 - '26", amount: 656.69 }])!;
+    expect(text.headline).toBe("On track to owe {$611} to {$657} at the October 2027 true\u2011up; {$180} in charges so far.");
+    expect(plain(text.line)).toBe("Year-end {2,092} to {2,376} kWh imported, if the rest of the year goes like '24 - '25 or '25 - '26");
     expect(text.line).toContain(`like ${yearName("'24 - '25")} or ${yearName("'25 - '26")}`);
   });
 
-  test("one year, and without dollars", () => {
-    const text = projectionText({ ...years(2000), years: [{ label: "'25 - '26", net: 2000 }] }, null);
-    expect(text.value).toBeNull();
-    expect(plain(text.line)).toBe("Year-end 2,000 kWh imported, if the rest of the year goes like '25 - '26");
-    expect(projectionText(years(1650, 2000), [{ label: "'25 - '26", amount: 830.4 }]).value).toBe("$830");
+  test("one year", () => {
+    const text = headline({ ...years(2000), years: [{ label: "'25 - '26", net: 2000 }] }, [{ label: "'25 - '26", amount: 830.4 }])!;
+    expect(text.headline).toBe("On track to owe {$830} at the October 2027 true\u2011up; {$180} in charges so far.");
+    expect(plain(text.line)).toBe("Year-end {2,000} kWh imported, if the rest of the year goes like '25 - '26");
   });
 
-  test("exports, and a range crossing zero", () => {
-    expect(plain(projectionText(years(-500, -200), null).line)).toBe("Year-end 200 to 500 kWh exported, if the rest of the year goes like '24 - '25 or '25 - '26");
-    expect(plain(projectionText(years(-200, 300), null).line)).toBe("Year-end between 200 kWh exported and 300 kWh imported, if the rest of the year goes like '24 - '25 or '25 - '26");
+  test("dollars without charges so far leave the charges out", () => {
+    const text = headline(years(2000), [{ label: "'25 - '26", amount: 830.4 }], null)!;
+    expect(text.headline).toBe("On track to owe {$830} at the October 2027 true‑up.");
+  });
+
+  test("without dollars, the headline holds the year-end net", () => {
+    const text = headline(years(2092.1, 2376.1), null, null)!;
+    expect(plain(text.headline)).toBe("On track to end '26 - '27 with {2,092} to {2,376} kWh imported.");
+    expect(plain(text.line)).toBe("If the rest of the year goes like '24 - '25 or '25 - '26");
+    expect(plain(headline(years(-500, -200), null, null)!.headline)).toBe("On track to end '26 - '27 with {200} to {500} kWh exported.");
+  });
+
+  test("a projection crossing zero", () => {
+    expect(plain(headline(years(-120, 80), null, null)!.headline)).toBe("On track to end '26 - '27 between {120} kWh exported and {80} kWh imported.");
+    expect(plain(headline(years(-200, 300), [{ label: "'24 - '25", amount: 50 }, { label: "'25 - '26", amount: 90 }])!.line)).toBe(
+      "Year-end between {200} kWh exported and {300} kWh imported, if the rest of the year goes like '24 - '25 or '25 - '26",
+    );
+  });
+
+  test("no headline without a projection", () => {
+    expect(headline(null, null)).toBeNull();
+  });
+});
+
+describe("a past year's headline", () => {
+  const year = (label: string, amount_due: number | null) => ({ label, amount_due });
+
+  test("more than the year before", () => {
+    expect(plain(pastHeadline(year("'25 - '26", 767.73), year("'24 - '25", 554.83)))).toBe("'25 - '26 ended owing {$768} at the true\u2011up, {$213} more than '24 - '25.");
+  });
+
+  test("less, the same, and nothing due", () => {
+    expect(plain(pastHeadline(year("'26 - '27", 500), year("'25 - '26", 767.73)))).toBe("'26 - '27 ended owing {$500} at the true\u2011up, {$268} less than '25 - '26.");
+    expect(plain(pastHeadline(year("'26 - '27", 767.6), year("'25 - '26", 767.73)))).toBe("'26 - '27 ended owing {$768} at the true\u2011up, the same as '25 - '26.");
+    expect(plain(pastHeadline(year("'26 - '27", 0), year("'25 - '26", 767.73)))).toBe("'26 - '27 ended with nothing due at the true\u2011up, {$768} less than '25 - '26.");
+  });
+
+  test("no headline without both amounts", () => {
+    expect(pastHeadline(year("'23 - '24", 0), year("'22 - '23", null))).toBeNull();
+    expect(pastHeadline(year("'22 - '23", null), year("'21 - '22", null))).toBeNull();
+    expect(pastHeadline(year("'22 - '23", 400), null)).toBeNull();
   });
 });
 
