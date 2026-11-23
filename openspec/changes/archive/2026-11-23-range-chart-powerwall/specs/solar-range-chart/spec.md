@@ -1,7 +1,7 @@
 ## MODIFIED Requirements
 
 ### Requirement: Bar values
-Each bar SHALL show its period's solar generated, grid (imported minus exported, below zero when more was exported), Powerwall (house use minus solar minus grid, below zero when the Powerwalls stored more than they gave) and house use, in kWh to one decimal place, from the `data` table, with PG&E's meter readings standing in for Tesla's grid figures, and the house use corrected by the difference, on days before 2026-04-27 that have them. The bar SHALL stack solar, positive grid and positive Powerwall from zero, in that order, negative grid below zero and negative Powerwall below that, and mark house use at its own value.
+Each bar SHALL show its period's solar generated, grid (imported minus exported, below zero when more was exported), Powerwall (house use minus solar minus grid, below zero when the Powerwalls stored more than they gave) and house use, in kWh to one decimal place, from the `data` table, with PG&E's meter readings standing in for Tesla's grid figures, and the house use corrected by the difference, on days before 2026-04-27 that have them.
 
 #### Scenario: A day that exported more than it imported
 - **WHEN** October 14, 2026 generated 44.4 kWh, used 34.0 kWh in the house, and exported 8.3 kWh more than it imported
@@ -20,7 +20,7 @@ Each bar SHALL show its period's solar generated, grid (imported minus exported,
 - **THEN** its bar stacks 11.9 kWh of Powerwall on top of solar and grid, up to the house mark
 
 ### Requirement: Bar shape and labels
-Each bar SHALL round only the outer ends of its stack, its top and its bottom. The house mark SHALL be a short rounded line in the home color, a little wider than its bar and edged in the card's color, drawn over the bar. Flows SHALL take their colors as the dashboard shell sets them, with a legend naming Solar, Grid, Powerwall and House (shown as the mark), a note that below zero means more was sent to the grid than taken from it, or more stored in the Powerwalls than they gave back that day, and the value axis labeled in kWh.
+Each bar SHALL round only its stack's top and bottom ends. The house mark SHALL be a short rounded line in the home color, a little wider than its bar and edged in the card's color, drawn over the bar. Flows SHALL take the dashboard shell's colors, with a legend naming Solar, Grid, Powerwall and House (shown as the mark), a note that below zero means more was sent to the grid than taken from it, or more stored in the Powerwalls than they gave back that day, and the value axis labeled in kWh.
 
 #### Scenario: A stacked bar
 - **WHEN** a bar has solar and grid above zero, and no Powerwall
@@ -63,3 +63,16 @@ Pointing at a bar, or tapping it on a touch screen, SHALL show its label and its
 #### Scenario: A range before the site existed
 - **WHEN** a client requests `/api/range?start_date=1900-01-01&end_date=2026-10-31`
 - **THEN** the response is 400 and its message names 2021-10-01
+
+## ADDED Requirements
+
+### Requirement: Bar stacking order
+Each bar SHALL stack solar, positive grid and positive Powerwall from zero, in that order, negative grid below zero and negative Powerwall below that, and mark house use at its own value.
+
+#### Scenario: Powerwall on top
+- **WHEN** October 9, 2026 has 22.5 kWh of solar, 10.0 kWh of grid and 11.9 kWh of Powerwall
+- **THEN** its bar stacks solar from zero, grid on solar and the Powerwall on top
+
+#### Scenario: Powerwall below grid
+- **WHEN** October 14, 2026 has 8.3 kWh of grid and 2.1 kWh of Powerwall below zero
+- **THEN** the grid section hangs from zero and the Powerwall section hangs under it
