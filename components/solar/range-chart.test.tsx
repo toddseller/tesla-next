@@ -32,13 +32,42 @@ const periodItems = (labels: string[]) => labels.map((date) => ({ date, solar: 9
 const section = (container: HTMLElement, series: string, label: string) =>
   container.querySelector(`[data-series="${series}"][data-label="${label}"]`) as HTMLElement;
 
-test("a daily bar stacks solar and house above zero and negative grid below, rounding only its outer ends", () => {
+test("a daily bar stacks solar above zero and negative grid below, rounding only its outer ends", () => {
   const { container } = render(<RangeChart items={OCTOBER} range={OCTOBER_RANGE} onOpenDay={() => {}} onOpenRange={() => {}} />);
   expect(container.querySelectorAll('[data-series="solar"]')).toHaveLength(31);
-  expect(section(container, "solar", "Oct 14").dataset.ends).toBe("");
+  expect(section(container, "solar", "Oct 14").dataset.ends).toBe("top");
   expect(section(container, "grid", "Oct 14").dataset.ends).toBe("bottom");
-  expect(section(container, "house", "Oct 14").dataset.ends).toBe("top");
   expect(section(container, "solar", "Oct 1").dataset.ends).toBe("bottom");
+  expect(section(container, "grid", "Oct 1").dataset.ends).toBe("top");
+});
+
+// House use came from the solar and grid below it, so it's a mark at its own value rather than more stack.
+test("house use is a mark across its bar at its own value, above the bar when the Powerwalls covered the rest", () => {
+  const { container } = render(<RangeChart items={OCTOBER} range={OCTOBER_RANGE} onOpenDay={() => {}} onOpenRange={() => {}} />);
+  const zero = topOf(section(container, "grid", "Oct 14"));
+  const outerTop = (path: Element) => Math.min(...[...path.getAttribute("d")!.matchAll(/,([\d.]+)/g)].map((m) => Number(m[1])));
+  const perKwh = (zero - outerTop(section(container, "solar", "Oct 14"))) / 44.4;
+  const mark = section(container, "house", "Oct 14");
+  const middle = (el: Element) => Number(el.getAttribute("y")) + Number(el.getAttribute("height")) / 2;
+  expect(middle(mark)).toBeCloseTo(zero - 34.0 * perKwh, 1);
+  const left = Number(section(container, "solar", "Oct 14").getAttribute("d")!.match(/^M([\d.]+),/)![1]);
+  expect(Number(mark.getAttribute("x"))).toBeLessThan(left);
+  // Oct 2 used 73.8 kWh against 28.1 of solar and 42.1 from the grid.
+  expect(middle(section(container, "house", "Oct 2"))).toBeLessThan(topOf(section(container, "grid", "Oct 2")));
+});
+
+test("the value axis reaches a house mark taller than every bar", () => {
+  const items = [{ date: "Oct 1", day: "2026-10-01", solar: 10, grid: 5, house: 30 }];
+  const { container } = render(<RangeChart items={items} range={OCTOBER_RANGE} onOpenDay={() => {}} onOpenRange={() => {}} />);
+  const labels = [...container.querySelectorAll("svg.recharts-surface text")].map((text) => text.textContent!).filter((text) => /^-?[\d,]+( kWh)?$/.test(text));
+  expect(Number.parseFloat(labels.at(-1)!.replace(",", ""))).toBeGreaterThanOrEqual(30);
+});
+
+// A mark at the axis top reaches 2px above its value; a clip to the plot area would cut it in half.
+test("nothing clips a house mark at the top of the axis", () => {
+  const items = [{ date: "Oct 1", day: "2026-10-01", solar: 10, grid: 0, house: 50 }];
+  const { container } = render(<RangeChart items={items} range={OCTOBER_RANGE} onOpenDay={() => {}} onOpenRange={() => {}} />);
+  expect(section(container, "house", "Oct 1").closest("[clip-path]")).toBeNull();
 });
 
 test("clicking a daily bar opens its day", () => {
@@ -86,6 +115,8 @@ test("a partial first month opens from the range's first day", () => {
 test("a legend names the flows, a note explains grid below zero, and the axis is in kWh", () => {
   const { container } = render(<RangeChart items={OCTOBER} range={OCTOBER_RANGE} onOpenDay={() => {}} onOpenRange={() => {}} />);
   for (const name of ["Solar", "Grid", "House, car included"]) expect(screen.getByText(name)).toBeTruthy();
+  expect(screen.getByText("House, car included").querySelector("[data-part=mark]")).toBeTruthy();
+  expect(screen.getByText("Solar").querySelector("[data-part=mark]")).toBeNull();
   expect(screen.getByText(/grid below zero/i).textContent).toMatch(/more energy sent to the grid than taken from it/);
   expect(container.querySelector("svg.recharts-surface")?.textContent).toMatch(/\d kWh/);
 });
@@ -109,7 +140,8 @@ test("a month's details show its values and that clicking shows its days", () =>
 test("the value axis steps by round numbers", () => {
   const { container } = render(<RangeChart items={TRUE_UP_YEAR} range={YEAR_RANGE} onOpenDay={() => {}} onOpenRange={() => {}} />);
   const labels = [...container.querySelectorAll("svg.recharts-surface text")].map((text) => text.textContent).filter((text) => /^-?[\d,]+( kWh)?$/.test(text!));
-  expect(labels).toEqual(["-1,000", "0", "1,000", "2,000", "3,000", "4,000 kWh"]);
+  // The top is December's 1,688.7 kWh bar, not its bar and house use together.
+  expect(labels).toEqual(["-1,000", "0", "1,000", "2,000 kWh"]);
 });
 
 // site-motion, "Charts draw in when the view changes".
@@ -122,7 +154,7 @@ test("every segment rises from the chart's zero line, staggered by its column", 
   expect(segments.every((path) => path.classList.contains("motion-rise"))).toBe(true);
   // Oct 14 sent more to the grid than it took, so its grid segment hangs from the zero line with a square top.
   const zero = topOf(section(container, "grid", "Oct 14"));
-  expect(segments.every((path) => originY(path) === zero)).toBe(true);
+  expect(segments.every((path) => Math.abs(originY(path) - zero) < 0.01)).toBe(true);
   expect((section(container, "solar", "Oct 1") as unknown as SVGElement).style.getPropertyValue("--i")).toBe("0");
   expect((section(container, "house", "Oct 14") as unknown as SVGElement).style.getPropertyValue("--i")).toBe("13");
 });
