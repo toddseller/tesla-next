@@ -91,6 +91,6 @@ test("in the first hour of December, December has 12 AM only", () => {
   expect(last.at(-1)).toEqual({ month: "2026-12", watts: [2338, ...Array(23).fill(null)] });
 });
 
-test("seven half-kilowatt steps, everything under 1 kW the palest and 3.5 kW and up the deepest", () => {
+test("seven half-kilowatt steps, everything under 1 kW the first and 3.5 kW and up the last", () => {
   expect([400, 999, 1000, 1499, 1500, 3499, 3500, 6681].map(stepOf)).toEqual([0, 0, 1, 1, 2, 5, 6, 6]);
 });

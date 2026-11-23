@@ -40,15 +40,16 @@
     --color-vehicle: #E8474F;
 }
 
-/* The Patterns page's house use steps, palest to deepest; the fifth is the home color, so the scale reads as the house. */
+/* The Patterns page's house use steps, least use to most. Heavier is lighter, as on Home's year chart, so the busiest hours
+   stand out on the dark card; the third is the home color, so the scale reads as the house. */
 @theme {
-    --color-use-1: #D4E1FA;
-    --color-use-2: #AFC6F5;
-    --color-use-3: #89AAEF;
+    --color-use-1: #213C86;
+    --color-use-2: #2F52B4;
+    --color-use-3: #3E6AE1;
     --color-use-4: #6189E8;
-    --color-use-5: #3E6AE1;
-    --color-use-6: #2F52B4;
-    --color-use-7: #213C86;
+    --color-use-5: #89AAEF;
+    --color-use-6: #AFC6F5;
+    --color-use-7: #D4E1FA;
 }
 
 :root {

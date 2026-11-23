@@ -149,5 +149,5 @@ export function hourGrids(hours: HourLoad[], today: string) {
   };
 }
 
-// Half-kilowatt steps from 1 kW: the house rarely draws under 0.5 kW, so the palest step takes everything below 1.
+// Half-kilowatt steps from 1 kW: the house rarely draws under 0.5 kW, so the first step takes everything below 1.
 export const stepOf = (watts: number) => Math.min(6, Math.max(0, Math.floor((watts - 500) / 500)));
