@@ -28,6 +28,8 @@ Check every item on the live site, at 1440x900 and 390x844. A check passes only 
 
 2026-11-23, live with v2026.11.23.8: 10 of 15 pass. Checks 6 and 7 pass with PR #78 (`/nope` answers 404 in the site's look; `?start=banana`, a 2030 range and `?start=x` answer 307 to the plain address). Checks 1, 2 and 5 pass with PR #79 (Solar, Impact and True-Up share the core presets in one order, header order and size match, and the calendar's year list reaches any year in two choices once it's open). Still failing: 8, 10, 11, 12, 13.
 
+2026-11-23, live with v2026.11.23.10: 12 of 15 pass. Check 8 passes with PR #81: today says "today so far" with no comparison against a whole day, and ranges under way say "so far" or "since". Check 11 passes for every range view with PR #81: Impact's All time reads "68% self-powered since Oct 10, 2021." and every preset on Solar and Impact opens with a figure; Patterns, which the check also named, has no range, so it isn't a range view and keeps its subtitle. Still failing: 10, 12, 13.
+
 ## What comparable sites do
 
 Studied 2026-11-23 at 1440x900: Electricity Maps, Grid Status, Our World in Data, PVOutput and a public Enphase Enlighten page. Not studied: phone layouts, SolarEdge (no public page found), and anything behind a login.
@@ -54,6 +56,6 @@ Studied 2026-11-23 at 1440x900: Electricity Maps, Grid Status, Our World in Data
 
 1. Validate the range on the server and give unknown paths a styled 404 (checks 6, 7). Done in PR #78.
 2. One shared range header for Solar, Impact and True-Up: h1, lead, then the same preset row, with a year jump in the calendar (checks 1, 2, 5). Done in PR #79.
-3. Honest partial periods: "so far" labels and same-span comparisons, or Impact opening on yesterday before noon; a lead for Impact's All time (checks 8, 11).
+3. Honest partial periods: "so far" labels and same-span comparisons, or Impact opening on yesterday before noon; a lead for Impact's All time (checks 8, 11). Done in PR #81.
 4. On True-Up, explain owing money despite 100% solar as a question and answer under the lead, and bring the dollar estimate to Home's true-up chapter (checks 12, 13).
 5. One data start date in one "data since" line on Home, Impact's All time and Solar (check 10).

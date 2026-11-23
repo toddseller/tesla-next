@@ -4,11 +4,12 @@ import { afterEach, beforeEach, expect, test, vi } from "vitest";
 
 import { COST_25_26, CURRENT, CURRENT_COST, CURRENT_SAVINGS, SAVINGS_25_26, YEAR_25_26, YEARS } from "@/components/true-up/fixtures";
 
-const mocks = vi.hoisted(() => ({ trueUpYears: vi.fn(), cycleRows: vi.fn(), trueUpCost: vi.fn(), trueUpSavings: vi.fn(), payback: vi.fn() }));
+const mocks = vi.hoisted(() => ({ trueUpYears: vi.fn(), cycleRows: vi.fn(), trueUpCost: vi.fn(), trueUpSavings: vi.fn(), payback: vi.fn(), impactFigures: vi.fn() }));
 vi.mock("@/lib/true-up/reads", () => ({ trueUpYears: mocks.trueUpYears }));
 vi.mock("@/lib/true-up/cost", () => ({ cycleRows: mocks.cycleRows, trueUpCost: mocks.trueUpCost }));
 vi.mock("@/lib/true-up/savings", () => ({ trueUpSavings: mocks.trueUpSavings }));
 vi.mock("@/lib/true-up/payback", () => ({ payback: mocks.payback }));
+vi.mock("@/lib/impact", () => ({ impactFigures: mocks.impactFigures }));
 const redirect = vi.hoisted(() => vi.fn((to: string) => { throw new Error(`NEXT_REDIRECT ${to}`); }));
 vi.mock("next/navigation", () => ({ redirect, useRouter: () => ({ push: vi.fn() }) }));
 
@@ -24,6 +25,7 @@ beforeEach(() => {
   mocks.cycleRows.mockImplementation(async (start: string) => (start === "2025-10-01" ? YEAR_25_26 : CURRENT));
   mocks.trueUpCost.mockImplementation(async (start: string) => (start === "2025-10-01" ? COST_25_26 : CURRENT_COST));
   mocks.trueUpSavings.mockImplementation(async (start: string) => (start === "2025-10-01" ? SAVINGS_25_26 : CURRENT_SAVINGS));
+  mocks.impactFigures.mockImplementation(async (start: string) => ({ total_solar_percentage: start === "2025-10-03" ? 89 : 73, total_house: 1 }));
 });
 
 afterEach(() => {
@@ -110,4 +112,26 @@ test("the title names the true-up year shown", async () => {
   const title = async (params: Record<string, string>) => (await generateMetadata({ searchParams: Promise.resolve(params) })).title;
   expect(await title({})).toBe("True-Up · '26\u00a0-\u00a0'27");
   expect(await title({ start: "2025-10-01", end: "2026-09-30" })).toBe("True-Up · '25\u00a0-\u00a0'26");
+});
+
+// true-up-tracker, "The year explained": the year's share as Impact gives it, over the billing cycles' own days, as the
+// net beside it counts them.
+test("a true-up year is served with its explanation; other ranges ask for no share", async () => {
+  at("2026-11-08T20:00:00Z");
+  const past = await served({ start: "2025-10-01", end: "2026-09-30" });
+  expect(mocks.impactFigures).toHaveBeenCalledWith("2025-10-03", "2026-10-04", "corrected");
+  expect(past).toContain("solar covered 89% of the house&#x27;s use, so the house drew");
+  const current = await served();
+  expect(mocks.impactFigures).toHaveBeenLastCalledWith("2026-10-05", "2026-11-08", "corrected");
+  expect(current).toContain("This true-up year solar has covered 73% of the house&#x27;s use so far");
+  mocks.impactFigures.mockClear();
+  await served({ start: "2021-10-01", end: "2027-09-30" });
+  expect(mocks.impactFigures).not.toHaveBeenCalled();
+});
+
+// A new year with no house use saved yet has no share to give, rather than reading 0%.
+test("a year without house use yet has no explanation", async () => {
+  at("2026-11-08T20:00:00Z");
+  mocks.impactFigures.mockResolvedValue({ total_solar_percentage: 0, total_house: 0 });
+  expect(await served()).not.toContain("solar has covered");
 });
