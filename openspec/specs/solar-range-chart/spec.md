@@ -17,7 +17,7 @@ The Solar page (`/solar`) SHALL show the range given by its `start` and `end` pa
 - **THEN** each tab keeps its own range
 
 ### Requirement: Default and invalid ranges
-When `start` or `end` is missing, is not a `YYYY-MM-DD` calendar date, is before 2021-10-01, is more than 732 days after today in the site's time zone, or `start` is after `end`, the page SHALL show the current month in the site's time zone, from its first to its last day.
+When `start` and `end` are both missing, the page SHALL show the current month in the site's time zone, from its first to its last day. When either is given but `start` or `end` is missing, is not a `YYYY-MM-DD` calendar date, is before 2021-10-01, is more than 732 days after today in the site's time zone, or `start` is after `end`, the page SHALL redirect to its address without `start` and `end`, keeping its other parameters, so the address names the range shown.
 
 #### Scenario: No range
 - **WHEN** a visitor opens `/solar` on 2026-11-07
@@ -25,11 +25,15 @@ When `start` or `end` is missing, is not a `YYYY-MM-DD` calendar date, is before
 
 #### Scenario: A malformed range
 - **WHEN** a visitor opens `/solar?start=nope&end=2026-10-31` on 2026-11-07
-- **THEN** the page shows November 2026, with no error
+- **THEN** the visitor is redirected to `/solar`, which shows November 2026
 
 #### Scenario: A range before the site existed
-- **WHEN** a visitor opens `/solar?start=1900-01-01&end=2026-10-31`
-- **THEN** the page shows the current month
+- **WHEN** a visitor opens `/solar?start=1900-01-01&end=2026-10-31&readings=reported`
+- **THEN** the visitor is redirected to `/solar?readings=reported`, which shows the current month
+
+#### Scenario: Only a start
+- **WHEN** a visitor opens `/solar?start=2026-10-01`
+- **THEN** the visitor is redirected to `/solar`
 
 ### Requirement: Range presets
 The page SHALL offer three presets, each changing the address to its range: This month (the current month), This year (January 1 to December 31 of the current year) and True-up year (October 1 to September 30 of the true-up year containing today), all in the site's time zone. A preset matching the shown range SHALL be marked as selected.
