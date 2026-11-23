@@ -48,7 +48,8 @@ describe("scene", () => {
     expect(part(scene, "label-solar").textContent).toBe("SOLAR6.1 kW");
     expect(part(scene, "label-home").textContent).toBe("HOME4.1 kW");
     expect(part(scene, "label-powerwall").textContent).toBe("POWERWALL0 kW · 100%");
-    expect(part(scene, "label-grid").textContent).toBe("GRID2.0 kW");
+    expect(part(scene, "label-grid").textContent).toBe("GRID2.0 kWfrom PG&E");
+    expect(part(scene, "label-grid").querySelector(".scene-label-note")!.textContent).toBe("from PG&E");
   });
 
   test("the backdrop is a padded frame around a stage that keeps the stage's proportions", () => {
@@ -415,7 +416,8 @@ describe("fits a phone", () => {
       labelBox(LABELS.solar, [["SOLAR", title], ["10.4 kW", value]], 295),
       labelBox(LABELS.home, [["HOME", title], ["10.4 kW", value]], 295),
       labelBox(LABELS.powerwall, [["POWERWALL", title], ["10.4 kW · 100%", value]], 295),
-      labelBox(LABELS.grid, [["GRID", title], ["10.4 kW", value]], 295),
+      // The direction on its own line keeps GRID as narrow as before; a one-line "10.4 kW · from PG&E" reached POWERWALL.
+      labelBox(LABELS.grid, [["GRID", title], ["10.4 kW", value], ["from PG&E", title]], 295),
     ];
     const height = (295 * STAGE.height) / 1600;
 

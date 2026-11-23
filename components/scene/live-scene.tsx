@@ -635,7 +635,7 @@ const LiveScene = ({ state, paused = false, drift = 1 }: { state: SceneState; pa
         <Rain rain={state.rain ?? 0} dusk={dusk} wind={state.wind} />
         <Vane arrow={vaneArrow} pose={firstPose} text={windText(state.windSpeed, state.windGusts, state.windDirection, wind)} />
         {(['solar', 'home', 'powerwall', 'grid'] as const).map((name) => (
-          <Label key={name} name={name} title={LABELS[name].title} value={labels[name]} />
+          <Label key={name} name={name} title={LABELS[name].title} value={labels[name]} note={name === 'grid' ? labels.gridDirection : null} />
         ))}
         {car && <Label name="car" title={car.name} value={car.value} note={car.age} />}
       </div>

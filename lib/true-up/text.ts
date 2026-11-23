@@ -205,7 +205,7 @@ export function savingsText(savings: Savings, season: Cost["vpp"], current: bool
     paidSplit: `PG&E ${wholeCredit(actual.pge)} · WestLight ${wholeCredit(actual.westlight)}`,
     solar: wholeDollars(solar),
     powerwallsCost: costs,
-    solarLess: costs ? `Less the Powerwalls' ${wholeDollars(shownPowerwalls)} on the bill: ${wholeDollars(shownSaved)} saved` : null,
+    solarLess: costs ? `Solar ${wholeDollars(solar)} against buying it all from the grid, less the Powerwalls' ${wholeDollars(shownPowerwalls)}` : null,
     powerwalls: { bill: `${effect(shownPowerwalls)} on the bill`, vpp: vppText, parts, whatIf, nem2 },
     estimates: [
       "Estimates of PG&E's and WestLight Energy's charges.", days, stale,

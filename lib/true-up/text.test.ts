@@ -207,7 +207,7 @@ describe("savingsText", () => {
     // Every shown dollar adds up: $1,118 + $5,577 = $6,695, and $5,727 less the Powerwalls' $150 = $5,577, so the
     // Powerwalls show $150 though their $150.84 would round alone to $151.
     expect(text).toMatchObject({ saved: "$5,577", unit: "estimate, of $6,695 without solar or Powerwalls", paid: "$1,118", paidSplit: "PG&E $825 · WestLight $293", solar: "$5,727",
-      solarLess: "Less the Powerwalls' $150 on the bill: $5,577 saved" });
+      solarLess: "Solar $5,727 against buying it all from the grid, less the Powerwalls' $150" });
     expect(text.bar).toEqual({ parts: [["paid", 1118.07], ["saved", 5576.6]], label: "Of $6,695: $1,118 paid, $5,577 saved" });
     expect(text.powerwalls).toEqual({
       bill: "$150 cost on the bill",

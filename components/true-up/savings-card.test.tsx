@@ -20,13 +20,17 @@ test("'25 - '26: the saving of the no-system bill, the key, and the Powerwalls b
   render(<SavingsCard savings={SAVINGS_25_26} season={COST_25_26.vpp} current={false} />);
 
   const card = screen.getByRole("region", { name: "What the system saved" }).textContent;
-  for (const text of ["$5,577", "estimate, of $6,695 without solar or Powerwalls", "Paid", "$1,118", "PG&E $825 · WestLight $293", "Solar saved", "$5,727",
+  for (const text of ["$5,577", "estimate, of $6,695 without solar or Powerwalls", "Paid", "$1,118", "PG&E $825 · WestLight $293",
     "$150 cost on the bill", "$368 VPP credit", "Under NEM2, exporting solar earns about what importing it later costs",
-    "Less the Powerwalls' $150 on the bill: $5,577 saved",
+    "Solar $5,727 against buying it all from the grid, less the Powerwalls' $150",
     "205 days before April 27, 2026 rebuilt from PG&E's meter, 1 as Tesla read it."])
     expect(card).toContain(text);
   expect(screen.getByRole("img").getAttribute("aria-label")).toBe("Of $6,695: $1,118 paid, $5,577 saved");
   expect(parts()).toEqual([["bg-grid", "1118.07"], ["bg-solar", "5576.6"]]);
+  // The key names the bar's two parts, so its yellow figure is the bar's: Saved $5,577, not solar's $5,727.
+  expect(card).not.toContain("Solar saved");
+  const saved = screen.getByText("Saved").closest("div")!.parentElement!.textContent;
+  expect(saved).toContain("$5,577");
 });
 
 test("'25 - '26: the Powerwalls' row splits their cost, and the what-if sits in its own panel", () => {
@@ -100,4 +104,15 @@ test("the words beside the card's figures aren't monospace", () => {
     if (/\b(cost|saved|less)\b/.test(node.textContent!) && node.parentElement!.closest(".font-mono")) inMono.push(node.textContent!);
   }
   expect(inMono).toEqual([]);
+});
+
+// With no Powerwall cost the bar has its own solar part, so the key keeps "Solar saved" beside it.
+test("a year the Powerwalls saved money keeps Solar saved in the key", () => {
+  const year = { ...SAVINGS_25_26, actual: { pge: 700, westlight: 205.1, total: 905.1 }, solar_only: { pge: 900, westlight: 220.75, total: 1120.75 },
+    no_system: { pge: 2800, westlight: 610.2, total: 3410.2 }, solar_saved: 2289.45, powerwalls_added: 215.65 };
+  render(<SavingsCard savings={year} season={null} current={false} />);
+  const card = screen.getByRole("region", { name: "What the system saved" }).textContent;
+  expect(card).toContain("Solar saved");
+  expect(card).toContain("Against buying it all from the grid");
+  expect(screen.queryByText("Saved")).toBeNull();
 });

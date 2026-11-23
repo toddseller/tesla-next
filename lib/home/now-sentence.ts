@@ -12,8 +12,12 @@ export function nowSentence({ sources }: ReturnType<typeof balance>, { battery, 
   const supplying = sources.filter((term) => term.kw > 0).sort((a, b) => b.kw - a.kw).map((term) => NAMES[term.name]);
   const { sunrise, sunset } = sunTimes(now);
   const dark = now >= sunset ? "after sunset" : now < sunrise ? "before sunrise" : null;
-  const supply = supplying.length ? `${capital(list(supplying))} ${supplying.length > 1 ? "supply" : "supplies"} the house` : "Nothing supplies the house";
-  const first = `${supply}${dark && !supplying.includes("solar") ? `; solar is at 0 ${dark}` : ""}.`;
+  // "The Powerwalls" is plural on its own.
+  const plural = supplying.length > 1 || supplying[0] === NAMES.Powerwall;
+  const sending = sources.find((term) => term.name === "Grid" && term.kw < 0);
+  const supply = supplying.length ? `${capital(list(supplying))} ${plural ? "supply" : "supplies"} the house` : "Nothing supplies the house";
+  const sends = sending && supplying.length ? ` and ${plural ? "send" : "sends"} ${kw(sending.kw)} to PG&E` : "";
+  const first = `${supply}${sends}${dark && !supplying.includes("solar") ? `; solar is at 0 ${dark}` : ""}.`;
 
   const powerwall = sources.find((term) => term.name === "Powerwall");
   const full = battery == null ? "" : `, ${battery}% full`;

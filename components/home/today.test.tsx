@@ -37,12 +37,23 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-test("leads with today's solar so far, then the day's expected, the expected by now and what is still to come", () => {
+test("leads with today's solar so far, then the day's expected, how far ahead of the forecast it is and what is still to come", () => {
   render(<Today today={TODAY} forecast={CARD} day={DAY} renderedAt={Date.now()} />);
   expect(screen.getByRole("heading", { name: "Today" })).toBeTruthy();
   expect(figure("made, of 18.0 kWh expected")).toBe("21.7 kWh");
-  expect(figure("expected by 3:35 PM")).toBe("17.8 kWh");
+  // Said, not left to subtract: 21.7 made against 17.8 expected by 3:35 PM.
+  expect(figure("ahead of the forecast")).toBe("3.9 kWh");
+  expect(screen.queryByText(/expected by/)).toBeNull();
   expect(figure("still to come")).toBe("0.2 kWh");
+});
+
+test("behind the forecast, or on it when the two read the same", () => {
+  const card = (expected: number) => ({ ...CARD, byHour: { hours: HOURS, byNow: { made: 21.728, expected, at: "2026-11-21T23:35:00.000Z", over: false } } });
+  render(<Today today={TODAY} forecast={card(25.04)} day={DAY} renderedAt={Date.now()} />);
+  expect(figure("behind the forecast")).toBe("3.3 kWh");
+  cleanup();
+  render(<Today today={TODAY} forecast={card(21.68)} day={DAY} renderedAt={Date.now()} />);
+  expect(figure("on the forecast")).toBe("0.0 kWh");
 });
 
 test("the day's expected is the forecast card's, to a tenth as every page gives it", () => {
@@ -156,4 +167,11 @@ test("the first render reads the server's clock, so hydration finds the sentence
   vi.setSystemTime(Date.parse("2026-11-21T19:00:00Z"));
   const html = renderToString(<Today today={TODAY} forecast={morningCard} day={DAY} renderedAt={Date.parse("2026-11-21T16:00:00Z")} />);
   expect(html).toContain("Most of today&#x27;s 20.5 kWh is expected between 10 AM and 3 PM.");
+});
+
+// The Solar page compares made and expected at the same moment; the day's running total can be minutes newer.
+test("ahead or behind compares made and expected by the same moment, as the Solar page does", () => {
+  render(<Today today={TODAY} forecast={{ ...CARD, byHour: { hours: HOURS, byNow: { made: 20.0, expected: 17.819, at: "2026-11-21T23:35:00.000Z", over: false } } }} day={DAY} renderedAt={Date.now()} />);
+  expect(figure("made, of 18.0 kWh expected")).toBe("21.7 kWh");
+  expect(figure("ahead of the forecast")).toBe("2.2 kWh");
 });
