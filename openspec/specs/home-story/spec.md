@@ -268,7 +268,7 @@ The Records chapter SHALL offer four tabs, Best solar day, Most sent to PG&E in 
 
 #### Scenario: Never off the grid
 - **WHEN** Top Ten has no outages
-- **THEN** the Longest outage tab says the house has not been off the grid since October 2021
+- **THEN** the Longest outage tab says "The house hasn't been off the grid since October 22, 2021."
 
 ### Requirement: A Records tab in the address
 Choosing a Records tab SHALL put it in the address as `record` (`solar`, `sent-day`, `sent-month` or `outage`) without adding a history entry, keeping the address's other parameters, and opening such an address SHALL show that tab in the first response.
