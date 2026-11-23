@@ -13,7 +13,7 @@ The True-Up Tracker (`/true-up`) SHALL show the range given by its `start` and `
 - **THEN** the page shows '25 - '26, with its cycles in the first response
 
 ### Requirement: Default and invalid ranges
-When `start` or `end` is missing, is not a `YYYY-MM-DD` calendar date, is before 2021-10-01, is more than 732 days after today in the site's time zone, or `start` is after `end`, the page SHALL show the current true-up year (see true-up-cycles).
+When `start` and `end` are both missing, the page SHALL show the current true-up year (see true-up-cycles). When either is given but `start` or `end` is missing, is not a `YYYY-MM-DD` calendar date, is before 2021-10-01, is more than 732 days after today in the site's time zone, or `start` is after `end`, the page SHALL redirect to its address without `start` and `end`, keeping its other parameters, so the address names the range shown.
 
 #### Scenario: No range in November
 - **WHEN** a visitor opens `/true-up` on 2026-11-08
@@ -22,6 +22,10 @@ When `start` or `end` is missing, is not a `YYYY-MM-DD` calendar date, is before
 #### Scenario: No range before the October read
 - **WHEN** a visitor opens `/true-up` on 2026-10-04, the day before the October read
 - **THEN** the page shows 2025-10-01 to 2026-09-30
+
+#### Scenario: A range past the horizon
+- **WHEN** a visitor opens `/true-up?start=2030-10-01&end=2031-09-30` on 2026-11-08
+- **THEN** the visitor is redirected to `/true-up`, which shows 2026-10-01 to 2027-09-30
 
 ### Requirement: Year picker
 The page SHALL offer, each changing the address: This year (the current true-up year) and the two years before it as buttons labeled like "'25 - '26"; an Earlier menu with every older year, newest first; All time (2021-10-01 to the current year's end); and the date-range picker the other pages use. The control matching the shown range SHALL be marked as selected. In a window narrower than 640 pixels the year buttons, Earlier's years and All time SHALL be one menu, as the dashboard shell's range presets on a phone are.

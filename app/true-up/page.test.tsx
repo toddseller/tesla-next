@@ -9,7 +9,8 @@ vi.mock("@/lib/true-up/reads", () => ({ trueUpYears: mocks.trueUpYears }));
 vi.mock("@/lib/true-up/cost", () => ({ cycleRows: mocks.cycleRows, trueUpCost: mocks.trueUpCost }));
 vi.mock("@/lib/true-up/savings", () => ({ trueUpSavings: mocks.trueUpSavings }));
 vi.mock("@/lib/true-up/payback", () => ({ payback: mocks.payback }));
-vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn() }) }));
+const redirect = vi.hoisted(() => vi.fn((to: string) => { throw new Error(`NEXT_REDIRECT ${to}`); }));
+vi.mock("next/navigation", () => ({ redirect, useRouter: () => ({ push: vi.fn() }) }));
 
 const { default: Page, generateMetadata } = await import("./page");
 
@@ -54,17 +55,22 @@ test("a range that isn't a true-up year is served without its cost", async () =>
   expect(html).not.toContain("Charges so far");
 });
 
+test("no range is served as the current true-up year", async () => {
+  // 1:00 AM on November 9 in New York, still November 8 at the site.
+  at("2026-11-09T06:00:00Z");
+  const html = await served();
+  expect(mocks.cycleRows).toHaveBeenCalledWith("2026-10-01", "2027-09-30");
+  expect(html).toContain("Net so far");
+});
+
 test.each([
-  [{}],
   [{ start: "nope", end: "2026-10-31" }],
   [{ start: "1900-01-01", end: "2026-10-31" }],
   [{ start: "2026-10-31", end: "2026-10-01" }],
-])("%j is served as the current true-up year", async (params) => {
-  // 1:00 AM on November 9 in New York, still November 8 at the site.
-  at("2026-11-09T06:00:00Z");
-  const html = await served(params);
-  expect(mocks.cycleRows).toHaveBeenCalledWith("2026-10-01", "2027-09-30");
-  expect(html).toContain("Net so far");
+  [{ start: "2030-10-01", end: "2031-09-30" }],
+])("%j redirects to the address without its range", async (params) => {
+  await expect(served(params)).rejects.toThrow(new Error("NEXT_REDIRECT /true-up"));
+  expect(mocks.cycleRows).not.toHaveBeenCalled();
 });
 
 test("the day before the October read, the current year is still '25 - '26; on the read, the next", async () => {

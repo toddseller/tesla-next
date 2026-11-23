@@ -7,7 +7,8 @@ vi.mock("@/lib/range", () => ({ rangeTotals }));
 const dayIntervals = vi.hoisted(() => vi.fn());
 vi.mock("@/lib/intervals/intervals", () => ({ dayIntervals }));
 vi.mock("@/lib/live", () => ({ latest: () => JSON.stringify({ modified: "2026-11-07T19:47:00Z" }) }));
-vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn(), replace: vi.fn() }) }));
+const redirect = vi.hoisted(() => vi.fn((to: string) => { throw new Error(`NEXT_REDIRECT ${to}`); }));
+vi.mock("next/navigation", () => ({ redirect, useRouter: () => ({ push: vi.fn(), replace: vi.fn() }) }));
 const forecast = vi.hoisted(() => vi.fn());
 vi.mock("@/lib/forecast", async (original) => ({ ...(await original<typeof import("@/lib/forecast")>()), forecast }));
 
@@ -57,9 +58,9 @@ test("without a range, the current month is served", async () => {
   expect(html).toMatch(/November 1\s–\s30, 2026/);
 });
 
-test("a malformed range is served as the current month, with no error", async () => {
-  await served({ start: "nope", end: "2026-10-31" });
-  expect(rangeTotals).toHaveBeenCalledWith("2026-11-01", "2026-11-30", "corrected");
+test("a malformed range redirects to the address without it, which is the current month", async () => {
+  await expect(served({ start: "nope", end: "2026-10-31", readings: "reported" })).rejects.toThrow(new Error("NEXT_REDIRECT /solar?readings=reported"));
+  expect(rangeTotals).not.toHaveBeenCalled();
 });
 
 test("an open day is served with its data, its strip's bars and the latest live update", async () => {
@@ -72,10 +73,9 @@ test("an open day is served with its data, its strip's bars and the latest live 
   expect(renderToString(page)).toContain("Wed, Oct 14, 2026");
 });
 
-test("a day after today is ignored, and the range is served", async () => {
-  const html = await served({ start: "2026-10-01", end: "2026-10-31", day: "2030-01-01" });
+test("a day after today redirects to the range without it", async () => {
+  await expect(served({ start: "2026-10-01", end: "2026-10-31", day: "2030-01-01" })).rejects.toThrow(new Error("NEXT_REDIRECT /solar?start=2026-10-01&end=2026-10-31"));
   expect(dayIntervals).not.toHaveBeenCalled();
-  expect(html).toContain("Solar by date range");
 });
 
 test("a day outside the range has its own month in the strip", async () => {
