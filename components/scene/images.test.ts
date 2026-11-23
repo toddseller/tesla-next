@@ -39,13 +39,15 @@ test("a car with its own image shows in the open garage with the Wall Connector,
   expect(layers.car).toEqual({ name: "car", ...cars.R2D2 });
 });
 
-test("R2D2 and Tesla T.I.E. Fighter have their own images, cables and plugs", () => {
-  const [y, three] = [sceneLayers({ name: "R2D2" }).car!, sceneLayers({ name: "Tesla T.I.E. Fighter" }).car!];
+test("R2D2, Tesla T.I.E. Fighter and Tesla Star Destroyer have their own images, cables and plugs", () => {
+  const [y, three, highland] = ["R2D2", "Tesla T.I.E. Fighter", "Tesla Star Destroyer"].map((name) => sceneLayers({ name }).car!);
 
   expect(y.src).toContain("model-y");
   expect(three.src).toContain("model-3");
+  expect(highland.src).toContain("star-destroyer");
   expect(y.path).toBe(CAR_CABLES.modelY.path);
   expect(three.plug).toBe(CAR_CABLES.model3.plug);
+  expect(highland.plug).toBe(CAR_CABLES.starDestroyer.plug);
 });
 
 test("sunlight covers the south, east and west faces, and the east faces under the panels", () => {
@@ -70,6 +72,6 @@ test("every scene image is on the same 2400 x 1166 frame", () => {
   // The moon's map (NASA's, drawn onto its disc) isn't a layer of the scene.
   const files = readdirSync(ASSETS).filter((file) => file.endsWith(".webp") && !file.startsWith("moon"));
 
-  expect(files).toHaveLength(15);
+  expect(files).toHaveLength(16);
   files.forEach((file) => expect([file, ...webpSize(file)]).toEqual([file, 2400, 1166]));
 });
