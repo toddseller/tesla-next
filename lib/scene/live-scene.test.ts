@@ -16,18 +16,22 @@ const r2d2 = (overrides: Partial<Vehicle> = {}): Vehicle => ({
 describe("labels", () => {
   test("midday values as in the Tesla app", () => {
     expect(sceneState(midday, NOW).labels).toEqual({
-      solar: "6.1 kW", home: "4.1 kW", powerwall: "0 kW · 100%", grid: "2.0 kW", car: null,
+      solar: "6.1 kW", home: "4.1 kW", powerwall: "0 kW · 100%", grid: "2.0 kW", gridDirection: "from PG&E", car: null,
     });
   });
 
   test("dashes before the first update", () => {
     expect(sceneState({ ...midday, liveReceived: false }, NOW).labels).toEqual({
-      solar: "—", home: "—", powerwall: "—", grid: "—", car: null,
+      solar: "—", home: "—", powerwall: "—", grid: "—", gridDirection: null, car: null,
     });
   });
 
-  test("exporting shows the magnitude, not a sign", () => {
-    expect(sceneState({ ...midday, gridPower: -2.0 }, NOW).labels.grid).toBe("2.0 kW");
+  // The wire's motion alone left "sending or drawing?" to be inferred from an animation, so the label says it.
+  test("the grid's label says the direction: to PG&E exporting, from PG&E importing, none idle", () => {
+    const grid = (gridPower: number) => { const { labels } = sceneState({ ...midday, gridPower }, NOW); return [labels.grid, labels.gridDirection]; };
+    expect(grid(-2.0)).toEqual(["2.0 kW", "to PG&E"]);
+    expect(grid(0.07)).toEqual(["0.1 kW", "from PG&E"]);
+    expect(grid(0.02)).toEqual(["0 kW", null]);
   });
 
   test("plugged-in car not charging", () => {

@@ -15,7 +15,7 @@ function Key({ swatch, label, value, children }: { swatch: string; label: string
         <span className="flex items-center gap-2 text-[13px] text-muted-foreground"><span aria-hidden className={`size-2.5 rounded-[3px] ${swatch}`} />{label}</span>
         <span className="text-xl font-semibold"><CountUp text={value} /></span>
       </div>
-      {children && <p className="text-[13px] text-muted-foreground">{children}</p>}
+      {children && <p className="text-[13px] text-pretty text-muted-foreground">{children}</p>}
     </div>
   );
 }
@@ -41,7 +41,10 @@ export function SavingsCard({ savings, season, current }: { savings: Savings; se
       </div>
       <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:gap-x-10">
         <Key swatch="bg-grid" label="Paid" value={text.paid}>{text.paidSplit}</Key>
-        <Key swatch="bg-solar" label="Solar saved" value={text.solar}>Against buying it all from the grid{text.solarLess && <><br />{text.solarLess}</>}</Key>
+        {/* With a Powerwall cost the bar has two parts, paid and saved, so the key names those and gives solar's own saving under Saved. */}
+        {cost
+          ? <Key swatch="bg-solar" label="Saved" value={text.saved}>{text.solarLess}</Key>
+          : <Key swatch="bg-solar" label="Solar saved" value={text.solar}>Against buying it all from the grid</Key>}
       </div>
       <div role="group" aria-labelledby="powerwalls" className="grid gap-4 border-t pt-4 sm:grid-cols-3 sm:gap-6">
         <div className="flex flex-col gap-1">

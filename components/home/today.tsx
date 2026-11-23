@@ -86,13 +86,17 @@ export function Today({ today, forecast, day, renderedAt }: Props) {
     ? `Sunrise ${clock.format(sunTimes(new Date(now)).sunrise)}. Most of today's ${expected!.toFixed(1)} kWh is expected between ${hour.format(Date.parse(most.start))} and ${hour.format(Date.parse(most.end))}.`
     : null;
 
+  // Made and expected by the same moment, as the Solar page compares them (the day's running total can be minutes
+  // newer), each to a tenth as it reads there.
+  const gap = byNow && Math.round((Number(byNow.made.toFixed(1)) - Number(byNow.expected.toFixed(1))) * 10) / 10;
+
   return (
     <section aria-labelledby="today" className="flex flex-col gap-6">
       <div className="flex flex-wrap items-end justify-between gap-x-8 gap-y-4">
         <h2 id="today" className="text-[64px] leading-[0.9] font-semibold tracking-[-0.04em] text-solar md:text-[112px]">Today</h2>
         <div className="flex flex-wrap gap-x-9 gap-y-4">
           <Figure value={soFar.toFixed(1)} unit="kWh" label={expected === null ? "made" : `made, of ${expected.toFixed(1)} kWh expected`} className="text-4xl text-solar md:text-[40px]" />
-          {byNow && <Figure value={byNow.expected.toFixed(1)} unit="kWh" label={`expected by ${clock.format(new Date(byNow.at))}`} />}
+          {byNow && <Figure value={Math.abs(gap!).toFixed(1)} unit="kWh" label={gap! > 0 ? "ahead of the forecast" : gap! < 0 ? "behind the forecast" : "on the forecast"} />}
           {expected !== null && <Figure value={stillToCome(card?.byHour ?? null, expected)!.toFixed(1)} unit="kWh" label="still to come" />}
         </div>
       </div>

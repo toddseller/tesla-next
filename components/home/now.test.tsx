@@ -42,7 +42,7 @@ test("the served status: Now in a sentence leading, and the scene, linking to Di
 test("a new status moves the sentence and the scene without a reload", () => {
   now();
   FakeStream.opened[0].send({ ...STATUS, solar_power: 5.8, home_power: 1.1, grid_power: -4.7, modified: "2026-11-21T23:39:20Z" });
-  expect(part("now-sentence").textContent).toBe("Solar supplies the house. The Powerwalls are idle at 100%.");
+  expect(part("now-sentence").textContent).toBe("Solar supplies the house and sends 4.7\u00a0kW to PG&E. The Powerwalls are idle at 100%.");
   expect(part("label-solar").textContent).toContain("5.8 kW");
 });
 

@@ -211,7 +211,7 @@ With one true-up year from '23 - '24 on shown, a card below the tiles, "What the
 
 #### Scenario: '25 - '26
 - **WHEN** '25 - '26 is shown, costing $6,693.86 with no system, $966.56 with solar only and $1,118.07 actual ($825.00 PG&E, $293.07 WestLight)
-- **THEN** the card reads $5,576 saved of $6,694, and its key reads Paid $1,118 (PG&E $825, WestLight $293) and Solar saved $5,727, with "Less the Powerwalls' $151 on the bill: $5,576 saved" under it
+- **THEN** the card reads $5,576 saved of $6,694, and its key reads Paid $1,118 (PG&E $825, WestLight $293) and Saved $5,576, with "Solar $5,727 against buying it all from the grid, less the Powerwalls' $151" under it
 
 #### Scenario: The current year
 - **WHEN** the current year is shown
@@ -224,6 +224,13 @@ With one true-up year from '23 - '24 on shown, a card below the tiles, "What the
 #### Scenario: Before '24 - '25, All time or a custom range
 - **WHEN** '22 - '23, All time or a custom range is shown
 - **THEN** there is no savings card
+
+### Requirement: The savings key when the Powerwalls cost money
+When the Powerwalls cost money, the savings card's key SHALL name the bar's two parts, Paid and Saved, with solar's saving less the Powerwalls' cost in the line under Saved; a year they saved money SHALL keep Solar saved beside its own part of the bar.
+
+#### Scenario: The Powerwalls cost $151
+- **WHEN** '25 - '26 is shown, solar saving $5,727 and the Powerwalls costing $151
+- **THEN** the key reads Saved $5,576, with "Solar $5,727 against buying it all from the grid, less the Powerwalls' $151" under it
 
 ### Requirement: Savings bar
 The card SHALL draw the no-system cost as one bar split into paid, Powerwalls saved and solar saved, each part's length in proportion to its dollars and in the grid, Powerwall and solar colors. The bar SHALL be announced as an image whose label reads out each part.

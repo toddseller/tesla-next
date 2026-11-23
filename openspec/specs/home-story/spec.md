@@ -59,6 +59,17 @@ The Now chapter SHALL lead, under the word Now, with one sentence from the live 
 - **WHEN** at 5:00 AM the house uses 2.4 kW from the grid with the Powerwalls idle at 20% and no car in the status
 - **THEN** the sentence reads "The grid supplies the house; solar is at 0 before sunrise. The Powerwalls are idle at 20%."
 
+### Requirement: Now says what goes to PG&E
+When the grid is exporting 0.05 kW or more and something supplies the house, the Now sentence's first clause SHALL add the power sent to PG&E, its verbs agreeing with what supplies the house ("the Powerwalls" taking plural verbs).
+
+#### Scenario: Sending to PG&E
+- **WHEN** solar supplies all of the house's 0.8 kW and sends 1.2 kW to the grid, with the Powerwalls idle at 100%
+- **THEN** the sentence reads "Solar supplies the house and sends 1.2 kW to PG&E. The Powerwalls are idle at 100%."
+
+#### Scenario: A VPP evening
+- **WHEN** after sunset the Powerwalls supply 6.0 kW at 80%, all of the house's 1.0 kW and 5.0 kW to the grid
+- **THEN** the sentence reads "The Powerwalls supply the house and send 5.0 kW to PG&E; solar is at 0 after sunset. The Powerwalls are supplying 6.0 kW, 80% full."
+
 ### Requirement: The house scene in Now
 The Now chapter SHALL show the Distribution page's live house scene beside its sentence, drawn and updated as live-flow-scene and scene-weather specify, with its stale warning, and without the replay controls. Below 640 pixels the scene SHALL sit under the sentence at the window's width.
 
@@ -96,7 +107,7 @@ The Today chapter SHALL lead with today's solar so far in kWh to one decimal, as
 
 #### Scenario: Ahead of the forecast
 - **WHEN** at 3:39 PM today has made 21.7 kWh, 18 kWh is expected for the day, 17.8 kWh was expected by 3:35 PM, and the forecast's 3 PM hour expects 0.4 kWh with no hour after it
-- **THEN** the chapter leads with 21.7 kWh, then "made, of 18.0 kWh expected", "17.8 kWh expected by 3:35 PM" and "0.2 kWh still to come", each figure with its unit beside it
+- **THEN** the chapter leads with 21.7 kWh, then "made, of 18.0 kWh expected", "3.9 kWh ahead of the forecast" and "0.2 kWh still to come", each figure with its unit beside it
 
 #### Scenario: After sundown
 - **WHEN** at 7:25 PM the day's hours sum to 19.7 kWh and the forecast card says the day's sunlight is over
@@ -105,6 +116,17 @@ The Today chapter SHALL lead with today's solar so far in kWh to one decimal, as
 #### Scenario: No forecast
 - **WHEN** there are too few days with a forecast to give an expected kWh and today has made 3.0 kWh
 - **THEN** the chapter shows 3.0 kWh and no expected figure
+
+### Requirement: Today ahead of or behind the forecast
+Between the day's expected and still to come, the Today chapter SHALL say how far the forecast's kWh made by now is ahead of or behind its kWh expected by the same time, each to one decimal as the Solar page compares them, or "on the forecast" when they read the same.
+
+#### Scenario: Behind the forecast
+- **WHEN** at 2:15 PM today has made 15.6 kWh and 20.6 kWh was expected by 2:15 PM
+- **THEN** the chapter shows "5.0 kWh behind the forecast"
+
+#### Scenario: On the forecast
+- **WHEN** today has made 12.4 kWh and 12.4 kWh was expected by the same time
+- **THEN** the chapter shows "0.0 kWh on the forecast"
 
 ### Requirement: Today's totals
 The Today chapter SHALL show today's totals so far in kWh to one decimal: the house's use, the car's charging, energy from the grid, energy sent to PG&E, and the Powerwalls' energy in and out, each the day view's figure for today, so the house's use leaves out the car as the day view does and, on a day with car data, is labelled "used by the house, car apart".

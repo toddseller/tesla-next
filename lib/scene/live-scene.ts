@@ -99,7 +99,7 @@ export const staleWarning = (modifiedAt: number | Date, now: number | Date) => {
   return seconds < UPDATE_STALE_SECONDS ? null : `No update for ${Math.floor(seconds / 60)} min`;
 };
 
-// Like the Tesla app: magnitudes only (direction is shown by the wire's motion),
+// Like the Tesla app: magnitudes only (the grid's direction gets its own line),
 // one decimal, and a plain "0 kW" when idle.
 export const kw = (value: unknown) => {
   const magnitude = Math.abs(Number(value) || 0);
@@ -197,9 +197,11 @@ export const sceneState = (
         home: kw(homePower),
         powerwall: battery != null ? `${kw(batteryPower)} · ${battery}%` : kw(batteryPower),
         grid: kw(gridPower),
+        // The wire's motion alone left sending or drawing to an animation; a grid the label shows as 0 has neither.
+        gridDirection: kw(gridPower) === "0 kW" ? null : Number(gridPower) < 0 ? "to PG&E" : "from PG&E",
         car: vehicle ? carLabel(vehicle, now) : null,
       }
-    : { solar: DASH, home: DASH, powerwall: DASH, grid: DASH, car: null };
+    : { solar: DASH, home: DASH, powerwall: DASH, grid: DASH, gridDirection: null, car: null };
 
   return {
     labels,
