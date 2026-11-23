@@ -107,6 +107,10 @@ While the garage is open with a car, the scene SHALL draw that car's charging ca
 - **WHEN** Tesla T.I.E. Fighter is charging instead of R2D2
 - **THEN** the gradient follows Tesla T.I.E. Fighter's cable, not R2D2's
 
+#### Scenario: Tesla Star Destroyer charging
+- **WHEN** Tesla Star Destroyer is charging
+- **THEN** the garage is open with its own image, and the gradient follows its own cable to the plug at the top of its left taillight, not the other cars' cables
+
 #### Scenario: Plugged in, not charging
 - **WHEN** R2D2 is plugged in at 0 kW
 - **THEN** its cable is shown in gray with no moving gradient
