@@ -183,3 +183,5 @@ PG_BIN=/usr/lib/postgresql/18/bin yarn vitest run
 ## Credits
 
 R2D2's render in `public/scene/model-y.webp` is made from ["2021 Tesla Model Y"](https://sketchfab.com/3d-models/59e2ead369984b1a85c800ff6cf6789d) by tonielpro520, licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). The model was modified: new materials and paint, 19" aero covers in place of its wheels, and its own lighting and camera.
+
+Tesla T.I.E. Fighter's render in `public/scene/model-3.webp` is made from ["Tesla 2018 Model 3"](https://sketchfab.com/3d-models/5ef9b845aaf44203b6d04e2c677e444f) by [Ameer Studio](https://sketchfab.com/uchiha.321abc), licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). The model was modified: new materials and paint, black trim, its lights switched off, its width corrected, its licence plate removed, 18" aero covers in place of its wheels, and its own lighting and camera.

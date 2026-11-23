@@ -341,9 +341,10 @@ describe("charging", () => {
     expect(new Set([modelY, model3, starDestroyer].map(({ plug }) => plug[1].join()))).toHaveProperty("size", 3);
   });
 
-  test("R2D2's and Tesla Star Destroyer's plugs sit on top of the left taillight in their renders", () => {
+  test("each car's plug sits on top of the left taillight in its render", () => {
     // Measured on the renders, in render units; the stage adds 80 down.
     expect(CAR_CABLES.modelY.plug[1]).toEqual([178.5, 580.7 + 80]);
+    expect(CAR_CABLES.model3.plug[1]).toEqual([180.9, 594.1 + 80]);
     expect(CAR_CABLES.starDestroyer.plug[1]).toEqual([178.3, 590.7 + 80]);
   });
 

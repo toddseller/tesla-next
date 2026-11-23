@@ -79,7 +79,7 @@ const plugged = ([px, py]: Point) => {
 };
 export const CAR_CABLES = {
   modelY: plugged([178.5, 580.7]),
-  model3: plugged([153, 612]),
+  model3: plugged([180.9, 594.1]),
   starDestroyer: plugged([178.3, 590.7]),
 };
 
