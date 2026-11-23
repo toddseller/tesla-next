@@ -80,6 +80,7 @@ const plugged = ([px, py]: Point) => {
 export const CAR_CABLES = {
   modelY: plugged([148.5, 596.5]),
   model3: plugged([153, 612]),
+  starDestroyer: plugged([152.3, 619.9]),
 };
 
 // The Powerwall's charge bar at 100%, on the lower piece of its dark side face:

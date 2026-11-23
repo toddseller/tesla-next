@@ -15,6 +15,7 @@ const nightLights = "/scene/night-lights.webp";
 const powerwall = "/scene/powerwall.webp";
 const solarGlow = "/scene/solar-glow.webp";
 const solarPanels = "/scene/solar-panels.webp";
+const starDestroyer = "/scene/star-destroyer.webp";
 const sunEast = "/scene/sun-east.webp";
 const sunEastPanels = "/scene/sun-east-panels.webp";
 const sunSouth = "/scene/sun-south.webp";
@@ -50,12 +51,14 @@ export const SUNLIGHT: Record<"house" | "panels", { face: "south" | "east" | "we
 };
 
 // A plugged-in car's image and its cable and plug, by the vehicle's name:
-// R2D2 is a Model Y, Tesla T.I.E. Fighter a Model 3.
+// R2D2 is a Model Y, Tesla T.I.E. Fighter a Model 3 (now off the account, kept
+// for replay) and Tesla Star Destroyer a Model 3 Highland.
 export type CarImage = { src: string; path: Point[]; plug: Point[] };
 const MODEL_3: CarImage = { src: model3, ...CAR_CABLES.model3 };
 const CARS: Record<string, CarImage> = {
   R2D2: { src: modelY, ...CAR_CABLES.modelY },
   "Tesla T.I.E. Fighter": MODEL_3,
+  "Tesla Star Destroyer": { src: starDestroyer, ...CAR_CABLES.starDestroyer },
 };
 
 // The house, shared elements and car for a plugged-in vehicle. A car with its

@@ -306,6 +306,7 @@ describe("charging", () => {
   test.each([
     ["R2D2", "model-y", CAR_CABLES.modelY],
     ["Tesla T.I.E. Fighter", "model-3", CAR_CABLES.model3],
+    ["Tesla Star Destroyer", "star-destroyer", CAR_CABLES.starDestroyer],
   ])("%s shows its own image, with a gradient from the Wall Connector along its own cable to the plug", (name, image, { path, plug }) => {
     const scene = renderScene(charging(name));
     const flow = scene.querySelector<HTMLElement>('[data-link="solar-car"]')!;
@@ -326,8 +327,8 @@ describe("charging", () => {
     expect(scene.querySelector<HTMLElement>('[data-link$="-car"]')).toBeNull();
   });
 
-  test("the two cars' cables come out of the Wall Connector and end at their own plug", () => {
-    const [modelY, model3] = [CAR_CABLES.modelY, CAR_CABLES.model3];
+  test("the cars' cables come out of the Wall Connector and end at their own plug", () => {
+    const { modelY, model3, starDestroyer } = CAR_CABLES;
     // The Wall Connector's layer covers 118 to 134 across and 505 to 537 down.
     const [x, y] = modelY.path[0];
 
@@ -335,9 +336,9 @@ describe("charging", () => {
     expect(x).toBeLessThan(134);
     expect(y - 80).toBeGreaterThan(505);
     expect(y - 80).toBeLessThan(537);
-    expect(model3.path[0]).toEqual(modelY.path[0]);
-    [modelY, model3].forEach(({ path, plug }) => expect(path.at(-1)).toEqual(plug[0]));
-    expect(modelY.plug[1]).not.toEqual(model3.plug[1]);
+    [model3, starDestroyer].forEach(({ path }) => expect(path[0]).toEqual(modelY.path[0]));
+    [modelY, model3, starDestroyer].forEach(({ path, plug }) => expect(path.at(-1)).toEqual(plug[0]));
+    expect(new Set([modelY, model3, starDestroyer].map(({ plug }) => plug[1].join()))).toHaveProperty("size", 3);
   });
 
   test("a car without its own image has no cable to flow along", () => {
