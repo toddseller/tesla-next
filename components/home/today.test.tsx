@@ -40,7 +40,7 @@ afterEach(() => {
 test("leads with today's solar so far, then the day's expected, how far ahead of the forecast it is and what is still to come", () => {
   render(<Today today={TODAY} forecast={CARD} day={DAY} renderedAt={Date.now()} />);
   expect(screen.getByRole("heading", { name: "Today" })).toBeTruthy();
-  expect(figure("made, of 18.0 kWh expected")).toBe("21.7 kWh");
+  expect(figure("generated, of 18.0 kWh expected")).toBe("21.7 kWh");
   // Said, not left to subtract: 21.7 made against 17.8 expected by 3:35 PM.
   expect(figure("ahead of the forecast")).toBe("3.9 kWh");
   expect(screen.queryByText(/expected by/)).toBeNull();
@@ -58,13 +58,13 @@ test("behind the forecast, or on it when the two read the same", () => {
 
 test("the day's expected is the forecast card's, to a tenth as every page gives it", () => {
   render(<Today today={TODAY} forecast={{ ...CARD, today: { ...CARD.today, expected: 7.7 }, byHour: { hours: [{ start: HOURS[0].start, expected: 7.68, made: null }], byNow: null } }} day={DAY} renderedAt={Date.now()} />);
-  expect(figure("made, of 7.7 kWh expected")).toBe("21.7 kWh");
+  expect(figure("generated, of 7.7 kWh expected")).toBe("21.7 kWh");
   expect(figure("still to come")).toBe("7.7 kWh");
 });
 
 test("without a forecast, today's solar so far alone, and no days ahead", () => {
   render(<Today today={TODAY} forecast={{ ...CARD, today: { ...CARD.today, expected: null }, days: null, byHour: null }} day={DAY} renderedAt={Date.now()} />);
-  expect(figure("made")).toBe("21.7 kWh");
+  expect(figure("generated")).toBe("21.7 kWh");
   expect(screen.queryByText(/expected by/)).toBeNull();
   expect(screen.getByText("No forecast right now")).toBeTruthy();
 });
@@ -97,7 +97,7 @@ test("a totals event for today reloads the forecast and the day; one for another
   FakeStream.opened[0].send({ date: TODAY }, "totals");
   await act(async () => {});
   expect(fetch.mock.calls.map(([url]) => url).sort()).toEqual(["/api/forecast", `/api/intervals?date=${TODAY}`]);
-  expect(figure("made, of 18.0 kWh expected")).toBe("22.4 kWh");
+  expect(figure("generated, of 18.0 kWh expected")).toBe("22.4 kWh");
   expect(figure("used by the house, car apart")).toBe("21.9 kWh");
 });
 
@@ -108,7 +108,7 @@ test("a failed reload keeps the figures and says when they are from, until one s
   render(<Today today={TODAY} forecast={CARD} day={DAY} renderedAt={Date.now()} />);
   FakeStream.opened[0].send({ date: TODAY }, "totals");
   await act(async () => {});
-  expect(figure("made, of 18.0 kWh expected")).toBe("21.7 kWh");
+  expect(figure("generated, of 18.0 kWh expected")).toBe("21.7 kWh");
   expect(screen.getByText("as of 3:35 PM")).toBeTruthy();
   ok = true;
   FakeStream.opened[0].send({ date: TODAY }, "totals");
@@ -174,6 +174,6 @@ test("the first render reads the server's clock, so hydration finds the sentence
 // The Solar page compares made and expected at the same moment; the day's running total can be minutes newer.
 test("ahead or behind compares made and expected by the same moment, as the Solar page does", () => {
   render(<Today today={TODAY} forecast={{ ...CARD, byHour: { hours: HOURS, byNow: { made: 20.0, expected: 17.819, at: "2026-11-21T23:35:00.000Z", over: false } } }} day={DAY} renderedAt={Date.now()} />);
-  expect(figure("made, of 18.0 kWh expected")).toBe("21.7 kWh");
+  expect(figure("generated, of 18.0 kWh expected")).toBe("21.7 kWh");
   expect(figure("ahead of the forecast")).toBe("2.2 kWh");
 });

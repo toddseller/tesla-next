@@ -41,7 +41,7 @@ function OnPhone() {
     <section aria-labelledby="today-so-far" className="mt-6 flex flex-col gap-5 sm:hidden">
       <h2 id="today-so-far" className="text-sm font-medium text-muted-foreground">Today so far</h2>
       <div className="grid grid-cols-2 gap-x-4 gap-y-5">
-        <Figure value={made} unit="kWh" label="made" className="text-solar" />
+        <Figure value={made} unit="kWh" label="generated" className="text-solar" />
         <TodayTotals day={day} />
       </div>
       <Doorway href={address(monthOf(day.date), day.date)}>Today, hour by hour</Doorway>

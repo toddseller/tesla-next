@@ -96,7 +96,7 @@ export function Today({ today, forecast, day, renderedAt }: Props) {
       <div className="flex flex-wrap items-end justify-between gap-x-8 gap-y-4">
         <h2 id="today" className="text-[64px] leading-[0.9] font-semibold tracking-[-0.04em] text-solar md:text-[112px]">Today</h2>
         <div className="flex flex-wrap gap-x-9 gap-y-4">
-          <Figure value={soFar.toFixed(1)} unit="kWh" label={expected === null ? "made" : `made, of ${expected.toFixed(1)} kWh expected`} className="text-4xl text-solar md:text-[40px]" />
+          <Figure value={soFar.toFixed(1)} unit="kWh" label={expected === null ? "generated" : `generated, of ${expected.toFixed(1)} kWh expected`} className="text-4xl text-solar md:text-[40px]" />
           {byNow && <Figure value={Math.abs(gap!).toFixed(1)} unit="kWh" label={gap! > 0 ? "ahead of the forecast" : gap! < 0 ? "behind the forecast" : "on the forecast"} />}
           {expected !== null && <Figure value={stillToCome(card?.byHour ?? null, expected)!.toFixed(1)} unit="kWh" label="still to come" />}
         </div>

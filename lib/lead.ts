@@ -1,6 +1,6 @@
 import type { RangeItem } from "@/lib/range";
 import { FIRST_DAY } from "@/lib/scene/replay";
-import { monthOf, type Range, rangeNames } from "@/lib/solar/ranges";
+import { monthOf, type Range, rangeIncludes, rangeNames } from "@/lib/solar/ranges";
 import type { TopTen } from "@/lib/top-ten";
 
 // The pages' lead sentences mark their figures {like this}: the figures go in mono, while the dates and year names
@@ -13,7 +13,7 @@ export const solarTotal = (items: RangeItem[]) => items.reduce((sum, item) => su
 export function solarLead(range: Range, today: string, solar: number, before: { then: number; now: number | null } | null) {
   const { name, earlier } = rangeNames(range, today);
   const first = monthOf(FIRST_DAY);
-  const lead = `Solar made {${whole(solar)}} kWh ${name}`;
+  const lead = `Solar ${rangeIncludes(range, today) ? "has generated" : "generated"} {${whole(solar)}} kWh ${name}`;
   if (range.start === first.start && range.end === first.end) return `${lead}, its first month.`;
   if (!before?.then) return `${lead}.`;
   const change = Math.round((100 * ((before.now ?? solar) - before.then)) / before.then);
@@ -22,8 +22,8 @@ export function solarLead(range: Range, today: string, solar: number, before: { 
 }
 
 export function impactLead(range: Range, today: string, share: number, before: number | null) {
-  if (before === null) return null;
   const { name, earlier } = rangeNames(range, today);
+  if (before === null) return `{${share}%} self-powered ${name}.`;
   if (range.start === range.end) return `{${share}%} self-powered ${name}; this day last year was {${before}%}.`;
   const than = earlier ?? "the same days last year";
   if (share === before) return `{${share}%} self-powered ${name}, about the same as ${than}.`;

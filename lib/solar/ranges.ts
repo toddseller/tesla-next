@@ -140,10 +140,10 @@ const yearBefore = (date: string) => {
   return day(y - 1, m - 1, Math.min(d, monthLength(y - 1, m - 1)));
 };
 
-// Today is only partly over, so a longer range reaching it compares the days before it on both sides; a lone day
-// compares with the whole of that date. A year before the first day has nothing to compare.
+// Today is only partly over, so a range reaching it compares the days before it on both sides, and one starting today,
+// today alone included, has nothing to compare yet. A year before the first day has nothing to compare either.
 export function comparedDays(range: Range, today: string): { now: Range; then: Range } | null {
-  const end = range.start === range.end || range.end < today ? range.end : shiftDay(today, -1);
+  const end = range.end < today ? range.end : shiftDay(today, -1);
   const then = { start: yearBefore(range.start), end: yearBefore(end) };
   return end < range.start || then.start < FIRST_DAY ? null : { now: { start: range.start, end }, then };
 }
@@ -184,7 +184,8 @@ export function rangeNames(range: Range, today: string): { name: string; earlier
   const year = yearName(range);
   if (year) return named(year, yearName({ start: yearBefore(start), end: yearBefore(end) })!);
   if (start === end)
-    return { name: start === today ? "today" : start === shiftDay(today, -1) ? "yesterday" : `on ${datesLabel(range, "short")}`, earlier: null };
+    return { name: start === today ? "today so far" : start === shiftDay(today, -1) ? "yesterday" : `on ${datesLabel(range, "short")}`, earlier: null };
   if (soFar && isWeek(range)) return { name: "this week so far", earlier: null };
+  if (soFar) return { name: `since ${datesLabel({ start, end: start }, "short")}`, earlier: null };
   return { name: `from ${datesLabel(range, "short").replace(" – ", " to ")}`, earlier: null };
 }

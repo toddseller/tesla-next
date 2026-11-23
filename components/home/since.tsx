@@ -32,9 +32,9 @@ export function Since({ today, months, solar, matched, net, trueUpStart, payback
   return (
     <section aria-labelledby="since" className="flex flex-col gap-6">
       <h2 id="since" className="text-[64px] leading-[0.9] font-semibold tracking-[-0.04em] md:text-[112px]">Since 2021</h2>
-      <p className="max-w-[60ch] text-[15px] text-pretty text-muted-foreground">Everything the panels have made, against everything the house has used, month by month since the system started.</p>
+      <p className="max-w-[60ch] text-[15px] text-pretty text-muted-foreground">Everything the panels have generated, against everything the house has used, month by month since the system started.</p>
       <div className="flex flex-wrap gap-x-5 gap-y-1 font-mono text-[13px]">
-        <span className="flex items-center gap-2"><span aria-hidden className="h-[3px] w-3.5 rounded-sm bg-solar" />solar made</span>
+        <span className="flex items-center gap-2"><span aria-hidden className="h-[3px] w-3.5 rounded-sm bg-solar" />solar generated</span>
         <span className="flex items-center gap-2"><span aria-hidden className="h-[3px] w-3.5 rounded-sm bg-home" />house used, car included</span>
       </div>
       <div role="img" aria-label={label}>
@@ -63,8 +63,8 @@ export function Since({ today, months, solar, matched, net, trueUpStart, payback
         <div className="flex flex-col gap-3">
           <p className="text-xl leading-snug font-medium text-pretty">
             {matched >= 100
-              ? <>Solar has made as much as the house used: <span className="font-mono text-solar">{whole(solar)} kWh</span>, {matched}%.</>
-              : <>Solar has made <span className="font-mono text-solar">{whole(solar)} kWh</span>, {matched}% of what the house used.</>}
+              ? <>Solar has generated as much as the house used: <span className="font-mono text-solar">{whole(solar)} kWh</span>, {matched}%.</>
+              : <>Solar has generated <span className="font-mono text-solar">{whole(solar)} kWh</span>, {matched}% of what the house used.</>}
           </p>
           <p className="text-[15px] text-pretty text-muted-foreground">Most of it comes at midday, when the surplus goes to PG&amp;E; at night the house draws from the grid. The true-up nets the two once a year.</p>
         </div>
@@ -86,7 +86,7 @@ export function SinceDetails({ active, payload }: Hover<{ t: number; solar: numb
   if (!active || !row) return null;
   return (
     <DetailsBox title={monthName(new Date(row.t).toISOString().slice(0, 7))} details={[
-      { name: "Solar made", value: `${whole(row.solar)} kWh`, color: "var(--color-solar)" },
+      { name: "Solar generated", value: `${whole(row.solar)} kWh`, color: "var(--color-solar)" },
       { name: "House used", value: `${whole(row.house)} kWh`, color: "var(--color-home)" },
     ]} />
   );
