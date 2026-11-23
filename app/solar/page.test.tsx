@@ -110,7 +110,7 @@ test("the sentence comes with the page, against the year-earlier days in the sam
   const html = await served({ readings: "tesla" });
   expect(rangeTotals).toHaveBeenCalledWith("2025-11-01", "2025-11-06", "tesla");
   expect(rangeTotals).toHaveBeenCalledWith("2026-11-01", "2026-11-06", "tesla");
-  expect(html.replace(/<[^>]+>/g, "")).toContain("Solar made 60 kWh in November so far, 10% more than the same days last year.");
+  expect(html.replace(/<[^>]+>/g, "")).toContain("Solar has generated 60 kWh in November so far, 10% more than the same days last year.");
 });
 
 test("a finished range is compared without asking for its own days again", async () => {

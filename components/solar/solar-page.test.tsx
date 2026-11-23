@@ -226,12 +226,12 @@ test("a range after the fix offers no readings", () => {
 test("under the heading, a sentence gives the range's solar against a year earlier and follows the reloaded bars; the forecast follows the chart", async () => {
   const { container } = render(<SolarPage range={november} items={[item("2026-11-06", 12.1)]} before={{ then: 10, now: null }} today="2026-11-07" initialStatus={null} forecast={CARD} />);
   const lead = screen.getByRole("heading", { level: 1 }).parentElement!.querySelector(":scope > p")!;
-  expect(lead.textContent).toBe("Solar made 12 kWh in November so far, 21% more than the same days last year.");
+  expect(lead.textContent).toBe("Solar has generated 12 kWh in November so far, 21% more than the same days last year.");
   expect([...lead.querySelectorAll(".font-mono")].map((figure) => figure.textContent)).toEqual(["12", "21%"]);
   answers.push(() => Promise.resolve({ ok: true, json: () => ({ data: [item("2026-11-06", 12.1), item("2026-11-07", 30.5)] }) }));
   FakeStream.opened[0].send({ date: "2026-11-06" }, "totals");
   await settle();
-  expect(lead.textContent).toBe("Solar made 43 kWh in November so far, 326% more than the same days last year.");
+  expect(lead.textContent).toBe("Solar has generated 43 kWh in November so far, 326% more than the same days last year.");
   const forecast = screen.getByText("Solar forecast");
   expect(container.querySelector("#range-title")!.compareDocumentPosition(forecast) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
 });

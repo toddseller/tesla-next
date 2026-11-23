@@ -61,7 +61,7 @@ export function ImpactPage({ range, figures, today, backup, backupYear, charging
           {corrected && <ReadingsSwitch readings={readings} addresses={{ corrected: address(range, backupYear, "corrected"), tesla: address(range, backupYear, "tesla") }} />}
           <RangeControls today={today} range={range} presets={impactPresets(today)} onRange={(next) => router.push(address(next), { scroll: false })} />
         </div>
-        {lead && <Lead className={`${LEAD} -mt-2 basis-full`} text={lead} />}
+        <Lead className={`${LEAD} -mt-2 basis-full`} text={lead} />
       </div>
       <section aria-labelledby="impact-title" className="flex flex-col gap-6 rounded-[10px] border bg-card p-4 sm:p-6">
         <div className="flex flex-wrap items-baseline justify-between gap-2">

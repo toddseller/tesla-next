@@ -25,7 +25,7 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-test("on a phone it fetches today and shows solar made, the six totals and a link to today on Solar", async () => {
+test("on a phone it fetches today and shows solar generated, the six totals and a link to today on Solar", async () => {
   screenWidth(true);
   const fetch = answering();
   vi.stubGlobal("fetch", fetch);
@@ -33,7 +33,7 @@ test("on a phone it fetches today and shows solar made, the six totals and a lin
   await act(async () => {});
   expect(fetch).toHaveBeenCalledWith(`/api/intervals?date=${TODAY}`);
   expect(screen.getByRole("region", { name: "Today so far" })).toBeTruthy();
-  expect(figure("made")).toBe("21.7 kWh");
+  expect(figure("generated")).toBe("21.7 kWh");
   expect(figure("used by the house, car apart")).toBe("21.3 kWh");
   expect(figure("charged into the car")).toBe("3.1 kWh");
   expect(screen.getByRole("link", { name: "Today, hour by hour" }).getAttribute("href")).toBe("/solar?start=2026-11-01&end=2026-11-30&day=2026-11-21");

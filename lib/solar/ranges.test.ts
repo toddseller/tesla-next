@@ -285,9 +285,14 @@ describe("the days compared with a year earlier", () => {
     });
   });
 
-  test("today alone compares with the whole of that date", () => {
-    expect(comparedDays({ start: "2026-11-22", end: "2026-11-22" }, "2026-11-22")).toEqual({
-      now: { start: "2026-11-22", end: "2026-11-22" }, then: { start: "2025-11-22", end: "2025-11-22" },
+  // A part-day can't be set against a whole one, so today alone has no comparison until it's over.
+  test("today alone has nothing to compare yet", () => {
+    expect(comparedDays({ start: "2026-11-22", end: "2026-11-22" }, "2026-11-22")).toBeNull();
+  });
+
+  test("a past day alone compares with the whole of that date", () => {
+    expect(comparedDays({ start: "2026-11-21", end: "2026-11-21" }, "2026-11-22")).toEqual({
+      now: { start: "2026-11-21", end: "2026-11-21" }, then: { start: "2025-11-21", end: "2025-11-21" },
     });
   });
 
@@ -315,10 +320,13 @@ describe("naming a range", () => {
     [{ start: "2026-10-01", end: "2027-09-30" }, "in '26\u00a0-\u00a0'27 so far", null],
     [{ start: "2025-10-01", end: "2026-09-30" }, "in '25\u00a0-\u00a0'26", "'24\u00a0-\u00a0'25"],
     [{ start: "2026-11-22", end: "2026-11-28" }, "this week so far", null],
-    [{ start: "2026-11-22", end: "2026-11-22" }, "today", null],
+    [{ start: "2026-11-22", end: "2026-11-22" }, "today so far", null],
     [{ start: "2026-11-21", end: "2026-11-21" }, "yesterday", null],
     [{ start: "2026-11-03", end: "2026-11-03" }, "on Nov 3, 2026", null],
     [{ start: "2026-03-03", end: "2026-04-09" }, "from Mar 3 to Apr 9, 2026", null],
+    [{ start: "2021-10-10", end: "2026-11-22" }, "since Oct 10, 2021", null],
+    [{ start: "2026-11-10", end: "2026-11-22" }, "since Nov 10, 2026", null],
+    [{ start: "2026-11-10", end: "2026-12-10" }, "since Nov 10, 2026", null],
   ])("%o", (range, name, earlier) => {
     expect(rangeNames(range, today)).toEqual({ name, earlier });
   });

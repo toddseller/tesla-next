@@ -93,12 +93,13 @@ test("a range in the address is served as asked, even before any solar today", a
     total_solar_percentage: 0, total_solar: 0, from_solar: 0, from_powerwall: 0, from_grid: 1, total_house: 1,
   }));
   await served({ start: "2026-11-08", end: "2026-11-08" });
-  expect(impactFigures.mock.calls).toEqual([["2026-11-08", "2026-11-08", "corrected"], ["2025-11-08", "2025-11-08", "corrected"]]);
+  // Today is only partly over, so it isn't compared with a year earlier.
+  expect(impactFigures.mock.calls).toEqual([["2026-11-08", "2026-11-08", "corrected"]]);
 });
 
 test("with no range, once today has solar, today is served from the one read", async () => {
   const html = await served();
-  expect(impactFigures.mock.calls).toEqual([["2026-11-08", "2026-11-08", "corrected"], ["2025-11-08", "2025-11-08", "corrected"]]);
+  expect(impactFigures.mock.calls).toEqual([["2026-11-08", "2026-11-08", "corrected"]]);
   expect(html).toContain("November 8, 2026");
 });
 
@@ -112,14 +113,14 @@ test("the sentence comes with the page, against the year-earlier days in the sam
   expect(html.replace(/<[^>]+>/g, "")).toContain("35% self-powered in November so far, up from 27% over the same days last year.");
 });
 
-test("year-earlier days without home use, or before the first day, give no sentence", async () => {
+test("year-earlier days without home use, or before the first day, give the share alone", async () => {
   impactFigures.mockImplementation(async (start: string) => ({
     from_solar_percentage: 0, from_powerwall_percentage: 0, from_grid_percentage: 0, self_powered_percentage: 0,
     total_solar_percentage: 0, total_solar: 1, from_solar: 0, from_powerwall: 0, from_grid: 1, total_house: start.startsWith("2025") ? 0 : 1,
   }));
-  expect(await served({ start: "2026-11-01", end: "2026-11-30" })).not.toContain("self-powered in November");
+  expect((await served({ start: "2026-11-01", end: "2026-11-30" })).replace(/<[^>]+>/g, "")).toContain("0% self-powered in November so far.");
   impactFigures.mockClear();
-  await served({ start: "2022-01-01", end: "2022-12-31" });
+  expect((await served({ start: "2022-01-01", end: "2022-12-31" })).replace(/<[^>]+>/g, "")).toContain("0% self-powered in 2022.");
   expect(impactFigures).toHaveBeenCalledTimes(1);
 });
 

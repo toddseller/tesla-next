@@ -9,40 +9,42 @@ const today = "2026-11-22";
 describe("Solar's lead sentence", () => {
   test("the month so far against the same days last year", () => {
     expect(solarLead({ start: "2026-11-01", end: "2026-11-30" }, today, 556.1, { then: 500, now: 530 })).toBe(
-      "Solar made {556} kWh in November so far, {6%} more than the same days last year.",
+      "Solar has generated {556} kWh in November so far, {6%} more than the same days last year.",
     );
   });
 
   test("a finished month against the same month", () => {
     expect(solarLead({ start: "2026-10-01", end: "2026-10-31" }, today, 1086.2, { then: 997.9, now: null })).toBe(
-      "Solar made {1,086} kWh in October 2026, {9%} more than October 2025.",
+      "Solar generated {1,086} kWh in October 2026, {9%} more than October 2025.",
     );
   });
 
   test("less than a year earlier", () => {
     expect(solarLead({ start: "2026-10-01", end: "2026-10-31" }, today, 900, { then: 1000, now: null })).toBe(
-      "Solar made {900} kWh in October 2026, {10%} less than October 2025.",
+      "Solar generated {900} kWh in October 2026, {10%} less than October 2025.",
     );
   });
 
   test("under one percent apart", () => {
     expect(solarLead({ start: "2026-01-01", end: "2026-12-31" }, today, 13554, { then: 13450, now: 13500 })).toBe(
-      "Solar made {13,554} kWh in 2026 so far, about the same as the same days last year.",
+      "Solar has generated {13,554} kWh in 2026 so far, about the same as the same days last year.",
     );
   });
 
   test("a range under way compares the days before today", () => {
     expect(solarLead({ start: "2026-12-01", end: "2026-12-31" }, "2026-12-03", 40, { then: 50, now: 30 })).toBe(
-      "Solar made {40} kWh in December so far, {40%} less than the same days last year.",
+      "Solar has generated {40} kWh in December so far, {40%} less than the same days last year.",
     );
   });
 
   test("the first month", () => {
-    expect(solarLead({ start: "2021-10-01", end: "2021-10-31" }, today, 522.8, null)).toBe("Solar made {523} kWh in October 2021, its first month.");
+    expect(solarLead({ start: "2021-10-01", end: "2021-10-31" }, today, 522.8, null)).toBe("Solar generated {523} kWh in October 2021, its first month.");
   });
 
   test("no year to compare with", () => {
-    expect(solarLead({ start: "2022-01-01", end: "2022-06-30" }, today, 7000.4, null)).toBe("Solar made {7,000} kWh from Jan 1 to Jun 30, 2022.");
+    expect(solarLead({ start: "2022-01-01", end: "2022-06-30" }, today, 7000.4, null)).toBe("Solar generated {7,000} kWh from Jan 1 to Jun 30, 2022.");
+    expect(solarLead({ start: today, end: today }, today, 12.4, null)).toBe("Solar has generated {12} kWh today so far.");
+    expect(solarLead({ start: "2021-10-10", end: today }, today, 75643.2, null)).toBe("Solar has generated {75,643} kWh since Oct 10, 2021.");
   });
 });
 
@@ -64,14 +66,16 @@ describe("Impact's lead sentence", () => {
     expect(impactLead({ start: "2025-01-01", end: "2025-12-31" }, today, 50, 50)).toBe("{50%} self-powered in 2025, about the same as 2024.");
   });
 
-  test("a day against the same day", () => {
-    expect(impactLead({ start: today, end: today }, today, 21, 29)).toBe("{21%} self-powered today; this day last year was {29%}.");
+  test("a past day against the same day", () => {
     expect(impactLead({ start: "2026-11-21", end: "2026-11-21" }, today, 31, 30)).toBe("{31%} self-powered yesterday; this day last year was {30%}.");
     expect(impactLead({ start: "2026-11-03", end: "2026-11-03" }, today, 40, 12)).toBe("{40%} self-powered on Nov 3, 2026; this day last year was {12%}.");
   });
 
-  test("no sentence without a year earlier", () => {
-    expect(impactLead({ start: "2022-01-01", end: "2022-12-31" }, today, 40, null)).toBeNull();
+  // impact-report, "The share alone without a year earlier": every range opens with a figure.
+  test("the share alone without a year earlier", () => {
+    expect(impactLead({ start: "2022-01-01", end: "2022-12-31" }, today, 52, null)).toBe("{52%} self-powered in 2022.");
+    expect(impactLead({ start: "2021-10-10", end: today }, today, 41, null)).toBe("{41%} self-powered since Oct 10, 2021.");
+    expect(impactLead({ start: today, end: today }, today, 24, null)).toBe("{24%} self-powered today so far.");
   });
 });
 
