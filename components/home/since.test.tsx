@@ -26,7 +26,7 @@ afterEach(cleanup);
 test("the running totals, named, with today and the payback marked, and the figures in words", () => {
   since();
   expect(screen.getByRole("heading", { name: "Since 2021" })).toBeTruthy();
-  expect(screen.getByRole("img", { name: /^Running totals since October 2021: solar 1,900 kWh against the house's 2,100 kWh/ })).toBeTruthy();
+  expect(screen.getByRole("img", { name: /^Running totals since October 22, 2021: solar 1,900 kWh against the house's 2,100 kWh/ })).toBeTruthy();
   expect(screen.getByText("solar made")).toBeTruthy();
   expect(document.body.textContent).toContain("Solar has made as much as the house used: 75,611 kWh, 100%.");
   expect(screen.getByText(/midday, when the surplus goes to PG&E; at night the house draws from the grid/)).toBeTruthy();

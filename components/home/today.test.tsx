@@ -80,6 +80,8 @@ test("today's six totals are the day view's, the car apart from the house, and t
   expect(figure("expected over the next three days")).toBe("Sun 22.4 kWh · Mon 28.0 kWh · Tue 16.9 kWh");
   const days = screen.getByText("expected over the next three days").parentElement!.querySelectorAll('[data-part="day-ahead"]');
   expect([...days].map((day) => [day.textContent, day.className.includes("whitespace-nowrap")])).toEqual([["Sun 22.4 kWh", true], ["Mon 28.0 kWh", true], ["Tue 16.9 kWh", true]]);
+  // DESIGN.md's smallest size is 11px; 0.6em of the days' 15 to 18px figures fell to 9 to 10.8px.
+  expect(days[0].querySelector("span")!.className).toContain("text-[max(11px,0.6em)]");
   expect(screen.getByRole("link", { name: "Today, hour by hour" }).getAttribute("href")).toBe("/solar?start=2026-11-01&end=2026-11-30&day=2026-11-21");
 });
 

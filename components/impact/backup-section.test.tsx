@@ -85,15 +85,40 @@ test("each event's bar is its length against the year's longest event", () => {
   expect(parseFloat(widths[3])).toBeCloseTo((3600 / 188_172) * 100, 3);
 });
 
-test("a year without outages says so, and still lists its other events", () => {
+// backup-history, "The outage summary": "No outages." alone would sit oddly above a listed test.
+test("a year without outages says so, naming the other events it lists", () => {
   render(<BackupSection history={{ ...EMPTY, events: [HISTORY.events[0]] }} year={THIS_YEAR} today={TODAY} onYear={() => {}} />);
-  expect(screen.getByText("No outages.")).toBeTruthy();
+  expect(screen.getByText("No outages, only a Go Off-Grid test.")).toBeTruthy();
   expect(eventRows()).toHaveLength(1);
+  cleanup();
+  const blip = HISTORY.events[2];
+  const events = [HISTORY.events[0], blip, { ...blip, start: "2023-11-01T20:00:18.000Z" }, { ...blip, start: "2023-10-01T20:00:18.000Z" }];
+  render(<BackupSection history={{ ...EMPTY, events }} year={THIS_YEAR} today={TODAY} onYear={() => {}} />);
+  expect(screen.getByText("No outages, only 3 blips and a Go Off-Grid test.")).toBeTruthy();
+  cleanup();
+  const commissioning = { ...blip, start: "2021-10-12T20:00:18.000Z", kind: "commissioning" as const };
+  render(<BackupSection history={{ ...EMPTY, events: [HISTORY.events[0], blip, events[2], commissioning] }} year={THIS_YEAR} today={TODAY} onYear={() => {}} />);
+  expect(screen.getByText("No outages, only 2 blips, a Go Off-Grid test and a commissioning event.")).toBeTruthy();
 });
 
 test("a year without events says so", () => {
   render(<BackupSection history={EMPTY} year={THIS_YEAR} today={TODAY} onYear={() => {}} />);
+  expect(screen.getByText("No outages.")).toBeTruthy();
   expect(screen.getByText("No backup events.")).toBeTruthy();
+});
+
+// backup-history, "How a length of time reads": spaced mono made the units read as wide as the figures.
+test("an event's length sets its figures in mono and its units in sans", () => {
+  render(<BackupSection history={HISTORY} year={YEAR_23_24} today={TODAY} onYear={() => {}} />);
+  const length = within(eventRows()[0]).getByText((_, el) => el?.tagName === "SPAN" && el.textContent === "1 m 4 s");
+  expect(length.classList.contains("font-mono")).toBe(false);
+  expect([...length.querySelectorAll(".font-mono")].map((figure) => figure.textContent)).toEqual(["1", "4"]);
+  // Mono figures give the length a taller line than the kind's 13px label, so the row lines its text up by baseline,
+  // centering only the bar.
+  const grid = length.parentElement!;
+  expect(grid.className).toContain("items-baseline");
+  expect(within(eventRows()[0]).getByText("Test").parentElement).toBe(grid);
+  expect(grid.querySelector('[data-part="duration-bar"]')!.parentElement!.className).toContain("self-center");
 });
 
 const FULL = { drop_kwh: 20.6, low_at: "2024-02-06T14:10:00.000Z", complete: true, full: true, low_percent: 42.78, left_kwh: 15.4, hours_left: 14.2, refilled: true };

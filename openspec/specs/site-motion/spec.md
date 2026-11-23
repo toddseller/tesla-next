@@ -158,11 +158,11 @@ When the True-Up Tracker is first viewed, its tiles' and savings card's amounts 
 - **THEN** each card's figures appear at their values at once
 
 ### Requirement: The Payback card tells its story
-On the True-Up Tracker's first view, the Payback card's timeline SHALL show only its grey track until half of it has scrolled into view. Then the line SHALL draw at an even pace that would cross the whole track in 6 s, stopping 900 ms at each mark while the mark lands: solid to solar's mark, on to Today, dashed to the whole system's mark, then the Powerwall warranty. It SHALL play once, and the timeline SHALL show complete when the page runs without JavaScript.
+On the True-Up Tracker's first view, the Payback card's timeline SHALL show only its grey track until half of it has scrolled into view. Then the line SHALL draw at an even pace that would cross the whole track in 3 s, stopping 600 ms at each mark while the mark lands: solid to solar's mark, on to Today, dashed to the whole system's mark, then the Powerwall warranty. It SHALL play once, and the timeline SHALL show complete when the page runs without JavaScript.
 
 #### Scenario: Across the card
 - **WHEN** the page is first viewed at 1280 pixels, with solar paid back in 2025, today in 2026 and the whole system projected for 2028, and the viewer scrolls down to the Payback card
-- **THEN** once half its timeline is in view, the solid line draws to 2025 and stops while Solar paid back lands, goes on to Today, the dashed line draws to 2028 and stops while its mark lands, and the warranty mark lands last
+- **THEN** once half its timeline is in view, the solid line draws to 2025 and stops while Solar paid back lands, goes on to Today, the dashed line draws to 2028 and stops while its mark lands, and the warranty mark lands last, all within about 4 s
 
 #### Scenario: A mark lands
 - **WHEN** the line reaches a mark

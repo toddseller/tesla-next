@@ -11,6 +11,7 @@ import { siteToday, TIME_ZONE } from "@/lib/scene/replay";
 import { address, monthOf, type Range } from "@/lib/solar/ranges";
 import { kwh } from "@/lib/true-up/text";
 import { Length } from "@/components/length";
+import { Measured } from "@/components/measured";
 
 type Props = { history: BackupHistory; year: Range; today: string; onYear: (year: Range) => void };
 
@@ -56,19 +57,30 @@ function EventRow({ event, length, longest, grouped, order }: { event: Event; le
   const line = detail(event);
   return (
     <div data-part="event" className={`flex flex-col gap-1 py-2.5 text-sm ${grouped ? "pl-4" : ""}`}>
-      <div className="grid grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-x-4 gap-y-1.5 sm:grid-cols-[13rem_minmax(0,1fr)_7rem_8rem]">
+      <div className="grid grid-cols-[minmax(0,1fr)_auto_auto] items-baseline gap-x-4 gap-y-1.5 sm:grid-cols-[13rem_minmax(0,1fr)_7rem_8rem]">
         <Link href={dayLink(start)} className="col-span-3 hover:text-white sm:col-span-1">{(grouped ? timeOnly : dayTime).format(new Date(start))}</Link>
-        <span aria-hidden className="h-2 sm:h-2.5">
+        <span aria-hidden className="h-2 self-center sm:h-2.5">
           <span data-part="duration-bar" className={`motion-uncover block h-full min-w-0.5 rounded-xs ${kind === "outage" ? "bg-powerwall" : "bg-grid/60"}`}
             style={{ width: `${(length / longest) * 100}%`, "--i": order } as CSSProperties} />
         </span>
-        <span className="text-right font-mono">{duration(length)}</span>
+        <span className="text-right"><Measured text={duration(length)} /></span>
         <span className={`text-[13px] ${kind === "outage" ? "text-powerwall" : "text-muted-foreground"}`}>{KINDS[kind]}</span>
       </div>
       {line && <span data-part="detail" className="text-[13px] text-muted-foreground">{line}</span>}
     </div>
   );
 }
+
+const OTHERS: [BackupKind, string, string][] = [["blip", "a blip", "blips"], ["test", "a Go Off-Grid test", "Go Off-Grid tests"], ["commissioning", "a commissioning event", "commissioning events"]];
+
+// A year without outages can still list tests and blips, so the summary names them rather than reading as if nothing happened.
+const noOutages = (events: Event[]) => {
+  const parts = OTHERS.flatMap(([kind, one, many]) => {
+    const n = events.filter((event) => event.kind === kind).length;
+    return n ? [n === 1 ? one : `${n} ${many}`] : [];
+  });
+  return parts.length ? `No outages, only ${parts.length > 1 ? `${parts.slice(0, -1).join(", ")} and ` : ""}${parts.at(-1)}.` : "No outages.";
+};
 
 const blipsLine = (blips: BackupHistory["summary"]["blips"]) =>
   blips.length === 1
@@ -108,7 +120,7 @@ export function BackupSection({ history: { summary, events }, year, today, onYea
           <p className="text-[13px] text-muted-foreground">{blipsLine(summary.blips)}</p>
         </div>
       ) : (
-        <p className="text-sm text-muted-foreground">No outages.</p>
+        <p className="text-sm text-muted-foreground">{noOutages(events)}</p>
       )}
       {events.length ? (
         <ul aria-label="Backup events" className="flex flex-col border-t">

@@ -76,7 +76,7 @@ export function Records({ today, tabs, record: served }: Props) {
             <p className="text-[15px] text-pretty text-muted-foreground">{misses(tab.near, tab.per)}</p>
           </div>
         ) : (
-          <p className="text-[15px] text-muted-foreground">{tab.per === "outage" ? "The house hasn't been off the grid since October 2021." : `No ${tab.per}s with figures yet.`}</p>
+          <p className="text-[15px] text-muted-foreground">{tab.per === "outage" ? "The house hasn't been off the grid since October 22, 2021." : `No ${tab.per}s with figures yet.`}</p>
         )}
         <ol className="m-0 flex list-none flex-col p-0">
           {tab.top.map((row, i) => (

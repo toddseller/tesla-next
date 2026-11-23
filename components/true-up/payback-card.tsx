@@ -31,12 +31,12 @@ const monthName = (month: string, width: "short" | "long") =>
   new Intl.DateTimeFormat("en-US", { month: width, timeZone: "UTC" }).format(Date.parse(`${month}-01T00:00:00Z`));
 const shortMonth = (month: string) => `${monthName(month, "short")} '${month.slice(2, 4)}`;
 
-// The story chosen on the motion prototype: once the timeline is in view, the line crosses the whole track at an even
-// 6 s and stops 900 ms at each mark, where it lands: the dot pops in and rings, the connector draws up, and the label
-// grows past its size and settles, solar's the most.
+// The story chosen on the motion prototype, at half its pace so it lands in about 4 s: once the timeline is in view,
+// the line crosses the whole track at an even 3 s and stops 600 ms at each mark, where it lands: the dot pops in and
+// rings, the connector draws up, and the label grows past its size and settles, solar's the most.
 const START_MS = 200;
-const PACE_MS = 6000;
-const STOP_MS = 900;
+const PACE_MS = 3000;
+const STOP_MS = 600;
 const LAND_MS = 260;
 const CONNECTOR_AFTER_MS = 160;
 const CONNECTOR_MS = 260;
@@ -70,7 +70,8 @@ function story(shares: number[], today: number, dashedTo: number | null) {
     stops.push(time);
     time += STOP_MS;
   }
-  return { stretches, stops, length: time };
+  // The last label grows on past its stop; the story ends once it has settled.
+  return { stretches, stops, length: time - STOP_MS + LABEL_AFTER_MS + GROW_MS };
 }
 
 // Waiting, a piece is hidden (shown again without JavaScript or with reduced motion, app/motion.css); playing, it plays
@@ -125,7 +126,7 @@ export function PaybackCard({ payback, today }: { payback: Payback; today: strin
     return () => clearTimeout(timer);
   }, [phase, length]);
   const spoken = [
-    "Timeline from October 2021, when the system went in",
+    "Timeline from October 22, 2021, when the system went in",
     solar.year !== null && `solar ${solar.projected ? "is projected to pay" : "paid"} for itself in ${solar.month ? `${monthName(solar.month, "long")} ${solar.year}` : solar.year}`,
     `today is ${thisYear}`,
     system.year !== null && `solar ${system.projected ? "is projected to pay" : "paid"} for the whole system in ${system.year}`,

@@ -81,7 +81,12 @@ const pressed = () =>
 test("without VPP events, the switch, the footnote and a reload say so", async () => {
   render(<TopTenPage topTen={WITHOUT_VPP} withVpp={false} today="2026-11-08" />);
   expect(pressed()).toEqual(["Without VPP events"]);
-  screen.getByText(/The export rankings leave out VPP event days, when Tesla discharged the Powerwalls to the grid for PG&E\./);
+  const note = screen.getByText(/The export rankings leave out VPP event days, when Tesla discharged the Powerwalls to the grid for PG&E\./);
+  // dashboard-shell, "The start date": one day, said one way.
+  expect(note.textContent).toContain("Outages count after October 22, 2021, the day the system was approved to run, and last a minute or more");
+  expect(note.textContent).not.toContain("October 23");
+  // About 75 characters a line, not the page's full width.
+  expect(note.className).toContain("max-w-[75ch]");
   fireEvent.click(screen.getByRole("button", { name: "With VPP events" }));
   expect(router.replace).toHaveBeenLastCalledWith("/top?vpp=with");
   FakeStream.opened[0].send({ date: "2026-11-08" }, "totals");

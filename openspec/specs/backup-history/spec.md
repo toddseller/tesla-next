@@ -59,7 +59,7 @@ The Backup section's year SHALL be in the address as `backup`, `24-25` for '24 -
 - **THEN** the Backup section still covers '24 - '25
 
 ### Requirement: The outage summary
-The section SHALL give, for the outages in the chosen year: their number, their total time, the longest with its date, and the energy the house used during them, split into what came from the Powerwalls and what came from solar. A year without outages SHALL say there were none.
+The section SHALL give, for the outages in the chosen year: their number, their total time, the longest with its date, and the energy the house used during them, split into what came from the Powerwalls and what came from solar. A year without outages SHALL say there were none, and when its list isn't empty, name what it holds: "No outages, only a Go Off-Grid test."
 
 #### Scenario: All time on 2026-11-09
 - **WHEN** All time is shown on 2026-11-09, with 35 outages of 156.9 hours, the longest 52.3 hours from February 4, 2024, through which the house used 206.9 kWh, 130.0 from the Powerwalls and 76.3 from solar
@@ -67,7 +67,15 @@ The section SHALL give, for the outages in the chosen year: their number, their 
 
 #### Scenario: A quiet year
 - **WHEN** '26 - '27 is shown on 2026-11-09, its only event the test of that morning
-- **THEN** the summary says there were no outages, and the list shows the test
+- **THEN** the summary reads "No outages, only a Go Off-Grid test.", and the list shows the test
+
+#### Scenario: Blips and a test
+- **WHEN** a year without outages lists three blips and one test
+- **THEN** the summary reads "No outages, only 3 blips and a Go Off-Grid test."
+
+#### Scenario: Nothing at all
+- **WHEN** a year has no events
+- **THEN** the summary reads "No outages."
 
 ### Requirement: The full event list
 Under the summary the section SHALL list every backup event of the chosen year, whatever its kind, newest first, each with its start date and time in the site's time zone, its duration, and its kind. Each date SHALL link to its day on the Solar page, as the Top Ten page links a day. A year without events SHALL say so.
@@ -219,7 +227,7 @@ Under the summary the section SHALL give the number of blips: for one true-up ye
 - **THEN** the line lists every true-up year from '21 - '22 with its count, '24 - '25 reading 0
 
 ### Requirement: How a length of time reads
-Every length of time the section gives off the grid (the summary's total and longest, each storm day's total and each event's duration) SHALL read in days and hours when it is a day or more, and otherwise in hours and minutes, minutes and seconds, or seconds, each part rounded down.
+Every length of time the section gives off the grid (the summary's total and longest, each storm day's total and each event's duration) SHALL read in days and hours when it is a day or more, and otherwise in hours and minutes, minutes and seconds, or seconds, each part rounded down. An event's duration SHALL set its figures in mono and its units in the row's sans.
 
 #### Scenario: The day boundary
 - **WHEN** one event lasts 23 hours 59 minutes 59 seconds and another exactly 24 hours
@@ -232,3 +240,7 @@ Every length of time the section gives off the grid (the summary's total and lon
 #### Scenario: Under an hour
 - **WHEN** an outage lasts 4 minutes 30 seconds, and a blip 42 seconds
 - **THEN** they read 4 m 30 s and 42 s
+
+#### Scenario: An event's figures and units
+- **WHEN** a test lasted 1 minute 4 seconds
+- **THEN** its row reads 1 m 4 s with "1" and "4" in mono and "m" and "s" in sans

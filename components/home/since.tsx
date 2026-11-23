@@ -27,7 +27,7 @@ export function Since({ today, months, solar, matched, net, trueUpStart, payback
   const projected = systemYear !== null && payback!.system.projected;
   const solarPaid = payback?.solar.year ? (payback.solar.projected ? `Solar should pay for itself in ${payback.solar.year}, projected.` : `Solar paid for itself in ${payback.solar.month ? monthName(payback.solar.month) : payback.solar.year}.`) : null;
   const powerwalls = payback ? (payback.powerwalls.wont ? "The Powerwalls won't pay for themselves within their warranty." : payback.powerwalls.year ? `The Powerwalls should pay for themselves in ${payback.powerwalls.year}.` : null) : null;
-  const label = `Running totals since October 2021: solar ${whole(made)} kWh against the house's ${whole(used)} kWh${solarPaid ? `; ${solarPaid}` : ""}${systemYear ? ` The whole system pays back in ${systemYear}${payback!.system.projected ? ", projected" : ""}.` : ""}`;
+  const label = `Running totals since October 22, 2021: solar ${whole(made)} kWh against the house's ${whole(used)} kWh${solarPaid ? `; ${solarPaid}` : ""}${systemYear ? ` The whole system pays back in ${systemYear}${payback!.system.projected ? ", projected" : ""}.` : ""}`;
 
   return (
     <section aria-labelledby="since" className="flex flex-col gap-6">
