@@ -387,7 +387,7 @@ Each page SHALL have exactly one h1. Distribution's SHALL be "Distribution", and
 - **THEN** the page has one h1, "Solar on Sat, Nov 14, 2026", and the day button still shows the date
 
 ### Requirement: The start date
-A sentence giving the day the system began SHALL say "October 22, 2021", the day it was approved to run. A heading, subtitle or axis MAY shorten it to "October 2021" or "2021". No page SHALL give the system's start as another day.
+A sentence giving when the site's figures begin SHALL say "October 10, 2021", the first day of data, and every figure counted from the start SHALL count from it. A sentence about outages or payback SHALL instead say "October 22, 2021", named as the day the system was approved to run. A heading, subtitle or axis MAY shorten either to "October 2021" or "2021". No page SHALL give another start.
 
 #### Scenario: Top Ten's note
 - **WHEN** a viewer reads Top Ten's note
@@ -395,7 +395,7 @@ A sentence giving the day the system began SHALL say "October 22, 2021", the day
 
 #### Scenario: Home's running totals
 - **WHEN** a screen reader reads the Since chapter's chart
-- **THEN** it hears "Running totals since October 22, 2021"
+- **THEN** it hears "Running totals since October 10, 2021"
 
 ### Requirement: An address that isn't a page
 An address that isn't one of the site's pages SHALL answer 404 with a page inside the site's top bar and footer, on the dark field, never the framework's default. It SHALL have the h1 "You've gone off-grid", as large as the Pick a day heading below it, then a sentence naming the address asked for, like "/nope isn't a page on the site, so nothing is flowing here.", then the home page's Pick a day control, then a link back to the home page. Its title SHALL be "Not found · Tesla Solar Report".

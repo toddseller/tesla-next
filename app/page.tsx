@@ -14,7 +14,8 @@ import { dayIntervals } from "@/lib/intervals/intervals";
 import { latest } from "@/lib/live";
 import { latestFigures, patterns, powerwallYears } from "@/lib/patterns";
 import { recordTabs } from "@/lib/home/records";
-import { PTO, siteToday } from "@/lib/scene/replay";
+import { longDate } from "@/lib/calendar-dates";
+import { FIRST_DAY, siteToday } from "@/lib/scene/replay";
 import { recordSeries, topTen } from "@/lib/top-ten";
 import { cycleRows, trueUpCost } from "@/lib/true-up/cost";
 import { payback } from "@/lib/true-up/payback";
@@ -26,7 +27,7 @@ type Params = Record<string, string | string[] | undefined>;
 
 // Addresses from before the Solar page moved to /solar keep showing the same view.
 const SOLAR_PARAMS = ["start", "end", "day", "readings"];
-const FIRST_YEAR = Number(PTO.slice(0, 4));
+const FIRST_YEAR = Number(FIRST_DAY.slice(0, 4));
 // The home page reads as each linked page opens, on corrected readings.
 const READINGS = "corrected";
 
@@ -43,8 +44,8 @@ export default async function Page({ searchParams }: { searchParams: Promise<Par
   const yearEnd = year === thisYear ? today : `${year}-12-31`;
   const [stored, day, hours, shares, rankings, series, house, months, sinceFigures, trueUp, paidBack] = await Promise.all([
     forecast(today), dayIntervals(today, READINGS), solarHours(year, today), impactFigures(`${year}-01-01`, yearEnd, READINGS),
-    topTen(false, READINGS), recordSeries(false, READINGS), patterns(today, READINGS), impactByMonth(PTO, today, READINGS),
-    impactFigures(PTO, today, READINGS),
+    topTen(false, READINGS), recordSeries(false, READINGS), patterns(today, READINGS), impactByMonth(FIRST_DAY, today, READINGS),
+    impactFigures(FIRST_DAY, today, READINGS),
     trueUpYears(today).then(async (years) => {
       const current = years.at(-1)!;
       const rows = cycleRows(current.start_date, current.end_date);
@@ -58,7 +59,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<Par
   return (
     <div className="flex flex-col">
       <h1 className="max-w-[48ch] pb-6 text-lg font-medium text-balance md:pt-2 md:pb-10 md:text-xl">
-        One home&apos;s 12.24 kW of Tesla solar and three Powerwalls, live and since October 22, 2021.
+        {`One home's 12.24 kW of Tesla solar and three Powerwalls, live and recorded since ${longDate(FIRST_DAY)}.`}
       </h1>
       <Now initialStatus={latest()} renderedAt={Date.now()} />
       {[

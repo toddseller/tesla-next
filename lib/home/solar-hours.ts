@@ -1,6 +1,6 @@
 import { db } from "@/lib/db";
 import { type Kept, keptFor, refreshKept } from "@/lib/kept";
-import { PTO } from "@/lib/scene/replay";
+import { FIRST_DAY } from "@/lib/scene/replay";
 
 export type SolarDay = { day: string; kwh: number[] };
 
@@ -12,7 +12,7 @@ async function workOut(year: number, today: string): Promise<SolarDay[]> {
   const { rows } = await db.query<{ day: string; hour: number; wh: number }>(
     `SELECT day::text AS day, extract(hour FROM start_at AT TIME ZONE ${SITE})::int AS hour, sum(solar_generated_wh)::float8 AS wh
      FROM energy_interval WHERE day >= greatest($1::date, $4::date) AND day <= least($2::date, $3::date) GROUP BY 1, 2 ORDER BY 1, 2`,
-    [`${year}-01-01`, `${year}-12-31`, today, PTO],
+    [`${year}-01-01`, `${year}-12-31`, today, FIRST_DAY],
   );
   const days = new Map<string, number[]>();
   for (const { day, hour, wh } of rows) (days.get(day) ?? days.set(day, Array(24).fill(0)).get(day)!)[hour] += wh / 1000;

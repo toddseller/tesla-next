@@ -3,11 +3,11 @@
 import { useRouter } from "next/navigation";
 import { type FormEvent, useState } from "react";
 
-import { PTO as FIRST, shiftDay } from "@/lib/scene/replay";
+import { longDate } from "@/lib/calendar-dates";
+import { FIRST_DAY as FIRST, shiftDay } from "@/lib/scene/replay";
 import { address, monthOf } from "@/lib/solar/ranges";
 
 const DAY_MS = 86_400_000;
-const longDay = new Intl.DateTimeFormat("en-US", { month: "long", day: "numeric", year: "numeric", timeZone: "UTC" });
 
 export function PickADay({ today }: { today: string }) {
   const router = useRouter();
@@ -26,7 +26,7 @@ export function PickADay({ today }: { today: string }) {
     <section aria-labelledby="pick" className="flex flex-wrap items-end justify-between gap-8">
       <div>
         <h2 id="pick" className="text-[28px] font-semibold tracking-[-0.02em]">Pick a day</h2>
-        <p className="mt-2 text-[15px] text-muted-foreground">Any of the {span.toLocaleString("en-US")} days since October 22, 2021.</p>
+        <p className="mt-2 text-[15px] text-muted-foreground">Any of the {span.toLocaleString("en-US")} days since {longDate(FIRST)}.</p>
       </div>
       <form noValidate onSubmit={submit} className="relative flex flex-wrap items-end gap-3 max-sm:w-full max-sm:flex-col max-sm:items-stretch">
         <div className="flex items-end gap-2">
@@ -40,7 +40,7 @@ export function PickADay({ today }: { today: string }) {
         <button type="button" onClick={() => open(shiftDay(FIRST, Math.floor(Math.random() * span)))} className="h-11 rounded-md border border-input bg-input/30 px-4 text-sm font-medium text-foreground">
           Random day
         </button>
-        {refused && <p role="alert" className="max-sm:w-full sm:w-max text-[13px] text-destructive sm:absolute sm:top-full sm:right-0 sm:mt-2 sm:text-right">Pick a day from {longDay.format(Date.parse(FIRST))} to {longDay.format(Date.parse(today))}.</p>}
+        {refused && <p role="alert" className="max-sm:w-full sm:w-max text-[13px] text-destructive sm:absolute sm:top-full sm:right-0 sm:mt-2 sm:text-right">Pick a day from {longDate(FIRST)} to {longDate(today)}.</p>}
       </form>
     </section>
   );

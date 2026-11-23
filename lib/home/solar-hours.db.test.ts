@@ -51,10 +51,10 @@ test("no day after today, and the year's days only", async () => {
   expect((await solar.solarHours(2026, TODAY)).map((d) => d.day)).toEqual(["2026-01-01"]);
 });
 
-test("2021 starts on October 22, the system's first day in service", async () => {
-  await putInterval(owner, "2021-10-21 12:00", { solar_generated_wh: 100 });
-  await putInterval(owner, "2021-10-22 12:00", { solar_generated_wh: 100 });
-  expect((await solar.solarHours(2021, TODAY)).map((d) => d.day)).toEqual(["2021-10-22"]);
+test("2021 starts on October 10, the first day of data", async () => {
+  await putInterval(owner, "2021-10-09 12:00", { solar_generated_wh: 100 });
+  await putInterval(owner, "2021-10-10 12:00", { solar_generated_wh: 100 });
+  expect((await solar.solarHours(2021, TODAY)).map((d) => d.day)).toEqual(["2021-10-10"]);
 });
 
 test("a totals notice for today works the current year out again and keeps a past one", async () => {
