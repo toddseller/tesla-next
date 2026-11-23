@@ -416,7 +416,7 @@ Below 640 pixels, Distribution SHALL show under the scene and its replay control
 
 #### Scenario: A phone in the morning
 - **WHEN** a visitor opens `/distribution` on a 390-pixel-wide screen
-- **THEN** under the scene they see today's solar made, the house's use, the car's charging, energy from and sent to the grid, and the Powerwalls in and out, and "Today, hour by hour" linking to today on the Solar page
+- **THEN** under the scene they see today's solar, labeled "generated", the house's use, the car's charging, energy from and sent to the grid, and the Powerwalls in and out, and "Today, hour by hour" linking to today on the Solar page
 
 #### Scenario: The database is slow or down
 - **WHEN** today's figures are slow to come or fail
