@@ -30,7 +30,14 @@ export function dailySql(readings: Readings) {
 
 const parts = (date: string) => date.split("-").map(Number);
 
-export type RangeItem = { date: string; day?: string; solar: number | null; grid: number | null; house: number | null };
+export type RangeItem = { date: string; day?: string; solar: number | null; grid: number | null; powerwall: number | null; house: number | null };
+
+// The Powerwalls supplied whatever the house used beyond solar and grid. Taken from the rounded figures, so a bar's
+// sections add up to its house mark exactly; `+ 0` turns the -0 a balanced day's float remainder rounds to into 0.
+export const withPowerwall = (item: Omit<RangeItem, "powerwall">): RangeItem => ({
+  ...item,
+  powerwall: item.solar === null || item.grid === null || item.house === null ? null : pyRound(item.house - item.solar - item.grid, 1) + 0,
+});
 
 const monthName = (date: string) => new Date(`${date}T00:00:00Z`).toLocaleString("en-US", { month: "short", timeZone: "UTC" });
 const dayLabel = (date: string) => `${monthName(date)} ${parts(date)[2]}`;
@@ -54,13 +61,13 @@ export function dailyItem(row: DayRow, readings: Readings): RangeItem {
   const gridOut = isCorrected ? row.meter_exported! : effectiveOut;
   const extraIn = isCorrected ? row.meter_imported! - (row.from_grid || 0) : 0;
   const extraOut = isCorrected ? row.meter_exported! - rawOut : 0;
-  return {
+  return withPowerwall({
     date: dayLabel(row.date),
     day: row.date,
     solar: row.solar_generated,
     grid: pyRound(gridIn - gridOut, 1),
     house: pyRound((row.total_house_usage || 0) + extraIn - extraOut, 1),
-  };
+  });
 }
 
 // Daily items up to 31 days after the start, periods beyond.
@@ -83,7 +90,7 @@ export async function rangeTotals(start: string, end: string, readings: Readings
      ) s ORDER BY p.n`,
     [list.map(([first]) => first), list.map(([, last]) => last)],
   );
-  return rows.map((row, i) => ({
+  return rows.map((row, i) => withPowerwall({
     date: periodLabel(list[i][0]),
     solar: round1(row.solar),
     grid: row.from_grid === null && row.to_grid === null ? null : round1(row.from_grid! - row.to_grid!),

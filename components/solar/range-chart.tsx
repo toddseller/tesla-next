@@ -14,6 +14,7 @@ import { isDaily, periods, type Range } from "@/lib/solar/ranges";
 const FLOWS = [
   { key: "solar", label: "Solar", color: "var(--color-solar)" },
   { key: "grid", label: "Grid", color: "var(--color-grid)" },
+  { key: "powerwall", label: "Powerwall", color: "var(--color-powerwall)" },
   { key: "house", label: "House, car included", color: "var(--color-home)" },
 ] as const;
 
@@ -63,8 +64,8 @@ function Section({ series, domain, entering, onOpenDay, onOpenRange, x = 0, y = 
     fill, "data-series": series, "data-label": payload.label, onClick: open, style: riseFrom(background, domain, index),
     className: [entering && "motion-rise", open && "cursor-pointer"].filter(Boolean).join(" ") || undefined,
   };
-  // House use came from the solar and grid under it, so it stacks as 0 only to take the bar's slot; the mark sits at
-  // the house's own value instead, edged in the card's color to read over yellow and gray.
+  // House use came from the sections under it, so it stacks as 0 only to take the bar's slot; the mark sits at the
+  // house's own value instead, edged in the card's color to read over the sections' colors.
   if (series === "house") {
     if (payload.house === null || !background) return <g />;
     const [low, high] = domain;
@@ -106,9 +107,10 @@ export function RangeChart({ items, range, ...open }: { items: RangeItem[]; rang
   // Columns rise by CSS while the chart enters; after that recharts moves only what a reload changed. "auto", not true:
   // only "auto" leaves it still for a viewer who asked for reduced motion.
   const entering = useEntering(ENTER_MS);
+  const [below, above] = [(value: number | null) => Math.min(0, value ?? 0), (value: number | null) => Math.max(0, value ?? 0)];
   const axis = niceAxis(
-    Math.min(0, ...rows.map((row) => row.grid ?? 0)),
-    Math.max(1, ...rows.map((row) => Math.max((row.solar ?? 0) + Math.max(0, row.grid ?? 0), row.house ?? 0))),
+    Math.min(0, ...rows.map((row) => below(row.grid) + below(row.powerwall))),
+    Math.max(1, ...rows.map((row) => Math.max((row.solar ?? 0) + above(row.grid) + above(row.powerwall), row.house ?? 0))),
   );
   return (
     <div className="flex flex-col gap-4">
@@ -133,7 +135,9 @@ export function RangeChart({ items, range, ...open }: { items: RangeItem[]; rang
           </span>
         ))}
       </div>
-      <p className="text-center text-sm italic text-muted-foreground">Grid below zero: more energy sent to the grid than taken from it.</p>
+      <p className="text-center text-sm italic text-muted-foreground">
+        Below zero: more energy sent to the grid than taken from it, or more stored in the Powerwalls than they gave back that day.
+      </p>
     </div>
   );
 }

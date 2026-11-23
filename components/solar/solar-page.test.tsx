@@ -13,7 +13,7 @@ vi.mock("next/navigation", () => ({ useRouter: () => router }));
 
 const november = { start: "2026-11-01", end: "2026-11-30" };
 const march = { start: "2026-03-01", end: "2026-03-31" };
-const item = (day: string, solar: number): RangeItem => ({ date: `Nov ${Number(day.slice(8))}`, day, solar, grid: 1, house: 2 });
+const item = (day: string, solar: number): RangeItem => ({ date: `Nov ${Number(day.slice(8))}`, day, solar, grid: 1, powerwall: 1 - solar, house: 2 });
 
 let fetches: string[];
 let answers: (() => Promise<Response | { ok: boolean; json: () => unknown }>)[];
@@ -54,7 +54,7 @@ test("a preset and a picked day each push their address", () => {
 
 test("a month bar of a long range pushes that month, and the subtitle says a month can be selected", () => {
   const trueUpYear = { start: "2026-10-01", end: "2027-09-30" };
-  const months: RangeItem[] = [{ date: "Oct-26", solar: 997.6, grid: 299.5, house: 1261.7 }, { date: "Nov-26", solar: 240.2, grid: 120.1, house: 330.4 }];
+  const months: RangeItem[] = [{ date: "Oct-26", solar: 997.6, grid: 299.5, powerwall: -35.4, house: 1261.7 }, { date: "Nov-26", solar: 240.2, grid: 120.1, powerwall: -29.9, house: 330.4 }];
   const { container } = render(<SolarPage range={trueUpYear} items={months} today="2026-11-07" initialStatus={null} />);
   expect(screen.getByText(/select a month for its days/)).toBeTruthy();
   fireEvent.click(solarOf(container, "Oct 2026")!);
@@ -118,7 +118,7 @@ test("a new range from the server replaces bars reloaded for the old one", async
   const { container, rerender } = render(<SolarPage range={november} items={[]} today="2026-11-07" initialStatus={null} />);
   FakeStream.opened[0].send({ date: "2026-11-07" }, "totals");
   await settle();
-  rerender(<SolarPage range={march} items={[{ date: "Mar 3", day: "2026-03-03", solar: 9, grid: 1, house: 2 }]} today="2026-11-07" initialStatus={null} />);
+  rerender(<SolarPage range={march} items={[{ date: "Mar 3", day: "2026-03-03", solar: 9, grid: 1, powerwall: -8, house: 2 }]} today="2026-11-07" initialStatus={null} />);
   expect(solarOf(container, "Mar 3")).not.toBeNull();
   expect(solarOf(container, "Nov 7")).toBeNull();
 });

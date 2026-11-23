@@ -24,7 +24,7 @@ vi.mock("next/link", () => ({ default: ({ href, children, ...rest }: { href: str
 
 const october = { start: "2026-10-01", end: "2026-10-31" };
 const stripItems: RangeItem[] = Array.from({ length: 31 }, (_, i) => ({
-  date: `Oct ${i + 1}`, day: `2026-10-${String(i + 1).padStart(2, "0")}`, solar: 30 + i, grid: 1, house: 2,
+  date: `Oct ${i + 1}`, day: `2026-10-${String(i + 1).padStart(2, "0")}`, solar: 30 + i, grid: 1, powerwall: -29 - i, house: 2,
 }));
 const dayOf = (date: string) => ({ date, vehicle_data: false, totals: { solar_to_home: 12.27 }, data: [], off_grid: [], storm_watch: [] });
 

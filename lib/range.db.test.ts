@@ -3,9 +3,12 @@
 import { Client } from "pg";
 import { afterAll, beforeAll, beforeEach, describe, expect, inject, test, vi } from "vitest";
 
+import { pyRound } from "@/lib/intervals/python";
+
 const pg = inject("pg");
 let owner: Client;
 let rangeTotals: typeof import("./range").rangeTotals;
+let withPowerwall: typeof import("./range").withPowerwall;
 
 type Day = Partial<{
   solar_generated: number; from_grid: number; to_grid: number; powerwall_to_grid: number; is_vpp: boolean; total_house_usage: number;
@@ -31,7 +34,7 @@ const storeMeter = (day: string, importedKwh: number, exportedKwh: number) =>
 beforeAll(async () => {
   vi.stubEnv("DATABASE_URL", `postgresql://${pg.user}:${pg.password}@/${pg.database}?host=${pg.host}`);
   vi.resetModules();
-  ({ rangeTotals } = await import("./range"));
+  ({ rangeTotals, withPowerwall } = await import("./range"));
   owner = new Client({ ...pg });
   await owner.connect();
 });
@@ -50,7 +53,7 @@ describe("daily items", () => {
     await seedDays("2026-01-01", "2026-02-01");
     const items = await rangeTotals("2026-01-01", "2026-02-01", "corrected");
     expect(items).toHaveLength(32);
-    expect(items[0]).toEqual({ date: "Jan 1", day: "2026-01-01", solar: 20.9, grid: 9.4, house: 17.0 });
+    expect(items[0]).toEqual({ date: "Jan 1", day: "2026-01-01", solar: 20.9, grid: 9.4, powerwall: -13.3, house: 17.0 });
   });
 
   test("a range across a new year labels its days", async () => {
@@ -82,6 +85,27 @@ describe("daily items", () => {
     expect((await rangeTotals("2026-07-01", "2026-07-02", "corrected")).map((i) => i.grid)).toEqual([7, 5]);
   });
 
+  // solar-range-chart, "Bar values": the Powerwall is what the house used beyond solar and grid, so the stack meets the mark.
+  test("the Powerwall is house use minus solar minus grid, positive for a day that drew it down", async () => {
+    await seedDays("2026-10-09", "2026-10-09", { solar_generated: 22.5, from_grid: 10.0, to_grid: 0, total_house_usage: 44.4 });
+    await seedDays("2026-10-14", "2026-10-14", { solar_generated: 44.4, from_grid: 0.1, to_grid: 8.4, total_house_usage: 34.0 });
+    expect((await rangeTotals("2026-10-09", "2026-10-14", "corrected")).map((i) => i.powerwall)).toEqual([11.9, -2.1]);
+  });
+
+  // Float subtraction leaves a balanced day a hair below zero, which rounds to -0 and would read "-0.0 kWh".
+  test("a day that balances has a Powerwall of plain zero", async () => {
+    await seedDays("2026-10-20", "2026-10-20", { solar_generated: 20, from_grid: 0.2, to_grid: 8.0, total_house_usage: 12.2 });
+    const [day] = await rangeTotals("2026-10-20", "2026-10-20", "corrected");
+    expect(Object.is(day.powerwall, 0)).toBe(true);
+  });
+
+  test("the Powerwall is null when solar, grid or house is", () => {
+    const item = { date: "Oct 20", solar: 20, grid: 5, house: 30 };
+    expect([withPowerwall({ ...item, solar: null }), withPowerwall({ ...item, grid: null }), withPowerwall({ ...item, house: null })].map((i) => i.powerwall))
+      .toEqual([null, null, null]);
+    expect(withPowerwall(item).powerwall).toBe(5);
+  });
+
   test("an empty range has no items", async () => {
     expect(await rangeTotals("2022-01-01", "2022-01-31", "corrected")).toEqual([]);
   });
@@ -93,6 +117,14 @@ describe("meter corrections", () => {
     await storeMeter("2025-12-10", 40, 8);
     const [day] = await rangeTotals("2025-12-10", "2025-12-10", "corrected");
     expect([day.grid, day.house]).toEqual([32.0, 46.0]);
+  });
+
+  test("a correction moves grid and house alike, so the Powerwall is Tesla's either way", async () => {
+    await seedDays("2025-12-10", "2025-12-10", TESLA_WINTER);
+    await storeMeter("2025-12-10", 40, 8);
+    const [corrected] = await rangeTotals("2025-12-10", "2025-12-10", "corrected");
+    const [tesla] = await rangeTotals("2025-12-10", "2025-12-10", "tesla");
+    expect([corrected.powerwall, tesla.powerwall]).toEqual([-6.9, -6.9]);
   });
 
   test("months add up corrected days", async () => {
@@ -132,6 +164,7 @@ describe("periods", () => {
     const items = await rangeTotals("2026-01-01", "2026-06-30", "corrected");
     expect(items.map((i) => i.date)).toEqual(["Jan-26", "Feb-26", "Mar-26", "Apr-26", "May-26", "Jun-26"]);
     expect(items[0].solar).toBe(647.9);
+    expect(items[0].powerwall).toBe(pyRound(items[0].house! - 647.9 - items[0].grid!, 1));
     expect(items[0]).not.toHaveProperty("day");
   });
 
@@ -148,6 +181,6 @@ describe("periods", () => {
   test("months without data are null", async () => {
     const items = await rangeTotals("2022-01-01", "2022-06-30", "corrected");
     expect(items).toHaveLength(6);
-    expect(items.every((i) => i.solar === null && i.grid === null && i.house === null)).toBe(true);
+    expect(items.every((i) => i.solar === null && i.grid === null && i.powerwall === null && i.house === null)).toBe(true);
   });
 });
