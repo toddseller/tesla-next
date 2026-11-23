@@ -31,3 +31,9 @@ test("the focus ring is a 2px outline in the ring color at full strength, everyw
   const faint = sources.filter((file) => readFileSync(file, "utf8").includes("ring-ring/50")).map((file) => file.pathname.split("/").slice(-2).join("/"));
   expect(faint).toEqual([]);
 });
+
+// patterns-page, "The use steps": heavier use is lighter, as brighter means more on Home's year chart, so the busiest
+// hours stand out on the dark card instead of sinking into it.
+test("the house use steps are the seven blues, each lighter than the one before", () => {
+  expect([1, 2, 3, 4, 5, 6, 7].map((n) => token(`use-${n}`))).toEqual(["#213C86", "#2F52B4", "#3E6AE1", "#6189E8", "#89AAEF", "#AFC6F5", "#D4E1FA"]);
+});

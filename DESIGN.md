@@ -180,7 +180,7 @@ A cool near-black field with two slate steps above it, light gray text, and colo
 ### Flow colors
 Tesla app colors, each bound to one flow on every page, every chart and legend swatch:
 - **Solar** (#F7B500), also the storm-watch pill.
-- **Home** (#3E6AE1). The Patterns page's house-use heat scale runs seven steps from #D4E1FA to #213C86 with Home as the fifth, so the scale reads as the house.
+- **Home** (#3E6AE1). The Patterns page's house-use heat scale runs seven steps from #213C86 for the least use to #D4E1FA for the most, with Home as the third, so the scale reads as the house. Heavier use is lighter, as brighter means more on Home's year chart, so the busiest hours stand out on the dark card.
 - **Powerwall** (#31B76B), also the live dot.
 - **Grid** (#8E8E93).
 - **Vehicle** (#E8474F).

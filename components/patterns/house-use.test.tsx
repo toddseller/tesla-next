@@ -49,7 +49,7 @@ test("an hour without readings is an empty square, unlike any step", () => {
   expect([step(october), october.textContent]).toEqual([null, "no readings"]);
 });
 
-test("the key shows the seven steps, palest to deepest", () => {
+test("the key shows the seven steps, darkest to lightest", () => {
   render(<HouseUseSection hours={HOURS} today="2026-11-10" />);
   const key = document.querySelector("[data-part=key]")!;
   expect([...key.querySelectorAll("[data-part=step]")].map((swatch) => [swatch.textContent, swatch.querySelector("span")!.className.match(/bg-use-\d/)![0]])).toEqual([
