@@ -57,20 +57,25 @@ type Open = { onOpenDay: (day: string) => void; onOpenRange: (range: Range) => v
 function Section({ series, domain, entering, onOpenDay, onOpenRange, x = 0, y = 0, width = 0, height = 0, fill, payload, index = 0, background }:
   ShapeProps & Open & { series: (typeof SERIES)[number]; domain: [number, number]; entering: boolean }) {
   if (!payload) return <g />;
-  const ends = stackEnds(payload)[series];
   const { day, period } = payload;
   const open = day ? () => onOpenDay(day) : period ? () => onOpenRange(period) : undefined;
+  const shared = {
+    fill, "data-series": series, "data-label": payload.label, onClick: open, style: riseFrom(background, domain, index),
+    className: [entering && "motion-rise", open && "cursor-pointer"].filter(Boolean).join(" ") || undefined,
+  };
+  // House use came from the solar and grid under it, so it stacks as 0 only to take the bar's slot; the mark sits at
+  // the house's own value instead, edged in the card's color to read over yellow and gray.
+  if (series === "house") {
+    if (payload.house === null || !background) return <g />;
+    const [low, high] = domain;
+    const at = background.y + (background.height * (high - payload.house)) / (high - low);
+    const reach = Math.min(4, width * 0.1);
+    return <rect {...shared} x={x - reach} y={at - 2} width={width + 2 * reach} height={4} rx={2} stroke="var(--color-card)" strokeWidth={1.5} />;
+  }
+  const ends = stackEnds(payload)[series];
   return (
-    <path
-      d={roundedRect(x, Math.min(y, y + height), width, Math.abs(height), ends.top, ends.bottom)}
-      fill={fill}
-      data-series={series}
-      data-label={payload.label}
-      data-ends={[ends.top && "top", ends.bottom && "bottom"].filter(Boolean).join(" ")}
-      className={[entering && "motion-rise", open && "cursor-pointer"].filter(Boolean).join(" ") || undefined}
-      style={riseFrom(background, domain, index)}
-      onClick={open}
-    />
+    <path {...shared} d={roundedRect(x, Math.min(y, y + height), width, Math.abs(height), ends.top, ends.bottom)}
+      data-ends={[ends.top && "top", ends.bottom && "bottom"].filter(Boolean).join(" ")} />
   );
 }
 
@@ -103,7 +108,7 @@ export function RangeChart({ items, range, ...open }: { items: RangeItem[]; rang
   const entering = useEntering(ENTER_MS);
   const axis = niceAxis(
     Math.min(0, ...rows.map((row) => row.grid ?? 0)),
-    Math.max(1, ...rows.map((row) => (row.solar ?? 0) + Math.max(0, row.grid ?? 0) + (row.house ?? 0))),
+    Math.max(1, ...rows.map((row) => Math.max((row.solar ?? 0) + Math.max(0, row.grid ?? 0), row.house ?? 0))),
   );
   return (
     <div className="flex flex-col gap-4">
@@ -115,7 +120,7 @@ export function RangeChart({ items, range, ...open }: { items: RangeItem[]; rang
           <ReferenceLine y={0} className="stroke-muted-foreground/40" />
           <ChartTooltip cursor={{ className: "fill-white/5" }} content={<BarDetails />} />
           {FLOWS.map(({ key, color }) => (
-            <Bar key={key} dataKey={key} stackId="range" fill={color} maxBarSize={100} isAnimationActive={entering ? false : "auto"} animationDuration={400}
+            <Bar key={key} dataKey={key === "house" ? () => 0 : key} stackId="range" fill={color} maxBarSize={100} isAnimationActive={entering ? false : "auto"} animationDuration={400}
               animationEasing="ease-out" shape={<Section series={key} domain={axis.domain} entering={entering} {...open} />} />
           ))}
         </BarChart>
@@ -123,7 +128,7 @@ export function RangeChart({ items, range, ...open }: { items: RangeItem[]; rang
       <div className="flex justify-center gap-5 text-sm text-muted-foreground">
         {FLOWS.map(({ key, label, color }) => (
           <span key={key} className="flex items-center gap-1.5">
-            <span className="size-2 rounded-full" style={{ background: color }} />
+            <span data-part={key === "house" ? "mark" : undefined} className={key === "house" ? "h-1 w-4 rounded-full" : "size-2 rounded-full"} style={{ background: color }} />
             {label}
           </span>
         ))}
