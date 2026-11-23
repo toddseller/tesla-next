@@ -1,3 +1,5 @@
+import { redirect } from "next/navigation";
+
 import { dateError } from "@/lib/request-dates";
 import { FIRST_DAY, shiftDay, siteToday } from "@/lib/scene/replay";
 
@@ -84,6 +86,20 @@ export function parseRange(params: { start?: Param; end?: Param }, fallback: Ran
 export function parseDay(value: Param): string | null {
   const day = single(value);
   return !dateError("day", day) && day! >= FIRST_DAY && day! <= siteToday() ? day : null;
+}
+
+const NONE: Range = { start: "", end: "" };
+
+// A shared link must name what it shows, so a range or day the page can't show is dropped from the address, not ignored.
+// 307 rather than 308: the dates allowed move with today, so an address refused now may be valid later.
+export function dropUnshown(path: string, params: Record<string, Param>, hasDay: boolean) {
+  const badRange = (params.start !== undefined || params.end !== undefined) && parseRange(params, NONE) === NONE;
+  const badDay = hasDay && params.day !== undefined && !parseDay(params.day);
+  if (!badRange && !badDay) return;
+  const dropped = [...(badRange ? ["start", "end"] : []), ...(badDay ? ["day"] : [])];
+  const kept = Object.entries(params).flatMap(([name, value]) => (dropped.includes(name) || value === undefined ? [] : [value].flat().map((v) => [name, v])));
+  const query = new URLSearchParams(kept).toString();
+  redirect(query ? `${path}?${query}` : path);
 }
 
 export const address = (range: Range, day?: string | null) =>

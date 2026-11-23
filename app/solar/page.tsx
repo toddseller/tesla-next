@@ -8,7 +8,7 @@ import { latest } from "@/lib/live";
 import { readingsOf } from "@/lib/meter";
 import { rangeTotals } from "@/lib/range";
 import { siteToday } from "@/lib/scene/replay";
-import { comparedDays, monthOf, parseDay, parseRange, rangeTitle, stripRange } from "@/lib/solar/ranges";
+import { comparedDays, dropUnshown, monthOf, parseDay, parseRange, rangeTitle, stripRange } from "@/lib/solar/ranges";
 
 type Params = Record<string, string | string[] | undefined>;
 
@@ -24,6 +24,7 @@ export async function generateMetadata({ searchParams }: { searchParams: Promise
 // The range and the open day live in the address, so a link or a reload shows the same page, rendered with its data.
 export default async function Page({ searchParams }: { searchParams: Promise<Params> }) {
   const params = await searchParams;
+  dropUnshown("/solar", params, true);
   const today = requestToday();
   const readings = readingsOf(params.readings);
   const range = parseRange(params, monthOf(today));

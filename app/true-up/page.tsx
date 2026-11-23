@@ -2,7 +2,7 @@ import { cache } from "react";
 
 import { TrueUpPage } from "@/components/true-up/true-up-page";
 import { siteToday } from "@/lib/scene/replay";
-import { parseRange, rangeTitle } from "@/lib/solar/ranges";
+import { dropUnshown, parseRange, rangeTitle } from "@/lib/solar/ranges";
 import { cycleRows, trueUpCost } from "@/lib/true-up/cost";
 import { payback } from "@/lib/true-up/payback";
 import { trueUpSavings } from "@/lib/true-up/savings";
@@ -30,7 +30,9 @@ export async function generateMetadata({ searchParams }: { searchParams: Promise
 // year turns over on the October read, as PG&E's billing does.
 export default async function Page({ searchParams }: { searchParams: Promise<Params> }) {
   const today = requestToday();
-  const { years, range } = await shownRange(await searchParams, today);
+  const params = await searchParams;
+  dropUnshown("/true-up", params, false);
+  const { years, range } = await shownRange(params, today);
   const shown = years.findIndex((y) => y.start_date === range.start && y.end_date === range.end);
   const year = shown >= 0;
   // A finished year's headline compares it with the year before.

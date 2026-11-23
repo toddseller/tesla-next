@@ -1,7 +1,11 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
 import { siteToday } from "@/lib/scene/replay";
-import { address, comparedDays, datesLabel, impactPresets, isDaily, parseDay, parseRange, periods, presets, rangeIncludes, rangeLabel, rangeNames, rangeTitle, stripRange, trueUpPresets } from "./ranges";
+
+const redirect = vi.hoisted(() => vi.fn(() => { throw new Error("NEXT_REDIRECT"); }));
+vi.mock("next/navigation", () => ({ redirect }));
+
+import { address, comparedDays, datesLabel, dropUnshown, impactPresets, isDaily, parseDay, parseRange, periods, presets, rangeIncludes, rangeLabel, rangeNames, rangeTitle, stripRange, trueUpPresets } from "./ranges";
 
 const march = { start: "2026-03-01", end: "2026-03-31" };
 
@@ -73,7 +77,10 @@ describe("the address", () => {
     vi.useFakeTimers({ toFake: ["Date"] });
     vi.setSystemTime(Date.parse("2026-11-07T20:00:00Z"));
   });
-  afterEach(() => vi.useRealTimers());
+  afterEach(() => {
+    vi.useRealTimers();
+    redirect.mockClear();
+  });
 
   const today = { start: "2026-11-07", end: "2026-11-07" };
 
@@ -100,6 +107,33 @@ describe("the address", () => {
     expect(parseDay("2026-11-08")).toBeNull();
     expect(parseDay("2026-02-30")).toBeNull();
     expect(parseDay(undefined)).toBeNull();
+  });
+
+  test.each([
+    [{}],
+    [{ start: "2026-10-01", end: "2026-10-31", readings: "reported" }],
+    [{ start: "2026-10-01", end: "2026-10-31", day: "2026-10-14" }],
+  ])("%j is left as it is", (params) => {
+    dropUnshown("/solar", params, true);
+    expect(redirect).not.toHaveBeenCalled();
+  });
+
+  test.each<[Record<string, string | string[]>, string]>([
+    [{ start: "nope", end: "2026-10-31" }, "/solar"],
+    [{ start: "2026-10-01" }, "/solar"],
+    [{ start: "1900-01-01", end: "2026-10-31", readings: "reported" }, "/solar?readings=reported"],
+    [{ start: "2026-10-31", end: "2026-10-01", backup: "25-26" }, "/solar?backup=25-26"],
+    [{ day: "2030-01-01" }, "/solar"],
+    [{ start: "2026-10-01", end: "2026-10-31", day: "soon" }, "/solar?start=2026-10-01&end=2026-10-31"],
+    [{ start: "x", day: "2026-10-14", readings: ["a", "b"] }, "/solar?day=2026-10-14&readings=a&readings=b"],
+  ])("%j redirects to %s", (params, to) => {
+    expect(() => dropUnshown("/solar", params, true)).toThrow("NEXT_REDIRECT");
+    expect(redirect).toHaveBeenCalledWith(to);
+  });
+
+  test("a page without a day view leaves day alone", () => {
+    dropUnshown("/impact", { day: "soon" }, false);
+    expect(redirect).not.toHaveBeenCalled();
   });
 
   test("a range and an open day make the page's address", () => {

@@ -11,7 +11,8 @@ const carCharging = vi.hoisted(() => vi.fn(async () => ({
   solar_percentage: 0, powerwall_percentage: 60, grid_percentage: 40, off_grid_percentage: 60, cars: [],
 })));
 vi.mock("@/lib/car-charging", () => ({ carCharging }));
-vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn() }) }));
+const redirect = vi.hoisted(() => vi.fn((to: string) => { throw new Error(`NEXT_REDIRECT ${to}`); }));
+vi.mock("next/navigation", () => ({ redirect, useRouter: () => ({ push: vi.fn() }) }));
 
 const { default: Page, generateMetadata } = await import("./page");
 
@@ -40,15 +41,19 @@ test("the range in the address is served with its figures", async () => {
   expect(html).toContain("45.6 kWh");
 });
 
-test.each([
-  [{}],
-  [{ start: "nope", end: "2026-10-31" }],
-  [{ start: "1900-01-01", end: "2026-10-31" }],
-  [{ start: "2026-10-31", end: "2026-10-01" }],
-])("%j is served as today in the site's time zone", async (params) => {
-  const html = await served(params);
+test("no range is served as today in the site's time zone", async () => {
+  const html = await served();
   expect(impactFigures).toHaveBeenCalledWith("2026-11-08", "2026-11-08", "corrected");
   expect(html).toContain("November 8, 2026");
+});
+
+test.each([
+  [{ start: "nope", end: "2026-10-31", backup: "25-26" }],
+  [{ start: "1900-01-01", end: "2026-10-31", backup: "25-26" }],
+  [{ start: "2026-10-31", end: "2026-10-01", backup: "25-26" }],
+])("%j redirects to the address without its range", async (params) => {
+  await expect(served(params)).rejects.toThrow(new Error("NEXT_REDIRECT /impact?backup=25-26"));
+  expect(impactFigures).not.toHaveBeenCalled();
 });
 
 test("the Backup section is served for the year in the address, this true-up year without one", async () => {

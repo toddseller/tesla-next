@@ -7,7 +7,7 @@ import { carCharging } from "@/lib/car-charging";
 import { impactFigures } from "@/lib/impact";
 import { type Readings, readingsOf } from "@/lib/meter";
 import { shiftDay, siteToday } from "@/lib/scene/replay";
-import { comparedDays, parseRange, rangeTitle } from "@/lib/solar/ranges";
+import { comparedDays, dropUnshown, parseRange, rangeTitle } from "@/lib/solar/ranges";
 
 type Params = Record<string, string | string[] | undefined>;
 
@@ -36,6 +36,7 @@ export async function generateMetadata({ searchParams }: { searchParams: Promise
 export default async function Page({ searchParams }: { searchParams: Promise<Params> }) {
   const today = requestToday();
   const params = await searchParams;
+  dropUnshown("/impact", params, false);
   const { readings, todays, range } = await shownRange(params, today);
   const year = backupYear(params.backup, today);
   const earlier = comparedDays(range, today)?.then;
