@@ -13,11 +13,11 @@ The site SHALL serve the home page at `/` with six chapters in this order, each 
 - **THEN** the first response holds Now, Today, 2026, Records, Habits, Since 2021 and Pick a day in that order, each chapter with its figures and its link
 
 ### Requirement: What the page is
-The page SHALL open, above the Now chapter, with its one heading: a line saying it shows one home's Tesla solar panels, with their size in kW, and its three Powerwalls, live and recorded since October 22, 2021.
+The page SHALL open, above the Now chapter, with its one heading: a line saying it shows one home's Tesla solar panels, with their size in kW, and its three Powerwalls, live and recorded since October 10, 2021, the first day of data.
 
 #### Scenario: A first-time visitor
 - **WHEN** a visitor opens `/`
-- **THEN** the first thing under the top bar is the heading "One home's 12.24 kW of Tesla solar and three Powerwalls, live and since October 22, 2021", the page's only h1
+- **THEN** the first thing under the top bar is the heading "One home's 12.24 kW of Tesla solar and three Powerwalls, live and recorded since October 10, 2021", the page's only h1
 
 ### Requirement: The same story at every width
 Every chapter SHALL show the same figures, sentences and links at every window width; only their layout SHALL change.
@@ -176,7 +176,7 @@ The Today chapter's link SHALL open today on the Solar page, in its month.
 - **THEN** `/solar?start=2026-11-01&end=2026-11-30&day=2026-11-21` opens
 
 ### Requirement: The year's solar by day and hour
-The year chapter SHALL draw one row per day of the chosen year and one column per hour of the site day, each cell shaded from dark through amber to white by the solar kWh made in that hour. Days before October 22, 2021, after today, or without solar figures SHALL be left blank.
+The year chapter SHALL draw one row per day of the chosen year and one column per hour of the site day, each cell shaded from dark through amber to white by the solar kWh made in that hour. Days before October 10, 2021, after today, or without solar figures SHALL be left blank.
 
 #### Scenario: A clear June day and a cloudy one
 - **WHEN** June 13 made 9 kWh at noon and June 14 made 1 kWh at noon
@@ -232,7 +232,7 @@ Choosing a year SHALL open its readout on the same month and day as the day show
 
 #### Scenario: A date before the figures begin
 - **WHEN** the readout shows June 13, 2026 and a visitor chooses 2021
-- **THEN** the readout shows October 22, 2021, the first day with figures
+- **THEN** the readout shows the first day with figures, in October 2021
 
 ### Requirement: A year that is slow or fails
 While a chosen year loads, the chart SHALL say so and keep the year it showed. If the year fails to load, the chapter SHALL say it couldn't load that year, offer to try again, and keep the year it showed chosen.
@@ -268,7 +268,7 @@ The Records chapter SHALL offer four tabs, Best solar day, Most sent to PG&E in 
 
 #### Scenario: Never off the grid
 - **WHEN** Top Ten has no outages
-- **THEN** the Longest outage tab says "The house hasn't been off the grid since October 22, 2021."
+- **THEN** the Longest outage tab says "The house hasn't been off the grid since it was approved to run on October 22, 2021."
 
 ### Requirement: A Records tab in the address
 Choosing a Records tab SHALL put it in the address as `record` (`solar`, `sent-day`, `sent-month` or `outage`) without adding a history entry, keeping the address's other parameters, and opening such an address SHALL show that tab in the first response.
@@ -278,7 +278,7 @@ Choosing a Records tab SHALL put it in the address as `record` (`solar`, `sent-d
 - **THEN** the address is `/?year=2024&record=outage` and Longest outage is shown
 
 ### Requirement: How each record was beaten
-Under its steps, each Records tab SHALL say how many days (or months) since the record was set have come within 2% of it, or that none has. Each Records tab SHALL chart its record since October 22, 2021 as steps, the highest figure up to each date, its y-axis marked at 0, the record and the lowest figure if below 0 (to a tenth, or in days and hours for outages), and its x-axis at each January 1. The current record SHALL be marked with its date and how long ago it was set ("set 4 years ago").
+Under its steps, each Records tab SHALL say how many days (or months) since the record was set have come within 2% of it, or that none has. Each Records tab SHALL chart its record since October 10, 2021 as steps, the highest figure up to each date, its y-axis marked at 0, the record and the lowest figure if below 0 (to a tenth, or in days and hours for outages), and its x-axis at each January 1. The current record SHALL be marked with its date and how long ago it was set ("set 4 years ago").
 
 #### Scenario: A record that stands
 - **WHEN** June 13, 2022 at 80.9 kWh is the best solar day and nothing has beaten it
@@ -334,10 +334,10 @@ The Since 2021 chapter SHALL chart, by month from October 2021 to today, the run
 - **THEN** the axis reads 2022 to 2026, each at its January 1, so March 2025's payback mark falls just after "2025", and nothing is drawn past today
 
 ### Requirement: Since 2021's figures
-Beside its chart, the Since 2021 chapter SHALL give the solar since October 22, 2021, say whether solar has generated as much as the house used and by what share, as Impact gives it for that range, and give the current true-up year's net so far as True-Up's net tile gives it: the figure once, then in words what it is, imported or sent, more than the other, since the year began, without repeating the figure.
+Beside its chart, the Since 2021 chapter SHALL give the solar since October 10, 2021, say whether solar has generated as much as the house used and by what share, as Impact gives it for that range, and give the current true-up year's net so far as True-Up's net tile gives it: the figure once, then in words what it is, imported or sent, more than the other, since the year began, without repeating the figure.
 
 #### Scenario: As much as the house used
-- **WHEN** Impact gives 75,611 kWh of solar and 100% of the house's use for October 22, 2021 to today
+- **WHEN** Impact gives 75,611 kWh of solar and 100% of the house's use for October 10, 2021 to today
 - **THEN** the chapter says solar has generated as much as the house used (100%) and gives 75,611 kWh
 
 #### Scenario: The true-up so far
@@ -370,14 +370,14 @@ The home page SHALL NOT show what the system cost, its net cost, the amount left
 - **THEN** no dollar figure about what the system cost appears
 
 ### Requirement: Pick a day
-The page SHALL end with a date field limited to October 22, 2021 through today, a filled Go button that leads, and an outlined Random day button. The field SHALL start empty; submitting it (Go or Enter) SHALL open that day on the Solar page, and changing it alone SHALL NOT. A date outside the span SHALL be refused with a message naming the span, under the form, one line on a wide screen, the buttons unmoved. Random day SHALL open a day picked at random from that span.
+The page SHALL end with a date field limited to October 10, 2021 through today, a filled Go button that leads, and an outlined Random day button. The field SHALL start empty; submitting it (Go or Enter) SHALL open that day on the Solar page, and changing it alone SHALL NOT. A date outside the span SHALL be refused with a message naming the span, under the form, one line on a wide screen, the buttons unmoved. Random day SHALL open a day picked at random from that span.
 
 #### Scenario: A random day
 - **WHEN** a visitor presses Random day
-- **THEN** a day between October 22, 2021 and today opens on `/solar` in its month
+- **THEN** a day between October 10, 2021 and today opens on `/solar` in its month
 
 #### Scenario: A refused date on a wide screen
-- **WHEN** a visitor at 1440 pixels submits a date before October 22, 2021
+- **WHEN** a visitor at 1440 pixels submits a date before October 10, 2021
 - **THEN** the message appears and the Go and Random day buttons stay where they were
 
 ### Requirement: Chapters below Today stay as served
