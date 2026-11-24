@@ -34,7 +34,7 @@ Every page SHALL have a top bar with the site's icon and name, "Tesla Solar Repo
 - **THEN** it finds a navigation landmark holding the Pages button, and once opened, the seven links with the current one announced as the current page
 
 ### Requirement: The frame fits any screen
-At any window width from 320 pixels up, every page's frame SHALL fit the window with no sideways scrolling. From 640 pixels up, the top bar's seven links SHALL stay on one row, the live status taking a row of its own when it doesn't fit beside them; below 640 pixels the brand and the page menu's button SHALL share one row, with the live status under them. Each link and the page menu's button SHALL be at least 44 pixels tall so it can be tapped.
+At any window width from 320 pixels up, every page's frame SHALL fit the window with no sideways scrolling. From 640 pixels up, the top bar's seven links SHALL stay on one row with each link's name on one line, the live status taking a row of its own when it doesn't fit beside them; below 640 pixels the brand and the page menu's button SHALL share one row, with the live status under them. Each link and the page menu's button SHALL be at least 44 pixels tall so it can be tapped.
 
 #### Scenario: A phone
 - **WHEN** a viewer opens the site on a 390 pixel wide screen
@@ -51,6 +51,14 @@ At any window width from 320 pixels up, every page's frame SHALL fit the window 
 #### Scenario: A laptop window
 - **WHEN** a viewer opens the site in a 1024 pixel wide window
 - **THEN** the name and all seven links share one row, and the live status is on the row under them
+
+#### Scenario: A 1440 window during a storm watch
+- **WHEN** a viewer opens the site in a 1440 pixel wide window while the top bar shows STORM WATCH and the SOLAR and HOME readings
+- **THEN** every link's name, "True-Up" and "Top Ten" included, is on one line, the name and all seven links share one row, and the live status is on the row under them
+
+#### Scenario: A tablet window
+- **WHEN** a viewer opens the site in a 768 pixel wide window
+- **THEN** all seven links share one row with each name on one line, and nothing scrolls sideways
 
 ### Requirement: The dashboard's design system
 Every page SHALL use one dark design system: a near-black background (`#0E1116`), raised panels (`#151A21`) with a fine border (`#232831`), light text (`#E6E8EB`) and muted gray labels (`#9AA3AD`). Text SHALL be set in IBM Plex Sans and figures in IBM Plex Mono, both served by the site itself; a figure is any measured or computed number, kWh, kW, percentages and dollars alike. Every card's heading SHALL be a section label: Plex Sans at 14 pixels, weight 500, uppercase with 0.06em tracking, in the muted gray. Tesla red (`#E82127`) SHALL mark the current page and indicators, and SHALL NOT be used for text smaller than 24 pixels, because it falls short of 4.5:1 contrast on the background. The Distribution house scene and the Solar day view's sections keep their own styling.
