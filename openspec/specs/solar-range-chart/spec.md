@@ -146,7 +146,7 @@ Each bar SHALL stack solar, positive grid and positive Powerwall from zero, in t
 - **THEN** the grid section hangs from zero and the Powerwall section hangs under it
 
 ### Requirement: Bar shape and labels
-Each bar SHALL round only its stack's top and bottom ends. The house mark SHALL be a short rounded line in the home color, a little wider than its bar and edged in the card's color, drawn over the bar. Flows SHALL take the dashboard shell's colors, with a legend naming Solar, Grid, Powerwall and House (shown as the mark), a note that below zero means more was sent to the grid than taken from it, or more stored in the Powerwalls than they gave back that day, and the value axis labeled in kWh.
+Each bar SHALL round only its stack's top and bottom ends. The house mark SHALL be a short rounded line in the home color, a little wider than its bar and edged in the card's color, drawn over the bar. Flows SHALL take the dashboard shell's colors, with a legend naming Solar, Grid, Powerwall and House (shown as the mark), a note that below zero means more was sent to the grid than taken from it, or more stored in the Powerwalls than they gave back that day (that month, under monthly bars), and the value axis labeled in kWh.
 
 #### Scenario: A stacked bar
 - **WHEN** a bar has solar and grid above zero, and no Powerwall
@@ -163,6 +163,14 @@ Each bar SHALL round only its stack's top and bottom ends. The house mark SHALL 
 #### Scenario: Powerwall at the bottom
 - **WHEN** a bar's grid and Powerwall are both below zero
 - **THEN** the bottom of the Powerwall section is rounded, under the grid section
+
+#### Scenario: The note under daily bars
+- **WHEN** the range is October 2026
+- **THEN** the note ends "than they gave back that day."
+
+#### Scenario: The note under monthly bars
+- **WHEN** the range is 2023
+- **THEN** the note ends "than they gave back that month."
 
 ### Requirement: Bar details
 Pointing at a bar, or tapping it on a touch screen, SHALL show its label and its solar, grid, Powerwall and house values, the house's named "House, car included" as the chart's legend names it. A daily bar's details SHALL also say that clicking opens the day, and a period bar's that clicking shows its days.
