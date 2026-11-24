@@ -7,9 +7,8 @@ import { Calendar, MARKER_SELECTED } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { toDate, toDay } from "@/lib/calendar-dates";
 import { FIRST_DAY } from "@/lib/scene/replay";
-import { datesLabel, type Preset, type Range, rangeTitle, step } from "@/lib/solar/ranges";
+import { datesLabel, holds, type Preset, type Range, rangeTitle, step } from "@/lib/solar/ranges";
 
-const holds = (preset: Preset, range: Range) => preset.range.start === range.start && preset.range.end === range.end;
 const shape = (range: Range) => step(range, 1)?.name;
 
 // With `today`, a preset stays selected for a range of its shape, so stepping keeps the viewer on the preset that moved.

@@ -74,11 +74,13 @@ export function trueUpPresets(years: { start_date: string; end_date: string }[])
   ];
 }
 
+// Nothing comes before the first day of service, so a range from it or earlier to All time's end or later, as a shared or
+// typed address may give, shows all the data and is All time.
+export const holds = ({ label, range: own }: Preset, range: Range) =>
+  label === "All time" ? range.start <= FIRST_DAY && range.end >= own.end : range.start === own.start && range.end === own.end;
+
 // True-Up's All time runs between true-up year boundaries, the second still to come, so it's named rather than dated.
-export function isTrueUpAllTime(range: Range, years: { start_date: string; end_date: string }[]) {
-  const allTime = trueUpPresets(years).at(-1)!.range;
-  return range.start === allTime.start && range.end === allTime.end;
-}
+export const isTrueUpAllTime = (range: Range, years: { start_date: string; end_date: string }[]) => holds(trueUpPresets(years).at(-1)!, range);
 
 const single = (value: Param) => (typeof value === "string" ? value : null);
 

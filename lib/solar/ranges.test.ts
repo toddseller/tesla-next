@@ -5,7 +5,7 @@ import { siteToday } from "@/lib/scene/replay";
 const redirect = vi.hoisted(() => vi.fn(() => { throw new Error("NEXT_REDIRECT"); }));
 vi.mock("next/navigation", () => ({ redirect }));
 
-import { address, comparedDays, datesLabel, dropUnshown, impactPresets, isDaily, parseDay, parseRange, periods, presets, rangeIncludes, rangeLabel, rangeNames, rangeTitle, step, stripRange, trueUpPresets } from "./ranges";
+import { address, comparedDays, datesLabel, dropUnshown, holds, impactPresets, isDaily, isTrueUpAllTime, parseDay, parseRange, periods, presets, rangeIncludes, rangeLabel, rangeNames, rangeTitle, step, stripRange, trueUpPresets } from "./ranges";
 
 const march = { start: "2026-03-01", end: "2026-03-31" };
 
@@ -191,6 +191,33 @@ test("True-Up offers the core's tail: its current year and All time to that year
     { label: "True-up year", range: { start: "2026-10-01", end: "2027-09-30" } },
     { label: "All time", range: { start: "2021-10-01", end: "2027-09-30" } },
   ]);
+});
+
+// dashboard-shell, "A range over all the data is All time".
+describe("holds", () => {
+  const trueUpAll = trueUpPresets(trueUpYearsTo(2027))[1];
+  const [month, , , solarAll] = presets("2026-11-24");
+
+  test("All time holds a range from the first day of service or earlier to its end or later", () => {
+    expect(holds(trueUpAll, { start: "2021-10-10", end: "2027-09-30" })).toBe(true);
+    expect(holds(trueUpAll, { start: "2021-10-01", end: "2027-09-30" })).toBe(true);
+    expect(holds(solarAll, { start: "2021-10-01", end: "2026-11-30" })).toBe(true);
+  });
+
+  test("a range leaving out some of the data stays custom", () => {
+    expect(holds(solarAll, { start: "2021-10-10", end: "2026-11-23" })).toBe(false);
+    expect(holds(solarAll, { start: "2021-10-11", end: "2026-11-24" })).toBe(false);
+  });
+
+  test("other presets hold only their own dates", () => {
+    expect(holds(month, { start: "2026-11-01", end: "2026-11-30" })).toBe(true);
+    expect(holds(month, { start: "2026-10-31", end: "2026-11-30" })).toBe(false);
+  });
+
+  test("True-Up names a range over all its data All time", () => {
+    expect(isTrueUpAllTime({ start: "2021-10-10", end: "2027-09-30" }, trueUpYearsTo(2027))).toBe(true);
+    expect(isTrueUpAllTime({ start: "2021-10-11", end: "2027-09-30" }, trueUpYearsTo(2027))).toBe(false);
+  });
 });
 
 test("in 2036 there are still just the two", () => {
