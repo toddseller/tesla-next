@@ -80,7 +80,7 @@ Each ranking SHALL lead with its #1: its figure in kWh, or for outages its lengt
 - **THEN** the record reads "Tied with #2" instead of a lead
 
 ### Requirement: The timeline
-Each ranking SHALL show its ten entries as dots on a timeline from October 2021 to the end of the current year, with the years marked, the current year shaded, and a figure axis spanning the ten entries' figures rather than starting at zero, its marks read as the entries' figures are (an outage's in days and hours). The #1 dot SHALL be ringed in Tesla red, and the #2 and #3 dots SHALL carry their rank. Solar days SHALL be drawn in the solar color, exports in the grid color and outages in the Powerwall color. The timeline SHALL be described in words for assistive technology.
+Each ranking SHALL show its ten entries as dots on a timeline from October 2021 to the end of the current year, with the years marked, the current year shaded and captioned "this year", and a figure axis spanning the ten entries' figures rather than starting at zero, its marks read as the entries' figures are (an outage's in days and hours). The #1 dot SHALL be ringed in Tesla red, and the #2 to #10 dots SHALL carry their rank. Solar days SHALL be drawn in the solar color, exports in the grid color and outages in the Powerwall color. The timeline SHALL be described in words for assistive technology.
 
 #### Scenario: Solar days
 - **WHEN** the solar ranking is shown
@@ -89,6 +89,10 @@ Each ranking SHALL show its ten entries as dots on a timeline from October 2021 
 #### Scenario: Outages
 - **WHEN** the outage ranking is shown
 - **THEN** its axis is marked in days and hours, as "20 h" and "1 d 16 h", each on one line, and its dots are in the Powerwall color
+
+#### Scenario: Every runner-up numbered
+- **WHEN** a ranking with ten entries is shown
+- **THEN** the dots read 2 to 10, the #1 dot is ringed, and the shaded band reads "this year"
 
 ### Requirement: The runners-up
 Under each timeline, #2 to #10 SHALL be listed with their rank, figure and date, and entries from the current calendar year in the site's time zone SHALL be marked as this year's.
