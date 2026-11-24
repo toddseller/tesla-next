@@ -39,16 +39,16 @@ export default async function Page({ searchParams }: { searchParams: Promise<Par
   // A finished year's headline compares it with the year before.
   const previous = year && !years[shown].current ? years[shown - 1] : undefined;
   const rows = cycleRows(range.start, range.end);
-  const [cycles, cost, savings, paidBack, previousCost, share] = await Promise.all([
+  const [cycles, cost, savings, paidBack, previousCost, explained] = await Promise.all([
     rows,
     year ? trueUpCost(range.start, range.end, today) : null,
     year ? trueUpSavings(range.start, range.end) : null,
     payback(today),
     previous ? trueUpCost(previous.start_date, previous.end_date, today) : null,
-    year ? rows.then(cyclesShare) : null,
+    rows.then(cyclesShare),
   ]);
   return (
     <TrueUpPage range={range} years={years} cycles={cycles} cost={cost} savings={savings} payback={paidBack} today={today}
-      before={previous && previousCost && { label: previous.label, amount_due: previousCost.amount_due }} share={share} />
+      before={previous && previousCost && { label: previous.label, amount_due: previousCost.amount_due }} explained={explained} />
   );
 }

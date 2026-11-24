@@ -216,16 +216,49 @@ test("without a headline, the title and subtitle stay", () => {
   expect(screen.getByText("Grid energy by PG&E billing cycle")).toBeTruthy();
 });
 
-// true-up-tracker, "The year explained": under the lead for a true-up year, and not for other ranges.
-test("a true-up year explains what its share of solar left with PG&E, under the lead", () => {
-  render(<TrueUpPage range={YEAR_25} years={YEARS} cycles={YEAR_25_26} cost={COST_25_26} savings={SAVINGS_25_26} payback={null} today="2026-11-08" share={89}
-    before={{ label: "'24 - '25", amount_due: 554.83 }} />);
+// true-up-tracker, "The range explained" and "The headline": under a headline, or the lead itself without one.
+test("a true-up year with a headline explains its share under it, muted", () => {
+  render(<TrueUpPage range={YEAR_25} years={YEARS} cycles={YEAR_25_26} cost={COST_25_26} savings={SAVINGS_25_26} payback={null} today="2026-11-08"
+    explained={{ share: 89, start: "2025-10-03", end: "2026-10-04" }} before={{ label: "'24 - '25", amount_due: 554.83 }} />);
   const [lead, why] = leads();
   expect(lead.textContent).toContain("ended owing");
   expect(why.textContent).toMatch(/^In '25.-.'26 solar covered 89% of the house's use, so the house drew [\d,]+ kWh more from PG&E than it sent\.$/);
+  expect(why.className).toContain("text-muted-foreground");
 });
 
-test("All time has no explanation", () => {
+test("a true-up year without a headline leads with its explanation, at the lead's size", () => {
+  render(<TrueUpPage range={YEAR_25} years={YEARS} cycles={YEAR_25_26} cost={COST_25_26} savings={SAVINGS_25_26} payback={null} today="2026-11-08"
+    explained={{ share: 89, start: "2025-10-03", end: "2026-10-04" }} />);
+  const [lead] = leads();
+  expect(lead.textContent).toMatch(/^In '25.-.'26 solar covered 89%/);
+  expect(lead.className).toContain(LEAD);
+  expect(screen.queryByText("Grid energy by PG&E billing cycle")).toBeNull();
+});
+
+test("All time leads with its explanation, named from the first day of data", () => {
+  render(<TrueUpPage range={{ start: "2021-10-01", end: "2027-09-30" }} years={YEARS} cycles={[...YEAR_25_26, ...CURRENT]} cost={null} savings={null} payback={null}
+    today="2026-11-08" explained={{ share: 100, start: "2021-10-10", end: "2026-11-08" }} />);
+  const [lead] = leads();
+  expect(lead.textContent).toMatch(/^Since October 10, 2021 solar has covered 100% of the house's use, yet the house has drawn [\d,]+ kWh more from PG&E than it sent: the Powerwalls lose/);
+  expect(lead.className).toContain(LEAD);
+  expect(screen.queryByText("Grid energy by PG&E billing cycle")).toBeNull();
+});
+
+test("a past custom range is named from and to its cycles' days", () => {
+  render(<TrueUpPage range={{ start: "2026-02-10", end: "2026-04-01" }} years={YEARS} cycles={YEAR_25_26.slice(4, 6)} cost={null} savings={null} payback={null}
+    today="2026-11-08" explained={{ share: 96, start: "2026-02-05", end: "2026-04-06" }} />);
+  expect(leads()[0].textContent).toMatch(/^From February 5 to April 6, 2026 solar covered 96% of the house's use/);
+});
+
+test("with nothing to explain yet, the subtitle stays", () => {
   render(page({ start: "2021-10-01", end: "2026-11-08" }, [...YEAR_25_26, ...CURRENT], CURRENT_COST, null));
+  expect(screen.getByText("Grid energy by PG&E billing cycle")).toBeTruthy();
   expect(screen.queryByText(/solar (has )?covered/)).toBeNull();
+});
+
+// A custom range's figures are its billing cycles', so whether it's under way follows their days, not the days picked.
+test("a custom range inside the running cycle reads as under way", () => {
+  render(<TrueUpPage range={{ start: "2026-11-01", end: "2026-11-10" }} years={YEARS} cycles={CURRENT.slice(1, 2)} cost={null} savings={null} payback={null}
+    today="2026-11-23" explained={{ share: 67, start: "2026-11-03", end: "2026-11-23" }} />);
+  expect(leads()[0].textContent).toMatch(/^Since November 3, 2026 solar has covered 67% of the house's use/);
 });

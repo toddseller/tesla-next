@@ -3,7 +3,8 @@
 import { useRouter } from "next/navigation";
 
 import { FirstView } from "@/components/count-up";
-import { Lead } from "@/components/lead";
+import { LEAD, Lead } from "@/components/lead";
+import { longDate } from "@/lib/calendar-dates";
 import { RangeControls } from "@/components/solar/range-controls";
 import { useReload } from "@/components/solar/use-reload";
 import { Term } from "@/components/term";
@@ -19,7 +20,7 @@ import { datesLabel, type Range, rangeIncludes, trueUpPresets } from "@/lib/sola
 import type { Payback } from "@/lib/true-up/payback";
 import type { TrueUpYear } from "@/lib/true-up/reads";
 import type { Savings } from "@/lib/true-up/savings";
-import { type Cost, currentHeadline, type Cycle, pastHeadline, startedCycles, totals, yearExplained, yearName } from "@/lib/true-up/text";
+import { type Cost, currentHeadline, type Cycle, pastHeadline, rangeExplained, startedCycles, totals, yearName } from "@/lib/true-up/text";
 
 const address = ({ start, end }: Range) => `/true-up?start=${start}&end=${end}`;
 const query = ({ start, end }: Range) => `start_date=${start}&end_date=${end}`;
@@ -28,11 +29,11 @@ type Props = {
   range: Range; years: TrueUpYear[]; cycles: Cycle[]; cost: Cost | null; savings: Savings | null; payback: Payback | null; today: string;
   // For a finished year, the year before's amount due, which its headline compares with.
   before?: { label: string; amount_due: number | null } | null;
-  // For a true-up year, solar's share of the house's use over its days so far.
-  share?: number | null;
+  // Solar's share of the house's use over the billing cycles' days shown, and those days.
+  explained?: { share: number; start: string; end: string } | null;
 };
 
-export function TrueUpPage({ range, years, cycles: served, cost: servedCost, savings: servedSavings, payback: servedPayback, today, before = null, share = null }: Props) {
+export function TrueUpPage({ range, years, cycles: served, cost: servedCost, savings: servedSavings, payback: servedPayback, today, before = null, explained = null }: Props) {
   const router = useRouter();
   const [cycles, reloadCycles] = useReload(address(range), served);
   const [cost, reloadCost] = useReload(address(range), servedCost);
@@ -67,6 +68,11 @@ export function TrueUpPage({ range, years, cycles: served, cost: servedCost, sav
   const firstView = useEntering(ENTER_MS);
   const projection = year?.current && cost ? currentHeadline(cost, year.label, year.end_date) : null;
   const headline = projection?.headline ?? (year && !year.current && cost ? pastHeadline({ label: year.label, amount_due: cost.amount_due }, before) : null);
+  // A range that isn't a true-up year is named by, and is under way with, the billing cycles' days its figures cover.
+  const under = year ? year.current : Boolean(explained && rangeIncludes(explained, today));
+  const name = year ? (year.current ? "This true-up year" : `In ${yearName(year.label)}`)
+    : explained && (under ? `Since ${longDate(explained.start)}` : `From ${datesLabel(explained, "long").replace(" – ", " to ")}`);
+  const sentence = explained && name && rangeExplained({ name, under, soFar: Boolean(year?.current), share: explained.share, net: totals(startedCycles(cycles)).net });
   return (
     <FirstView value={firstView}>
       <div className="flex flex-col gap-5">
@@ -85,13 +91,9 @@ export function TrueUpPage({ range, years, cycles: served, cost: servedCost, sav
                 {projection && <Lead text={projection.line} className="text-sm text-muted-foreground" />}
               </>
             ) : (
-              <p className="text-sm text-muted-foreground">Grid energy by PG&amp;E billing cycle</p>
+              sentence ? <p className={LEAD}>{sentence}</p> : <p className="text-sm text-muted-foreground">Grid energy by PG&amp;E billing cycle</p>
             )}
-            {year && share !== null && (
-              <p className="mt-2 max-w-[62ch] text-[15px] text-pretty text-muted-foreground">
-                {yearExplained({ label: year.label, current: year.current, share, net: totals(startedCycles(cycles)).net })}
-              </p>
-            )}
+            {headline && sentence && <p className="mt-2 max-w-[62ch] text-[15px] text-pretty text-muted-foreground">{sentence}</p>}
           </div>
         </div>
         <Tiles cycles={cycles} cost={year && cost} year={year} today={today} />

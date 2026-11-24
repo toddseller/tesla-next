@@ -4,7 +4,7 @@ import { Line, LineChart, ReferenceArea, ReferenceLine, XAxis, YAxis } from "rec
 
 import { Doorway } from "@/components/home/doorway";
 import { DetailsBox, type Hover } from "@/components/home/chart-details";
-import { dollarRange, yearExplained } from "@/lib/true-up/text";
+import { dollarRange, rangeExplained } from "@/lib/true-up/text";
 import { ChartContainer, ChartTooltip } from "@/components/ui/chart";
 import { longDate } from "@/lib/calendar-dates";
 import { yearTicks } from "@/lib/home/records";
@@ -76,7 +76,7 @@ export function Since({ today, months, solar, matched, net, share, owed, trueUpS
           {share !== null && (
             <p className="text-[15px] text-pretty text-muted-foreground">
               {matched >= 100 && share < 100 && `That ${matched}% rests on the early years, when solar covered more than the house used. `}
-              {yearExplained({ label: "", current: true, share, net })}
+              {rangeExplained({ name: "This true-up year", under: true, soFar: true, share, net })}
             </p>
           )}
         </div>
