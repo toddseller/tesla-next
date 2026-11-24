@@ -9,6 +9,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { useLiveStream } from "@/components/use-live-stream";
 import { slidePage } from "@/components/page-slide";
 import { Rolling } from "@/components/rolling";
+import { Term } from "@/components/term";
 import { gridPill, type LiveStatus, liveStatus, type SiteState } from "@/lib/live-status";
 import { kw } from "@/lib/scene/live-scene";
 import { PAGES } from "@/lib/pages";
@@ -54,7 +55,7 @@ function Status({ initialStatus, initialSite, renderedAt }: Props) {
       {grid && (
         <span data-part="grid-pill" className={`flex items-center gap-1.5 rounded-full border px-2.5 py-1 ${PILL_STYLES[grid.kind]}`}>
           {grid.kind === "outage" && <span aria-hidden className="size-1.5 rounded-full bg-primary" />}
-          {grid.text}
+          {grid.kind === "storm" ? <Term name="storm-watch">{grid.text}</Term> : grid.text}
         </span>
       )}
       {/* Flex rows center the squares on the line, as the dot is; inline, they sat below the capitals' middle. */}

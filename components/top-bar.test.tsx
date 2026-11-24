@@ -2,6 +2,7 @@
 import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { usePathname } from "next/navigation";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
+import { TERMS } from "@/lib/terms";
 import { FakeStream } from "@/test/fake-event-source";
 import { PageSlide } from "./page-slide";
 import { TopBar } from "./top-bar";
@@ -120,6 +121,7 @@ const pill = () => document.querySelector('[data-part="grid-pill"]');
 test("an outage shows OFF GRID SINCE the stretch the page was rendered with, before the Powerwall pill", () => {
   render(<TopBar initialStatus={JSON.stringify(OUTAGE)} initialSite={JSON.stringify(OFF_GRID_STRETCH)} renderedAt={RENDERED_AT} />);
   expect(pill()!.textContent).toBe("OFF GRID SINCE 6:25 AM");
+  expect(within(pill() as HTMLElement).queryByRole("button")).toBeNull();
   expect(shown().text).toBe("LIVE 9:59 AMOFF GRID SINCE 6:25 AMPW 92% · DISCHARGING");
 });
 
@@ -130,13 +132,18 @@ test("a site_state event fills in the outage's start", () => {
   expect(pill()!.textContent).toBe("OFF GRID SINCE 6:25 AM");
 });
 
+// term-hints, "The top bar's term": only storm watch is hinted, in the pill's own color.
 test("a test, storm watch and going back on the grid", () => {
   render(bar());
   expect(pill()).toBeNull();
   FakeStream.opened[0].send({ ...STATUS, island_status: "off_grid_intentional", storm_mode_active: false });
   expect(pill()!.textContent).toBe("OFF GRID TEST");
+  expect(within(pill() as HTMLElement).queryByRole("button")).toBeNull();
   FakeStream.opened[0].send({ ...STATUS, island_status: "on_grid", storm_mode_active: true });
   expect(pill()!.textContent).toBe("STORM WATCH");
+  expect(pill()!.className).toContain("text-solar");
+  fireEvent.click(within(pill() as HTMLElement).getByRole("button", { name: "STORM WATCH" }));
+  expect(screen.getByRole("dialog", { name: "Storm watch" }).textContent).toBe(TERMS["storm-watch"].definition);
   FakeStream.opened[0].send({ ...STATUS, island_status: "on_grid", storm_mode_active: false });
   expect(pill()).toBeNull();
 });
