@@ -147,6 +147,12 @@ describe("a past year's headline", () => {
     expect(plain(pastHeadline(year("'26 - '27", 0), year("'25 - '26", 767.73)))).toBe("'26 - '27 ended with nothing due at the true\u2011up, {$768} less than '25 - '26.");
   });
 
+  // "$555 more than" a year with nothing due reads oddly, so that year is named as having nothing due.
+  test("after a year with nothing due", () => {
+    expect(plain(pastHeadline(year("'24 - '25", 554.83), year("'23 - '24", 0)))).toBe("'24 - '25 ended owing {$555} at the true\u2011up, after nothing due in '23 - '24.");
+    expect(plain(pastHeadline(year("'24 - '25", 0), year("'23 - '24", 0)))).toBe("'24 - '25 ended with nothing due at the true\u2011up, the same as '23 - '24.");
+  });
+
   test("no headline without both amounts", () => {
     expect(pastHeadline(year("'23 - '24", 0), year("'22 - '23", null))).toBeNull();
     expect(pastHeadline(year("'22 - '23", null), year("'21 - '22", null))).toBeNull();
