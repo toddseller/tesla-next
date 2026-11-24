@@ -112,6 +112,8 @@ test("the title names the true-up year shown", async () => {
   const title = async (params: Record<string, string>) => (await generateMetadata({ searchParams: Promise.resolve(params) })).title;
   expect(await title({})).toBe("True-Up · '26\u00a0-\u00a0'27");
   expect(await title({ start: "2025-10-01", end: "2026-09-30" })).toBe("True-Up · '25\u00a0-\u00a0'26");
+  // dashboard-shell, "True-Up's All time title": its range runs between true-up year boundaries, so it's named, not dated.
+  expect(await title({ start: "2021-10-01", end: "2027-09-30" })).toBe("True-Up · All time");
 });
 
 // true-up-tracker, "The year explained": the year's share as Impact gives it, over the billing cycles' own days, as the

@@ -74,6 +74,12 @@ export function trueUpPresets(years: { start_date: string; end_date: string }[])
   ];
 }
 
+// True-Up's All time runs between true-up year boundaries, the second still to come, so it's named rather than dated.
+export function isTrueUpAllTime(range: Range, years: { start_date: string; end_date: string }[]) {
+  const allTime = trueUpPresets(years).at(-1)!.range;
+  return range.start === allTime.start && range.end === allTime.end;
+}
+
 const single = (value: Param) => (typeof value === "string" ? value : null);
 
 export function parseRange(params: { start?: Param; end?: Param }, fallback: Range): Range {

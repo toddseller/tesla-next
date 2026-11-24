@@ -141,7 +141,7 @@ When the shown cycles include days before April 27, 2026 without PG&E data, the 
 - **THEN** no note is shown
 
 ### Requirement: Cycle chart
-The page SHALL chart each started cycle's imports as a bar above zero in the grid color and its exports below in the solar color, each rounded only at its outer end, square at zero, with a running net line in Tesla red that starts again at each true-up year's first cycle. Months label the cycles, and a legend names every series shown.
+The page SHALL chart each started cycle's imports as a bar above zero in the grid color and its exports below in the solar color, each rounded only at its outer end, square at zero, with a running net line in Tesla red that starts again at each true-up year's first cycle. Months label the cycles, and a legend names every series shown. Its heading SHALL name the range, the true-up year's name or "All time" or the range's dates, then "by billing cycle".
 
 #### Scenario: Current year in November
 - **WHEN** the current year is shown on 2026-11-08
@@ -150,6 +150,10 @@ The page SHALL chart each started cycle's imports as a bar above zero in the gri
 #### Scenario: All time
 - **WHEN** All time is shown
 - **THEN** the running net returns to that cycle's own net at the first cycle of each true-up year
+
+#### Scenario: All time's heading
+- **WHEN** All time is shown
+- **THEN** the chart is headed "All time by billing cycle"
 
 ### Requirement: Last year and projection on the chart
 With one true-up year shown, the chart SHALL show last year's running net as a dashed line across its cycles, and, with a kWh projection, a band from the open cycle to the twelfth between the lowest and highest projected running net, named in the legend. Neither SHALL show for other ranges.

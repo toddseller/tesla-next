@@ -2,7 +2,7 @@ import { cache } from "react";
 
 import { TrueUpPage } from "@/components/true-up/true-up-page";
 import { siteToday } from "@/lib/scene/replay";
-import { dropUnshown, parseRange, rangeTitle } from "@/lib/solar/ranges";
+import { dropUnshown, isTrueUpAllTime, parseRange, rangeTitle } from "@/lib/solar/ranges";
 import { cycleRows, trueUpCost } from "@/lib/true-up/cost";
 import { payback } from "@/lib/true-up/payback";
 import { cyclesShare } from "@/lib/true-up/share";
@@ -24,7 +24,8 @@ async function shownRange(params: Params, today: string) {
 }
 
 export async function generateMetadata({ searchParams }: { searchParams: Promise<Params> }) {
-  return { title: `True-Up · ${rangeTitle((await shownRange(await searchParams, requestToday())).range)}` };
+  const { years, range } = await shownRange(await searchParams, requestToday());
+  return { title: `True-Up · ${isTrueUpAllTime(range, years) ? "All time" : rangeTitle(range)}` };
 }
 
 // The range lives in the address, so a link or a reload shows the same page, rendered with its data. The current true-up

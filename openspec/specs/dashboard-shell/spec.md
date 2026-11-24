@@ -485,3 +485,10 @@ Each month the date-range picker shows SHALL be captioned by a month list and a 
 #### Scenario: The first year
 - **WHEN** a viewer chooses 2021 in a picker's year list
 - **THEN** its month list offers only October to December
+
+### Requirement: True-Up's All time title
+True-Up's All time runs between true-up year boundaries, so its document title SHALL name it "All time" rather than those boundary dates.
+
+#### Scenario: True-Up's All time
+- **WHEN** a viewer opens True-Up's All time
+- **THEN** the title is "True-Up · All time · Tesla Solar Report", not "True-Up · Oct 1, 2021 – Sep 30, 2027 · Tesla Solar Report"
