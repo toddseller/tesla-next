@@ -232,7 +232,7 @@ In a window narrower than 640 pixels, the top bar SHALL end its brand row with a
 - **THEN** the top bar shows the seven links and no Pages button
 
 ### Requirement: Range presets on a phone
-In a window narrower than 640 pixels, each group of range presets SHALL be one button naming the selected preset as its button reads, or "Custom" when none is selected, that opens a menu of the group's presets in order, any Earlier years in Earlier's place, newest first. The selected one SHALL be marked. Choosing one SHALL close the menu and do what its button does. The selected preset's step buttons SHALL sit either side of the menu's button, and the dates button beside them.
+In a window narrower than 640 pixels, each group of range presets SHALL be one button naming the selected preset as its button reads, or "Custom" when none is selected, that opens a menu of the group's presets in order. The selected one SHALL be marked. Choosing one SHALL close the menu and do what its button does. The selected preset's step buttons SHALL sit either side of the menu's button, and the dates button beside them.
 
 #### Scenario: Impact on a phone
 - **WHEN** a viewer opens the Impact page on This month in a 390 pixel wide window
