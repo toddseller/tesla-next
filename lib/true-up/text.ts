@@ -250,9 +250,9 @@ type Explained = { name: string; under: boolean; soFar: boolean; share: number; 
 export function rangeExplained({ name, under, soFar, share, net }: Explained) {
   const covered = `${name} solar ${under ? "has covered" : "covered"} ${share}% of the house's use${soFar ? " so far" : ""}`;
   const [drew, sent] = under ? ["has drawn", "has sent"] : ["drew", "sent"];
-  const [figure, unit] = energy(Math.abs(net), 0);
+  const [figure, unit] = energy(Math.abs(net), 1);
   const amount = `${figure} ${unit}`;
-  if (figure === "0") return `${covered}, and the house ${sent} as much to PG&E as it drew.`;
+  if (figure === "0.0") return `${covered}, and the house ${sent} as much to PG&E as it drew.`;
   if (net < 0) return `${covered}, and the house ${sent} ${amount} more to PG&E than it drew.`;
   const imported = `the house ${drew} ${amount} more from PG&E than it sent`;
   return share < 100

@@ -26,13 +26,21 @@ afterEach(cleanup);
 test("the running totals, named, with today and the payback marked, and the figures in words", () => {
   since();
   expect(screen.getByRole("heading", { name: "Since 2021" })).toBeTruthy();
-  expect(screen.getByRole("img", { name: /^Running totals since October 10, 2021: solar 1.9 MWh against the house's 2.1 MWh/ })).toBeTruthy();
+  expect(screen.getByRole("img", { name: /^Running totals since October 10, 2021: solar 1.9 MWh against the house's 2.1 MWh; Solar paid for itself in March 2025\./ })).toBeTruthy();
   expect(screen.getByText("solar generated")).toBeTruthy();
   expect(document.body.textContent).toContain("Solar has generated as much as the house used: 75.6 MWh, 100%.");
   expect(screen.getByText("more imported than sent this true-up year, since October 1")).toBeTruthy();
-  expect(screen.getByText(/Solar paid for itself in March 2025\. The Powerwalls won't pay for themselves within their warranty\./)).toBeTruthy();
+  expect(screen.getByText("dotted line: solar paid back, March 2025")).toBeTruthy();
+  expect(screen.queryByText(/Solar paid for itself/)).toBeNull();
+  expect(screen.getByText("The Powerwalls won't pay for themselves within their warranty.")).toBeTruthy();
   expect(screen.getByRole("link", { name: "The true-up and payback" }).getAttribute("href")).toBe("/true-up");
   expect(document.body.textContent).not.toMatch(/\$/);
+});
+
+test("a projected solar payback, with no line to key, is said in words", () => {
+  since({ payback: { ...PAYBACK, solar: { year: 2027, projected: true, month: null } } });
+  expect(screen.queryByText(/dotted line/)).toBeNull();
+  expect(screen.getByText("Solar should pay for itself in 2027, projected. The Powerwalls won't pay for themselves within their warranty.")).toBeTruthy();
 });
 
 test("without the costs file there is no payback, and a year that sent more says so", () => {
@@ -81,7 +89,7 @@ test("a projected whole-system year draws no box", () => {
 test("a matched 100% rests on the early years, and this year's sentence says what it left with PG&E", () => {
   since();
   expect(screen.getByText(/^That 100% rests on/).textContent).toBe(
-    "That 100% rests on the early years, when solar covered more than the house used. This true-up year solar has covered 73% of the house's use so far, so the house has drawn 609 kWh more from PG&E than it sent.",
+    "That 100% rests on the early years, when solar covered more than the house used. This true-up year solar has covered 73% of the house's use so far, so the house has drawn 609.3 kWh more from PG&E than it sent.",
   );
   expect(screen.queryByText(/midday/)).toBeNull();
 });

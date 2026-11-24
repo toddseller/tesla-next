@@ -12,7 +12,7 @@ import { solarHours } from "@/lib/home/solar-hours";
 import { impactByMonth, impactFigures } from "@/lib/impact";
 import { dayIntervals } from "@/lib/intervals/intervals";
 import { latest } from "@/lib/live";
-import { latestFigures, patterns, powerwallYears } from "@/lib/patterns";
+import { latestFigures, patterns } from "@/lib/patterns";
 import { recordTabs } from "@/lib/home/records";
 import { longDate } from "@/lib/calendar-dates";
 import { FIRST_DAY, siteToday } from "@/lib/scene/replay";
@@ -54,7 +54,6 @@ export default async function Page({ searchParams }: { searchParams: Promise<Par
     }),
     payback(today),
   ]);
-  const powerwallOut = powerwallYears(house.years, today).rows.find((row) => row.year === thisYear)?.kwh ?? 0;
 
   return (
     <div className="flex flex-col">
@@ -66,7 +65,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<Par
         <Today key="today" today={today} forecast={forecastCard(stored, today, Date.now())} day={day} renderedAt={Date.now()} />,
         <Year key="year" year={year} today={today} days={hours} shares={shares} />,
         <Records key="records" today={today} tabs={recordTabs(rankings, series)} record={String(params.record)} />,
-        <Habits key="habits" today={today} months={house.months} figures={latestFigures(house.months, today)} powerwallOut={powerwallOut} />,
+        <Habits key="habits" today={today} months={house.months} figures={latestFigures(house.months, today)} />,
         <Since key="since" today={today} months={months} solar={sinceFigures.total_solar} matched={sinceFigures.total_solar_percentage}
           net={trueUp.net} share={trueUp.share} owed={trueUp.owed} trueUpStart={trueUp.start} trueUpEnd={trueUp.end} payback={paidBack} />,
         <PickADay key="pick" today={today} />,
