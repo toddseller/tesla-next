@@ -249,11 +249,15 @@ Below 640 pixels the year switcher SHALL be one button naming the chosen year th
 - **THEN** a menu lists 2021 to 2026 with 2026 marked
 
 ### Requirement: The year's shares
-Under its chart, the year chapter SHALL say how much of the house's energy in the chosen year, January 1 to December 31 or to today, came from solar, from the Powerwalls and from the grid, as Impact gives them for that range, saying that the house's energy here includes the car's charging, and SHALL link to Impact for that range.
+Under its chart, the year chapter SHALL say how much of the house's energy in the chosen year, January 1 to December 31 or to today, came from solar, from the Powerwalls and from the grid, as Impact gives them for that range, saying that the house's energy here includes the car's charging, and SHALL link to Impact for that calendar year, January 1 to December 31, so Impact opens on its preset for the year rather than a custom range.
 
 #### Scenario: 2026 so far
 - **WHEN** on November 21, 2026 Impact gives 39% from solar, 30% from the Powerwalls and 31% from the grid for the year so far
-- **THEN** the chapter gives the three shares under "Where the house's energy came from in 2026, car included" and links to `/impact?start=2026-01-01&end=2026-11-21`
+- **THEN** the chapter gives the three shares under "Where the house's energy came from in 2026, car included" and links to `/impact?start=2026-01-01&end=2026-12-31`, where This year is marked as selected
+
+#### Scenario: A past year
+- **WHEN** a visitor picks 2024 in the year chapter
+- **THEN** the chapter links to `/impact?start=2024-01-01&end=2024-12-31`
 
 ### Requirement: The records
 The Records chapter SHALL offer four tabs, Best solar day, Most sent to PG&E in a day, Most sent to PG&E in a month, and Longest outage, Best solar day chosen by default, as tabs for assistive technology, all four shown in full without sideways scrolling at any width. Each tab SHALL list the top five of that Top Ten ranking as Top Ten shows it by default (an outage's length in days and hours), each linked to its day or month on the Solar page, and the chapter SHALL link to Top Ten.

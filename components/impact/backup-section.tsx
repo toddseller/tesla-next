@@ -6,9 +6,9 @@ import { type CSSProperties, Fragment, type ReactNode } from "react";
 import { PresetGroup } from "@/components/solar/range-controls";
 import type { BackupHistory, BackupKind } from "@/lib/backup";
 import { duration, stormDays } from "@/lib/backup-figures";
-import { backupPresets } from "@/lib/backup-years";
+import { backupParam, backupPresets } from "@/lib/backup-years";
 import { siteToday, TIME_ZONE } from "@/lib/scene/replay";
-import { address, monthOf, type Range } from "@/lib/solar/ranges";
+import { address, monthOf, type Range, rangeTitle } from "@/lib/solar/ranges";
 import { kwh } from "@/lib/true-up/text";
 import { Length } from "@/components/length";
 import { Measured } from "@/components/measured";
@@ -89,7 +89,8 @@ const blipsLine = (blips: BackupHistory["summary"]["blips"]) =>
 
 // When the grid went down and the house ran on its own, for the true-up year picked here, apart from the page's range.
 export function BackupSection({ history: { summary, events }, year, today, onYear }: Props) {
-  const { presets, earlier } = backupPresets(today);
+  // Named in the heading, as the picker's "This year" doesn't say which, and the page above may show another range.
+  const shown = backupParam(year, today) === "all" ? "All time" : rangeTitle(year);
   const lengths = new Map(events.map((e) => [e.start, (Date.parse(e.end) - Date.parse(e.start)) / 1000]));
   const longestEvent = Math.max(...lengths.values());
   const row = (event: Event, grouped: boolean) => (
@@ -99,10 +100,10 @@ export function BackupSection({ history: { summary, events }, year, today, onYea
     <section aria-labelledby="backup" className="flex flex-col gap-5 rounded-[10px] border bg-card p-4 sm:p-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-col gap-0.5">
-          <h2 id="backup" className="font-semibold">Backup</h2>
+          <h2 id="backup" className="font-semibold">Backup <span className="font-normal text-muted-foreground">· {shown}</span></h2>
           <span className="text-sm text-muted-foreground">When the grid went down and the house ran on its own</span>
         </div>
-        <PresetGroup label="Backup years" range={year} presets={presets} earlier={earlier} onRange={onYear} />
+        <PresetGroup label="Backup years" range={year} presets={backupPresets(today)} onRange={onYear} today={today} />
       </div>
       {summary.longest ? (
         <div className="flex flex-col gap-3">

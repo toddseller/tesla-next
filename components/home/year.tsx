@@ -125,7 +125,6 @@ export function Year({ year: servedYear, today, days: servedDays, shares: served
 
   const presets = Array.from({ length: Number(today.slice(0, 4)) - FIRST_YEAR + 1 }, (_, i) => FIRST_YEAR + i)
     .map((y) => ({ label: String(y), range: { start: `${y}-01-01`, end: `${y}-12-31` } }));
-  const end = current ? today : `${shown.year}-12-31`;
 
   return (
     <section aria-labelledby="year" className="flex flex-col gap-8">
@@ -181,7 +180,7 @@ export function Year({ year: servedYear, today, days: servedDays, shares: served
               <span><b className="text-2xl text-powerwall">{shown.shares.from_powerwall_percentage}%</b> <span className="font-sans text-[13px] text-muted-foreground">Powerwalls</span></span>
               <span><b className="text-2xl text-grid">{shown.shares.from_grid_percentage}%</b> <span className="font-sans text-[13px] text-muted-foreground">grid</span></span>
             </div>
-            <Doorway href={`/impact?start=${shown.year}-01-01&end=${end}`}>The year on Impact</Doorway>
+            <Doorway href={`/impact?start=${shown.year}-01-01&end=${shown.year}-12-31`}>The year on Impact</Doorway>
           </div>
         </div>
       </div>

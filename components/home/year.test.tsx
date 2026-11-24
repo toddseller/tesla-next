@@ -35,7 +35,7 @@ test("the chart's summary, a label for each month, today's row marked, and the y
   expect([...document.querySelectorAll('[data-part="month"]')].map((m) => m.textContent)).toEqual(["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]);
   expect(document.querySelector('[data-part="today-row"]')).not.toBeNull();
   expect(screen.getByText("39%")).toBeTruthy();
-  expect(screen.getByRole("link", { name: "The year on Impact" }).getAttribute("href")).toBe("/impact?start=2026-01-01&end=2026-11-21");
+  expect(screen.getByRole("link", { name: "The year on Impact" }).getAttribute("href")).toBe("/impact?start=2026-01-01&end=2026-12-31");
 });
 
 test("the readout starts on today and steps a day with its buttons and the keyboard, linking to the day", () => {

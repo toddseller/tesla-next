@@ -1,7 +1,7 @@
 "use client";
 
 import { CalendarDays, ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
-import { Fragment, useState } from "react";
+import { useState } from "react";
 
 import { Calendar, MARKER_SELECTED } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -21,29 +21,29 @@ const SELECTED = "bg-secondary text-white shadow-[inset_0_-2px_0_var(--primary)]
 export const presetStyle = (selected: boolean) =>
   `min-h-10 whitespace-nowrap rounded-md px-3.5 text-sm font-medium ${selected ? SELECTED : "text-muted-foreground hover:text-foreground"}`;
 
-type Menu = { label: string; empty: string; items: Preset[]; range: Range; onRange: (range: Range) => void; phone?: boolean; lit?: Preset; litName?: string };
+type Menu = { label: string; items: Preset[]; range: Range; onRange: (range: Range) => void; lit?: Preset; litName?: string };
 
-// A menu of presets whose button names the one picked, or `empty` when none matches the range. On a phone it holds the
-// whole group, so its button carries the group's name and its items are full tap height.
-function PresetMenu({ label, empty, items, range, onRange, phone, lit, litName }: Menu) {
+// On a phone, the whole group as one menu: its button carries the group's name and the preset picked, or Custom when
+// none matches the range, and its items are full tap height.
+function PresetMenu({ label, items, range, onRange, lit, litName }: Menu) {
   const [open, setOpen] = useState(false);
   const picked = lit ?? items.find((item) => holds(item, range));
-  const shown = litName ?? picked?.label ?? empty;
+  const shown = litName ?? picked?.label ?? "Custom";
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <button type="button" aria-haspopup="menu" aria-label={phone ? `${label}: ${shown}` : undefined} aria-pressed={phone ? undefined : Boolean(picked)}
-          className={`flex items-center gap-1.5 ${phone ? "min-h-11 justify-between rounded-lg border border-input bg-card px-3.5 text-sm font-medium whitespace-nowrap sm:hidden max-sm:flex-1" : `justify-center ${presetStyle(Boolean(picked))}`}`}>
+        <button type="button" aria-haspopup="menu" aria-label={`${label}: ${shown}`}
+          className="flex min-h-11 items-center justify-between gap-1.5 rounded-lg border border-input bg-card px-3.5 text-sm font-medium whitespace-nowrap sm:hidden max-sm:flex-1">
           {shown}
           <ChevronDown size={14} aria-hidden />
         </button>
       </PopoverTrigger>
-      <PopoverContent role="menu" aria-label={label} align={phone ? "start" : "center"}
-        className={`flex flex-col border-input p-1 shadow-xl shadow-black/45 ${phone ? "w-(--radix-popover-trigger-width) min-w-44" : "w-44"}`}>
+      <PopoverContent role="menu" aria-label={label} align="start"
+        className="flex w-(--radix-popover-trigger-width) min-w-44 flex-col border-input p-1 shadow-xl shadow-black/45">
         {items.map((item) => (
           <button key={item.label} type="button" role="menuitemradio" aria-checked={item === picked}
             onClick={() => { onRange(item.range); setOpen(false); }}
-            className={`rounded-md px-2.5 text-left text-sm whitespace-nowrap ${phone ? "min-h-11" : "min-h-9 font-mono"} ${item === picked ? "bg-secondary text-white" : "hover:bg-secondary"}`}>
+            className={`min-h-11 rounded-md px-2.5 text-left text-sm whitespace-nowrap ${item === picked ? "bg-secondary text-white" : "hover:bg-secondary"}`}>
             {item.label}
           </button>
         ))}
@@ -66,12 +66,11 @@ function StepButton({ by, range, today, onRange, phone }: Step) {
   );
 }
 
-type Group = { label: string; range: Range; presets: Preset[]; earlier?: Preset[]; onRange: (range: Range) => void; today?: string };
+type Group = { label: string; range: Range; presets: Preset[]; onRange: (range: Range) => void; today?: string };
 
-// The preset buttons, with an Earlier menu of older true-up years before the last, All time, when there are any; on a
-// phone, one menu of them all. Given `today`, the selected preset holds step buttons and names a range it was stepped to.
-export function PresetGroup({ label, range, presets, earlier, onRange, today }: Group) {
-  const all = earlier ? [...presets.slice(0, -1), ...earlier, ...presets.slice(-1)] : presets;
+// The preset buttons; on a phone, one menu of them all. Given `today`, the selected preset holds step buttons and names a
+// range it was stepped to.
+export function PresetGroup({ label, range, presets, onRange, today }: Group) {
   const lit = selected(presets, range, today);
   const steps = Boolean(today && lit && shape(range));
   const stepped = lit && !holds(lit, range) ? rangeTitle(range) : undefined;
@@ -79,29 +78,24 @@ export function PresetGroup({ label, range, presets, earlier, onRange, today }: 
   return (
     <>
       <div role="group" aria-label={label} className="flex gap-0.5 rounded-lg border border-input bg-card p-[3px] max-sm:hidden">
-        {presets.map((preset, i) => (
-          <Fragment key={preset.label}>
-            {earlier && i === presets.length - 1 && (
-              <PresetMenu label="Earlier true-up years" empty="Earlier" items={earlier} range={range} onRange={onRange} />
-            )}
-            {preset === lit && steps ? (
-              <div className={`flex items-center rounded-md ${SELECTED}`}>
-                <StepButton by={-1} range={range} today={today!} onRange={onRange} />
-                <button type="button" aria-pressed title={back} onClick={() => onRange(preset.range)} className="min-h-10 whitespace-nowrap px-1 text-sm font-medium">
-                  {stepped ?? preset.label}
-                </button>
-                <StepButton by={1} range={range} today={today!} onRange={onRange} />
-              </div>
-            ) : (
-              <button type="button" aria-pressed={preset === lit} onClick={() => onRange(preset.range)} className={`${presetStyle(preset === lit)} ${today ? "max-xl:px-1.5" : ""}`}>
-                {preset.label}
+        {presets.map((preset) =>
+          preset === lit && steps ? (
+            <div key={preset.label} className={`flex items-center rounded-md ${SELECTED}`}>
+              <StepButton by={-1} range={range} today={today!} onRange={onRange} />
+              <button type="button" aria-pressed title={back} onClick={() => onRange(preset.range)} className="min-h-10 whitespace-nowrap px-1 text-sm font-medium">
+                {stepped ?? preset.label}
               </button>
-            )}
-          </Fragment>
-        ))}
+              <StepButton by={1} range={range} today={today!} onRange={onRange} />
+            </div>
+          ) : (
+            <button key={preset.label} type="button" aria-pressed={preset === lit} onClick={() => onRange(preset.range)} className={`${presetStyle(preset === lit)} ${today ? "max-xl:px-1.5" : ""}`}>
+              {preset.label}
+            </button>
+          ),
+        )}
       </div>
       {steps && <StepButton by={-1} range={range} today={today!} onRange={onRange} phone />}
-      <PresetMenu label={label} empty="Custom" items={all} range={range} onRange={onRange} phone lit={lit} litName={stepped} />
+      <PresetMenu label={label} items={presets} range={range} onRange={onRange} lit={lit} litName={stepped} />
       {steps && <StepButton by={1} range={range} today={today!} onRange={onRange} phone />}
     </>
   );
