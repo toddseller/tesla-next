@@ -134,7 +134,7 @@ export function TopBar({ initialStatus, initialSite, renderedAt }: Props) {
               href={href}
               aria-current={current ? "page" : undefined}
               onNavigate={slideTo(i)}
-              className={`relative flex min-h-11 items-center rounded-md px-3 text-sm ${current ? "text-white" : "text-muted-foreground hover:text-foreground"}`}
+              className={`relative flex min-h-11 items-center rounded-md px-3 text-sm whitespace-nowrap ${current ? "text-white" : "text-muted-foreground hover:text-foreground"}`}
             >
               {/* One name across pages, so the browser glides it from the old tab to the new one as the page arrives. */}
               {current && (

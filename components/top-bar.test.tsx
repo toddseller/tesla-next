@@ -317,4 +317,6 @@ test("the links never wrap among themselves; the live status takes the next row 
   render(bar());
   expect(wideNav().className).toContain("flex-nowrap");
   expect(wideNav().className).not.toMatch(/(^| )flex-wrap/);
+  // Squeezed for room, "True-Up" and "Top Ten" broke onto two lines at 1440 rather than moving the live status down.
+  for (const link of within(wideNav()).getAllByRole("link")) expect(link.className).toContain("whitespace-nowrap");
 });
