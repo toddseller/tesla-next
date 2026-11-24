@@ -22,7 +22,7 @@ const CARD: ForecastCard = {
 // Today's day view totals: the house 21.3 kWh (car apart), 14.4 from the grid, 11.0 sent, the Powerwalls 0.7 in and 0 out.
 const TOTALS = { solar_to_home: 9.366, solar_to_powerwall: 0.318, solar_to_grid: 11.007, powerwall_to_home: 0, powerwall_to_grid: 0, grid_to_home: 11.962, grid_to_powerwall: 0.362, solar_to_vehicle: 1.037, powerwall_to_vehicle: 0, grid_to_vehicle: 2.043 };
 const DAY = { date: TODAY, vehicle_data: true, totals: TOTALS, data: [] };
-const figure = (label: string) => screen.getByText(label).parentElement!.querySelector("b")!.textContent;
+const figure = (label: string) => screen.getByText(label, { selector: "span" }).parentElement!.querySelector("b")!.textContent;
 
 beforeEach(() => {
   vi.useFakeTimers({ toFake: ["Date"] });
@@ -176,4 +176,17 @@ test("ahead or behind compares made and expected by the same moment, as the Sola
   render(<Today today={TODAY} forecast={{ ...CARD, byHour: { hours: HOURS, byNow: { made: 20.0, expected: 17.819, at: "2026-11-21T23:35:00.000Z", over: false } } }} day={DAY} renderedAt={Date.now()} />);
   expect(figure("generated, of 18.0 kWh expected")).toBe("21.7 kWh");
   expect(figure("ahead of the forecast")).toBe("2.2 kWh");
+});
+
+test("the chart's dimmed hours to come say so", () => {
+  render(<Today today={TODAY} forecast={CARD} day={DAY} renderedAt={Date.now()} />);
+  expect(screen.getByText("still to come", { selector: "svg tspan" })).toBeTruthy();
+});
+
+test("the chart's time axis runs from 12 AM to 12 AM", () => {
+  render(<Today today={TODAY} forecast={CARD} day={DAY} renderedAt={Date.now()} />);
+  const ticks = screen.getAllByText(/^\d+ [AP]M$/, { selector: "svg tspan" });
+  expect(ticks.map((t) => t.textContent)).toEqual(["12 AM", "6 AM", "12 PM", "6 PM", "12 AM"]);
+  // Midnight's labels sit inside the plot, the first clear of the kW axis.
+  expect(ticks.map((t) => t.parentElement!.getAttribute("text-anchor"))).toEqual(["start", "middle", "middle", "middle", "end"]);
 });

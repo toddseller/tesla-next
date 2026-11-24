@@ -23,17 +23,18 @@ test("each dot is placed by its date from October 2021 to the end of this year, 
 
 test("the figure axis spans the ten, not zero, and the years are marked with this one shaded", () => {
   solar();
-  expect(screen.getAllByText(/^\d\d$/).map((t) => t.textContent)).toEqual(["78", "79", "80", "81"]);
+  expect(screen.getAllByText(/^\d\d$/).filter((t) => !t.title).map((t) => t.textContent)).toEqual(["78", "79", "80", "81"]);
   const years = screen.getAllByText(/^20\d\d$/);
   expect(years.map((y) => [y.textContent, y.style.left])).toEqual([["2022", "4.8%"], ["2023", "23.84%"], ["2024", "42.88%"], ["2025", "61.97%"], ["2026", "81.01%"]]);
-  expect(screen.getByTitle("This year").style.left).toBe("81.01%");
+  expect(screen.getByText("this year").parentElement!.style.left).toBe("81.01%");
 });
 
-test("#1 is ringed, #2 and #3 carry their rank, and the rest are plain dots", () => {
+test("#1 is ringed, and #2 to #10 carry their rank at one size", () => {
   solar();
   expect(dot(1).className).toContain("ring-primary");
-  expect([dot(1), dot(2), dot(3), dot(4)].map((d) => d.textContent)).toEqual(["", "2", "3", ""]);
-  expect(dot(4).className).not.toContain("ring-primary");
+  const ranks = Array.from({ length: 10 }, (_, i) => dot(i + 1));
+  expect(ranks.map((d) => d.textContent)).toEqual(["", "2", "3", "4", "5", "6", "7", "8", "9", "10"]);
+  expect(ranks.slice(1).every((d) => d.className.includes("size-5") && !d.className.includes("ring-primary"))).toBe(true);
 });
 
 test("solar days are drawn in the solar color, exports in the grid color", () => {
@@ -75,7 +76,7 @@ test("the outage timeline's axis reads in days and hours, as its dots do", () =>
 // DESIGN.md: Tesla red is a marker, never a surface, so this year's band is a neutral shade.
 test("this year's band is shaded in the muted foreground, not red", () => {
   solar();
-  const band = screen.getByTitle("This year");
+  const band = screen.getByText("this year").parentElement!;
   expect(band.className).toContain("bg-muted-foreground/");
   expect(band.className).not.toContain("bg-primary");
 });

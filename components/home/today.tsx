@@ -1,7 +1,7 @@
 "use client";
 
-import { Fragment, type ReactNode, useEffect, useState } from "react";
-import { Area, ComposedChart, Line, ReferenceArea, XAxis, YAxis } from "recharts";
+import { type ComponentProps, Fragment, type ReactNode, useEffect, useState } from "react";
+import { Area, ComposedChart, Line, ReferenceArea, Text, XAxis, YAxis } from "recharts";
 
 import { useReload } from "@/components/solar/use-reload";
 import { Doorway } from "@/components/home/doorway";
@@ -22,6 +22,14 @@ const clock = new Intl.DateTimeFormat("en-US", { hour: "numeric", minute: "2-dig
 const hour = new Intl.DateTimeFormat("en-US", { hour: "numeric", timeZone: TIME_ZONE });
 const weekday = new Intl.DateTimeFormat("en-US", { weekday: "short", timeZone: "UTC" });
 const DAY_MINUTES = 1440;
+// Midnight at both ends shows the chart is the whole day, so the clear hours read as gone, not as a different background.
+const TICKS = [0, ...TIME_TICKS, DAY_MINUTES];
+const tick = (minute: number) => (minute % DAY_MINUTES === 0 ? "12 AM" : timeTick(minute));
+// Midnight's labels anchor inward, so the first stays clear of the kW axis and the last needs no margin.
+const anchor = (minute: number) => (minute === 0 ? "start" : minute === DAY_MINUTES ? "end" : "middle");
+const TimeTick = ({ payload, ...props }: ComponentProps<typeof Text> & { payload: { value: number } }) => (
+  <Text {...props} textAnchor={anchor(payload.value)}>{tick(payload.value)}</Text>
+);
 
 // The space is inside the small text, so the gap is the unit's size, not the figure's. Under the days ahead's small
 // figures, 0.6em would fall below DESIGN.md's 11px floor.
@@ -108,10 +116,11 @@ export function Today({ today, forecast, day, renderedAt }: Props) {
       </p>
       <ChartContainer config={{}} className="aspect-auto h-56 w-full md:h-64">
         <ComposedChart data={rows.records} margin={{ top: 8, right: 0, bottom: 0, left: 0 }}>
-          <XAxis dataKey="minute" type="number" domain={[0, DAY_MINUTES]} ticks={TIME_TICKS} tickFormatter={timeTick} tickLine={false} axisLine={false} />
+          <XAxis dataKey="minute" type="number" domain={[0, DAY_MINUTES]} ticks={TICKS} interval={0} tick={TimeTick} tickLine={false} axisLine={false} />
           <YAxis unit=" kW" tickLine={false} axisLine={false} width={64} />
           <ChartTooltip content={<TodayDetails />} />
-          <ReferenceArea x1={rows.latest} x2={DAY_MINUTES} fill="var(--card)" fillOpacity={0.6} stroke="none" />
+          <ReferenceArea x1={rows.latest} x2={DAY_MINUTES} fill="var(--card)" fillOpacity={0.6} stroke="none"
+            label={rows.latest < DAY_MINUTES ? { value: "still to come", position: "insideTopRight", fill: "var(--muted-foreground)", fontSize: 11 } : undefined} />
           <Area dataKey="solar" fill="var(--color-solar)" stroke="none" fillOpacity={0.85} isAnimationActive={false} />
           <Area dataKey="charging" stackId="below" fill="var(--color-powerwall)" stroke="none" fillOpacity={0.85} isAnimationActive={false} />
           <Area dataKey="exporting" stackId="below" fill="var(--color-grid)" stroke="none" fillOpacity={0.55} isAnimationActive={false} />
