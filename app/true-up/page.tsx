@@ -49,7 +49,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<Par
     rows.then(cyclesShare),
   ]);
   return (
-    <TrueUpPage range={range} years={years} cycles={cycles} cost={cost} savings={savings} payback={paidBack} today={today}
+    <TrueUpPage range={range} years={years} cycles={cycles} cost={cost} savings={savings} payback={paidBack} today={today} unshown={params.unshown === "1"}
       before={previous && previousCost && { label: previous.label, amount_due: previousCost.amount_due }} explained={explained} />
   );
 }

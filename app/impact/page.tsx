@@ -45,7 +45,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<Par
     earlier && impactFigures(earlier.start, earlier.end, readings),
   ]);
   return (
-    <ImpactPage range={range} figures={figures} today={today} backup={backup} backupYear={year} charging={charging} readings={readings}
+    <ImpactPage range={range} figures={figures} today={today} backup={backup} backupYear={year} charging={charging} readings={readings} unshown={params.unshown === "1"}
       before={before?.total_house ? before.self_powered_percentage : null} />
   );
 }

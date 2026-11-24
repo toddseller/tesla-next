@@ -11,6 +11,7 @@ import type { Day } from "@/components/solar/day-view";
 import { RangeChart } from "@/components/solar/range-chart";
 import { RangeControls } from "@/components/solar/range-controls";
 import { useReload } from "@/components/solar/use-reload";
+import { UnshownNotice } from "@/components/unshown-notice";
 import { useLiveStream } from "@/components/use-live-stream";
 import type { ForecastCard as Card } from "@/lib/forecast";
 import { solarLead, solarTotal } from "@/lib/lead";
@@ -39,11 +40,12 @@ type Props = {
   day?: { data: Day; strip: { range: Range; items: RangeItem[] } } | null;
   forecast?: Card | null;
   readings?: Readings;
+  unshown?: boolean;
   // The year-earlier days' solar, or null when there are none to compare.
   before?: { then: number; now: number | null } | null;
 };
 
-export function SolarPage({ range, items, today, initialStatus, day, forecast, readings = "corrected", before = null }: Props) {
+export function SolarPage({ range, items, today, initialStatus, day, forecast, readings = "corrected", unshown = false, before = null }: Props) {
   const router = useRouter();
   // Every address the page goes to keeps the readings it shows; reloads ask for them too.
   const at = (shown: Range, open?: string | null) => withReadings(address(shown, open), readings);
@@ -76,9 +78,12 @@ export function SolarPage({ range, items, today, initialStatus, day, forecast, r
   const corrected = reachesCorrected(range.start, range.end);
   if (day && shownDay) {
     return (
-      <DayPanel range={range} day={shownDay} strip={strip} today={today} modified={modified} readings={readings}
-        readingsAt={reachesCorrected(day.strip.range.start, day.strip.range.end) ? both(range, shownDay.date) : null}
-        onDay={(next) => router.replace(at(range, next), { transitionTypes: [next > shownDay.date ? "day-next" : "day-previous"] })} />
+      <>
+        {unshown && <UnshownNotice />}
+        <DayPanel range={range} day={shownDay} strip={strip} today={today} modified={modified} readings={readings}
+          readingsAt={reachesCorrected(day.strip.range.start, day.strip.range.end) ? both(range, shownDay.date) : null}
+          onDay={(next) => router.replace(at(range, next), { transitionTypes: [next > shownDay.date ? "day-next" : "day-previous"] })} />
+      </>
     );
   }
   return (
@@ -89,6 +94,7 @@ export function SolarPage({ range, items, today, initialStatus, day, forecast, r
           {corrected && <ReadingsSwitch readings={readings} addresses={both(range)} />}
           <RangeControls today={today} range={range} presets={presets(today)} onRange={(next) => router.push(at(next), { scroll: false })} />
         </div>
+        {unshown && <UnshownNotice range={range} />}
         <Lead className={`${LEAD} -mt-2 basis-full`} text={solarLead(range, today, solarTotal(bars), before)} />
       </div>
       <section aria-labelledby="range-title" className="flex flex-col gap-4 rounded-[10px] border bg-card p-4 sm:p-6">

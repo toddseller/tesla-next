@@ -14,6 +14,7 @@ import { PaybackCard } from "@/components/true-up/payback-card";
 import { SavingsCard } from "@/components/true-up/savings-card";
 import { Tiles } from "@/components/true-up/tiles";
 import { ENTER_MS, useEntering } from "@/components/use-entering";
+import { UnshownNotice } from "@/components/unshown-notice";
 import { useLiveStream } from "@/components/use-live-stream";
 import { siteToday } from "@/lib/scene/replay";
 import { datesLabel, isTrueUpAllTime, type Range, rangeIncludes, trueUpPresets } from "@/lib/solar/ranges";
@@ -26,14 +27,14 @@ const address = ({ start, end }: Range) => `/true-up?start=${start}&end=${end}`;
 const query = ({ start, end }: Range) => `start_date=${start}&end_date=${end}`;
 
 type Props = {
-  range: Range; years: TrueUpYear[]; cycles: Cycle[]; cost: Cost | null; savings: Savings | null; payback: Payback | null; today: string;
+  range: Range; years: TrueUpYear[]; cycles: Cycle[]; cost: Cost | null; savings: Savings | null; payback: Payback | null; today: string; unshown?: boolean;
   // For a finished year, the year before's amount due, which its headline compares with.
   before?: { label: string; amount_due: number | null } | null;
   // Solar's share of the house's use over the billing cycles' days shown, and those days.
   explained?: { share: number; start: string; end: string } | null;
 };
 
-export function TrueUpPage({ range, years, cycles: served, cost: servedCost, savings: servedSavings, payback: servedPayback, today, before = null, explained = null }: Props) {
+export function TrueUpPage({ range, years, cycles: served, cost: servedCost, savings: servedSavings, payback: servedPayback, today, unshown = false, before = null, explained = null }: Props) {
   const router = useRouter();
   const [cycles, reloadCycles] = useReload(address(range), served);
   const [cost, reloadCost] = useReload(address(range), servedCost);
@@ -83,6 +84,7 @@ export function TrueUpPage({ range, years, cycles: served, cost: servedCost, sav
           <div className="max-sm:order-last max-sm:w-full">
             <RangeControls today={today} range={range} presets={trueUpPresets(years)} onRange={(next) => router.push(address(next), { scroll: false })} />
           </div>
+          {unshown && <UnshownNotice range={range} />}
           {/* A wrapper, since the lead's 46ch cap would otherwise let it sit beside the controls on a wide row. */}
           <div className="-mt-2 flex basis-full flex-col gap-1">
             {headline ? (

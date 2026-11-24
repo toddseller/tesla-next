@@ -156,7 +156,7 @@ export function Year({ year: servedYear, today, days: servedDays, shares: served
             {current && <div data-part="today-row" aria-hidden className="absolute -inset-x-2 h-0.5 bg-primary" style={{ top: `${(dates.indexOf(today) / dates.length) * 100}%` }} />}
           </div>
         </figure>
-        <div className="flex flex-col gap-6">
+        <div className="flex flex-col gap-6 md:sticky md:top-6 md:self-start">
           <p className="max-w-[60ch] text-[15px] text-pretty text-muted-foreground">
             Every day of the year, top to bottom; every hour, left to right. Brighter is more sun. Summer&apos;s long days, the March and November clock changes and the cloudy streaks all show.
           </p>

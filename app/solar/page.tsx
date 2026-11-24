@@ -37,11 +37,11 @@ export default async function Page({ searchParams }: { searchParams: Promise<Par
       cut && rangeTotals(days.now.start, days.now.end, readings),
     ]);
     return (
-      <SolarPage range={range} items={items} today={today} initialStatus={latest()} forecast={stored ? forecastCard(stored, today, Date.now()) : null} readings={readings}
+      <SolarPage range={range} items={items} today={today} initialStatus={latest()} unshown={params.unshown === "1"} forecast={stored ? forecastCard(stored, today, Date.now()) : null} readings={readings}
         before={then ? { then: solarTotal(then), now: now ? solarTotal(now) : null } : null} />
     );
   }
   const strip = stripRange(range, day, today);
   const [data, items] = await Promise.all([dayIntervals(day, readings), rangeTotals(strip.start, strip.end, readings)]);
-  return <SolarPage range={range} items={[]} today={today} initialStatus={latest()} day={{ data, strip: { range: strip, items } }} readings={readings} />;
+  return <SolarPage range={range} items={[]} today={today} initialStatus={latest()} unshown={params.unshown === "1"} day={{ data, strip: { range: strip, items } }} readings={readings} />;
 }

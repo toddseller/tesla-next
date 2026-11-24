@@ -103,10 +103,10 @@ export function dropUnshown(path: string, params: Record<string, Param>, hasDay:
   const badRange = (params.start !== undefined || params.end !== undefined) && parseRange(params, NONE) === NONE;
   const badDay = hasDay && params.day !== undefined && !parseDay(params.day);
   if (!badRange && !badDay) return;
-  const dropped = [...(badRange ? ["start", "end"] : []), ...(badDay ? ["day"] : [])];
+  const dropped = ["unshown", ...(badRange ? ["start", "end"] : []), ...(badDay ? ["day"] : [])];
   const kept = Object.entries(params).flatMap(([name, value]) => (dropped.includes(name) || value === undefined ? [] : [value].flat().map((v) => [name, v])));
-  const query = new URLSearchParams(kept).toString();
-  redirect(query ? `${path}?${query}` : path);
+  // The marker tells the page it lands on to say what it shows instead; the page then drops it from the address.
+  redirect(`${path}?${new URLSearchParams([...kept, ["unshown", "1"]])}`);
 }
 
 export const address = (range: Range, day?: string | null) =>
