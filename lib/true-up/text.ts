@@ -126,7 +126,7 @@ export function pastHeadline(year: Due, before: Due | null) {
   if (year.amount_due === null || before?.amount_due == null) return null;
   const gap = Math.round(year.amount_due - before.amount_due);
   const ended = year.amount_due === 0 ? "ended with nothing due" : `ended owing {${wholeDollars(year.amount_due)}}`;
-  const than = gap ? `{${wholeDollars(gap)}} ${gap > 0 ? "more" : "less"} than` : "the same as";
+  const than = before.amount_due === 0 && gap ? "after nothing due in" : gap ? `{${wholeDollars(gap)}} ${gap > 0 ? "more" : "less"} than` : "the same as";
   return `${yearName(year.label)} ${ended} at the true\u2011up, ${than} ${yearName(before.label)}.`;
 }
 
