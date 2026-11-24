@@ -52,7 +52,7 @@ test.each([
   [{ start: "1900-01-01", end: "2026-10-31", backup: "25-26" }],
   [{ start: "2026-10-31", end: "2026-10-01", backup: "25-26" }],
 ])("%j redirects to the address without its range", async (params) => {
-  await expect(served(params)).rejects.toThrow(new Error("NEXT_REDIRECT /impact?backup=25-26"));
+  await expect(served(params)).rejects.toThrow(new Error("NEXT_REDIRECT /impact?backup=25-26&unshown=1"));
   expect(impactFigures).not.toHaveBeenCalled();
 });
 
@@ -134,4 +134,14 @@ test("the title names the range shown", async () => {
     total_solar_percentage: 0, total_solar: 0.0, from_solar: 0, from_powerwall: 1.2, from_grid: 0.8, total_house: 2.0,
   });
   expect(await title({})).toBe("Impact · Nov 7, 2026");
+});
+
+const NOTICE = "That link asked for dates the site doesn&#x27;t have, so this shows";
+
+test("a marked address says what it shows instead, under the title and before the figures; an unmarked one doesn't", async () => {
+  const html = await served({ unshown: "1" });
+  expect(html).toContain(`${NOTICE} Nov 8, 2026.`);
+  expect(html.indexOf(NOTICE)).toBeGreaterThan(html.indexOf("</h1>"));
+  expect(html.indexOf(NOTICE)).toBeLessThan(html.indexOf("impact-title"));
+  expect(await served()).not.toContain(NOTICE);
 });

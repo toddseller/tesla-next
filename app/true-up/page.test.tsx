@@ -71,7 +71,7 @@ test.each([
   [{ start: "2026-10-31", end: "2026-10-01" }],
   [{ start: "2030-10-01", end: "2031-09-30" }],
 ])("%j redirects to the address without its range", async (params) => {
-  await expect(served(params)).rejects.toThrow(new Error("NEXT_REDIRECT /true-up"));
+  await expect(served(params)).rejects.toThrow(new Error("NEXT_REDIRECT /true-up?unshown=1"));
   expect(mocks.cycleRows).not.toHaveBeenCalled();
 });
 
@@ -143,4 +143,15 @@ test("a year without house use yet has no explanation", async () => {
   at("2026-11-08T20:00:00Z");
   mocks.impactFigures.mockResolvedValue({ total_solar_percentage: 0, total_house: 0 });
   expect(await served()).not.toContain("solar has covered");
+});
+
+const NOTICE = "That link asked for dates the site doesn&#x27;t have, so this shows";
+
+test("a marked address says what it shows instead, under the title and before the chart; an unmarked one doesn't", async () => {
+  at("2026-11-08T20:00:00Z");
+  const html = await served({ unshown: "1" });
+  expect(html).toContain(`${NOTICE} &#x27;26 - &#x27;27.`);
+  expect(html.indexOf(NOTICE)).toBeGreaterThan(html.indexOf("</h1>"));
+  expect(html.indexOf(NOTICE)).toBeLessThan(html.indexOf("cycle-chart"));
+  expect(await served()).not.toContain(NOTICE);
 });

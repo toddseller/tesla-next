@@ -58,9 +58,17 @@ test("without a range, the current month is served", async () => {
   expect(html).toMatch(/November 1\s–\s30, 2026/);
 });
 
-test("a malformed range redirects to the address without it, which is the current month", async () => {
-  await expect(served({ start: "nope", end: "2026-10-31", readings: "reported" })).rejects.toThrow(new Error("NEXT_REDIRECT /solar?readings=reported"));
+test("a malformed range redirects to the address without it, marked, which is the current month", async () => {
+  await expect(served({ start: "nope", end: "2026-10-31", readings: "reported" })).rejects.toThrow(new Error("NEXT_REDIRECT /solar?readings=reported&unshown=1"));
   expect(rangeTotals).not.toHaveBeenCalled();
+});
+
+test("a bad range beside a good day redirects to the day, marked", async () => {
+  await expect(served({ start: "nope", end: "2026-10-31", day: "2026-10-14" })).rejects.toThrow(new Error("NEXT_REDIRECT /solar?day=2026-10-14&unshown=1"));
+});
+
+test("a refused address already carrying the marker keeps one", async () => {
+  await expect(served({ start: "2030-01-01", end: "2030-01-31", unshown: "1" })).rejects.toThrow(new Error("NEXT_REDIRECT /solar?unshown=1"));
 });
 
 test("an open day is served with its data, its strip's bars and the latest live update", async () => {
@@ -73,8 +81,8 @@ test("an open day is served with its data, its strip's bars and the latest live 
   expect(renderToString(page)).toContain("Wed, Oct 14, 2026");
 });
 
-test("a day after today redirects to the range without it", async () => {
-  await expect(served({ start: "2026-10-01", end: "2026-10-31", day: "2030-01-01" })).rejects.toThrow(new Error("NEXT_REDIRECT /solar?start=2026-10-01&end=2026-10-31"));
+test("a day after today redirects to the range without it, marked", async () => {
+  await expect(served({ start: "2026-10-01", end: "2026-10-31", day: "2030-01-01" })).rejects.toThrow(new Error("NEXT_REDIRECT /solar?start=2026-10-01&end=2026-10-31&unshown=1"));
   expect(dayIntervals).not.toHaveBeenCalled();
 });
 
@@ -135,4 +143,19 @@ test("the title names the range shown, or the open day", async () => {
   expect(await title({})).toBe("Solar · November 2026");
   expect(await title({ start: "2025-01-01", end: "2025-12-31" })).toBe("Solar · 2025");
   expect(await title({ start: "2026-10-01", end: "2026-10-31", day: "2026-10-14" })).toBe("Solar · Oct 14, 2026");
+});
+
+const NOTICE = "That link asked for dates the site doesn&#x27;t have, so this shows";
+
+test("a marked address says what it shows instead, under the title and before the chart; an unmarked one doesn't", async () => {
+  const html = await served({ unshown: "1" });
+  expect(html).toContain(`${NOTICE} November 2026.`);
+  expect(html.indexOf(NOTICE)).toBeGreaterThan(html.indexOf("</h1>"));
+  expect(html.indexOf(NOTICE)).toBeLessThan(html.indexOf("range-title"));
+  expect(await served()).not.toContain(NOTICE);
+});
+
+test("the day view, which shows the day its address names, says nothing of the marker", async () => {
+  dayIntervals.mockResolvedValue({ date: "2026-10-14", vehicle_data: false, totals: {}, data: [], off_grid: [], storm_watch: [] });
+  expect(await served({ day: "2026-10-14", unshown: "1" })).not.toContain(NOTICE);
 });

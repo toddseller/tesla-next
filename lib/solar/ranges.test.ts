@@ -121,13 +121,13 @@ describe("the address", () => {
   });
 
   test.each<[Record<string, string | string[]>, string]>([
-    [{ start: "nope", end: "2026-10-31" }, "/solar"],
-    [{ start: "2026-10-01" }, "/solar"],
-    [{ start: "1900-01-01", end: "2026-10-31", readings: "reported" }, "/solar?readings=reported"],
-    [{ start: "2026-10-31", end: "2026-10-01", backup: "25-26" }, "/solar?backup=25-26"],
-    [{ day: "2030-01-01" }, "/solar"],
-    [{ start: "2026-10-01", end: "2026-10-31", day: "soon" }, "/solar?start=2026-10-01&end=2026-10-31"],
-    [{ start: "x", day: "2026-10-14", readings: ["a", "b"] }, "/solar?day=2026-10-14&readings=a&readings=b"],
+    [{ start: "nope", end: "2026-10-31" }, "/solar?unshown=1"],
+    [{ start: "2026-10-01" }, "/solar?unshown=1"],
+    [{ start: "1900-01-01", end: "2026-10-31", readings: "reported" }, "/solar?readings=reported&unshown=1"],
+    [{ start: "2026-10-31", end: "2026-10-01", backup: "25-26" }, "/solar?backup=25-26&unshown=1"],
+    [{ day: "2030-01-01" }, "/solar?unshown=1"],
+    [{ start: "2026-10-01", end: "2026-10-31", day: "soon" }, "/solar?start=2026-10-01&end=2026-10-31&unshown=1"],
+    [{ start: "x", day: "2026-10-14", readings: ["a", "b"] }, "/solar?day=2026-10-14&readings=a&readings=b&unshown=1"],
   ])("%j redirects to %s", (params, to) => {
     expect(() => dropUnshown("/solar", params, true)).toThrow("NEXT_REDIRECT");
     expect(redirect).toHaveBeenCalledWith(to);

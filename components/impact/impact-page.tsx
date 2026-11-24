@@ -9,6 +9,7 @@ import { LEAD, Lead } from "@/components/lead";
 import { ReadingsNote, ReadingsSwitch } from "@/components/readings-switch";
 import { RangeControls } from "@/components/solar/range-controls";
 import { useReload } from "@/components/solar/use-reload";
+import { UnshownNotice } from "@/components/unshown-notice";
 import { useLiveStream } from "@/components/use-live-stream";
 import type { BackupHistory } from "@/lib/backup";
 import { backupParam } from "@/lib/backup-years";
@@ -20,12 +21,12 @@ import { siteToday } from "@/lib/scene/replay";
 import { datesLabel, impactPresets, type Range, rangeIncludes } from "@/lib/solar/ranges";
 
 type Props = {
-  range: Range; figures: ImpactFigures; today: string; backup: BackupHistory; backupYear: Range; charging: CarCharging | null; readings?: Readings;
+  range: Range; figures: ImpactFigures; today: string; backup: BackupHistory; backupYear: Range; charging: CarCharging | null; readings?: Readings; unshown?: boolean;
   // The year-earlier days' self-powered share, or null when there are none to compare.
   before?: number | null;
 };
 
-export function ImpactPage({ range, figures, today, backup, backupYear, charging, readings = "corrected", before = null }: Props) {
+export function ImpactPage({ range, figures, today, backup, backupYear, charging, readings = "corrected", unshown = false, before = null }: Props) {
   const router = useRouter();
   // Every address the page goes to keeps the readings it shows, unless it asks for others.
   const address = ({ start, end }: Range, year = backupYear, shown = readings) => {
@@ -61,6 +62,7 @@ export function ImpactPage({ range, figures, today, backup, backupYear, charging
           {corrected && <ReadingsSwitch readings={readings} addresses={{ corrected: address(range, backupYear, "corrected"), tesla: address(range, backupYear, "tesla") }} />}
           <RangeControls today={today} range={range} presets={impactPresets(today)} onRange={(next) => router.push(address(next), { scroll: false })} />
         </div>
+        {unshown && <UnshownNotice range={range} />}
         <Lead className={`${LEAD} -mt-2 basis-full`} text={lead} />
       </div>
       <section aria-labelledby="impact-title" className="flex flex-col gap-6 rounded-[10px] border bg-card p-4 sm:p-6">

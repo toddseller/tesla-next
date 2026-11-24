@@ -117,6 +117,13 @@ test("on a phone the chart is capped at half the screen's height, so a swipe els
   expect(chart().querySelector("canvas")!.className).toContain("max-sm:max-h-[50svh]");
 });
 
+test("beside the chart, the readout's column stays in view while the chart scrolls", () => {
+  year();
+  // The readout sits in its row, in its card, in the column beside the chart.
+  const column = document.querySelector('[data-part="day-readout"]')!.parentElement!.parentElement!.parentElement!;
+  expect(column.className.split(" ")).toEqual(expect.arrayContaining(["md:sticky", "md:top-6", "md:self-start"]));
+});
+
 test("the readout's figure never wraps away from its unit", () => {
   year();
   expect(readout()).toContain("21.7 kWh");
