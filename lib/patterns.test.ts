@@ -61,6 +61,13 @@ test("each year's kWh out, cycles against 40.5 kWh and round trip, with totals s
   expect(total).toEqual({ kwh: 20715, cycles: 511 });
 });
 
+test("the cycles since the first year add up the rows a reader sees, not the exact total", () => {
+  const halves = [2025, 2026].map((year) => ({ year, out_wh: 60_750, in_wh: 70_000, first_day: `${year}-01-01` }));
+  const { rows, total } = powerwallYears(halves, "2026-11-10");
+  expect(rows.map((row) => row.cycles)).toEqual([2, 2]);
+  expect(total.cycles).toBe(4);
+});
+
 test("a year with nothing into the Powerwalls has no round trip", () => {
   expect(powerwallYears([{ year: 2026, out_wh: 0, in_wh: 0, first_day: "2026-01-01" }], "2027-01-02").rows[0].roundTrip).toBeNull();
 });

@@ -50,7 +50,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<Par
       const current = years.at(-1)!;
       const rows = cycleRows(current.start_date, current.end_date);
       const [cycles, cost, share] = await Promise.all([rows, trueUpCost(current.start_date, current.end_date, today), rows.then(cyclesShare).then((explained) => explained?.share ?? null)]);
-      return { start: current.start_date, end: current.end_date, net: totals(startedCycles(cycles)).net, share, owed: owedRange(cost) };
+      return { end: current.end_date, net: totals(startedCycles(cycles)).net, share, owed: owedRange(cost) };
     }),
     payback(today),
   ]);
@@ -67,7 +67,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<Par
         <Records key="records" today={today} tabs={recordTabs(rankings, series)} record={String(params.record)} />,
         <Habits key="habits" today={today} months={house.months} figures={latestFigures(house.months, today)} />,
         <Since key="since" today={today} months={months} solar={sinceFigures.total_solar} matched={sinceFigures.total_solar_percentage}
-          net={trueUp.net} share={trueUp.share} owed={trueUp.owed} trueUpStart={trueUp.start} trueUpEnd={trueUp.end} payback={paidBack} />,
+          net={trueUp.net} share={trueUp.share} owed={trueUp.owed} trueUpEnd={trueUp.end} payback={paidBack} />,
         <PickADay key="pick" today={today} />,
       ].map((chapter) => <div key={chapter.key} className="mt-8 border-t pt-8 md:mt-20 md:pt-20">{chapter}</div>)}
     </div>

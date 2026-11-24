@@ -19,7 +19,7 @@ const PAYBACK = {
   powerwalls: { year: null, wont: true },
 };
 const since = (over: Partial<Parameters<typeof Since>[0]> = {}) =>
-  render(<Since today={TODAY} months={MONTHS} solar={75611.4} matched={100} net={609.3} share={73} owed={null} trueUpStart="2026-10-01" trueUpEnd="2027-09-30" payback={PAYBACK} {...over} />);
+  render(<Since today={TODAY} months={MONTHS} solar={75611.4} matched={100} net={609.3} share={73} owed={null} trueUpEnd="2027-09-30" payback={PAYBACK} {...over} />);
 
 afterEach(cleanup);
 
@@ -29,7 +29,8 @@ test("the running totals, named, with today and the payback marked, and the figu
   expect(screen.getByRole("img", { name: /^Running totals since October 10, 2021: solar 1.9 MWh against the house's 2.1 MWh; Solar paid for itself in March 2025\./ })).toBeTruthy();
   expect(screen.getByText("solar generated")).toBeTruthy();
   expect(document.body.textContent).toContain("Solar has generated as much as the house used: 75.6 MWh, 100%.");
-  expect(screen.getByText("more imported than sent this true-up year, since October 1")).toBeTruthy();
+  expect(screen.queryByText(/this true-up year, since/)).toBeNull();
+  expect(document.body.textContent!.split("609.3 kWh")).toHaveLength(2);
   expect(screen.getByText("dotted line: solar paid back, March 2025")).toBeTruthy();
   expect(screen.queryByText(/Solar paid for itself/)).toBeNull();
   expect(screen.getByText("The Powerwalls won't pay for themselves within their warranty.")).toBeTruthy();
@@ -46,7 +47,7 @@ test("a projected solar payback, with no line to key, is said in words", () => {
 test("without the costs file there is no payback, and a year that sent more says so", () => {
   since({ payback: null, net: -120.5, matched: 92 });
   expect(screen.queryByText(/paid for itself|pays back/)).toBeNull();
-  expect(screen.getByText("more sent than imported this true-up year, since October 1")).toBeTruthy();
+  expect(document.body.textContent).toContain("the house has sent 120.5 kWh more to PG&E than it drew.");
   expect(document.body.textContent).toContain("Solar has generated 75.6 MWh, 92% of what the house used.");
 });
 
@@ -57,7 +58,7 @@ test("a whole-system year already reached reads as paid back, not projected", ()
 
 test("a true-up year with nothing net reads as even, not as sent", () => {
   since({ net: 0.02 });
-  expect(screen.getByText("as much sent as imported this true-up year, since October 1")).toBeTruthy();
+  expect(document.body.textContent).toContain("the house has sent as much to PG&E as it drew.");
 });
 
 test("the legend says the house's line includes the car", () => {
@@ -101,7 +102,7 @@ test("not yet matched, this year's sentence stands alone", () => {
 });
 
 // home-story, "Since 2021's dollar estimate".
-test("True-Up's estimate sits under the net, with its true-up month", () => {
+test("True-Up's estimate leads the figures, with its true-up month", () => {
   since({ owed: [610, 654] });
   expect(screen.getByText("$610 to $654")).toBeTruthy();
   expect(screen.getByText("on track to owe at the October 2027 true-up")).toBeTruthy();

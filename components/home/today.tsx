@@ -49,7 +49,7 @@ export function TodayTotals({ day }: { day: Pick<Day, "totals" | "vehicle_data">
   const total = (view: string, i = 0) => viewSummary(view, day.totals, { vehicleData: day.vehicle_data }).headlines[i].value.toFixed(1);
   return (
     <>
-      <Figure value={total("home")} unit="kWh" label={day.vehicle_data ? "used by the house, car apart" : "used by the house"} />
+      <Figure value={total("home")} unit="kWh" label={day.vehicle_data ? "used by the house, without the car" : "used by the house"} />
       <Figure value={total("vehicle")} unit="kWh" label="charged into the car" className="text-vehicle" />
       <Figure value={total("grid")} unit="kWh" label="from the grid" className="text-grid" />
       <Figure value={total("grid", 1)} unit="kWh" label="sent to PG&E" className="text-grid" />

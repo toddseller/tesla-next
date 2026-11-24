@@ -96,23 +96,26 @@ test("?record= opens that Records tab in the first response", async () => {
 });
 
 test("the first render holds the six chapter words in order and Pick a day, with the true-up net so far", async () => {
+  readers.impactFigures.mockResolvedValue({ ...SHARES, total_house: 75611.4 });
   const html = await served();
   const words = [...html.matchAll(/<h2[^>]*>([^<]+)<\/h2>/g)].map((m) => m[1]);
   expect(words).toEqual(["Now", "Today", "2026", "Records", "Habits", "Since 2021", "Pick a day"]);
-  expect(html).toContain(">609.3 kWh<");
-  expect(html).toContain("more imported than sent this true-up year, since October 1");
+  expect(html).toContain("609.3 kWh more from PG&amp;E than it sent");
+  expect(html).not.toContain("this true-up year, since October 1");
 });
 
 // home-story, "Since 2021's dollar estimate": True-Up's estimate for the current year, as its headline rounds it.
-test("Since 2021 gives True-Up's estimate under the net", async () => {
+test("Since 2021 gives True-Up's estimate first among its figures", async () => {
   const html = await served();
   expect(html).toContain("$610 to $654");
   expect(html).toContain("on track to owe at the October 2027 true-up");
 });
 
-test("a true-up year without house use yet gives no explanation", async () => {
+// The net lives only in the explanation, so without house use yet it goes too; the net is near zero this early in a year.
+test("a true-up year without house use yet gives no explanation, and so no net", async () => {
   readers.impactFigures.mockImplementation(async (start: string) => (start === "2026-10-05" ? { ...SHARES, total_house: 0, total_solar_percentage: 0 } : SHARES));
   const html = await served();
   expect(html).not.toContain("This true-up year solar");
   expect(html).not.toContain("rests on the early years");
+  expect(html).not.toContain("609.3");
 });
