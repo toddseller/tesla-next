@@ -33,15 +33,19 @@ Each backup event anton-tesla-api-ws stores SHALL have one kind, checked in this
 - **THEN** its kind is outage
 
 ### Requirement: The Backup section's year
-The Impact page SHALL show a Backup section with its own year picker, apart from the page's date range, working as the page's range presets do: This year (the current true-up year, October 1 to September 30) and All time, the chosen one selected. On a true-up year, previous and next arrows SHALL step one true-up year, from '21 - '22 to this one, the button naming the year shown. Below 640 pixels wide the presets SHALL be one menu between the arrows.
+The Impact page SHALL show a Backup section with its own year picker, apart from the page's date range, working as the page's range presets do: True-up year (the current true-up year, October 1 to September 30, named as the page's own True-up year preset so "This year" on the page means only the calendar year) and All time, the chosen one selected. On a true-up year, previous and next arrows SHALL step one true-up year, from '21 - '22 to this one, the button naming the year shown. Below 640 pixels wide the presets SHALL be one menu between the arrows.
 
 #### Scenario: Opening the page on 2026-11-09
 - **WHEN** a visitor opens `/impact`
-- **THEN** the section shows '26 - '27, its presets read This year and All time with This year selected, and its next arrow is disabled
+- **THEN** the section shows '26 - '27, its presets read True-up year and All time with True-up year selected, and its next arrow is disabled
+
+#### Scenario: No second This year
+- **WHEN** a visitor opens `/impact`
+- **THEN** the only button reading "This year" is the page's preset for January 1 to December 31
 
 #### Scenario: On a phone
 - **WHEN** a visitor opens `/impact` on 2026-11-09 on a 390-pixel-wide screen
-- **THEN** the section's year is one "This year" menu button between the previous and next arrows, and its menu lists This year and All time
+- **THEN** the section's year is one "True-up year" menu button between the previous and next arrows, and its menu lists True-up year and All time
 
 #### Scenario: Stepping back
 - **WHEN** a visitor on 2026-11-09 presses the previous arrow twice
@@ -52,7 +56,7 @@ The Impact page SHALL show a Backup section with its own year picker, apart from
 - **THEN** its previous arrow is disabled
 
 ### Requirement: The Backup section names its year
-The Backup section's heading SHALL name what it shows, after a middle dot: the true-up year ("Backup · '26 - '27", This year included), or "Backup · All time", so the section can't be read as covering the page's range.
+The Backup section's heading SHALL name what it shows, after a middle dot: the true-up year ("Backup · '26 - '27", the current True-up year included), or "Backup · All time", so the section can't be read as covering the page's range.
 
 #### Scenario: Opening the page on 2026-11-09
 - **WHEN** a visitor opens `/impact`

@@ -21,8 +21,9 @@ export function backupParam(range: Range, today: string) {
   return range.start === yearRange(currentStart(today)).start ? null : `${range.start.slice(2, 4)}-${range.end.slice(2, 4)}`;
 }
 
-// As True-Up's picker: This year and All time, the shared picker's arrows stepping to the years between.
+// True-up year, as the page's own preset names the same span, so "This year" there means only the calendar year;
+// the shared picker's arrows step to the years between.
 export const backupPresets = (today: string): Preset[] => [
-  { label: "This year", range: yearRange(currentStart(today)) },
+  { label: "True-up year", range: yearRange(currentStart(today)) },
   { label: "All time", range: allTime(today) },
 ];

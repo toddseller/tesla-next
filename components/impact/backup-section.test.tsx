@@ -18,10 +18,10 @@ const pressed = () => picker().getAllByRole("button").filter((b) => b.getAttribu
 const names = () => picker().getAllByRole("button").map((b) => b.getAttribute("aria-label") ?? b.textContent);
 const arrow = (name: string) => picker().getByRole("button", { name }) as HTMLButtonElement;
 
-test("the picker reads This year and All time, This year chosen between its arrows, next disabled", () => {
+test("the picker reads True-up year and All time, True-up year chosen between its arrows, next disabled", () => {
   render(<BackupSection history={EMPTY} year={THIS_YEAR} today={TODAY} onYear={() => {}} />);
-  expect(names()).toEqual(["Previous true-up year", "This year", "Next true-up year", "All time"]);
-  expect(pressed()).toEqual(["This year"]);
+  expect(names()).toEqual(["Previous true-up year", "True-up year", "Next true-up year", "All time"]);
+  expect(pressed()).toEqual(["True-up year"]);
   expect(arrow("Next true-up year").disabled).toBe(true);
 });
 
@@ -55,7 +55,7 @@ test("All time is every year", () => {
   expect(onYear).toHaveBeenCalledWith({ start: "2021-10-01", end: "2027-09-30" });
 });
 
-test("the heading names the year shown, This year included, or All time", () => {
+test("the heading names the year shown, the current true-up year included, or All time", () => {
   const heading = () => screen.getByRole("heading", { level: 2 }).textContent!.replace(/\u00a0/g, " ");
   const { rerender } = render(<BackupSection history={EMPTY} year={THIS_YEAR} today={TODAY} onYear={() => {}} />);
   expect(heading()).toBe("Backup · '26 - '27");
