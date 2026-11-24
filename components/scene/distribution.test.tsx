@@ -17,6 +17,8 @@ vi.mock("@/components/scene/use-site-data", () => ({ useSiteData: () => context 
 // jsdom has no WebGL; the clouds' renderer is a stand-in that records what it is asked to draw.
 const cloudRenderer = vi.hoisted(() => ({ bake: vi.fn(), draw: vi.fn(), dispose: vi.fn() }));
 vi.mock("@/components/scene/cloud-renderer", () => ({ createCloudRenderer: () => cloudRenderer }));
+// Its own fetch and stream are tested in today-so-far.test.tsx.
+vi.mock("@/components/scene/today-so-far", () => ({ TodaySoFar: () => null }));
 
 const FLOW_KEYS = ["solar_to_home", "solar_to_vehicle", "solar_to_powerwall", "solar_to_grid", "powerwall_to_home",
   "powerwall_to_vehicle", "powerwall_to_grid", "grid_to_home", "grid_to_vehicle", "grid_to_powerwall"];
@@ -709,6 +711,18 @@ describe("progress line", () => {
     wait(3100);
     expect(fill(container).style.width).toMatch(/^25\.00/);
     expect(fill(container).className).toContain("bg-white");
+  });
+
+  // scene-replay, "Replay bar shown on demand": from 1024px the bar stays shown, so there is no line to stand in for it.
+  test("from 1024px the hidden bar stays in view and the line doesn't show", () => {
+    vi.useFakeTimers({ now: new Date("2026-10-20T01:00:00Z") });
+    const container = page();
+    wait(3100);
+    const drawer = container.querySelector<HTMLElement>('[data-part="replay-drawer"]')!;
+    expect(drawer.dataset.shown).toBe("false");
+    expect(drawer.className).not.toContain("translate-y-full");
+    expect(drawer.className).toContain("lg:grid-rows-[1fr]");
+    expect(line(container)!.className).toContain("lg:hidden");
   });
 });
 

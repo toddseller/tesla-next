@@ -16,6 +16,8 @@ vi.mock("@/components/scene/use-site-data", () => ({
   }),
 }));
 vi.mock("@/components/scene/cloud-renderer", () => ({ createCloudRenderer: () => null }));
+// Its own fetch and stream are tested in today-so-far.test.tsx.
+vi.mock("@/components/scene/today-so-far", () => ({ TodaySoFar: () => null }));
 
 const reduceMotion = (on: boolean) =>
   vi.stubGlobal("matchMedia", (query: string) => ({ matches: on && query === "(prefers-reduced-motion: reduce)", addEventListener: () => {}, removeEventListener: () => {} }));

@@ -44,7 +44,7 @@ export const Figure = ({ value, unit, label, className = "", wide = false }: Fig
 );
 
 // Today's six totals as the day view gives them, the house without the car on a day with car data. Distribution shows
-// the same six under its scene on a phone.
+// the same six under its scene.
 export function TodayTotals({ day }: { day: Pick<Day, "totals" | "vehicle_data"> }) {
   const total = (view: string, i = 0) => viewSummary(view, day.totals, { vehicleData: day.vehicle_data }).headlines[i].value.toFixed(1);
   return (
