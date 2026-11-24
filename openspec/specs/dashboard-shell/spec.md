@@ -169,7 +169,7 @@ The top bar's live status SHALL add a pill before the live pill while the latest
 
 #### Scenario: Storm watch
 - **WHEN** the latest status reports `on_grid` and storm watch active
-- **THEN** the top bar reads STORM WATCH beside the live pill
+- **THEN** the top bar reads STORM WATCH beside the live pill, in the solar color, and its STORM WATCH opens the storm watch definition
 
 #### Scenario: An outage during storm watch
 - **WHEN** the latest status reports `off_grid_unintentional` and storm watch active
