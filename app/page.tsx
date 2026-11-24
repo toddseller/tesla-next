@@ -49,7 +49,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<Par
     trueUpYears(today).then(async (years) => {
       const current = years.at(-1)!;
       const rows = cycleRows(current.start_date, current.end_date);
-      const [cycles, cost, share] = await Promise.all([rows, trueUpCost(current.start_date, current.end_date, today), rows.then(cyclesShare)]);
+      const [cycles, cost, share] = await Promise.all([rows, trueUpCost(current.start_date, current.end_date, today), rows.then(cyclesShare).then((explained) => explained?.share ?? null)]);
       return { start: current.start_date, end: current.end_date, net: totals(startedCycles(cycles)).net, share, owed: owedRange(cost) };
     }),
     payback(today),

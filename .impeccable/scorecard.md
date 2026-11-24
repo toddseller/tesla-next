@@ -32,6 +32,8 @@ Check every item on the live site, at 1440x900 and 390x844. A check passes only 
 
 2026-11-23, live with v2026.11.23.11: 14 of 15 pass. Checks 12 and 13 pass with PR #82: Home's Since 2021 chapter gives True-Up's estimate in dollars ("$607 to $651, on track to owe at the October 2027 true-up") beside the kWh net, and True-Up and Home each explain the year from its own figures ("This true-up year solar has covered 73% of the house's use so far, so the house has drawn 669 kWh more from PG&E than it sent."), Home adding that its since-2021 100% rests on the early years. Still failing: 10.
 
+2026-11-23, scorecard round on v2026.11.23.12, at 1440x900 and 390x844: 14 of 15 pass. Check 10 passes with PR #83: Home says "live and recorded since October 10, 2021" and "Any of the 1,871 days since October 10, 2021", its since-2021 solar (75,660 kWh, 100%) matches Impact's All time, and the only October 22 is Top Ten's outage note, named as the day the system was approved to run. Check 11 fails on True-Up, which the first round didn't look at for it: All time opens with "Grid energy by PG&E billing cycle", a subtitle with no figure, and so do '21 - '22 to '23 - '24, whose explanation comes only after it; every Solar and Impact preset passes. Check 5 passes as first measured (2022 is two interactions away: open the calendar, choose 2022), though choosing a range there takes four. True-Up's All time starts October 1, 2021, the first true-up year's start, a billing boundary rather than a data start.
+
 ## What comparable sites do
 
 Studied 2026-11-23 at 1440x900: Electricity Maps, Grid Status, Our World in Data, PVOutput and a public Enphase Enlighten page. Not studied: phone layouts, SolarEdge (no public page found), and anything behind a login.

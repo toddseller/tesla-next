@@ -116,7 +116,7 @@ test("the title names the true-up year shown", async () => {
 
 // true-up-tracker, "The year explained": the year's share as Impact gives it, over the billing cycles' own days, as the
 // net beside it counts them.
-test("a true-up year is served with its explanation; other ranges ask for no share", async () => {
+test("a true-up year is served with its explanation", async () => {
   at("2026-11-08T20:00:00Z");
   const past = await served({ start: "2025-10-01", end: "2026-09-30" });
   expect(mocks.impactFigures).toHaveBeenCalledWith("2025-10-03", "2026-10-04", "corrected");
@@ -124,9 +124,14 @@ test("a true-up year is served with its explanation; other ranges ask for no sha
   const current = await served();
   expect(mocks.impactFigures).toHaveBeenLastCalledWith("2026-10-05", "2026-11-08", "corrected");
   expect(current).toContain("This true-up year solar has covered 73% of the house&#x27;s use so far");
-  mocks.impactFigures.mockClear();
-  await served({ start: "2021-10-01", end: "2027-09-30" });
-  expect(mocks.impactFigures).not.toHaveBeenCalled();
+});
+
+// true-up-tracker, "The range explained": a range that isn't a true-up year is named by its cycles' days.
+test("All time is served with its explanation, named by the cycles' days", async () => {
+  at("2026-11-08T20:00:00Z");
+  const html = await served({ start: "2021-10-01", end: "2027-09-30" });
+  expect(mocks.impactFigures).toHaveBeenCalledWith("2026-10-05", "2026-11-08", "corrected");
+  expect(html).toContain("Since October 5, 2026 solar has covered 73% of the house&#x27;s use, so the house has drawn");
 });
 
 // A new year with no house use saved yet has no share to give, rather than reading 0%.

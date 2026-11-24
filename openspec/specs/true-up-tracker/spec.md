@@ -319,7 +319,7 @@ The True-Up Tracker SHALL show the Payback card (see system-payback) right after
 - **THEN** the Payback card follows the tiles and comes before the billing-cycle chart
 
 ### Requirement: The headline
-When a true-up year has something its tiles don't say, the page SHALL lead with it as a headline sentence under the "True-Up Tracker" heading, at the shared lead size with its figures in mono, in place of the subtitle. The heading SHALL stay at its full size. Without a headline the heading and subtitle SHALL stay as they are.
+When a true-up year has something its tiles don't say, the page SHALL lead with it as a headline sentence under the "True-Up Tracker" heading, at the shared lead size with its figures in mono, in place of the subtitle. The heading SHALL stay at its full size. Without a headline, the range's explanation SHALL lead in its place at the same size; the subtitle SHALL show only when there is neither.
 
 #### Scenario: A headline
 - **WHEN** the current year has a dollar projection
@@ -327,7 +327,19 @@ When a true-up year has something its tiles don't say, the page SHALL lead with 
 
 #### Scenario: All time
 - **WHEN** All time is shown
-- **THEN** the page has no headline, and "True-Up Tracker" heads it with its subtitle
+- **THEN** the page has no headline, and its explanation leads under "True-Up Tracker" at the lead size, with no subtitle
+
+#### Scenario: A year without a stored bill
+- **WHEN** '22 - '23 is shown, whose year before has no stored amount due
+- **THEN** its explanation leads at the lead size, with no subtitle
+
+#### Scenario: Nothing to explain yet
+- **WHEN** a new true-up year has no saved day yet
+- **THEN** "True-Up Tracker" heads the page with its subtitle
+
+#### Scenario: A range with no billing cycle in it
+- **WHEN** the range is November 10 to 23, 2026, and the cycle under way began November 3
+- **THEN** the page has no cycles to explain, and "True-Up Tracker" heads it with its subtitle
 
 ### Requirement: The current year's headline
 With dollar projections, the headline SHALL give the lowest and highest projected amount due in whole dollars, the true-up's month, and the charges so far when there are any: "On track to owe $611 to $657 at the October 2027 true-up; $180 in charges so far." With a kWh projection only, it SHALL give the projected year-end net. A muted line under it SHALL name the years the projection comes from.
@@ -367,8 +379,8 @@ For a finished year whose amount due is known, and the year before's too, the he
 - **WHEN** '23 - '24 is shown, and '22 - '23's amount isn't known
 - **THEN** the page has no headline
 
-### Requirement: The year explained
-For a true-up year, the page SHALL say under its lead, in one sentence, how much of the house's use solar covered, as Impact gives it over the days the net tile counts, and what that left with PG&E, as the net tile gives it, in whole kWh. Before any house use is saved there SHALL be no sentence. The year under way SHALL be named "This true-up year" with "so far" and the present perfect; a finished year by its name. All time and other ranges SHALL have no such sentence.
+### Requirement: The range explained
+The page SHALL say in one sentence how much of the house's use solar covered, as Impact gives it over the days the net tile counts, and what that left with PG&E, in whole kWh: under a headline, or as the lead. A true-up year is named "This true-up year" (with "so far") or by its name; any other range by the cycles' days, from no earlier than October 10, 2021: "Since <day>" while it reaches today, else "From <day> to <day>". Before any house use is saved there SHALL be none.
 
 #### Scenario: Short of the house's use
 - **WHEN** '25 - '26 is shown, solar covered 89% of the house's use, and the year imported 2,422.7 kWh more than it sent
@@ -387,8 +399,12 @@ For a true-up year, the page SHALL say under its lead, in one sentence, how much
 - **THEN** the sentence reads "This true-up year solar has covered 73% of the house's use so far, so the house has drawn 671 kWh more from PG&E than it sent."
 
 #### Scenario: All time
-- **WHEN** All time is shown
-- **THEN** there is no such sentence
+- **WHEN** All time is shown on 2026-11-23, its cycles run from 2021-10-06, solar has covered 100% of the house's use, and they have imported 4,541.3 kWh more than they sent
+- **THEN** the sentence reads "Since October 10, 2021 solar has covered 100% of the house's use, yet the house has drawn 4,541 kWh more from PG&E than it sent: the Powerwalls lose some of what they store, so solar needs a margin over use to break even."
+
+#### Scenario: A past custom range
+- **WHEN** a range's cycles run from 2026-02-05 to 2026-04-06, solar covered 96% of the house's use, and they imported 120.4 kWh more than they sent
+- **THEN** the sentence reads "From February 5 to April 6, 2026 solar covered 96% of the house's use, so the house drew 120 kWh more from PG&E than it sent."
 
 #### Scenario: Before any house use is saved
 - **WHEN** a new true-up year has no saved day yet

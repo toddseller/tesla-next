@@ -240,13 +240,13 @@ export function savingsText(savings: Savings, season: Cost["vpp"], current: bool
   };
 }
 
-type Explained = { label: string; current: boolean; share: number; net: number };
+type Explained = { name: string; under: boolean; soFar: boolean; share: number; net: number };
 
-// Why a year owed or didn't, from its own figures. A year above 100% can import only through what the Powerwalls lose
-// in storing, so that case names it.
-export function yearExplained({ label, current, share, net }: Explained) {
-  const covered = current ? `This true-up year solar has covered ${share}% of the house's use so far` : `In ${yearName(label)} solar covered ${share}% of the house's use`;
-  const [drew, sent] = current ? ["has drawn", "has sent"] : ["drew", "sent"];
+// Why a range owed or didn't, from its own figures. A range above 100% can import only through what the Powerwalls lose
+// in storing, so that case names it. `under` is a range still running, told in the present perfect.
+export function rangeExplained({ name, under, soFar, share, net }: Explained) {
+  const covered = `${name} solar ${under ? "has covered" : "covered"} ${share}% of the house's use${soFar ? " so far" : ""}`;
+  const [drew, sent] = under ? ["has drawn", "has sent"] : ["drew", "sent"];
   const amount = wholeKwh(net);
   if (amount === "0") return `${covered}, and the house ${sent} as much to PG&E as it drew.`;
   if (net < 0) return `${covered}, and the house ${sent} ${amount} kWh more to PG&E than it drew.`;
