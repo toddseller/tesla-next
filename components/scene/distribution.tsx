@@ -138,7 +138,7 @@ const Distribution = ({ initialStatus, search, renderedAt }: { initialStatus: st
     return () => clearInterval(timer);
   }, [playing, speed, end, isToday]);
 
-  // The replay bar shows on demand: for a while after each use (page load,
+  // Below 1024px (a desktop always shows it), the replay bar shows on demand: for a while after each use (page load,
   // a mouse moving over the scene, a tap or a key), while a mouse rests on
   // the bar, while the bar holds itself shown, and while a replay is paused.
   const [recent, setRecent] = useState(true);
@@ -236,19 +236,19 @@ const Distribution = ({ initialStatus, search, renderedAt }: { initialStatus: st
               REPLAY
             </span>
           )}
-          {/* While the bar is hidden: the shown time's place in its day, as the
-              scrubber has it, red live and white in replay. */}
+          {/* While the bar is hidden, on a phone: the shown time's place in its
+              day, as the scrubber has it, red live and white in replay. */}
           {!barShown && (
-            <div className="absolute inset-x-0 bottom-0 h-[3px] bg-white/20" data-part="progress-line">
+            <div className="lg:hidden absolute inset-x-0 bottom-0 h-[3px] bg-white/20" data-part="progress-line">
               <div className={`h-full ${replaying ? "bg-white" : "bg-[rgb(204,0,0)]"}`}
                 style={{ width: `${((shownTime - span.start) / (span.end - span.start)) * 100}%` }} />
             </div>
           )}
         </div>
-        {/* Hidden, the bar stays in the tab order: on a desktop it slides down
-            out of the card, which clips it; below that its row closes to 0. */}
+        {/* On a desktop the bar always shows over the scene's bottom. Below that,
+            hidden, it stays in the tab order while its row closes to 0. */}
         <div
-          className={`grid lg:absolute lg:inset-x-0 lg:bottom-0 lg:grid-rows-[1fr] transition-[grid-template-rows,transform] duration-[750ms] ease-[ease] motion-reduce:transition-none ${barShown ? "grid-rows-[1fr]" : "grid-rows-[0fr] lg:translate-y-full"}`}
+          className={`grid lg:absolute lg:inset-x-0 lg:bottom-0 lg:grid-rows-[1fr] transition-[grid-template-rows] duration-[750ms] ease-[ease] motion-reduce:transition-none ${barShown ? "grid-rows-[1fr]" : "grid-rows-[0fr]"}`}
           data-part="replay-drawer" data-shown={barShown} onPointerEnter={onHover(true)} onPointerLeave={onHover(false)}>
           <div className="min-h-0 overflow-hidden">
             <ReplayBar

@@ -11,15 +11,8 @@ import { address, monthOf } from "@/lib/solar/ranges";
 
 type Totals = Pick<Day, "date" | "totals" | "vehicle_data">;
 
-// Under the scene on a phone, where it ends halfway down: today's totals as the home page's Today shows them. The browser
-// fetches them, only on a phone, so the page still renders from the live status alone and wide screens do nothing.
+// The browser fetches today's totals, so the page still renders from the live status alone.
 export function TodaySoFar() {
-  const [phone, setPhone] = useState(false);
-  useEffect(() => setPhone(typeof matchMedia === "function" && matchMedia("(max-width: 639px)").matches), []);
-  return phone ? <OnPhone /> : null;
-}
-
-function OnPhone() {
   const [day, setDay] = useState<Totals | null>(null);
   const load = async () => {
     try {
@@ -38,9 +31,9 @@ function OnPhone() {
   const made = viewSummary("solar", day.totals, { vehicleData: day.vehicle_data }).headlines[0].value.toFixed(1);
 
   return (
-    <section aria-labelledby="today-so-far" className="mt-6 flex flex-col gap-5 sm:hidden">
+    <section aria-labelledby="today-so-far" className="mt-6 flex flex-col gap-5">
       <h2 id="today-so-far" className="text-sm font-medium text-muted-foreground">Today so far</h2>
-      <div className="grid grid-cols-2 gap-x-4 gap-y-5">
+      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-x-4 gap-y-5">
         <Figure value={made} unit="kWh" label="generated" className="text-solar" />
         <TodayTotals day={day} />
       </div>

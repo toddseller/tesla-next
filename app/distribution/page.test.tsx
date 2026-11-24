@@ -37,7 +37,7 @@ test("a shared moment is served as that replay", async () => {
   expect(html).toContain('data-part="replay-tag"');
 });
 
-// live-flow-scene, "Today's totals under the scene on a phone": the browser fetches them, so the page reads no database.
+// live-flow-scene, "Today's totals under the scene": the browser fetches them, so the page reads no database.
 test("the page is served from the live status alone, with no totals block in its HTML", async () => {
   const html = await served();
   expect(html).not.toContain("Today so far");

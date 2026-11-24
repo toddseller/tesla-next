@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-// live-flow-scene, "Today's totals under the scene on a phone": fetched by the browser on a phone only, so the page
+// live-flow-scene, "Today's totals under the scene": fetched by the browser at every width, so the page
 // itself still renders from the live status alone.
 import { act, cleanup, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
@@ -10,7 +10,6 @@ const TODAY = "2026-11-21";
 const TOTALS = { solar_to_home: 9.366, solar_to_powerwall: 0.318, solar_to_grid: 11.007, powerwall_to_home: 0, powerwall_to_grid: 0, grid_to_home: 11.962, grid_to_powerwall: 0.362, solar_to_vehicle: 1.037, powerwall_to_vehicle: 0, grid_to_vehicle: 2.043 };
 const DAY = { date: TODAY, vehicle_data: true, totals: TOTALS, data: [] };
 const figure = (label: string) => screen.getByText(label).parentElement!.querySelector("b")!.textContent;
-const screenWidth = (phone: boolean) => vi.stubGlobal("matchMedia", (query: string) => ({ matches: phone && query === "(max-width: 639px)", addEventListener: () => {}, removeEventListener: () => {} }));
 const answering = (totals = TOTALS) => vi.fn(async (_url: string) => ({ ok: true, json: async () => ({ ...DAY, totals }) }));
 
 beforeEach(() => {
@@ -25,8 +24,7 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-test("on a phone it fetches today and shows solar generated, the six totals and a link to today on Solar", async () => {
-  screenWidth(true);
+test("it fetches today and shows solar generated, the six totals and a link to today on Solar", async () => {
   const fetch = answering();
   vi.stubGlobal("fetch", fetch);
   render(<TodaySoFar />);
@@ -39,18 +37,17 @@ test("on a phone it fetches today and shows solar generated, the six totals and 
   expect(screen.getByRole("link", { name: "Today, hour by hour" }).getAttribute("href")).toBe("/solar?start=2026-11-01&end=2026-11-30&day=2026-11-21");
 });
 
-test("on a wide screen it fetches nothing and shows nothing", async () => {
-  screenWidth(false);
-  const fetch = answering();
-  vi.stubGlobal("fetch", fetch);
-  const { container } = render(<TodaySoFar />);
+test("at every width, two figures to a row on a phone, four from 640px and seven from 1024px", async () => {
+  vi.stubGlobal("fetch", answering());
+  render(<TodaySoFar />);
   await act(async () => {});
-  expect(fetch).not.toHaveBeenCalled();
-  expect(container.textContent).toBe("");
+  const region = screen.getByRole("region", { name: "Today so far" });
+  expect(region.className).not.toContain("sm:hidden");
+  const grid = screen.getByText("generated").parentElement!.parentElement!;
+  expect(grid.className).toContain("grid-cols-2 sm:grid-cols-4 lg:grid-cols-7");
 });
 
 test("until today's figures arrive, or if they fail, there's no block", async () => {
-  screenWidth(true);
   vi.stubGlobal("fetch", vi.fn(async () => ({ ok: false, json: async () => ({}) })));
   vi.spyOn(console, "error").mockImplementation(() => {});
   const { container } = render(<TodaySoFar />);
@@ -59,7 +56,6 @@ test("until today's figures arrive, or if they fail, there's no block", async ()
 });
 
 test("a totals event for today, or the stream coming back after a sleep, fetches today again", async () => {
-  screenWidth(true);
   const fetch = answering();
   vi.stubGlobal("fetch", fetch);
   render(<TodaySoFar />);
