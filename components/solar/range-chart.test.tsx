@@ -145,6 +145,11 @@ test("a legend names the flows in order, a note explains below zero, and the axi
   expect(container.querySelector("svg.recharts-surface")?.textContent).toMatch(/\d kWh/);
 });
 
+test("under monthly bars the note says that month", () => {
+  render(<RangeChart items={periodItems(["Jan-23", "Feb-23"])} range={{ start: "2023-01-01", end: "2023-12-31" }} onOpenDay={() => {}} onOpenRange={() => {}} />);
+  expect(screen.getByText(/below zero/i).textContent).toMatch(/than they gave back that month\.$/);
+});
+
 test("a day's details show its values and that clicking opens it", () => {
   render(<BarDetails active label="Oct 14" payload={[{ payload: { label: "Oct 14", day: "2026-10-14", solar: 44.4, grid: -8.3, powerwall: -2.1, house: 34.0 } }]} />);
   expect(screen.getByText("Oct 14")).toBeTruthy();

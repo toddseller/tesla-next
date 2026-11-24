@@ -143,15 +143,16 @@ test("with a forecast, today's totals reload it with the bars; another day's tot
   expect(soFar()).toContain("12.4 kWh so far");
 });
 
-test("a stream that opens again reloads the forecast, even for a past range", async () => {
+test("a stream that opens again reloads the forecast with the bars", async () => {
+  answers.push(() => Promise.resolve({ ok: true, json: () => ({ data: [] }) }));
   answers.push(() => Promise.resolve({ ok: true, json: () => ({ data: later }) }));
-  render(<SolarPage range={march} items={[]} today="2026-11-07" initialStatus={null} forecast={CARD} />);
+  render(<SolarPage range={november} items={[]} today="2026-11-07" initialStatus={null} forecast={CARD} />);
   const [stream] = FakeStream.opened;
   stream.connect();
   stream.fail(false);
   stream.connect();
   await settle();
-  expect(fetches).toEqual(["/api/forecast"]);
+  expect(fetches).toEqual(["/api/range?start_date=2026-11-01&end_date=2026-11-30", "/api/forecast"]);
   expect(soFar()).toContain("12.4 kWh so far");
 });
 
@@ -183,7 +184,7 @@ test("a new range served with fresher forecast figures shows them over an earlie
   FakeStream.opened[0].send({ date: "2026-11-07" }, "totals");
   await settle();
   expect(soFar()).toContain("12.4 kWh so far");
-  rerender(<SolarPage range={march} items={[]} today="2026-11-07" initialStatus={null} forecast={{ ...CARD, today: { ...CARD.today, soFar: 15 } }} />);
+  rerender(<SolarPage range={{ start: "2026-10-01", end: "2027-09-30" }} items={[]} today="2026-11-07" initialStatus={null} forecast={{ ...CARD, today: { ...CARD.today, soFar: 15 } }} />);
   expect(soFar()).toContain("15.0 kWh so far");
 });
 
