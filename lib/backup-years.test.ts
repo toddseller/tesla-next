@@ -22,9 +22,6 @@ test("each year's address value comes back from its range, All time is all, and 
   expect(backupParam({ start: "2021-10-01", end: "2022-09-30" }, TODAY)).toBe("21-22");
 });
 
-test("This year and the two before as buttons, older years in Earlier newest first, All time last", () => {
-  const { presets, earlier } = backupPresets(TODAY);
-  expect(presets.map(({ label }) => label)).toEqual(["This year", "'25 - '26", "'24 - '25", "All time"]);
-  expect(presets.at(-1)!.range).toEqual(ALL);
-  expect(earlier.map(({ label }) => label)).toEqual(["'23 - '24", "'22 - '23", "'21 - '22"]);
+test("This year and All time, the arrows stepping to the years between", () => {
+  expect(backupPresets(TODAY)).toEqual([{ label: "This year", range: { start: "2026-10-01", end: "2027-09-30" } }, { label: "All time", range: ALL }]);
 });

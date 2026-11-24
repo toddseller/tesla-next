@@ -113,8 +113,8 @@ test("a failed reload keeps the figures", async () => {
 
 test("picking a backup year replaces the address, keeping the range, with no new history entry", () => {
   render(<ImpactPage range={march} figures={figures(95)} today="2026-11-08" backup={NO_BACKUP} charging={CHARGING} backupYear={THIS_YEAR} />);
-  fireEvent.click(years().getByRole("button", { name: "'24 - '25" }));
-  expect(router.replace).toHaveBeenCalledWith("/impact?start=2026-03-01&end=2026-03-31&backup=24-25", { scroll: false });
+  fireEvent.click(years().getByRole("button", { name: "Previous true-up year" }));
+  expect(router.replace).toHaveBeenCalledWith("/impact?start=2026-03-01&end=2026-03-31&backup=25-26", { scroll: false });
   expect(router.push).not.toHaveBeenCalled();
   fireEvent.click(years().getByRole("button", { name: "This year" }));
   expect(router.replace).toHaveBeenLastCalledWith("/impact?start=2026-03-01&end=2026-03-31", { scroll: false });
@@ -152,7 +152,7 @@ test("this year's reload asks for no year, and a failed one keeps the section", 
 
 test("the Home car charging section sits between the energy section and Backup", () => {
   render(<ImpactPage range={today} figures={figures(95)} today="2026-11-08" backup={NO_BACKUP} charging={CHARGING} backupYear={THIS_YEAR} />);
-  const [energy, charging, backup] = ["November 8, 2026", "Home car charging", "Backup"].map((name) => screen.getByRole("region", { name }));
+  const [energy, charging, backup] = ["November 8, 2026", "Home car charging", /^Backup · '26\s-\s'27$/].map((name) => screen.getByRole("region", { name }));
   expect(energy.compareDocumentPosition(charging) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   expect(charging.compareDocumentPosition(backup) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
 });

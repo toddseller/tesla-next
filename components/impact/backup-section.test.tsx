@@ -15,20 +15,37 @@ afterEach(cleanup);
 const picker = () => within(screen.getByRole("group", { name: "Backup years" }));
 const pressed = () => picker().getAllByRole("button").filter((b) => b.getAttribute("aria-pressed") === "true").map((b) => b.textContent);
 
-test("the picker reads This year, the two years before, Earlier and All time, in that order, This year chosen", () => {
+const names = () => picker().getAllByRole("button").map((b) => b.getAttribute("aria-label") ?? b.textContent);
+const arrow = (name: string) => picker().getByRole("button", { name }) as HTMLButtonElement;
+
+test("the picker reads This year and All time, This year chosen between its arrows, next disabled", () => {
   render(<BackupSection history={EMPTY} year={THIS_YEAR} today={TODAY} onYear={() => {}} />);
-  expect(picker().getAllByRole("button").map((b) => b.textContent)).toEqual(["This year", "'25 - '26", "'24 - '25", "Earlier", "All time"]);
+  expect(names()).toEqual(["Previous true-up year", "This year", "Next true-up year", "All time"]);
   expect(pressed()).toEqual(["This year"]);
+  expect(arrow("Next true-up year").disabled).toBe(true);
 });
 
-test("an earlier year picked from Earlier is chosen and names the button", () => {
+test("the previous arrow steps a true-up year, the button and heading naming it", () => {
   const onYear = vi.fn();
   const { rerender } = render(<BackupSection history={EMPTY} year={THIS_YEAR} today={TODAY} onYear={onYear} />);
-  fireEvent.click(picker().getByRole("button", { name: "Earlier" }));
-  fireEvent.click(screen.getByRole("menuitemradio", { name: "'23 - '24" }));
-  expect(onYear).toHaveBeenCalledWith({ start: "2023-10-01", end: "2024-09-30" });
-  rerender(<BackupSection history={EMPTY} year={{ start: "2023-10-01", end: "2024-09-30" }} today={TODAY} onYear={onYear} />);
-  expect(pressed()).toEqual(["'23 - '24"]);
+  fireEvent.click(arrow("Previous true-up year"));
+  expect(onYear).toHaveBeenCalledWith({ start: "2025-10-01", end: "2026-09-30" });
+  rerender(<BackupSection history={EMPTY} year={{ start: "2025-10-01", end: "2026-09-30" }} today={TODAY} onYear={onYear} />);
+  // The shared year name keeps its spaces from breaking.
+  expect(pressed().map((name) => name!.replace(/\u00a0/g, " "))).toEqual(["'25 - '26"]);
+  expect(screen.getByRole("heading", { level: 2 }).textContent!.replace(/\u00a0/g, " ")).toBe("Backup · '25 - '26");
+  expect(arrow("Next true-up year").disabled).toBe(false);
+});
+
+test("the first true-up year can't step back", () => {
+  render(<BackupSection history={EMPTY} year={{ start: "2021-10-01", end: "2022-09-30" }} today={TODAY} onYear={() => {}} />);
+  expect(arrow("Previous true-up year").disabled).toBe(true);
+});
+
+test("All time has no arrows", () => {
+  render(<BackupSection history={EMPTY} year={{ start: "2021-10-01", end: "2027-09-30" }} today={TODAY} onYear={() => {}} />);
+  expect(screen.queryAllByRole("button", { name: /true-up year/ })).toEqual([]);
+  expect(pressed()).toEqual(["All time"]);
 });
 
 test("All time is every year", () => {
@@ -36,6 +53,17 @@ test("All time is every year", () => {
   render(<BackupSection history={EMPTY} year={THIS_YEAR} today={TODAY} onYear={onYear} />);
   fireEvent.click(picker().getByRole("button", { name: "All time" }));
   expect(onYear).toHaveBeenCalledWith({ start: "2021-10-01", end: "2027-09-30" });
+});
+
+test("the heading names the year shown, This year included, or All time", () => {
+  const heading = () => screen.getByRole("heading", { level: 2 }).textContent!.replace(/\u00a0/g, " ");
+  const { rerender } = render(<BackupSection history={EMPTY} year={THIS_YEAR} today={TODAY} onYear={() => {}} />);
+  expect(heading()).toBe("Backup · '26 - '27");
+  expect(screen.getByRole("region", { name: /^Backup · '26\s-\s'27$/ })).toBeTruthy();
+  rerender(<BackupSection history={EMPTY} year={{ start: "2023-10-01", end: "2024-09-30" }} today={TODAY} onYear={() => {}} />);
+  expect(heading()).toBe("Backup · '23 - '24");
+  rerender(<BackupSection history={EMPTY} year={{ start: "2021-10-01", end: "2027-09-30" }} today={TODAY} onYear={() => {}} />);
+  expect(heading()).toBe("Backup · All time");
 });
 
 const YEAR_23_24 = { start: "2023-10-01", end: "2024-09-30" };

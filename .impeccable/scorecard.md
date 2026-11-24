@@ -36,6 +36,8 @@ Check every item on the live site, at 1440x900 and 390x844. A check passes only 
 
 2026-11-23, scorecard round on v2026.11.23.13, at 1440x900 and 390x844: 15 of 15 pass. Check 11 passes with PR #84: True-Up's All time opens with "Since October 10, 2021 solar has covered 100% of the house's use, yet the house has drawn 4,542 kWh more from PG&E than it sent: …", and every true-up year from '21 - '22 to '25 - '26 opens with a figure at the lead's size; every Solar and Impact preset still passes. Noted, not failing: '24 - '25's headline read "$555 more than '23 - '24", a year with nothing due (reworded in this change), and True-Up's All time title names the range from October 1, 2021 beside a lead counting from October 10.
 
+2026-11-23, scorecard round on v2026.11.26.15, at 1440x900 and 390x844: 15 of 15 pass. True-Up's All time title now reads "All time" (PR #86), resolving last round's note. Noted, not failing: check 14's "The year on Impact" ended the current year at today, so Impact opened a custom range ("Impact · Jan 1 – Nov 23, 2026", no preset marked) rather than This year; the link ends on December 31 from the change that names the Backup card's year in its heading.
+
 ## What comparable sites do
 
 Studied 2026-11-23 at 1440x900: Electricity Maps, Grid Status, Our World in Data, PVOutput and a public Enphase Enlighten page. Not studied: phone layouts, SolarEdge (no public page found), and anything behind a login.
