@@ -361,7 +361,7 @@ With dollar projections, the headline SHALL give the lowest and highest projecte
 - **THEN** the page has no headline
 
 ### Requirement: A past year's headline
-For a finished year whose amount due is known, and the year before's too, the headline SHALL give the amount in whole dollars against the year before's: "'25 - '26 ended owing $768 at the true-up, $213 more than '24 - '25." It SHALL read "less than" for a smaller amount and "the same as" for an equal one, and "ended with nothing due" when nothing was due. Without both amounts there SHALL be no headline.
+For a finished year whose amount due is known, and the year before's too, the headline SHALL give the amount in whole dollars against the year before's: "'25 - '26 ended owing $768 at the true-up, $213 more than '24 - '25." It SHALL read "less than" for a smaller amount and "the same as" for an equal one, "ended with nothing due" when nothing was due, and "after nothing due in <year before>" when only the year before owed nothing. Without both amounts there SHALL be no headline.
 
 #### Scenario: '25 - '26
 - **WHEN** '25 - '26 is shown, owing $767.73, and '24 - '25 owed $554.83
@@ -378,6 +378,10 @@ For a finished year whose amount due is known, and the year before's too, the he
 #### Scenario: The year before unknown
 - **WHEN** '23 - '24 is shown, and '22 - '23's amount isn't known
 - **THEN** the page has no headline
+
+#### Scenario: After a year with nothing due
+- **WHEN** '24 - '25 is shown, owing $554.83, and '23 - '24 owed nothing
+- **THEN** the headline reads "'24 - '25 ended owing $555 at the true-up, after nothing due in '23 - '24."
 
 ### Requirement: The range explained
 The page SHALL say in one sentence how much of the house's use solar covered, as Impact gives it over the days the net tile counts, and what that left with PG&E, in whole kWh: under a headline, or as the lead. A true-up year is named "This true-up year" (with "so far") or by its name; any other range by the cycles' days, from no earlier than October 10, 2021: "Since <day>" while it reaches today, else "From <day> to <day>". Before any house use is saved there SHALL be none.
