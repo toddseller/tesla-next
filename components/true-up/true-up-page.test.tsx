@@ -262,3 +262,9 @@ test("a custom range inside the running cycle reads as under way", () => {
     today="2026-11-23" explained={{ share: 67, start: "2026-11-03", end: "2026-11-23" }} />);
   expect(leads()[0].textContent).toMatch(/^Since November 3, 2026 solar has covered 67% of the house's use/);
 });
+
+// true-up-tracker, "Cycle chart": All time is headed by its name, not its true-up years' boundary dates.
+test("All time's chart is headed \"All time by billing cycle\"", () => {
+  render(<TrueUpPage range={{ start: "2021-10-01", end: "2027-09-30" }} years={YEARS} cycles={[...YEAR_25_26, ...CURRENT]} cost={null} savings={null} payback={null} today="2026-11-08" />);
+  expect(screen.getByRole("heading", { level: 2, name: "All time by billing cycle" })).toBeTruthy();
+});

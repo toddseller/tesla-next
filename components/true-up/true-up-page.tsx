@@ -16,7 +16,7 @@ import { Tiles } from "@/components/true-up/tiles";
 import { ENTER_MS, useEntering } from "@/components/use-entering";
 import { useLiveStream } from "@/components/use-live-stream";
 import { siteToday } from "@/lib/scene/replay";
-import { datesLabel, type Range, rangeIncludes, trueUpPresets } from "@/lib/solar/ranges";
+import { datesLabel, isTrueUpAllTime, type Range, rangeIncludes, trueUpPresets } from "@/lib/solar/ranges";
 import type { Payback } from "@/lib/true-up/payback";
 import type { TrueUpYear } from "@/lib/true-up/reads";
 import type { Savings } from "@/lib/true-up/savings";
@@ -101,7 +101,7 @@ export function TrueUpPage({ range, years, cycles: served, cost: servedCost, sav
         {year && savings && <SavingsCard savings={savings} season={cost?.vpp ?? null} current={year.current} />}
         {payback && <PaybackCard payback={payback} today={today} />}
         <section aria-labelledby="cycle-chart" className="flex flex-col gap-3.5 rounded-[10px] border bg-card px-4 py-5 sm:px-6">
-          <h2 id="cycle-chart" className="font-semibold">{year ? yearName(year.label) : datesLabel(range, "short")} by billing cycle</h2>
+          <h2 id="cycle-chart" className="font-semibold">{year ? yearName(year.label) : isTrueUpAllTime(range, years) ? "All time" : datesLabel(range, "short")} by billing cycle</h2>
           <CycleChart cycles={cycles} cost={year && cost} oneYear={Boolean(year)} />
         </section>
         <section aria-labelledby="cycle-list" className="flex flex-col gap-3 rounded-[10px] border bg-card px-4 py-5 sm:px-6">
