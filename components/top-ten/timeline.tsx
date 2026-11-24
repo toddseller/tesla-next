@@ -6,7 +6,7 @@ import { niceAxis } from "@/lib/solar/day-views";
 
 const utc = (day: string) => Date.parse(`${day}T00:00:00Z`);
 const percent = (share: number) => `${(100 * share).toFixed(2)}%`;
-const dotSize = (rank: number) => (rank === 1 ? "size-[26px]" : rank <= 3 ? "size-5" : "size-[11px]");
+const dotSize = (rank: number) => (rank === 1 ? "size-[26px]" : "size-5");
 
 // Positioned HTML rather than Recharts, whose ResponsiveContainer serves an empty box until the browser measures it.
 export function Timeline({ label, entries, flow, today }: { label: string; entries: Entry[]; flow: Flow; today: string }) {
@@ -35,7 +35,9 @@ export function Timeline({ label, entries, flow, today }: { label: string; entri
       <div aria-hidden className="relative border-b border-l border-input">
         {ticks.map((t) => <span key={t} className="absolute inset-x-0 border-t border-border" style={{ top: top(t) }} />)}
         {years.map((y) => <span key={y} className="absolute inset-y-0 border-l border-dashed border-border" style={{ left: left(`${y}-01-01`) }} />)}
-        <span title="This year" className="absolute inset-y-0 right-0 bg-muted-foreground/[0.08]" style={{ left: left(`${year}-01-01`) }} />
+        <span className="absolute inset-y-0 right-0 bg-muted-foreground/[0.08]" style={{ left: left(`${year}-01-01`) }}>
+          <span className="absolute top-1 right-1.5 text-right text-[11px] leading-tight">this year</span>
+        </span>
         {entries.toReversed().map((e) => (
           <span
             key={e.rank}
@@ -43,7 +45,7 @@ export function Timeline({ label, entries, flow, today }: { label: string; entri
             className={`motion-pop absolute flex -translate-1/2 items-center justify-center rounded-full text-[11px] font-semibold text-background ${FLOW_DOT[flow]} ${dotSize(e.rank)} ${e.rank === 1 ? "ring-2 ring-primary ring-offset-[3px] ring-offset-card" : "ring-2 ring-card"}`}
             style={{ left: left(e.when), top: top(e.figure), "--i": e.rank - 1 } as CSSProperties}
           >
-            {e.rank === 2 || e.rank === 3 ? e.rank : ""}
+            {e.rank === 1 ? "" : e.rank}
           </span>
         ))}
       </div>
