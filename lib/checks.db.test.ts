@@ -186,3 +186,63 @@ test("a window whose bright days made nothing fails rather than reading 0 of 0 k
   await sunDay("2026-04-12", 20, 0);
   expect(await checks.peakCheck("2026-04-13")).toBe("FAIL solar peak: no bright day in the 30 before April 12, 2026 made any solar https://teslasolar.report/?day=2026-04-12");
 });
+
+// A day's stored solar total and intervals adding to the given kWh, split across two, either side left out by null.
+async function solarDay(day: string, total: number | null, intervalsKwh: number | null) {
+  if (total !== null) await owner.query("INSERT INTO data (date, solar_generated) VALUES ($1, $2)", [day, total]);
+  if (intervalsKwh === null) return;
+  const half = (intervalsKwh * 1000) / 2;
+  for (const [time, wh] of [["12:00", Math.floor(half)], ["12:05", Math.ceil(half)]] as const) {
+    await owner.query("INSERT INTO energy_interval VALUES ($1::date + $2::time AT TIME ZONE 'America/Los_Angeles', $1, $3, 0, 0, 0, 0, 0, 0, 0, 0, 0)", [day, time, wh]);
+  }
+}
+
+test("a daily total frozen at midday fails, naming the day and both figures", async () => {
+  for (const day of days("2024-01-29", 6)) await solarDay(day, 20, 20);
+  await solarDay("2024-02-04", 5.9, 15.7);
+  expect(await checks.solarTotalsCheck("2024-02-05")).toBe("FAIL solar totals: February 4, 2024's total is 5.9 kWh, its 5-minute intervals add to 15.70 kWh");
+});
+
+test("a week of totals within 0.5 kWh of their intervals passes, naming the span and the days compared", async () => {
+  for (const day of days("2026-11-16", 7)) await solarDay(day, 30, 30.4);
+  expect(await checks.solarTotalsCheck("2026-11-23")).toBe("ok solar totals: Nov 16 – 22, 2026, 7 days, each within 0.5 kWh of its 5-minute intervals");
+});
+
+test("two days off share one failing line", async () => {
+  for (const day of days("2026-11-16", 7)) await solarDay(day, 30, 30);
+  await owner.query("UPDATE data SET solar_generated = 12.0 WHERE date = '2026-11-17'");
+  await owner.query("UPDATE data SET solar_generated = 31.0 WHERE date = '2026-11-20'");
+  expect(await checks.solarTotalsCheck("2026-11-23")).toBe(
+    "FAIL solar totals: November 17, 2026's total is 12.0 kWh, its 5-minute intervals add to 30.00 kWh; November 20, 2026's total is 31.0 kWh, its 5-minute intervals add to 30.00 kWh",
+  );
+});
+
+test("a day exactly 0.5 kWh off its intervals passes", async () => {
+  await solarDay("2026-11-20", 20.0, 20.5);
+  // 8.3 - 7.8 in floats is 0.5000000000000009.
+  await solarDay("2026-11-21", 7.8, 8.3);
+  expect(await checks.solarTotalsCheck("2026-11-23")).toMatch(/^ok solar totals: .*, 2 days, /);
+});
+
+test("a day missing its total or its intervals is left out, and so is today", async () => {
+  for (const day of days("2026-11-16", 5)) await solarDay(day, 30, 30);
+  await solarDay("2026-11-21", 30, null);
+  await solarDay("2026-11-22", null, 30);
+  await solarDay("2026-11-23", 3, 6);
+  expect(await checks.solarTotalsCheck("2026-11-23")).toBe("ok solar totals: Nov 16 – 22, 2026, 5 days, each within 0.5 kWh of its 5-minute intervals");
+});
+
+test("a week with no day to compare passes, saying so", async () => {
+  expect(await checks.solarTotalsCheck("2026-11-23")).toBe("ok solar totals: no day of Nov 16 – 22, 2026 has both a total and its 5-minute intervals");
+});
+
+test("the weekly checks include the solar totals line", async () => {
+  const lines = await checks.allChecks("2026-11-23");
+  expect(lines).toHaveLength(4);
+  expect(lines[3]).toMatch(/^ok solar totals: /);
+});
+
+test("a day just over 0.5 kWh off shows its intervals' sum to two decimals, so the gap reads as over", async () => {
+  await solarDay("2026-11-20", 20.0, 20.54);
+  expect(await checks.solarTotalsCheck("2026-11-23")).toBe("FAIL solar totals: November 20, 2026's total is 20.0 kWh, its 5-minute intervals add to 20.54 kWh");
+});

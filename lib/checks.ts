@@ -113,4 +113,28 @@ export async function peakCheck(today: string) {
   return peak < usual! * PEAK_SHARE ? `FAIL solar peak: ${line} ${link}` : `ok solar peak: ${line}`;
 }
 
-export const allChecks = async (today: string) => Promise.all([meterCheck(), staleCheck(today), outputCheck(today)]);
+const TOTALS_TOLERANCE_KWH = 0.5;
+
+// A daily row that stops updating mid-day (Feb 4, 2024 froze at 12:39 when an outage began) keeps a part-day total
+// while the intervals hold the whole day. Solar only: the grid metering fault never touched it.
+export async function solarTotalsCheck(today: string) {
+  const { rows } = await db.query<{ date: string; total: string; intervals: string; off: boolean }>(
+    // Compared in numeric, the total at its one stored decimal, so no float's last digit tips a day over the tolerance.
+    `SELECT date, total, intervals, abs(total - intervals) > $2 AS off FROM (
+       SELECT d.date, round(d.solar_generated::numeric, 1) AS total, sum(e.solar_generated_wh) / 1000.0 AS intervals
+       FROM data d JOIN energy_interval e ON e.day = d.date::date
+       WHERE d.date::date BETWEEN $1::date - 7 AND $1::date - 1 AND d.solar_generated IS NOT NULL
+       GROUP BY d.date, d.solar_generated
+     ) days ORDER BY date`,
+    [today, TOTALS_TOLERANCE_KWH],
+  );
+  const off = rows.filter((row) => row.off);
+  if (off.length) {
+    return `FAIL solar totals: ${off.map((row) => `${datesLabel({ start: row.date, end: row.date }, "long")}'s total is ${Number(row.total).toFixed(1)} kWh, its 5-minute intervals add to ${Number(row.intervals).toFixed(2)} kWh`).join("; ")}`;
+  }
+  const span = datesLabel({ start: shiftDay(today, -7), end: shiftDay(today, -1) }, "short");
+  if (!rows.length) return `ok solar totals: no day of ${span} has both a total and its 5-minute intervals`;
+  return `ok solar totals: ${span}, ${rows.length} days, each within ${TOTALS_TOLERANCE_KWH} kWh of its 5-minute intervals`;
+}
+
+export const allChecks = async (today: string) => Promise.all([meterCheck(), staleCheck(today), outputCheck(today), solarTotalsCheck(today)]);
