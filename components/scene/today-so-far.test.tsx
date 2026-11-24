@@ -32,7 +32,7 @@ test("it fetches today and shows solar generated, the six totals and a link to t
   expect(fetch).toHaveBeenCalledWith(`/api/intervals?date=${TODAY}`);
   expect(screen.getByRole("region", { name: "Today so far" })).toBeTruthy();
   expect(figure("generated")).toBe("21.7 kWh");
-  expect(figure("used by the house, car apart")).toBe("21.3 kWh");
+  expect(figure("used by the house, without the car")).toBe("21.3 kWh");
   expect(figure("charged into the car")).toBe("3.1 kWh");
   expect(screen.getByRole("link", { name: "Today, hour by hour" }).getAttribute("href")).toBe("/solar?start=2026-11-01&end=2026-11-30&day=2026-11-21");
 });
@@ -65,7 +65,7 @@ test("a totals event for today, or the stream coming back after a sleep, fetches
   fetch.mockImplementation(answering({ ...TOTALS, grid_to_home: 12.5 }));
   FakeStream.opened[0].send({ date: TODAY }, "totals");
   await act(async () => {});
-  expect(figure("used by the house, car apart")).toBe("21.9 kWh");
+  expect(figure("used by the house, without the car")).toBe("21.9 kWh");
   FakeStream.opened[0].fail(false);
   FakeStream.opened[0].connect();
   await act(async () => {});

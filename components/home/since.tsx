@@ -19,16 +19,15 @@ type Payback = { solar: Year & { month: string | null }; system: Year; powerwall
 type Props = {
   today: string; months: Month[]; solar: number; matched: number; payback: Payback | null;
   // The current true-up year: its net, solar's share of the house's use so far, and True-Up's estimate of what it will owe.
-  net: number; share: number | null; owed: readonly [number, number] | null; trueUpStart: string; trueUpEnd: string;
+  net: number; share: number | null; owed: readonly [number, number] | null; trueUpEnd: string;
 };
 
 // A pair of running totals reads in one unit, the larger one's.
 const pair = (a: number, b: number) => [energy(a, 0, Math.max(a, b)).join(" "), energy(b, 0, Math.max(a, b)).join(" ")];
 const monthName = (month: string) => new Date(`${month}-01T00:00:00Z`).toLocaleString("en-US", { month: "long", year: "numeric", timeZone: "UTC" });
-const startName = (day: string) => new Date(`${day}T00:00:00Z`).toLocaleString("en-US", { month: "long", day: "numeric", timeZone: "UTC" });
 const at = (month: string) => Date.parse(`${month}-01T00:00:00Z`);
 
-export function Since({ today, months, solar, matched, net, share, owed, trueUpStart, trueUpEnd, payback }: Props) {
+export function Since({ today, months, solar, matched, net, share, owed, trueUpEnd, payback }: Props) {
   let [made, used] = [0, 0];
   const rows = months.map((m) => ({ t: at(m.month), solar: (made += m.solar), house: (used += m.house) }));
   const systemYear = payback?.system.year ?? null;
@@ -42,7 +41,6 @@ export function Since({ today, months, solar, matched, net, share, owed, trueUpS
   const paybackWords = [paidMonth ? null : solarPaid, powerwalls].filter(Boolean).join(" ");
   const [madeText, usedText] = pair(made, used);
   const axis = niceAxis(0, Math.max(1, made, used));
-  const netText = energy(Math.abs(net), 1);
   const label = `Running totals since ${longDate(FIRST_DAY)}: solar ${madeText} against the house's ${usedText}${solarPaid ? `; ${solarPaid}` : ""}${systemYear ? ` The whole system pays back in ${systemYear}${payback!.system.projected ? ", projected" : ""}.` : ""}`;
 
   return (
@@ -90,10 +88,6 @@ export function Since({ today, months, solar, matched, net, share, owed, trueUpS
           )}
         </div>
         <div className="flex flex-col gap-4">
-          <div className="flex flex-col gap-1">
-            <b className="font-mono text-2xl font-semibold">{netText.join(" ")}</b>
-            <span className="text-[13px] text-muted-foreground">{`${netText[0] === "0.0" ? "as much sent as imported" : `more ${net > 0 ? "imported than sent" : "sent than imported"}`} this true-up year, since ${startName(trueUpStart)}`}</span>
-          </div>
           {owed && (
             <div className="flex flex-col gap-1">
               <b className="font-mono text-2xl font-semibold">{dollarRange(owed)}</b>

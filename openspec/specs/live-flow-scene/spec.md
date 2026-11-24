@@ -412,7 +412,7 @@ The warm light on the faces turned toward the sun SHALL peak by the sun's noon h
 - **THEN** the light peaks as on that December date, whatever today's date is
 
 ### Requirement: Today's totals under the scene
-At every width, Distribution SHALL show under the scene and its replay controls "Today so far": today's solar and six totals as the home page's Today shows them, car apart, and a link to today on the Solar page. Below 640 pixels the figures SHALL sit two to a row, from 640 pixels four to a row, and from 1024 pixels all seven in one row. The browser SHALL fetch them, so the page still renders from the live status alone, and SHALL fetch them again on each totals event for today and when the live stream returns. Without them there SHALL be no block.
+At every width, Distribution SHALL show under the scene and its replay controls "Today so far": today's solar and six totals as the home page's Today shows them, the house's use without the car, and a link to today on the Solar page. Below 640 pixels the figures SHALL sit two to a row, from 640 pixels four to a row, and from 1024 pixels all seven in one row. The browser SHALL fetch them, so the page still renders from the live status alone, and SHALL fetch them again on each totals event for today and when the live stream returns. Without them there SHALL be no block.
 
 #### Scenario: A phone in the morning
 - **WHEN** a visitor opens `/distribution` on a 390-pixel-wide screen
@@ -425,4 +425,3 @@ At every width, Distribution SHALL show under the scene and its replay controls 
 #### Scenario: A wide screen
 - **WHEN** a visitor opens `/distribution` at 1440 pixels wide and scrolls below the scene
 - **THEN** they see "Today so far" with its seven figures in one row and the link to today on the Solar page
-

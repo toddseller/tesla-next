@@ -19,7 +19,7 @@ const CARD: ForecastCard = {
   goodDay: 41, staleSince: null,
   byHour: { hours: HOURS, byNow: { made: 21.728, expected: 17.819, at: "2026-11-21T23:35:00.000Z", over: false } },
 };
-// Today's day view totals: the house 21.3 kWh (car apart), 14.4 from the grid, 11.0 sent, the Powerwalls 0.7 in and 0 out.
+// Today's day view totals: the house 21.3 kWh (without the car), 14.4 from the grid, 11.0 sent, the Powerwalls 0.7 in and 0 out.
 const TOTALS = { solar_to_home: 9.366, solar_to_powerwall: 0.318, solar_to_grid: 11.007, powerwall_to_home: 0, powerwall_to_grid: 0, grid_to_home: 11.962, grid_to_powerwall: 0.362, solar_to_vehicle: 1.037, powerwall_to_vehicle: 0, grid_to_vehicle: 2.043 };
 const DAY = { date: TODAY, vehicle_data: true, totals: TOTALS, data: [] };
 const figure = (label: string) => screen.getByText(label, { selector: "span" }).parentElement!.querySelector("b")!.textContent;
@@ -69,9 +69,9 @@ test("without a forecast, today's solar so far alone, and no days ahead", () => 
   expect(screen.getByText("No forecast right now")).toBeTruthy();
 });
 
-test("today's six totals are the day view's, the car apart from the house, and the days ahead by name", () => {
+test("today's six totals are the day view's, the house without the car, and the days ahead by name", () => {
   render(<Today today={TODAY} forecast={CARD} day={DAY} renderedAt={Date.now()} />);
-  expect(figure("used by the house, car apart")).toBe("21.3 kWh");
+  expect(figure("used by the house, without the car")).toBe("21.3 kWh");
   expect(figure("charged into the car")).toBe("3.1 kWh");
   expect(figure("from the grid")).toBe("14.4 kWh");
   expect(figure("sent to PG&E")).toBe("11.0 kWh");
@@ -98,7 +98,7 @@ test("a totals event for today reloads the forecast and the day; one for another
   await act(async () => {});
   expect(fetch.mock.calls.map(([url]) => url).sort()).toEqual(["/api/forecast", `/api/intervals?date=${TODAY}`]);
   expect(figure("generated, of 18.0 kWh expected")).toBe("22.4 kWh");
-  expect(figure("used by the house, car apart")).toBe("21.9 kWh");
+  expect(figure("used by the house, without the car")).toBe("21.9 kWh");
 });
 
 test("a failed reload keeps the figures and says when they are from, until one succeeds", async () => {
@@ -141,7 +141,7 @@ test("without an hourly forecast, a failed reload still says when the figures ar
 test("without car data the house's figure holds the charging, so it doesn't say the car is apart", () => {
   render(<Today today={TODAY} forecast={CARD} day={{ ...DAY, vehicle_data: false }} renderedAt={Date.now()} />);
   expect(screen.getByText("used by the house")).toBeTruthy();
-  expect(screen.queryByText("used by the house, car apart")).toBeNull();
+  expect(screen.queryByText("used by the house, without the car")).toBeNull();
 });
 
 // home-story, "Today's morning sentence": 20.5 kWh from 7 AM to 4 PM PST, 10% by 10 AM, 90% in the 3 PM hour.

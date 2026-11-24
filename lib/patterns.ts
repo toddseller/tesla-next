@@ -131,7 +131,7 @@ export function powerwallYears(years: PowerwallYear[], today: string) {
     roundTrip: in_wh ? Math.round((100 * out_wh) / in_wh) : null,
   }));
   const out = years.reduce((sum, y) => sum + y.out_wh, 0) / 1000;
-  return { rows, total: { kwh: Math.round(out), cycles: Math.round(out / CYCLE_KWH) } };
+  return { rows, total: { kwh: Math.round(out), cycles: rows.reduce((sum, row) => sum + row.cycles, 0) } };
 }
 
 export type HourMonth = { month: string; watts: (number | null)[] };

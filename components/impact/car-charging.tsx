@@ -50,7 +50,7 @@ export function CarChargingSection({ charging, range }: { charging: CarCharging;
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <div className="flex flex-col gap-1">
           <h2 id="car-charging" className="text-sm font-medium tracking-[0.06em] text-muted-foreground uppercase">Home car charging</h2>
-          <p className="text-sm text-muted-foreground">Wall Connector charging met by solar and Powerwall</p>
+          <p className="text-sm text-pretty text-muted-foreground">Wall Connector charging met by solar and Powerwall</p>
         </div>
         {charging.since && !before && <span className="text-[13px] text-muted-foreground">Since {day(charging.since, "short")}, the oldest charging Tesla kept</span>}
       </div>

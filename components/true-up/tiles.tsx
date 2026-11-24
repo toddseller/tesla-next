@@ -26,7 +26,7 @@ function Tile({ title, value, unit, children }: { title: ReactNode; value: strin
           {unit && <span className="text-sm text-muted-foreground">{unit}</span>}
         </p>
       )}
-      <div className="flex flex-col gap-2 text-[13px] text-muted-foreground">{children}</div>
+      <div className="flex flex-col gap-2 text-[13px] text-balance text-muted-foreground">{children}</div>
     </section>
   );
 }

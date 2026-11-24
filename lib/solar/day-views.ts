@@ -113,7 +113,7 @@ export const viewSummary = (viewKey: string, totals: Totals, { vehicleData = fal
   const view = { ...VIEWS[viewKey], sections: sectionsFor(viewKey, vehicleData) };
   const sections = view.sections.map((s) => ({ title: s.title, items: breakdown(totals, s.flows) }));
   // With car data the home flows leave the charging out, unlike the house figures from Tesla's daily totals.
-  const headline = viewKey === "home" && vehicleData ? `${view.headline}, car apart` : view.headline;
+  const headline = viewKey === "home" && vehicleData ? `${view.headline}, without the car` : view.headline;
   const headlines = [{ label: headline, value: sumOf(totals, view.sections[0].flows) }];
   if (view.secondHeadline) headlines.push({ label: view.secondHeadline, value: sumOf(totals, view.sections[1].flows) });
   const summary: { headline: string; value: number; headlines: typeof headlines; sections: typeof sections; net?: { label: string; value: number } } =
