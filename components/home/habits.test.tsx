@@ -12,7 +12,7 @@ const MONTHS = [
   ...Y2025.map((watts, i) => ({ month: `2025-${String(i + 1).padStart(2, "0")}`, watts })),
   ...Y2026.map((watts, i) => ({ month: `2026-${String(i + 1).padStart(2, "0")}`, watts })),
 ];
-const habits = (months = MONTHS) => render(<Habits today={TODAY} months={months} figures={latestFigures(months, TODAY)} powerwallOut={4417} />);
+const habits = (months = MONTHS) => render(<Habits today={TODAY} months={months} figures={latestFigures(months, TODAY)} />);
 const figure = (label: string) => screen.getByText(label).parentElement!.querySelector("b")!.textContent;
 
 afterEach(cleanup);
@@ -24,7 +24,7 @@ test("since when the always-on load has run above last year, with Patterns' figu
   expect(figure("November so far")).toBe("864 W");
   expect(figure("November 2025")).toBe("643 W");
   expect(figure("about +5 kWh a day more than a year ago")).toBe("+221 W");
-  expect(figure("out of the Powerwalls in 2026")).toBe("4.4 MWh");
+  expect(screen.queryByText(/Powerwall/)).toBeNull();
   expect(screen.getByRole("link", { name: "The patterns behind it" }).getAttribute("href")).toBe("/patterns");
 });
 

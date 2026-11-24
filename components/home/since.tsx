@@ -35,8 +35,11 @@ export function Since({ today, months, solar, matched, net, share, owed, trueUpS
   // The chart ends at today, all of it real; a projected whole-system year is said under it instead.
   const end = Date.parse(today);
   const projected = systemYear !== null && payback!.system.projected;
+  // The month solar paid back, once reached: the chart draws it as a dotted line and its key says it.
+  const paidMonth = payback && !payback.solar.projected ? payback.solar.month : null;
   const solarPaid = payback?.solar.year ? (payback.solar.projected ? `Solar should pay for itself in ${payback.solar.year}, projected.` : `Solar paid for itself in ${payback.solar.month ? monthName(payback.solar.month) : payback.solar.year}.`) : null;
   const powerwalls = payback ? (payback.powerwalls.wont ? "The Powerwalls won't pay for themselves within their warranty." : payback.powerwalls.year ? `The Powerwalls should pay for themselves in ${payback.powerwalls.year}.` : null) : null;
+  const paybackWords = [paidMonth ? null : solarPaid, powerwalls].filter(Boolean).join(" ");
   const [madeText, usedText] = pair(made, used);
   const axis = niceAxis(0, Math.max(1, made, used));
   const netText = energy(Math.abs(net), 1);
@@ -58,7 +61,7 @@ export function Since({ today, months, solar, matched, net, share, owed, trueUpS
             <ChartTooltip content={<SinceDetails />} />
             {/* Clipped at today: the year it pays back, the box runs past the axis, and Recharts would drop it whole. */}
             {systemYear && !projected && <ReferenceArea x1={Date.UTC(systemYear, 0, 1)} x2={Date.UTC(systemYear, 11, 31)} fill="var(--muted-foreground)" fillOpacity={0.08} stroke="none" ifOverflow="hidden" />}
-            {payback?.solar.month && !payback.solar.projected && <ReferenceLine x={at(payback.solar.month)} stroke="var(--foreground)" strokeDasharray="2 3" />}
+            {paidMonth && <ReferenceLine x={at(paidMonth)} stroke="var(--foreground)" strokeDasharray="2 3" />}
             <ReferenceLine x={Date.parse(today)} stroke="var(--foreground)" label={{ value: "now", position: "insideBottomRight", fill: "var(--foreground)", fontSize: 12 }} />
             <Line dataKey="house" stroke="var(--color-home)" strokeWidth={2} dot={false} isAnimationActive={false} />
             <Line dataKey="solar" stroke="var(--color-solar)" strokeWidth={2.5} dot={false} isAnimationActive={false} />
@@ -67,7 +70,7 @@ export function Since({ today, months, solar, matched, net, share, owed, trueUpS
       </div>
       {payback && (
         <p className="flex flex-wrap gap-x-5 gap-y-1 font-mono text-[13px] text-muted-foreground">
-          {payback.solar.month && !payback.solar.projected && <span>dotted line: solar paid back, {monthName(payback.solar.month)}</span>}
+          {paidMonth && <span>dotted line: solar paid back, {monthName(paidMonth)}</span>}
           {systemYear && !projected && <span>shaded box: the whole system paid back in {systemYear}</span>}
         </p>
       )}
@@ -97,7 +100,7 @@ export function Since({ today, months, solar, matched, net, share, owed, trueUpS
               <span className="text-[13px] text-muted-foreground">{`on track to owe at the October ${trueUpEnd.slice(0, 4)} true-up`}</span>
             </div>
           )}
-          {(solarPaid || powerwalls) && <p className="text-[15px] text-pretty">{[solarPaid, powerwalls].filter(Boolean).join(" ")}</p>}
+          {paybackWords && <p className="text-[15px] text-pretty">{paybackWords}</p>}
         </div>
       </div>
       <Doorway href="/true-up">The true-up and payback</Doorway>

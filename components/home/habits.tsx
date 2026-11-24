@@ -8,11 +8,10 @@ import { Doorway } from "@/components/home/doorway";
 import { Figure } from "@/components/home/today";
 import { ChartContainer, ChartTooltip } from "@/components/ui/chart";
 import type { latestFigures, MonthLoad } from "@/lib/patterns";
-import { energy } from "@/lib/units";
 
 type Figures = ReturnType<typeof latestFigures>;
 // The latest months' figures come worked out on the server: lib/patterns also reads the database.
-type Props = { today: string; months: MonthLoad[]; figures: Figures; powerwallOut: number };
+type Props = { today: string; months: MonthLoad[]; figures: Figures };
 
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 const monthName = (month: string) => new Date(`${month}-01T00:00:00Z`).toLocaleString("en-US", { month: "long", timeZone: "UTC" });
@@ -42,8 +41,7 @@ function comparison(months: MonthLoad[], figures: NonNullable<Figures>) {
 }
 
 
-export function Habits({ today, months, figures, powerwallOut }: Props) {
-  const out = energy(powerwallOut, 0);
+export function Habits({ today, months, figures }: Props) {
   const compared = figures && comparison(months, figures);
   // The watts, not Patterns' rounded kWh a day, say more or less: a 20 W drop rounds to -0 kWh.
   const gap = figures?.before ? figures.watts - figures.before.watts : null;
@@ -88,7 +86,6 @@ export function Habits({ today, months, figures, powerwallOut }: Props) {
           {figures && <Figure value={figures.watts} unit="W" label={figures.label} className="text-3xl text-home" />}
           {figures?.before && <Figure value={figures.before.watts} unit="W" label={figures.before.label} className="text-muted-foreground" />}
           {gap !== null && <Figure value={signed(gap)} unit="W" label={`about ${signed(figures!.kwhPerDay!)} kWh a day ${gap >= 0 ? "more" : "less"} than a year ago`} />}
-          <Figure value={out[0]} unit={out[1]} label={`out of the Powerwalls in ${thisYear}`} className="text-powerwall" />
           <Doorway href="/patterns">The patterns behind it</Doorway>
         </div>
       </div>
