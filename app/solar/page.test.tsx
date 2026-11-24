@@ -97,6 +97,12 @@ test("the range view is served with the forecast card after its chart; a day's v
   expect(forecast).not.toHaveBeenCalled();
 });
 
+test("a past range is served without the forecast, a range running past today with it", async () => {
+  expect(await served({ start: "2023-04-01", end: "2023-04-30" })).not.toContain("Solar forecast");
+  expect(forecast).not.toHaveBeenCalled();
+  expect(await served({ start: "2026-10-01", end: "2027-09-30" })).toContain("Solar forecast");
+});
+
 // meter-correction: the address's readings reach the range's and the strip's figures.
 test("readings=tesla in the address asks for Tesla's figures", async () => {
   await Page({ searchParams: Promise.resolve({ start: "2025-10-01", end: "2025-10-31", readings: "tesla" }) });

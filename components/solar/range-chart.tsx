@@ -138,7 +138,7 @@ export function RangeChart({ items, range, ...open }: { items: RangeItem[]; rang
         ))}
       </div>
       <p className="text-center text-sm italic text-muted-foreground">
-        Below zero: more energy sent to the grid than taken from it, or more stored in the Powerwalls than they gave back that day.
+        Below zero: more energy sent to the grid than taken from it, or more stored in the Powerwalls than they gave back that {isDaily(range) ? "day" : "month"}.
       </p>
     </div>
   );

@@ -8,7 +8,7 @@ import { latest } from "@/lib/live";
 import { readingsOf } from "@/lib/meter";
 import { rangeTotals } from "@/lib/range";
 import { siteToday } from "@/lib/scene/replay";
-import { comparedDays, dropUnshown, monthOf, parseDay, parseRange, rangeTitle, stripRange } from "@/lib/solar/ranges";
+import { comparedDays, dropUnshown, monthOf, parseDay, parseRange, rangeIncludes, rangeTitle, stripRange } from "@/lib/solar/ranges";
 
 type Params = Record<string, string | string[] | undefined>;
 
@@ -33,11 +33,11 @@ export default async function Page({ searchParams }: { searchParams: Promise<Par
     const days = comparedDays(range, today);
     const cut = days && days.now.end !== range.end;
     const [items, stored, then, now] = await Promise.all([
-      rangeTotals(range.start, range.end, readings), forecast(today), days && rangeTotals(days.then.start, days.then.end, readings),
+      rangeTotals(range.start, range.end, readings), rangeIncludes(range, today) && forecast(today), days && rangeTotals(days.then.start, days.then.end, readings),
       cut && rangeTotals(days.now.start, days.now.end, readings),
     ]);
     return (
-      <SolarPage range={range} items={items} today={today} initialStatus={latest()} forecast={forecastCard(stored, today, Date.now())} readings={readings}
+      <SolarPage range={range} items={items} today={today} initialStatus={latest()} forecast={stored ? forecastCard(stored, today, Date.now()) : null} readings={readings}
         before={then ? { then: solarTotal(then), now: now ? solarTotal(now) : null } : null} />
     );
   }
