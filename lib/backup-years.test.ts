@@ -22,6 +22,6 @@ test("each year's address value comes back from its range, All time is all, and 
   expect(backupParam({ start: "2021-10-01", end: "2022-09-30" }, TODAY)).toBe("21-22");
 });
 
-test("This year and All time, the arrows stepping to the years between", () => {
-  expect(backupPresets(TODAY)).toEqual([{ label: "This year", range: { start: "2026-10-01", end: "2027-09-30" } }, { label: "All time", range: ALL }]);
+test("True-up year and All time, the arrows stepping to the years between", () => {
+  expect(backupPresets(TODAY)).toEqual([{ label: "True-up year", range: { start: "2026-10-01", end: "2027-09-30" } }, { label: "All time", range: ALL }]);
 });

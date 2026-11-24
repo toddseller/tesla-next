@@ -90,7 +90,7 @@ const blipsLine = (blips: BackupHistory["summary"]["blips"]) =>
 
 // When the grid went down and the house ran on its own, for the true-up year picked here, apart from the page's range.
 export function BackupSection({ history: { summary, events }, year, today, onYear }: Props) {
-  // Named in the heading, as the picker's "This year" doesn't say which, and the page above may show another range.
+  // Named in the heading, as the picker's "True-up year" doesn't say which, and the page above may show another range.
   const shown = backupParam(year, today) === "all" ? "All time" : rangeTitle(year);
   const lengths = new Map(events.map((e) => [e.start, (Date.parse(e.end) - Date.parse(e.start)) / 1000]));
   const longestEvent = Math.max(...lengths.values());

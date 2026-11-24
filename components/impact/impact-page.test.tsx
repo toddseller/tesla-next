@@ -112,12 +112,17 @@ test("a failed reload keeps the figures", async () => {
   expect(ring()).toContain("95%");
 });
 
+test("the only This year is the page's calendar year, Backup's year reading True-up year", () => {
+  render(<ImpactPage range={today} figures={figures(95)} today="2026-11-08" backup={NO_BACKUP} charging={CHARGING} backupYear={THIS_YEAR} />);
+  expect(screen.getAllByRole("button", { name: "This year" })).toEqual([ranges().getByRole("button", { name: "This year" })]);
+});
+
 test("picking a backup year replaces the address, keeping the range, with no new history entry", () => {
   render(<ImpactPage range={march} figures={figures(95)} today="2026-11-08" backup={NO_BACKUP} charging={CHARGING} backupYear={THIS_YEAR} />);
   fireEvent.click(years().getByRole("button", { name: "Previous true-up year" }));
   expect(router.replace).toHaveBeenCalledWith("/impact?start=2026-03-01&end=2026-03-31&backup=25-26", { scroll: false });
   expect(router.push).not.toHaveBeenCalled();
-  fireEvent.click(years().getByRole("button", { name: "This year" }));
+  fireEvent.click(years().getByRole("button", { name: "True-up year" }));
   expect(router.replace).toHaveBeenLastCalledWith("/impact?start=2026-03-01&end=2026-03-31", { scroll: false });
 });
 

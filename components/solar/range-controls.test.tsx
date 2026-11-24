@@ -190,8 +190,8 @@ test("a range no preset gives names the phone menu Custom, with nothing checked"
 });
 
 test("a group's phone menu carries its own name", () => {
-  render(<PresetGroup label="Backup years" range={{ start: "2026-10-01", end: "2027-09-30" }} presets={[{ label: "This year", range: { start: "2026-10-01", end: "2027-09-30" } }]} onRange={() => {}} />);
-  expect(screen.getByRole("button", { name: "Backup years: This year" })).not.toBeNull();
+  render(<PresetGroup label="Backup years" range={{ start: "2026-10-01", end: "2027-09-30" }} presets={[{ label: "True-up year", range: { start: "2026-10-01", end: "2027-09-30" } }]} onRange={() => {}} />);
+  expect(screen.getByRole("button", { name: "Backup years: True-up year" })).not.toBeNull();
 });
 
 // dashboard-shell, "Stepping the range", "A stepped preset names its range" and "Steps stay within the data".
