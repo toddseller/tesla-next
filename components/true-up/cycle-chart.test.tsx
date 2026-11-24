@@ -34,6 +34,17 @@ test("the running net starts again at each true-up year's first cycle", () => {
   expect(rows.map((row) => row.label)).toEqual(["Aug '26", "Sep '26", "Oct '26", "Nov '26"]);
 });
 
+const runningLines = (container: HTMLElement) =>
+  [...container.querySelectorAll('.recharts-line-curve[stroke="var(--primary)"]')].map((curve) => curve.getAttribute("d")!.match(/[ML]/g)!.length);
+
+test("the running net is drawn apart at each true-up start, nothing joining one year to the next", () => {
+  const { container } = render(<CycleChart cycles={[YEAR_25_26[10], YEAR_25_26[11], CURRENT[0], CURRENT[1]]} cost={NO_COST} oneYear={false} />);
+  expect(runningLines(container)).toEqual([2, 2]);
+  cleanup();
+  const { container: one } = render(<CycleChart cycles={YEAR_25_26} cost={COST_25_26} oneYear />);
+  expect(runningLines(one)).toEqual([12]);
+});
+
 test("a cycle without data in the middle keeps its slot, and the running net after it stays in place", () => {
   const gap = YEAR_25_26.map((c, i) => (i === 5 ? { ...c, imported: null, exported: null, net: null, peak_net: null, off_peak_net: null } : c));
   const rows = chartRows(gap, COST_25_26, true);

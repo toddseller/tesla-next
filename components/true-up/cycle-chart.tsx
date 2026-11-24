@@ -9,7 +9,7 @@ import { ChartContainer, ChartTooltip } from "@/components/ui/chart";
 import { niceAxis, unitOnTopTick } from "@/lib/solar/day-views";
 import { type Cost, type Cycle, kwh, runningNet, startedCycles, yearName } from "@/lib/true-up/text";
 
-type Row = { label: string; imported: number | null; exported: number | null; running: number | null; lastYear: number | null; band: [number, number] | null };
+type Row = { label: string; trueUp: string; imported: number | null; exported: number | null; running: number | null; lastYear: number | null; band: [number, number] | null };
 
 const month = (iso: string, withYear: boolean) =>
   new Date(`${iso}T00:00:00Z`).toLocaleString("en-US", { month: "short", timeZone: "UTC" }) + (withYear ? ` '${iso.slice(2, 4)}` : "");
@@ -22,6 +22,7 @@ export function chartRows(cycles: Cycle[], cost: Cost | null, oneYear: boolean):
   const { low, high } = (oneYear && cost?.kwh_projection?.band) || { low: [], high: [] };
   return slots.map((cycle, i) => ({
     label: month(cycle.first_day, !oneYear),
+    trueUp: cycle.true_up,
     imported: cycle.imported,
     exported: cycle.exported === null ? null : -cycle.exported,
     running: running[i],
@@ -97,7 +98,11 @@ export function CycleChart({ cycles, cost, oneYear }: { cycles: Cycle[]; cost: C
           <Bar dataKey="exported" stackId="flows" fill="var(--color-solar)" maxBarSize={48} isAnimationActive={false}
             shape={<Flow series="exported" domain={axis.domain} entering={entering} />} />
           {lastYear && <Line dataKey="lastYear" stroke="var(--muted-foreground)" strokeWidth={2} strokeDasharray="6 5" dot={false} isAnimationActive={false} connectNulls={false} className={lines} />}
-          <Line dataKey="running" stroke="var(--primary)" strokeWidth={3} dot={{ r: 3.5, fill: "var(--primary)" }} isAnimationActive={false} className={lines} />
+          {/* One line per true-up year, so a year's running net never joins the next one's fresh start. */}
+          {[...new Set(rows.map((row) => row.trueUp))].map((year) => (
+            <Line key={year} dataKey={(row: Row) => (row.trueUp === year ? row.running : null)} stroke="var(--primary)" strokeWidth={3}
+              dot={{ r: 3.5, fill: "var(--primary)" }} isAnimationActive={false} className={lines} />
+          ))}
         </ComposedChart>
       </ChartContainer>
       <p className="text-[13px] text-muted-foreground">kWh. Bars are each cycle&apos;s imports above zero and exports below; the lines are the net since October 1.</p>

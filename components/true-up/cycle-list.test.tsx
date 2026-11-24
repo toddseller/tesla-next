@@ -30,6 +30,29 @@ test("a billed year shows PG&E's charges, credits without a minus, and the estim
   );
 });
 
+test("cycles across true-up years follow a subhead for each year, the footnote once", () => {
+  render(<CycleList cycles={[...YEAR_25_26, ...CURRENT]} />);
+  const subheads = screen.getAllByRole("heading", { level: 3 });
+  expect(subheads.map((h) => h.textContent!.replace(/\u00a0/g, " "))).toEqual(["'25 - '26", "'26 - '27"]);
+  expect(subheads.map((h) => h.nextElementSibling!.querySelectorAll("li").length)).toEqual([12, 2]);
+  expect(subheads[1].nextElementSibling!.querySelector("li")!.textContent).toMatch(/^Oct 5 to Nov 2/);
+  expect(screen.getAllByText(/Before taxes/)).toHaveLength(1);
+});
+
+test("one true-up year has no subheads", () => {
+  render(<CycleList cycles={YEAR_25_26} />);
+  expect(screen.queryByRole("heading")).toBeNull();
+  cleanup();
+  render(<CycleList cycles={CURRENT} />);
+  expect(screen.queryByRole("heading")).toBeNull();
+});
+
+test("from 640 pixels every row has the same five columns, with or without charges", () => {
+  render(<CycleList cycles={[YEAR_25_26[0], { ...YEAR_25_26[1], nem_charges: null, nem_source: null, estimated_nem_charges: null, billed_net_kwh: null }]} />);
+  const templates = screen.getAllByRole("listitem").map((item) => item.className.split(" ").find((c) => c.startsWith("sm:grid-cols-")));
+  expect(templates).toEqual(Array(2).fill("sm:grid-cols-[minmax(0,1.3fr)_repeat(4,minmax(0,1fr))]"));
+});
+
 test("nothing is shown in red", () => {
   const { container } = render(<CycleList cycles={YEAR_25_26} />);
   expect(container.innerHTML).not.toMatch(/destructive|text-red|text-primary/);

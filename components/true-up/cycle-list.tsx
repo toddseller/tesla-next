@@ -1,8 +1,32 @@
+import { Fragment } from "react";
+
 import { Measured } from "@/components/measured";
-import { type Cycle, chargesText, cycleDates, estimateText, kwh, netLabel, startedCycles, uncorrectedDays } from "@/lib/true-up/text";
+import { type Cycle, chargesText, cycleDates, estimateText, kwh, netLabel, type Started, startedCycles, uncorrectedDays, yearName } from "@/lib/true-up/text";
 
 const Figure = ({ name, value }: { name: string; value: string }) => (
   <span className="text-sm text-muted-foreground">{name} <span className="text-foreground"><Measured text={value} /></span></span>
+);
+
+const CycleRows = ({ cycles }: { cycles: Started[] }) => (
+  <ul className="flex flex-col">
+    {cycles.map((cycle) => {
+      const [charges, estimate] = [chargesText(cycle), estimateText(cycle)];
+      return (
+        <li key={cycle.first_day} className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,150px),1fr))] sm:grid-cols-[minmax(0,1.3fr)_repeat(4,minmax(0,1fr))] items-baseline gap-x-4 gap-y-1.5 border-t py-3.5">
+          <span className="font-semibold">{cycleDates(cycle)}</span>
+          <Figure name="Imported" value={kwh(cycle.imported)} />
+          <Figure name="Exported" value={kwh(cycle.exported)} />
+          <Figure name="Net" value={`${kwh(cycle.net)} ${netLabel(cycle.net).toLowerCase()}`} />
+          {charges && (
+            <span className="flex flex-col items-end gap-0.5">
+              <span><Measured text={charges} /></span>
+              {estimate && <span className="text-xs text-muted-foreground">{estimate}</span>}
+            </span>
+          )}
+        </li>
+      );
+    })}
+  </ul>
 );
 
 // Each started cycle's grid energy and NEM charges, wrapping on a phone rather than scrolling sideways.
@@ -14,27 +38,17 @@ export function CycleList({ cycles }: { cycles: Cycle[] }) {
     calculated && "est.: calculated from PG&E's published rates.",
     billed && "Charges are PG&E's, from its bills, with the estimate for the same cycle under each.",
   ].filter(Boolean);
+  const years = [...new Set(started.map((cycle) => cycle.true_up))];
   return (
     <>
-      <ul className="flex flex-col">
-        {started.map((cycle) => {
-          const [charges, estimate] = [chargesText(cycle), estimateText(cycle)];
-          return (
-            <li key={cycle.first_day} className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,150px),1fr))] items-baseline gap-x-4 gap-y-1.5 border-t py-3.5">
-              <span className="font-semibold">{cycleDates(cycle)}</span>
-              <Figure name="Imported" value={kwh(cycle.imported)} />
-              <Figure name="Exported" value={kwh(cycle.exported)} />
-              <Figure name="Net" value={`${kwh(cycle.net)} ${netLabel(cycle.net).toLowerCase()}`} />
-              {charges && (
-                <span className="flex flex-col items-end gap-0.5">
-                  <span><Measured text={charges} /></span>
-                  {estimate && <span className="text-xs text-muted-foreground">{estimate}</span>}
-                </span>
-              )}
-            </li>
-          );
-        })}
-      </ul>
+      {years.length > 1
+        ? years.map((year) => (
+          <Fragment key={year}>
+            <h3 className="pt-2 text-sm font-semibold">{yearName(year)}</h3>
+            <CycleRows cycles={started.filter((cycle) => cycle.true_up === year)} />
+          </Fragment>
+        ))
+        : <CycleRows cycles={started} />}
       {notes.length > 0 && (
         <p className="text-[13px] text-muted-foreground">
           {notes.join(" ")} Before taxes; the Base Services Charge and WestLight Energy&apos;s generation charges are billed separately.
