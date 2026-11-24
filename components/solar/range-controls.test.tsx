@@ -165,6 +165,21 @@ test("a day after today inside the range keeps its fill, and one outside it fade
 // dashboard-shell, "Range presets on a phone": below 640 px the group is one menu; CSS picks which shows.
 const phoneButton = (name: string) => screen.getByRole("button", { name: `Preset ranges: ${name}` });
 
+// dashboard-shell, "A range over all the data is All time": a shared or typed address can give All time other dates.
+test("a range over all the data marks All time, on the row and in the phone menu, and not the dates button", () => {
+  render(<RangeControls today="2026-11-07" range={{ start: "2021-10-01", end: "2026-11-30" }} presets={presets("2026-11-07")} onRange={() => {}} />);
+  expect(rowButton("All time").getAttribute("aria-pressed")).toBe("true");
+  expect(marked(datesButton())).toBe(false);
+  act(() => fireEvent.click(phoneButton("All time")));
+  expect(screen.getByRole("menuitemradio", { name: "All time" }).getAttribute("aria-checked")).toBe("true");
+});
+
+test("a range a day short of today is still custom", () => {
+  render(<RangeControls today="2026-11-07" range={{ start: "2021-10-10", end: "2026-11-06" }} presets={presets("2026-11-07")} onRange={() => {}} />);
+  expect(rowButton("All time").getAttribute("aria-pressed")).toBe("false");
+  expect(marked(datesButton())).toBe(true);
+});
+
 test("on a phone the presets are one menu naming the preset shown, and on a wide screen a row of buttons", () => {
   render(<RangeControls today="2026-11-07" range={{ start: "2026-11-01", end: "2026-11-30" }} presets={presets("2026-11-07")} onRange={() => {}} />);
   expect(screen.getByRole("group", { name: "Preset ranges" }).className).toContain("max-sm:hidden");

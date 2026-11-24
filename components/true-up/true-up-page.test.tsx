@@ -269,6 +269,13 @@ test("All time's chart is headed \"All time by billing cycle\"", () => {
   expect(screen.getByRole("heading", { level: 2, name: "All time by billing cycle" })).toBeTruthy();
 });
 
+// dashboard-shell, "A range over all the data is All time": a link typed from the first day of service heads it the same.
+test("a range over all the data is headed \"All time by billing cycle\" with All time marked", () => {
+  render(<TrueUpPage range={{ start: "2021-10-10", end: "2027-09-30" }} years={YEARS} cycles={[...YEAR_25_26, ...CURRENT]} cost={null} savings={null} payback={null} today="2026-11-08" />);
+  expect(screen.getByRole("heading", { level: 2, name: "All time by billing cycle" })).toBeTruthy();
+  expect(pressed("All time")).toBe("true");
+});
+
 // dashboard-shell, "The dashboard's design system": every card heads itself with the section label.
 test("every card's heading is a section label", () => {
   render(page(YEAR_25, YEAR_25_26, COST_25_26, SAVINGS_25_26, PAYBACK));
