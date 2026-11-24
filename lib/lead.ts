@@ -2,10 +2,10 @@ import type { RangeItem } from "@/lib/range";
 import { FIRST_DAY } from "@/lib/scene/replay";
 import { monthOf, type Range, rangeIncludes, rangeNames } from "@/lib/solar/ranges";
 import type { TopTen } from "@/lib/top-ten";
+import { energy } from "@/lib/units";
 
 // The pages' lead sentences mark their figures {like this}: the figures go in mono, while the dates and year names
 // around them, which hold digits too, stay in the sans.
-const whole = (value: number) => Math.round(value).toLocaleString("en-US");
 
 export const solarTotal = (items: RangeItem[]) => items.reduce((sum, item) => sum + (item.solar ?? 0), 0);
 
@@ -13,7 +13,8 @@ export const solarTotal = (items: RangeItem[]) => items.reduce((sum, item) => su
 export function solarLead(range: Range, today: string, solar: number, before: { then: number; now: number | null } | null) {
   const { name, earlier } = rangeNames(range, today);
   const first = monthOf(FIRST_DAY);
-  const lead = `Solar ${rangeIncludes(range, today) ? "has generated" : "generated"} {${whole(solar)}} kWh ${name}`;
+  const [value, unit] = energy(solar, 0);
+  const lead = `Solar ${rangeIncludes(range, today) ? "has generated" : "generated"} {${value}} ${unit} ${name}`;
   if (range.start === first.start && range.end === first.end) return `${lead}, its first month.`;
   if (!before?.then) return `${lead}.`;
   const change = Math.round((100 * ((before.now ?? solar) - before.then)) / before.then);

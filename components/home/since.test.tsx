@@ -26,9 +26,9 @@ afterEach(cleanup);
 test("the running totals, named, with today and the payback marked, and the figures in words", () => {
   since();
   expect(screen.getByRole("heading", { name: "Since 2021" })).toBeTruthy();
-  expect(screen.getByRole("img", { name: /^Running totals since October 10, 2021: solar 1,900 kWh against the house's 2,100 kWh/ })).toBeTruthy();
+  expect(screen.getByRole("img", { name: /^Running totals since October 10, 2021: solar 1.9 MWh against the house's 2.1 MWh/ })).toBeTruthy();
   expect(screen.getByText("solar generated")).toBeTruthy();
-  expect(document.body.textContent).toContain("Solar has generated as much as the house used: 75,611 kWh, 100%.");
+  expect(document.body.textContent).toContain("Solar has generated as much as the house used: 75.6 MWh, 100%.");
   expect(screen.getByText("more imported than sent this true-up year, since October 1")).toBeTruthy();
   expect(screen.getByText(/Solar paid for itself in March 2025\. The Powerwalls won't pay for themselves within their warranty\./)).toBeTruthy();
   expect(screen.getByRole("link", { name: "The true-up and payback" }).getAttribute("href")).toBe("/true-up");
@@ -39,7 +39,7 @@ test("without the costs file there is no payback, and a year that sent more says
   since({ payback: null, net: -120.5, matched: 92 });
   expect(screen.queryByText(/paid for itself|pays back/)).toBeNull();
   expect(screen.getByText("more sent than imported this true-up year, since October 1")).toBeTruthy();
-  expect(document.body.textContent).toContain("Solar has generated 75,611 kWh, 92% of what the house used.");
+  expect(document.body.textContent).toContain("Solar has generated 75.6 MWh, 92% of what the house used.");
 });
 
 test("a whole-system year already reached reads as paid back, not projected", () => {
@@ -107,4 +107,15 @@ test("one projected amount reads alone", () => {
 test("without this year's share there is no explanation", () => {
   since({ share: null });
   expect(screen.queryByText(/rests on the early years|This true-up year/)).toBeNull();
+});
+
+test("the axis reads in MWh once its top tick passes 1,000 kWh, the unit on the top tick", () => {
+  const { container } = since();
+  const labels = [...container.querySelectorAll("svg.recharts-surface text")].map((text) => text.textContent).filter((text) => /^[\d,.]+( [kM]Wh)?$/.test(text!) && !/^20\d\d$/.test(text!));
+  expect(labels).toEqual(["0", "1", "2", "3 MWh"]);
+});
+
+test("the solar figure keeps its unit on its line", () => {
+  since();
+  expect(screen.getByText("75.6 MWh").className).toContain("whitespace-nowrap");
 });

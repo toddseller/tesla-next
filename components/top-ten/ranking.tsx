@@ -5,6 +5,7 @@ import { useId } from "react";
 import { type Entry, FLOW_DOT, type Flow, held, lead } from "@/components/top-ten/entries";
 import { Timeline } from "@/components/top-ten/timeline";
 import { Length } from "@/components/length";
+import { Measured } from "@/components/measured";
 
 type Props = { record: string; chart: string; subtitle: string; flow: Flow; entries: Entry[]; today: string };
 
@@ -23,7 +24,7 @@ export function Ranking({ record, chart, subtitle, flow, entries, today }: Props
     <section aria-labelledby={id} className="flex flex-col gap-[18px] rounded-[10px] border bg-card px-4 py-5 sm:px-6">
       <div className="flex flex-wrap items-stretch gap-x-8 gap-y-6">
         <div className="flex min-w-0 flex-[1_1_260px] flex-col gap-2.5">
-          <h2 id={id} className="flex items-center gap-2 text-[13px] font-semibold tracking-[0.06em] text-muted-foreground uppercase">
+          <h2 id={id} className="flex items-center gap-2 text-sm font-medium tracking-[0.06em] text-muted-foreground uppercase">
             <span aria-hidden className={`size-2.5 rounded-xs ${FLOW_DOT[flow]}`} />{record}
           </h2>
           {best ? (
@@ -39,7 +40,7 @@ export function Ranking({ record, chart, subtitle, flow, entries, today }: Props
                 <span>Record for <span className="text-foreground">{held(best.since, today)}</span></span>
                 {rest.length > 0 && (lead(entries) === null
                   ? <span>Tied with #2</span>
-                  : <span><span className="font-mono text-foreground">{lead(entries)}</span>{best.unit && ` ${best.unit}`} ahead of #2</span>)}
+                  : <span><span className="text-foreground"><Measured text={lead(entries)!} /></span> ahead of #2</span>)}
                 <span>{subtitle}</span>
               </div>
             </>

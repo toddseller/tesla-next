@@ -140,3 +140,8 @@ test("with nothing ranked, the subtitle stays", () => {
   render(<TopTenPage topTen={[{ solar: [] }, { net_grid: [] }, { to_grid_months: [] }, { outages: [] }]} withVpp={false} today="2026-11-08" />);
   expect(screen.getByRole("heading", { level: 1 }).nextElementSibling!.textContent).toBe("The records since October 2021, and the days and months closest to them");
 });
+
+test("each ranking's heading is a section label", () => {
+  render(<TopTenPage topTen={TOP_TEN} withVpp today="2026-11-08" />);
+  for (const heading of screen.getAllByRole("heading", { level: 2 })) expect([...heading.classList]).toEqual(expect.arrayContaining(["text-sm", "font-medium", "tracking-[0.06em]", "text-muted-foreground", "uppercase"]));
+});

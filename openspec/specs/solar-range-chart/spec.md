@@ -265,7 +265,7 @@ A request for `/` with any of `start`, `end`, `day` or `readings` in its query S
 - **THEN** the home page opens, with no redirect
 
 ### Requirement: The range's lead sentence
-Under its "Solar by date range" heading, the range view SHALL say in one sentence how much solar the range generated, in whole kWh with its figures in mono: "Solar generated N kWh <the range>", or "Solar has generated" while the range includes today. A range that includes today SHALL be named as under way: "today so far", "in November so far", or, for a range no preset names, from its first day ("since Nov 10, 2026"). The sentence SHALL follow the bars as they reload.
+Under its "Solar by date range" heading, the range view SHALL say in one sentence how much solar the range generated, in whole kWh, or in MWh from 1,000 kWh as `display-units` reads energy, with its figures in mono: "Solar generated N kWh <the range>", or "Solar has generated" while the range includes today. A range that includes today SHALL be named as under way: "today so far", "in November so far", or, for a range no preset names, from its first day ("since Nov 10, 2026"). The sentence SHALL follow the bars as they reload.
 
 #### Scenario: The current month
 - **WHEN** a viewer opens `/solar` on 2026-11-22, with 556.1 kWh made from November 1
@@ -273,7 +273,7 @@ Under its "Solar by date range" heading, the range view SHALL say in one sentenc
 
 #### Scenario: A finished month
 - **WHEN** the range is October 2026, with 1,086.2 kWh made
-- **THEN** the sentence begins "Solar generated 1,086 kWh in October 2026"
+- **THEN** the sentence begins "Solar generated 1.1 MWh in October 2026"
 
 #### Scenario: A totals event
 - **WHEN** the page shows the current month and a `totals` event for today raises the month's solar to 557.0 kWh
@@ -285,7 +285,7 @@ Under its "Solar by date range" heading, the range view SHALL say in one sentenc
 
 #### Scenario: All time
 - **WHEN** All time is shown on 2026-11-23, with 75,643 kWh made
-- **THEN** the sentence reads "Solar has generated 75,643 kWh since Oct 10, 2021."
+- **THEN** the sentence reads "Solar has generated 75.6 MWh since Oct 10, 2021."
 
 ### Requirement: The comparison with a year earlier
 The sentence SHALL compare the range's solar with the same days a year earlier, as a whole percentage: "N% more than", "N% less than", or "about the same as" when it rounds to 0%. Today being partly over, a longer range that includes it SHALL compare the days before today on both sides; one starting today, a lone today included, none. A finished month, calendar year or true-up year SHALL be compared by name ("October 2025"); any other range with "the same days last year".
@@ -296,11 +296,11 @@ The sentence SHALL compare the range's solar with the same days a year earlier, 
 
 #### Scenario: A finished month
 - **WHEN** October 2026 made 1,086.2 kWh and October 2025 made 997.9 kWh
-- **THEN** the sentence reads "Solar generated 1,086 kWh in October 2026, 9% more than October 2025."
+- **THEN** the sentence reads "Solar generated 1.1 MWh in October 2026, 9% more than October 2025."
 
 #### Scenario: Under one percent apart
 - **WHEN** 2026 has made 13,554 kWh through November 22 and 13,500 kWh through November 21, and 2025 made 13,450 kWh through November 21
-- **THEN** the sentence reads "Solar has generated 13,554 kWh in 2026 so far, about the same as the same days last year."
+- **THEN** the sentence reads "Solar has generated 13.6 MWh in 2026 so far, about the same as the same days last year."
 
 #### Scenario: The first of the month
 - **WHEN** a viewer opens `/solar` at 9 am on 2026-12-01

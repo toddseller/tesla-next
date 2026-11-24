@@ -20,7 +20,7 @@ export function VppSection({ season, today, days }: Props) {
   return (
     <section aria-labelledby="vpp-days" className="flex flex-col gap-3.5 rounded-[10px] border bg-card px-4 py-5 sm:px-6">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <h2 id="vpp-days" className="font-semibold">{`VPP days, ${season} season`}</h2>
+        <h2 id="vpp-days" className="text-sm font-medium tracking-[0.06em] text-muted-foreground uppercase">{`VPP days, ${season} season`}</h2>
         <span className="text-xs text-muted-foreground">May 1 to October 31</span>
       </div>
       {state.result && <Notice ok={state.result.ok}>{state.result.message}</Notice>}

@@ -1,8 +1,9 @@
 import type { CSSProperties } from "react";
 
 import { powerwallYears, type PowerwallYear } from "@/lib/patterns";
+import { energy } from "@/lib/units";
 
-const kwh = (value: number) => `${value.toLocaleString("en-US")} kWh`;
+const kwh = (value: number, top = value) => energy(value, 0, top).join(" ");
 const percent = (value: number | null) => (value === null ? "–" : `${value}%`);
 
 function Tile({ label, value, detail, wide }: { label: string; value: string; detail: string; wide?: boolean }) {
@@ -50,7 +51,7 @@ export function PowerwallSection({ years, today }: { years: PowerwallYear[]; tod
                   {row.year}
                   {row.note && <span className="text-xs text-muted-foreground"> {row.note}</span>}
                 </span>
-                <span role="cell" className="text-right font-mono sm:order-3">{kwh(row.kwh)}</span>
+                <span role="cell" className="text-right font-mono sm:order-3">{kwh(row.kwh, largest)}</span>
                 <span aria-hidden className="h-2 basis-full overflow-hidden rounded bg-secondary sm:order-2 sm:h-2.5">
                   <span className="motion-uncover block h-full rounded bg-powerwall" style={{ width: `${(100 * row.kwh) / largest}%`, "--i": i } as CSSProperties} />
                 </span>

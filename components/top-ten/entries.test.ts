@@ -43,6 +43,17 @@ test("a tie for #1 has no lead", () => {
 });
 
 test("the lead over #2 is the difference of the figures as shown", () => {
-  expect(lead(solarEntries([{ date: "a", solar: 80.9, day: "2022-06-13" }, { date: "b", solar: 80.2, day: "2025-06-21" }]))).toBe("0.7");
-  expect(lead(monthEntries([{ date: "a", net_grid: -510.1, month: "2024-05" }, { date: "b", net_grid: -479.2, month: "2024-04" }]))).toBe("30.9");
+  expect(lead(solarEntries([{ date: "a", solar: 80.9, day: "2022-06-13" }, { date: "b", solar: 80.2, day: "2025-06-21" }]))).toBe("0.7 kWh");
+  expect(lead(monthEntries([{ date: "a", net_grid: -510.1, month: "2024-05" }, { date: "b", net_grid: -479.2, month: "2024-04" }]))).toBe("30.9 kWh");
+});
+
+test("a ranking whose #1 passes 1,000 kWh reads every entry and the lead in MWh", () => {
+  const months = monthEntries([{ date: "May 2026", net_grid: -1204.3, month: "2026-05" }, { date: "Apr 2024", net_grid: -987.6, month: "2024-04" }]);
+  expect(months.map((e) => [e.value, e.unit])).toEqual([["1.2", "MWh"], ["1.0", "MWh"]]);
+  expect(lead(months)).toBe("216.7 kWh");
+});
+
+test("a lead under a tenth of a MWh reads in kWh, never as 0.0 MWh", () => {
+  expect(lead(monthEntries([{ date: "a", net_grid: -1251, month: "2026-05" }, { date: "b", net_grid: -1249, month: "2025-05" }]))).toBe("2.0 kWh");
+  expect(lead(solarEntries([{ date: "a", solar: 80.9, day: "2022-06-13" }, { date: "b", solar: 80.2, day: "2025-06-21" }]))).toBe("0.7 kWh");
 });

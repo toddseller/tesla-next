@@ -354,7 +354,7 @@ Beside its chart, the Since 2021 chapter SHALL give the solar since October 10, 
 
 #### Scenario: As much as the house used
 - **WHEN** Impact gives 75,611 kWh of solar and 100% of the house's use for October 10, 2021 to today
-- **THEN** the chapter says solar has generated as much as the house used (100%) and gives 75,611 kWh
+- **THEN** the chapter says solar has generated as much as the house used (100%) and gives 75.6 MWh
 
 #### Scenario: The true-up so far
 - **WHEN** the true-up year that began October 1, 2026 has imported 611.4 kWh more than it sent

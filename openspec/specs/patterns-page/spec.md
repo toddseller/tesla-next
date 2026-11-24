@@ -77,11 +77,11 @@ The Always-on load section SHALL show, headed "The last 12 months", a bar in the
 - **THEN** the months before that first anniversary have bars but no marks
 
 ### Requirement: Powerwall use by year
-For each calendar year from the first stored interval to this year, the Powerwall use section SHALL show the energy out of the Powerwalls in kWh as a bar and figure, the cycles as that energy over 40.5 kWh rounded to a whole number, and the round trip as energy out over energy into them, from solar and the grid, as a whole percentage. The first year SHALL say from which day when it starts after January 1, and this year SHALL say "so far".
+For each calendar year from the first stored interval to this year, the Powerwall use section SHALL show the energy out of the Powerwalls as a bar and figure, in kWh or MWh as `display-units` reads a list of energy figures, the cycles as that energy over 40.5 kWh rounded to a whole number, and the round trip as energy out over energy into them, from solar and the grid, as a whole percentage. The first year SHALL say from which day when it starts after January 1, and this year SHALL say "so far".
 
 #### Scenario: A full year
 - **WHEN** 3,030 kWh came out of the Powerwalls in 2025 and 3,662 kWh went in
-- **THEN** the 2025 row shows 3,030 kWh, 75 cycles and an 83% round trip
+- **THEN** the 2025 row shows 3.0 MWh, 75 cycles and an 83% round trip
 
 #### Scenario: The first year
 - **WHEN** the first stored interval is on October 10, 2021
@@ -96,7 +96,7 @@ Above the rows, the Powerwall use section SHALL show this year's cycles with the
 
 #### Scenario: November 2026
 - **WHEN** 4,416 kWh has come out in 2026 and 20,715 kWh since October 2021
-- **THEN** the figures read 109 cycles in 2026 and 511 since 2021, and 4,416 kWh in 2026 and 20,715 kWh since 2021
+- **THEN** the figures read 109 cycles in 2026 and 511 since 2021, and 4.4 MWh in 2026 and 20.7 MWh since 2021
 
 ### Requirement: Nothing to show yet
 When no night counts, the Always-on load section SHALL say there are no overnight readings yet in place of its figures and charts. When no interval is stored, the Powerwall use section SHALL say there is no Powerwall data yet in place of its figures and rows.

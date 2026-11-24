@@ -28,7 +28,7 @@ export function SavingsCard({ savings, season, current }: { savings: Savings; se
     <section aria-labelledby="savings" className="flex flex-col gap-4 rounded-[10px] border bg-card px-4 py-5 sm:px-6">
       <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-2">
         <div className="flex flex-col gap-2">
-          <h2 id="savings" className="text-sm font-medium text-muted-foreground">What the system saved</h2>
+          <h2 id="savings" className="text-sm font-medium tracking-[0.06em] text-muted-foreground uppercase">What the system saved</h2>
           <p className="flex flex-wrap items-baseline gap-2">
             <span className="text-[34px] leading-none font-semibold"><CountUp text={text.saved} /></span>
             <span className="text-sm text-muted-foreground">{text.unit}</span>

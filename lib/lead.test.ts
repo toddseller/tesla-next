@@ -15,7 +15,7 @@ describe("Solar's lead sentence", () => {
 
   test("a finished month against the same month", () => {
     expect(solarLead({ start: "2026-10-01", end: "2026-10-31" }, today, 1086.2, { then: 997.9, now: null })).toBe(
-      "Solar generated {1,086} kWh in October 2026, {9%} more than October 2025.",
+      "Solar generated {1.1} MWh in October 2026, {9%} more than October 2025.",
     );
   });
 
@@ -27,7 +27,7 @@ describe("Solar's lead sentence", () => {
 
   test("under one percent apart", () => {
     expect(solarLead({ start: "2026-01-01", end: "2026-12-31" }, today, 13554, { then: 13450, now: 13500 })).toBe(
-      "Solar has generated {13,554} kWh in 2026 so far, about the same as the same days last year.",
+      "Solar has generated {13.6} MWh in 2026 so far, about the same as the same days last year.",
     );
   });
 
@@ -42,9 +42,9 @@ describe("Solar's lead sentence", () => {
   });
 
   test("no year to compare with", () => {
-    expect(solarLead({ start: "2022-01-01", end: "2022-06-30" }, today, 7000.4, null)).toBe("Solar generated {7,000} kWh from Jan 1 to Jun 30, 2022.");
+    expect(solarLead({ start: "2022-01-01", end: "2022-06-30" }, today, 7000.4, null)).toBe("Solar generated {7.0} MWh from Jan 1 to Jun 30, 2022.");
     expect(solarLead({ start: today, end: today }, today, 12.4, null)).toBe("Solar has generated {12} kWh today so far.");
-    expect(solarLead({ start: "2021-10-10", end: today }, today, 75643.2, null)).toBe("Solar has generated {75,643} kWh since Oct 10, 2021.");
+    expect(solarLead({ start: "2021-10-10", end: today }, today, 75643.2, null)).toBe("Solar has generated {75.6} MWh since Oct 10, 2021.");
   });
 });
 

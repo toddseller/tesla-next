@@ -137,7 +137,7 @@ export function PaybackCard({ payback, today }: { payback: Payback; today: strin
   return (
     <section aria-labelledby="payback" className="flex flex-col gap-5 rounded-[10px] border bg-card px-4 py-5 sm:px-6">
       <div className="flex flex-col gap-0.5">
-        <h2 id="payback" className="font-semibold">Payback</h2>
+        <h2 id="payback" className="text-sm font-medium tracking-[0.06em] text-muted-foreground uppercase">Payback</h2>
         <p className="text-sm text-muted-foreground">{heading(payback)}</p>
       </div>
       <div ref={timeline} role="img" aria-label={`${spoken[0]}: ${spoken.slice(1).join(", ")}`}>

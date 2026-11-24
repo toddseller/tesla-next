@@ -158,15 +158,18 @@ test("a day's details show its values and that clicking opens it", () => {
 
 test("a month's details show its values and that clicking shows its days", () => {
   render(<BarDetails active label="May 2026" payload={[{ payload: { label: "May 2026", period: { start: "2026-05-01", end: "2026-05-31" }, solar: 1683.2, grid: -254.5, powerwall: -83.2, house: 1345.5 } }]} />);
-  expect(screen.getByText("1,683.2 kWh")).toBeTruthy();
+  // One unit for the whole list, from its largest figure.
+  expect(screen.getByText("1.7 MWh")).toBeTruthy();
+  expect(screen.getByText("-0.3 MWh")).toBeTruthy();
+  expect(screen.getByText("Powerwall").textContent).toBe("Powerwall-0.1 MWh");
   expect(screen.getByText(/click to see its days/i)).toBeTruthy();
 });
 
-test("the value axis steps by round numbers", () => {
+test("the value axis steps by round numbers, in MWh once its top tick reaches 1,000 kWh", () => {
   const { container } = render(<RangeChart items={TRUE_UP_YEAR} range={YEAR_RANGE} onOpenDay={() => {}} onOpenRange={() => {}} />);
-  const labels = [...container.querySelectorAll("svg.recharts-surface text")].map((text) => text.textContent).filter((text) => /^-?[\d,]+( kWh)?$/.test(text!));
+  const labels = [...container.querySelectorAll("svg.recharts-surface text")].map((text) => text.textContent).filter((text) => /^-?[\d,.]+( [kM]Wh)?$/.test(text!));
   // The top is December's 1,688.7 kWh bar, not its bar and house use together.
-  expect(labels).toEqual(["-1,000", "0", "1,000", "2,000 kWh"]);
+  expect(labels).toEqual(["-1", "0", "1", "2 MWh"]);
 });
 
 // site-motion, "Charts draw in when the view changes".

@@ -5,8 +5,10 @@ import { Rolling } from "@/components/rolling";
 import { ENTER_MS, useEntering } from "@/components/use-entering";
 import type { CarCharging } from "@/lib/car-charging";
 import { datesLabel, type Range } from "@/lib/solar/ranges";
+import { energy } from "@/lib/units";
 
-const kwh = (value: number) => value.toLocaleString("en-US", { maximumFractionDigits: 1 });
+// Below 1,000 kWh a whole figure keeps no decimal ("140"); `top` puts a whole list in its largest figure's unit.
+const kwh = (value: number, top: number) => (Math.abs(top) >= 1000 ? energy(value, 1, top)[0] : value.toLocaleString("en-US", { maximumFractionDigits: 1 }));
 const day = (date: string, month: "long" | "short") => datesLabel({ start: date, end: date }, month);
 
 // Each source is a full-width layer cut to its stretch, so a new split moves by clip without resizing anything.
@@ -42,6 +44,7 @@ function Message({ text }: { text: string }) {
 export function CarChargingSection({ charging, range }: { charging: CarCharging; range: Range }) {
   const shares = sourceShares(charging.solar_percentage, charging.powerwall_percentage, charging.grid_percentage);
   const before = charging.since !== null && range.end < charging.since;
+  const top = Math.max(0, ...charging.cars.map((car) => car.kwh));
   return (
     <section aria-labelledby="car-charging" className="flex flex-col gap-5 rounded-[10px] border bg-card p-4 sm:p-6">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
@@ -64,8 +67,8 @@ export function CarChargingSection({ charging, range }: { charging: CarCharging;
             <Ring name="Car charging" shares={shares} middle={charging.off_grid_percentage} caption="off the grid" />
             <div className="flex flex-col gap-3.5">
               <p className="flex items-baseline gap-2">
-                <span className="font-mono text-[28px] font-semibold"><Rolling value={charging.total_kwh} format={kwh} /></span>
-                <span className="text-muted-foreground">kWh into the cars</span>
+                <span className="font-mono text-[28px] font-semibold"><Rolling value={charging.total_kwh} format={(v) => kwh(v, charging.total_kwh)} /></span>
+                <span className="text-muted-foreground">{`${energy(charging.total_kwh, 1)[1]} into the cars`}</span>
               </p>
               <Legend shares={shares} />
             </div>
@@ -81,7 +84,7 @@ export function CarChargingSection({ charging, range }: { charging: CarCharging;
               <div key={repeat ? `${car.name} ${repeat}` : car.name} className="flex flex-col gap-2">
                 <div className="flex justify-between gap-3 text-sm">
                   <span>{car.name}</span>
-                  <span className="font-mono"><Rolling value={car.kwh} format={kwh} /> kWh</span>
+                  <span className="font-mono"><Rolling value={car.kwh} format={(v) => kwh(v, top)} /> {energy(top, 1)[1]}</span>
                 </div>
                 <Split name={car.name} shares={sourceShares(car.solar_percentage, car.powerwall_percentage, car.grid_percentage)} i={i} />
               </div>

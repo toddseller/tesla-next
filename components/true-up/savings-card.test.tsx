@@ -116,3 +116,10 @@ test("a year the Powerwalls saved money keeps Solar saved in the key", () => {
   expect(card).toContain("Against buying it all from the grid");
   expect(screen.queryByText("Saved")).toBeNull();
 });
+
+test("the Powerwalls' dollars are set in mono, their labels in the sans", () => {
+  render(<SavingsCard savings={SAVINGS_25_26} season={COST_25_26.vpp} current={false} />);
+  const group = screen.getByRole("group", { name: "Powerwalls" });
+  for (const dollars of ["$150", "$83", "$110", "$43", "$133"])
+    expect([...group.querySelectorAll(".font-mono")].some((figure) => figure.textContent === dollars)).toBe(true);
+});

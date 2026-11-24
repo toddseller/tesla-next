@@ -4,11 +4,14 @@ import { Line, LineChart, ReferenceArea, ReferenceLine, XAxis, YAxis } from "rec
 
 import { Doorway } from "@/components/home/doorway";
 import { DetailsBox, type Hover } from "@/components/home/chart-details";
+import { AxisTick } from "@/components/solar/axis-tick";
 import { dollarRange, rangeExplained } from "@/lib/true-up/text";
 import { ChartContainer, ChartTooltip } from "@/components/ui/chart";
 import { longDate } from "@/lib/calendar-dates";
 import { yearTicks } from "@/lib/home/records";
+import { niceAxis } from "@/lib/solar/day-views";
 import { FIRST_DAY } from "@/lib/scene/replay";
+import { energy, energyAxis } from "@/lib/units";
 
 type Month = { month: string; solar: number; house: number };
 type Year = { year: number | null; projected: boolean };
@@ -19,8 +22,8 @@ type Props = {
   net: number; share: number | null; owed: readonly [number, number] | null; trueUpStart: string; trueUpEnd: string;
 };
 
-const whole = (value: number) => Math.round(value).toLocaleString("en-US");
-const tenth = (value: number) => Math.abs(value).toLocaleString("en-US", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+// A pair of running totals reads in one unit, the larger one's.
+const pair = (a: number, b: number) => [energy(a, 0, Math.max(a, b)).join(" "), energy(b, 0, Math.max(a, b)).join(" ")];
 const monthName = (month: string) => new Date(`${month}-01T00:00:00Z`).toLocaleString("en-US", { month: "long", year: "numeric", timeZone: "UTC" });
 const startName = (day: string) => new Date(`${day}T00:00:00Z`).toLocaleString("en-US", { month: "long", day: "numeric", timeZone: "UTC" });
 const at = (month: string) => Date.parse(`${month}-01T00:00:00Z`);
@@ -34,7 +37,10 @@ export function Since({ today, months, solar, matched, net, share, owed, trueUpS
   const projected = systemYear !== null && payback!.system.projected;
   const solarPaid = payback?.solar.year ? (payback.solar.projected ? `Solar should pay for itself in ${payback.solar.year}, projected.` : `Solar paid for itself in ${payback.solar.month ? monthName(payback.solar.month) : payback.solar.year}.`) : null;
   const powerwalls = payback ? (payback.powerwalls.wont ? "The Powerwalls won't pay for themselves within their warranty." : payback.powerwalls.year ? `The Powerwalls should pay for themselves in ${payback.powerwalls.year}.` : null) : null;
-  const label = `Running totals since ${longDate(FIRST_DAY)}: solar ${whole(made)} kWh against the house's ${whole(used)} kWh${solarPaid ? `; ${solarPaid}` : ""}${systemYear ? ` The whole system pays back in ${systemYear}${payback!.system.projected ? ", projected" : ""}.` : ""}`;
+  const [madeText, usedText] = pair(made, used);
+  const axis = niceAxis(0, Math.max(1, made, used));
+  const netText = energy(Math.abs(net), 1);
+  const label = `Running totals since ${longDate(FIRST_DAY)}: solar ${madeText} against the house's ${usedText}${solarPaid ? `; ${solarPaid}` : ""}${systemYear ? ` The whole system pays back in ${systemYear}${payback!.system.projected ? ", projected" : ""}.` : ""}`;
 
   return (
     <section aria-labelledby="since" className="flex flex-col gap-6">
@@ -48,7 +54,7 @@ export function Since({ today, months, solar, matched, net, share, owed, trueUpS
         <ChartContainer config={{}} className="aspect-auto h-64 w-full">
           <LineChart data={rows} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
             <XAxis dataKey="t" type="number" domain={[at("2021-10"), end]} ticks={yearTicks(at("2021-10"), end)} tickFormatter={(t) => String(new Date(t).getUTCFullYear())} tickLine={false} axisLine={false} />
-            <YAxis tickFormatter={(v) => whole(v)} tickLine={false} axisLine={false} width={64} />
+            <YAxis tick={<AxisTick label={energyAxis(axis.ticks.at(-1)!)} />} domain={axis.domain} ticks={axis.ticks} tickLine={false} axisLine={false} width={64} />
             <ChartTooltip content={<SinceDetails />} />
             {/* Clipped at today: the year it pays back, the box runs past the axis, and Recharts would drop it whole. */}
             {systemYear && !projected && <ReferenceArea x1={Date.UTC(systemYear, 0, 1)} x2={Date.UTC(systemYear, 11, 31)} fill="var(--muted-foreground)" fillOpacity={0.08} stroke="none" ifOverflow="hidden" />}
@@ -70,8 +76,8 @@ export function Since({ today, months, solar, matched, net, share, owed, trueUpS
         <div className="flex flex-col gap-3">
           <p className="text-xl leading-snug font-medium text-pretty">
             {matched >= 100
-              ? <>Solar has generated as much as the house used: <span className="font-mono text-solar">{whole(solar)} kWh</span>, {matched}%.</>
-              : <>Solar has generated <span className="font-mono text-solar">{whole(solar)} kWh</span>, {matched}% of what the house used.</>}
+              ? <>Solar has generated as much as the house used: <span className="font-mono whitespace-nowrap text-solar">{energy(solar, 0).join(" ")}</span>, {matched}%.</>
+              : <>Solar has generated <span className="font-mono whitespace-nowrap text-solar">{energy(solar, 0).join(" ")}</span>, {matched}% of what the house used.</>}
           </p>
           {share !== null && (
             <p className="text-[15px] text-pretty text-muted-foreground">
@@ -82,8 +88,8 @@ export function Since({ today, months, solar, matched, net, share, owed, trueUpS
         </div>
         <div className="flex flex-col gap-4">
           <div className="flex flex-col gap-1">
-            <b className="font-mono text-2xl font-semibold">{tenth(net)} kWh</b>
-            <span className="text-[13px] text-muted-foreground">{`${tenth(net) === "0.0" ? "as much sent as imported" : `more ${net > 0 ? "imported than sent" : "sent than imported"}`} this true-up year, since ${startName(trueUpStart)}`}</span>
+            <b className="font-mono text-2xl font-semibold">{netText.join(" ")}</b>
+            <span className="text-[13px] text-muted-foreground">{`${netText[0] === "0.0" ? "as much sent as imported" : `more ${net > 0 ? "imported than sent" : "sent than imported"}`} this true-up year, since ${startName(trueUpStart)}`}</span>
           </div>
           {owed && (
             <div className="flex flex-col gap-1">
@@ -102,10 +108,11 @@ export function Since({ today, months, solar, matched, net, share, owed, trueUpS
 export function SinceDetails({ active, payload }: Hover<{ t: number; solar: number; house: number }>) {
   const row = payload?.[0]?.payload;
   if (!active || !row) return null;
+  const [solar, house] = pair(row.solar, row.house);
   return (
     <DetailsBox title={monthName(new Date(row.t).toISOString().slice(0, 7))} details={[
-      { name: "Solar generated", value: `${whole(row.solar)} kWh`, color: "var(--color-solar)" },
-      { name: "House used", value: `${whole(row.house)} kWh`, color: "var(--color-home)" },
+      { name: "Solar generated", value: solar, color: "var(--color-solar)" },
+      { name: "House used", value: house, color: "var(--color-home)" },
     ]} />
   );
 }

@@ -53,7 +53,7 @@ afterEach(() => {
   router.replace.mockReset();
 });
 
-const ring = () => screen.getByRole("img", { name: /^Home use/ }).textContent;
+const ring = () => screen.getByRole("img", { name: /^House use/ }).textContent;
 // The fetch, its JSON and the state update each take a turn.
 const settle = () => act(() => new Promise((resolve) => setTimeout(resolve, 0)));
 const ranges = () => within(screen.getByRole("group", { name: "Preset ranges" }));
@@ -74,6 +74,7 @@ test("the served figures show with no request of their own", async () => {
   await settle();
   expect(fetches).toEqual([]);
   expect(ring()).toContain("95%");
+  expect(screen.getByText("Where the house's energy came from")).toBeTruthy();
 });
 
 test("totals for a day in the range reload the figures in place; other days' don't", async () => {

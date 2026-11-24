@@ -102,3 +102,11 @@ test("the projected band and its key are a neutral shade; only the running-net l
   expect(swatch.className).not.toContain("bg-primary");
   expect(screen.getByText("Running net").querySelector("span")!.className).toContain("bg-primary");
 });
+
+test("a year's running net past 1,000 kWh puts the axis in MWh, which names its own unit", () => {
+  const { container } = render(<CycleChart cycles={YEAR_25_26} cost={COST_25_26} oneYear />);
+  const labels = [...container.querySelectorAll("svg.recharts-surface text")].map((text) => text.textContent!).filter((text) => /^-?[\d,.]+( [kM]Wh)?$/.test(text));
+  expect(labels.at(-1)).toMatch(/^[\d.]+ MWh$/);
+  expect(container.textContent).toContain("Bars are each cycle's imports above zero and exports below");
+  expect(container.textContent).not.toContain("kWh.");
+});

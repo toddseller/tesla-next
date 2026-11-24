@@ -8,8 +8,9 @@ import { ENTER_MS, useEntering } from "@/components/use-entering";
 import { ChartContainer, ChartTooltip } from "@/components/ui/chart";
 import type { RangeItem } from "@/lib/range";
 import { type Bar as Totals, SERIES, stackEnds } from "@/lib/solar/bars";
-import { niceAxis, unitOnTopTick } from "@/lib/solar/day-views";
+import { niceAxis } from "@/lib/solar/day-views";
 import { isDaily, periods, type Range } from "@/lib/solar/ranges";
+import { energy, energyAxis } from "@/lib/units";
 
 const FLOWS = [
   { key: "solar", label: "Solar", color: "var(--color-solar)" },
@@ -30,7 +31,7 @@ const withPeriods = (items: RangeItem[], range: Range): Row[] => {
   return items.map((item, i) => ({ ...toRow(item), ...(spans[i] && item.solar !== null && { period: { start: spans[i][0], end: spans[i][1] } }) }));
 };
 
-export const kwh = (value: number) => `${value.toLocaleString("en-US", { minimumFractionDigits: 1, maximumFractionDigits: 1 })} kWh`;
+export const kwh = (value: number, top = value) => energy(value, 1, top).join(" ");
 
 const RADIUS = 4;
 
@@ -83,6 +84,7 @@ function Section({ series, domain, entering, onOpenDay, onOpenRange, x = 0, y = 
 export function BarDetails({ active, label, payload }: { active?: boolean; label?: string | number; payload?: readonly { payload?: Row }[] }) {
   const row = payload?.[0]?.payload;
   if (!active || !row) return null;
+  const top = Math.max(...FLOWS.map(({ key }) => Math.abs(row[key] ?? 0)));
   return (
     <div className="flex min-w-48 flex-col gap-1.5 rounded-lg border border-input bg-background px-3.5 py-3 text-sm shadow-xl">
       <span className="font-semibold">{label}</span>
@@ -91,7 +93,7 @@ export function BarDetails({ active, label, payload }: { active?: boolean; label
           <span key={key} className="flex items-center gap-2">
             <span className="size-2 rounded-full" style={{ background: color }} />
             {name}
-            <span className="ml-auto font-mono">{kwh(row[key])}</span>
+            <span className="ml-auto font-mono">{kwh(row[key], top)}</span>
           </span>
         ),
       )}
@@ -118,7 +120,7 @@ export function RangeChart({ items, range, ...open }: { items: RangeItem[]; rang
         <BarChart data={rows} stackOffset="sign" margin={{ top: 8, right: 0, bottom: 0, left: 8 }}>
           <CartesianGrid vertical={false} />
           <XAxis dataKey="label" tickLine={false} axisLine={false} minTickGap={12} />
-          <YAxis tick={<AxisTick label={(value, index, count) => unitOnTopTick(" kWh")(value.toLocaleString("en-US"), index, count)} />} domain={axis.domain} ticks={axis.ticks} tickLine={false} axisLine={false} width={64} />
+          <YAxis tick={<AxisTick label={energyAxis(axis.ticks.at(-1)!)} />} domain={axis.domain} ticks={axis.ticks} tickLine={false} axisLine={false} width={64} />
           <ReferenceLine y={0} className="stroke-muted-foreground/40" />
           <ChartTooltip cursor={{ className: "fill-white/5" }} content={<BarDetails />} />
           {FLOWS.map(({ key, color }) => (

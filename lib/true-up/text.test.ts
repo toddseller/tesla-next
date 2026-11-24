@@ -100,14 +100,14 @@ describe("the current year's headline", () => {
   test("dollars to the dollar, the true-up's month and the charges so far, over the year-end net naming the years", () => {
     const text = headline(years(2092.1, 2376.1), [{ label: "'24 - '25", amount: 611.45 }, { label: "'25 - '26", amount: 656.69 }])!;
     expect(text.headline).toBe("On track to owe {$611} to {$657} at the October 2027 true\u2011up; {$180} in charges so far.");
-    expect(plain(text.line)).toBe("Year-end {2,092} to {2,376} kWh imported, if the rest of the year goes like '24 - '25 or '25 - '26");
+    expect(plain(text.line)).toBe("Year-end {2.1} to {2.4} MWh imported, if the rest of the year goes like '24 - '25 or '25 - '26");
     expect(text.line).toContain(`like ${yearName("'24 - '25")} or ${yearName("'25 - '26")}`);
   });
 
   test("one year", () => {
     const text = headline({ ...years(2000), years: [{ label: "'25 - '26", net: 2000 }] }, [{ label: "'25 - '26", amount: 830.4 }])!;
     expect(text.headline).toBe("On track to owe {$830} at the October 2027 true\u2011up; {$180} in charges so far.");
-    expect(plain(text.line)).toBe("Year-end {2,000} kWh imported, if the rest of the year goes like '25 - '26");
+    expect(plain(text.line)).toBe("Year-end {2.0} MWh imported, if the rest of the year goes like '25 - '26");
   });
 
   test("dollars without charges so far leave the charges out", () => {
@@ -117,7 +117,9 @@ describe("the current year's headline", () => {
 
   test("without dollars, the headline holds the year-end net", () => {
     const text = headline(years(2092.1, 2376.1), null, null)!;
-    expect(plain(text.headline)).toBe("On track to end '26 - '27 with {2,092} to {2,376} kWh imported.");
+    expect(plain(text.headline)).toBe("On track to end '26 - '27 with {2.1} to {2.4} MWh imported.");
+    // Both ends read in the larger's unit, and ends that read the same are one figure.
+    expect(plain(headline(years(980, 1020), null, null)!.headline)).toBe("On track to end '26 - '27 with {1.0} MWh imported.");
     expect(plain(text.line)).toBe("If the rest of the year goes like '24 - '25 or '25 - '26");
     expect(plain(headline(years(-500, -200), null, null)!.headline)).toBe("On track to end '26 - '27 with {200} to {500} kWh exported.");
   });
@@ -193,6 +195,7 @@ describe("the year in dollars", () => {
       line: "$58.03 of unused credit isn't paid out; PG&E pays about $15 of Net Surplus Compensation on the 412.3 kWh exported.",
     });
     expect(trueUpText(cost(credit))!.line).toBe("$58.03 of unused credit isn't paid out; PG&E pays Net Surplus Compensation on the 412.3 kWh exported.");
+    expect(trueUpText(cost({ ...credit, net_exported_kwh: 1412.3 }))!.line).toContain("on the 1.4 MWh exported.");
     expect(trueUpText(cost({ charges_so_far: -40, amount_due: 0, source: "statement" }))).toEqual({ value: "Nothing due", unit: null, line: "From PG&E's statement. Unused credit isn't paid out." });
   });
 
@@ -373,7 +376,7 @@ describe("a range explained", () => {
   const thisYear = { name: "This true-up year", under: true, soFar: true };
   test("short of the house's use", () => {
     expect(rangeExplained({ name: year("'25 - '26"), ...past, share: 89, net: 2422.7 })).toBe(
-      `In ${yearName("'25 - '26")} solar covered 89% of the house's use, so the house drew 2,423 kWh more from PG&E than it sent.`,
+      `In ${yearName("'25 - '26")} solar covered 89% of the house's use, so the house drew 2.4 MWh more from PG&E than it sent.`,
     );
   });
 
@@ -403,7 +406,7 @@ describe("a range explained", () => {
 
   test("all time, under way without \"so far\"", () => {
     expect(rangeExplained({ name: "Since October 10, 2021", under: true, soFar: false, share: 100, net: 4541.3 })).toBe(
-      "Since October 10, 2021 solar has covered 100% of the house's use, yet the house has drawn 4,541 kWh more from PG&E than it sent: the Powerwalls lose some of what they store, so solar needs a margin over use to break even.",
+      "Since October 10, 2021 solar has covered 100% of the house's use, yet the house has drawn 4.5 MWh more from PG&E than it sent: the Powerwalls lose some of what they store, so solar needs a margin over use to break even.",
     );
   });
 

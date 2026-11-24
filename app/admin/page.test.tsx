@@ -37,6 +37,8 @@ test("without the owner it is not found, and nothing is read", async () => {
 test("for the owner it has its three sections", async () => {
   const html = await served();
   for (const heading of ["Bill figures", "VPP days, 2026 season", "VPP payout"]) expect(html).toContain(heading);
+  // Each section heads itself with the section label, like the report pages' cards.
+  expect(html.match(/<h2 [^>]*class="text-sm font-medium tracking-\[0.06em\] text-muted-foreground uppercase"/g)).toHaveLength(3);
   expect(mocks.vppDays).toHaveBeenCalledWith(2026);
   expect(html).toContain("21.4 kWh");
   expect(html).toContain("Recorded for the 2025 season: $728.26, paid April 15, 2026.");

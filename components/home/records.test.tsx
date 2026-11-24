@@ -92,3 +92,12 @@ test("a served `record` opens its tab", () => {
   render(<Records today={TODAY} tabs={recordTabs(RANKINGS, SERIES)} record="sent-month" />);
   expect(screen.getByRole("tab", { name: "Most sent to PG&E in a month" }).getAttribute("aria-selected")).toBe("true");
 });
+
+test("a month record past 1,000 kWh reads in MWh, its list in the same unit", () => {
+  render(<Records today={TODAY} record="sent-month" tabs={recordTabs(
+    [RANKINGS[0], RANKINGS[1], { to_grid_months: [{ date: "May 2026", net_grid: -1204.3, month: "2026-05" }, { date: "Apr 2024", net_grid: -479.2, month: "2024-04" }] }, RANKINGS[3]],
+    { ...SERIES, exportMonths: [{ at: "2024-04", value: 479.2 }, { at: "2026-05", value: 1204.3 }] },
+  )} />);
+  expect(within(panel()).getByText("1.2 MWh in May 2026 · set 5 months ago")).toBeTruthy();
+  expect(within(panel()).getAllByRole("listitem").map((row) => row.querySelector("b")!.textContent)).toEqual(["1.2", "0.5"]);
+});
