@@ -15,9 +15,9 @@ export function Timeline({ label, entries, flow, today }: { label: string; entri
   const left = (day: string) => percent((utc(day) - from) / (to - from));
   const figures = entries.map((e) => e.figure);
   // At least 1 kWh (or hour) tall, so a single entry still has an axis.
-  // Outages read in days and hours, as their dots do; the rest in their figures' own unit.
-  const tick = entries[0]?.unit === "" ? outageTick : (t: number) => t.toLocaleString("en-US");
   const { domain: [low, high], ticks } = niceAxis(Math.min(...figures), Math.max(...figures, Math.min(...figures) + 1));
+  // Outages read in days and hours, as their dots do; the rest in the entries' own unit, so the axis matches the ranking.
+  const tick = entries[0]?.unit === "" ? outageTick : (t: number) => (entries[0].unit === "MWh" ? t / 1000 : t).toLocaleString("en-US");
   const top = (figure: number) => percent((high - figure) / (high - low));
   const years = Array.from({ length: year - 2021 }, (_, i) => 2022 + i);
 

@@ -23,7 +23,7 @@ const section = () => within(screen.getByRole("region", { name: "Home car chargi
 test("the ring shows the share off the grid, with the kWh and each source in the legend", () => {
   render(<CarChargingSection charging={CHARGING} range={ALL_TIME} />);
   expect(section().getByRole("img", { name: "Car charging: 34% Solar, 27% Powerwall, 39% Grid" }).textContent).toContain("61%");
-  expect(section().getByText("4,155.3")).toBeTruthy();
+  expect(section().getByText("4.2").parentElement!.nextElementSibling!.textContent).toBe("MWh into the cars");
   expect(section().getAllByRole("listitem").map((li) => li.textContent)).toEqual(["34%Solar", "27%Powerwall", "39%Grid"]);
 });
 
@@ -103,7 +103,8 @@ test("new figures move each car's split and the ring from their old shares, and 
   const fighter = pieces(/^Tesla T\.I\.E\. Fighter:/);
   expect(fighter.map(stretch)).toEqual([[0, 0], [0, 63], [63, 100]]);
   expect(fighter[1].style.clipPath).toBe("inset(0px calc(37% + 1px) 0px 0%)");
-  expect(section().getByText("4,155.3")).toBeTruthy();
+  // Rolls from the old total, read in the new total's unit.
+  expect(section().getByText("4,155.3").parentElement!.nextElementSibling!.textContent).toBe("kWh into the cars");
   act(() => vi.advanceTimersByTime(450));
   expect(section().getByText("200")).toBeTruthy();
   vi.useRealTimers();
@@ -128,4 +129,10 @@ test("two cars of one name each keep their own row", () => {
     .toEqual(["Tesla: 48% Solar, 12% Powerwall, 40% Grid", "Tesla: 22% Solar, 41% Powerwall, 37% Grid"]);
   expect(error.mock.calls.flat().join(" ")).not.toMatch(/same key/);
   error.mockRestore();
+});
+
+test("a car past 1,000 kWh puts every car's line in MWh", () => {
+  render(<CarChargingSection charging={{ ...CHARGING, cars: [{ ...CHARGING.cars[0], kwh: 1240 }, CHARGING.cars[1]] }} range={ALL_TIME} />);
+  expect(section().getByText("1.2").parentElement!.textContent).toBe("1.2 MWh");
+  expect(section().getByText("0.1").parentElement!.textContent).toBe("0.1 MWh");
 });

@@ -20,7 +20,7 @@ test("Habits: the month, then each year's overnight draw, newest first", () => {
 test("Since 2021: the month and both running totals", () => {
   render(<SinceDetails active payload={[{ payload: { t: Date.UTC(2025, 2, 1), solar: 50000.4, house: 49012.6 } }]} />);
   expect(screen.getByText("March 2025")).toBeTruthy();
-  expect(rows()).toEqual(["Solar generated50,000 kWh", "House used49,013 kWh"]);
+  expect(rows()).toEqual(["Solar generated50.0 MWh", "House used49.0 MWh"]);
 });
 
 test("Records: when, and the record as it stood then, a month tab by its month", () => {

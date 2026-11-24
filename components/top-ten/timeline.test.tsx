@@ -3,7 +3,7 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, expect, test } from "vitest";
 
-import { dayEntries, outageEntries, solarEntries } from "@/components/top-ten/entries";
+import { dayEntries, monthEntries, outageEntries, solarEntries } from "@/components/top-ten/entries";
 import { EXPORT_DAYS, OUTAGES, SOLAR } from "@/components/top-ten/fixtures";
 import { Timeline } from "@/components/top-ten/timeline";
 
@@ -78,4 +78,18 @@ test("this year's band is shaded in the muted foreground, not red", () => {
   const band = screen.getByTitle("This year");
   expect(band.className).toContain("bg-muted-foreground/");
   expect(band.className).not.toContain("bg-primary");
+});
+
+test("a ranking in MWh has its axis in MWh", () => {
+  render(<Timeline label="Top ten export months" flow="grid" today="2026-11-08"
+    entries={monthEntries([{ date: "May 2026", net_grid: -1204.3, month: "2026-05" }, { date: "Apr 2024", net_grid: -987.6, month: "2024-04" }])} />);
+  expect(screen.getAllByText(/^\d(\.\d)?$/).map((t) => t.textContent)).toEqual(["0.9", "1", "1.1", "1.2", "1.3", "2"]);
+  // The last "2" is #2's rank in its dot.
+  expect(dot(1).title).toBe("#1: 1.2 MWh, May 2026");
+});
+
+test("a best month under 1,000 kWh keeps the axis in kWh, even when its top tick rounds up to 1,000", () => {
+  render(<Timeline label="Top ten export months" flow="grid" today="2026-11-08"
+    entries={monthEntries([{ date: "May 2026", net_grid: -985, month: "2026-05" }, { date: "Apr 2024", net_grid: -720, month: "2024-04" }])} />);
+  expect(screen.getAllByText(/^[\d,]+$/).filter((t) => !/^20\d\d$/.test(t.textContent!) && t.textContent!.length > 1).map((t) => t.textContent)).toEqual(["700", "800", "900", "1,000"]);
 });

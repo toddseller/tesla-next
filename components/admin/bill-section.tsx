@@ -45,7 +45,7 @@ export function BillSection({ years, year, cycles, amountDue }: Props) {
   return (
     <section aria-labelledby="bill-figures" className="flex flex-col gap-3.5 rounded-[10px] border bg-card px-4 py-5 sm:px-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h2 id="bill-figures" className="font-semibold">Bill figures</h2>
+        <h2 id="bill-figures" className="text-sm font-medium tracking-[0.06em] text-muted-foreground uppercase">Bill figures</h2>
         <div className="flex flex-wrap items-center gap-3">
           <label className="flex items-center gap-2 whitespace-nowrap text-xs text-muted-foreground">
             True-up year

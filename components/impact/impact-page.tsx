@@ -66,7 +66,7 @@ export function ImpactPage({ range, figures, today, backup, backupYear, charging
       <section aria-labelledby="impact-title" className="flex flex-col gap-6 rounded-[10px] border bg-card p-4 sm:p-6">
         <div className="flex flex-wrap items-baseline justify-between gap-2">
           <h2 id="impact-title" className="font-semibold">{datesLabel(range, "long")}</h2>
-          <span className="text-sm text-muted-foreground">Where the home&apos;s energy came from</span>
+          <span className="text-sm text-muted-foreground">Where the house&apos;s energy came from</span>
         </div>
         <div className="grid grid-cols-1 gap-10 lg:grid-cols-2">
           <SelfPowered figures={shown} />

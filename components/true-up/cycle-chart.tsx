@@ -6,8 +6,9 @@ import { AxisTick } from "@/components/solar/axis-tick";
 import { riseFrom, roundedRect } from "@/components/solar/range-chart";
 import { ENTER_MS, useEntering } from "@/components/use-entering";
 import { ChartContainer, ChartTooltip } from "@/components/ui/chart";
-import { niceAxis, unitOnTopTick } from "@/lib/solar/day-views";
-import { type Cost, type Cycle, kwh, runningNet, startedCycles, yearName } from "@/lib/true-up/text";
+import { niceAxis } from "@/lib/solar/day-views";
+import { type Cost, type Cycle, runningNet, startedCycles, yearName } from "@/lib/true-up/text";
+import { energy, energyAxis } from "@/lib/units";
 
 type Row = { label: string; trueUp: string; imported: number | null; exported: number | null; running: number | null; lastYear: number | null; band: [number, number] | null };
 
@@ -49,8 +50,12 @@ function Flow({ x = 0, y = 0, width = 0, height = 0, fill, index = 0, background
 function CycleDetails({ active, label, payload }: { active?: boolean; label?: string | number; payload?: readonly { payload?: Row }[] }) {
   const row = payload?.[0]?.payload;
   if (!active || !row) return null;
+  // One unit for the whole list, from its largest figure.
+  const top = Math.max(...[row.imported, row.exported, row.running, row.lastYear, ...(row.band ?? [])].map((v) => Math.abs(v ?? 0)));
+  const text = (value: number) => energy(Math.abs(value), 1, top)[0];
+  const unit = energy(top, 1)[1];
   const line = (name: string, value: number | null) =>
-    value === null ? null : <span className="flex gap-4">{name}<span className="ml-auto font-mono">{kwh(value)} kWh</span></span>;
+    value === null ? null : <span className="flex gap-4">{name}<span className="ml-auto font-mono">{text(value)} {unit}</span></span>;
   return (
     <div className="flex min-w-48 flex-col gap-1.5 rounded-lg border border-input bg-background px-3.5 py-3 text-sm shadow-xl">
       <span className="font-semibold">{label}</span>
@@ -58,7 +63,7 @@ function CycleDetails({ active, label, payload }: { active?: boolean; label?: st
       {line("Exported", row.exported)}
       {line("Running net", row.running)}
       {line("Last year", row.lastYear)}
-      {row.band && <span className="flex gap-4">Projected<span className="ml-auto font-mono">{kwh(row.band[0])} to {kwh(row.band[1])} kWh</span></span>}
+      {row.band && <span className="flex gap-4">Projected<span className="ml-auto font-mono">{text(row.band[0])} to {text(row.band[1])} {unit}</span></span>}
     </div>
   );
 }
@@ -87,7 +92,7 @@ export function CycleChart({ cycles, cost, oneYear }: { cycles: Cycle[]; cost: C
         <ComposedChart data={rows} stackOffset="sign" margin={{ top: 8, right: 0, bottom: 0, left: 8 }}>
           <CartesianGrid vertical={false} />
           <XAxis dataKey="label" tickLine={false} axisLine={false} minTickGap={8} />
-          <YAxis tick={<AxisTick label={(value, index, count) => unitOnTopTick(" kWh")(value.toLocaleString("en-US"), index, count)} />} domain={axis.domain} ticks={axis.ticks} tickLine={false} axisLine={false} width={64} />
+          <YAxis tick={<AxisTick label={energyAxis(axis.ticks.at(-1)!)} />} domain={axis.domain} ticks={axis.ticks} tickLine={false} axisLine={false} width={64} />
           <ReferenceLine y={0} className="stroke-muted-foreground/40" />
           <ChartTooltip cursor={{ className: "fill-white/5" }} content={<CycleDetails />} />
           {/* The day chart's reveal, from the left as the columns rise. */}
@@ -105,7 +110,7 @@ export function CycleChart({ cycles, cost, oneYear }: { cycles: Cycle[]; cost: C
           ))}
         </ComposedChart>
       </ChartContainer>
-      <p className="text-[13px] text-muted-foreground">kWh. Bars are each cycle&apos;s imports above zero and exports below; the lines are the net since October 1.</p>
+      <p className="text-[13px] text-muted-foreground">Bars are each cycle&apos;s imports above zero and exports below; the lines are the net since October 1.</p>
     </div>
   );
 }

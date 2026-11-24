@@ -8,6 +8,7 @@ import { PresetGroup } from "@/components/solar/range-controls";
 import type { SolarDay } from "@/lib/home/solar-hours";
 import { FIRST_DAY } from "@/lib/scene/replay";
 import { address, monthOf } from "@/lib/solar/ranges";
+import { energy } from "@/lib/units";
 
 type Shares = { from_solar_percentage: number; from_powerwall_percentage: number; from_grid_percentage: number; total_solar: number };
 type Props = { year: number; today: string; days: SolarDay[]; shares: Shares };
@@ -69,7 +70,7 @@ export function Year({ year: servedYear, today, days: servedDays, shares: served
   const totals = shown.days.map((d) => ({ day: d.day, kwh: sum(d.kwh) }));
   const best = totals.reduce<(typeof totals)[number] | null>((a, b) => (!a || b.kwh > a.kwh ? b : a), null);
   const current = shown.year === Number(today.slice(0, 4));
-  const summary = `${shown.year} solar by day and hour: ${kwh(sum(totals.map((t) => t.kwh)))} kWh${current ? " so far" : ""}${best ? `, the best day ${shortDay.format(Date.parse(best.day))} at ${kwh(best.kwh)} kWh` : ""}.`;
+  const summary = `${shown.year} solar by day and hour: ${energy(sum(totals.map((t) => t.kwh)), 1).join(" ")}${current ? " so far" : ""}${best ? `, the best day ${shortDay.format(Date.parse(best.day))} at ${kwh(best.kwh)} kWh` : ""}.`;
   const day = dates[index];
   const dayKwh = byDay.get(day);
   // A no-break space, so the figure never wraps away from its unit.

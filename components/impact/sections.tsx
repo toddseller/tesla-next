@@ -4,10 +4,11 @@ import { Rolling } from "@/components/rolling";
 import { hidden } from "@/components/solar/forecast";
 import { ENTER_MS, useEntering } from "@/components/use-entering";
 import type { ImpactFigures } from "@/lib/impact";
+import { energy } from "@/lib/units";
 
 const percentOf = (share: number) => `${Math.round(share)}%`;
 
-const energy = (kwh: number) => (kwh >= 1000 ? `${(kwh / 1000).toFixed(1)} MWh` : `${kwh.toFixed(1)} kWh`);
+const energyText = (kwh: number) => energy(kwh, 1).join(" ");
 
 function Title({ id, title, explanation }: { id: string; title: string; explanation: string }) {
   return (
@@ -69,9 +70,9 @@ export function SelfPowered({ figures }: { figures: ImpactFigures }) {
   const shares = sourceShares(figures.from_solar_percentage, figures.from_powerwall_percentage, figures.from_grid_percentage);
   return (
     <section aria-labelledby="self-powered" className="flex flex-col gap-5">
-      <Title id="self-powered" title="Self powered" explanation="Home use met by solar and Powerwall" />
+      <Title id="self-powered" title="Self powered" explanation="House use met by solar and Powerwall" />
       <div className="flex flex-wrap items-center gap-8">
-        <Ring name="Home use" shares={shares} middle={figures.self_powered_percentage} caption="self-powered" />
+        <Ring name="House use" shares={shares} middle={figures.self_powered_percentage} caption="self-powered" />
         <Legend shares={shares} />
       </div>
     </section>
@@ -82,13 +83,13 @@ export function SolarOffset({ figures }: { figures: ImpactFigures }) {
   const scale = Math.max(figures.total_solar, figures.total_house);
   const bars = [
     { label: "Solar", kwh: figures.total_solar, fill: "bg-solar" },
-    { label: "Home, car included", kwh: figures.total_house, fill: "bg-home" },
+    { label: "House, car included", kwh: figures.total_house, fill: "bg-home" },
   ];
   // Uncovers as it first shows; after that a bar moves by its clip from its old length to its new one.
   const entering = useEntering(ENTER_MS);
   return (
     <section aria-labelledby="solar-offset" className="flex flex-col gap-5">
-      <Title id="solar-offset" title="Solar offset" explanation="Solar generated against home use" />
+      <Title id="solar-offset" title="Solar offset" explanation="Solar generated against house use" />
       <p className="flex items-baseline gap-2.5">
         <span className="font-mono text-[52px] font-semibold"><Rolling value={figures.total_solar_percentage} format={percentOf} /></span>
         <span className="text-muted-foreground">energy offset</span>
@@ -100,9 +101,9 @@ export function SolarOffset({ figures }: { figures: ImpactFigures }) {
           <div key={label} className="flex flex-col gap-1.5">
             <div className="flex justify-between text-sm" aria-hidden>
               <span>{label}</span>
-              <span className="font-mono"><Rolling value={kwh} format={energy} /></span>
+              <span className="font-mono"><Rolling value={kwh} format={energyText} /></span>
             </div>
-            <div role="meter" aria-label={label} aria-valuenow={kwh} aria-valuemin={0} aria-valuemax={scale} aria-valuetext={energy(kwh)}
+            <div role="meter" aria-label={label} aria-valuenow={kwh} aria-valuemin={0} aria-valuemax={scale} aria-valuetext={energyText(kwh)}
               className="h-7 rounded-md bg-secondary">
               <div className={`motion-tween h-full rounded-md ${entering ? "motion-uncover" : ""} ${fill}`}
                 style={{ "--i": i, "--hidden": covered, "--round": "8px", clipPath: `inset(0 ${covered} 0 0 round var(--round))` } as CSSProperties} />

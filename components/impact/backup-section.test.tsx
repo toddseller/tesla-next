@@ -221,3 +221,17 @@ test("the duration tiles set their units small beside the numbers, read out whol
   expect(units.every((u) => u.className.includes("text-[0.4em]"))).toBe(true);
   expect(within(summary).getByText("2 d 5 h").className).toBe("sr-only");
 });
+
+test("the house's energy through the outages reads in MWh past 1,000 kWh, its parts in the same unit", () => {
+  render(<BackupSection history={{ ...HISTORY, summary: { ...HISTORY.summary, house_kwh: 1269.54, powerwalls_kwh: 1154.2, solar_kwh: 114.6 } }} year={YEAR_23_24} today={TODAY} onYear={() => {}} />);
+  const summary = within(screen.getByRole("group", { name: "Outages" }));
+  expect(summary.getByText("1.3 MWh")).toBeTruthy();
+  expect(summary.getByText("Powerwalls 1.2 · Solar 0.1")).toBeTruthy();
+});
+
+test("its heading is a section label, the year still after its middle dot", () => {
+  render(<BackupSection history={HISTORY} year={YEAR_23_24} today={TODAY} onYear={() => {}} />);
+  const heading = screen.getByRole("heading", { level: 2 });
+  expect([...heading.classList]).toEqual(expect.arrayContaining(["text-sm", "font-medium", "tracking-[0.06em]", "text-muted-foreground", "uppercase"]));
+  expect(heading.textContent!.replace(/\u00a0/g, " ")).toBe("Backup · '23 - '24");
+});

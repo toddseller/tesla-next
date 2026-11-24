@@ -20,7 +20,7 @@ export function PayoutSection({ seasons, today, latest }: Props) {
   const ended = seasons.filter((season) => `${season}-10-31` < today).at(-1) ?? seasons.at(-1);
   return (
     <section aria-labelledby="vpp-payout" className="flex flex-col gap-3.5 rounded-[10px] border bg-card px-4 py-5 sm:px-6">
-      <h2 id="vpp-payout" className="font-semibold">VPP payout</h2>
+      <h2 id="vpp-payout" className="text-sm font-medium tracking-[0.06em] text-muted-foreground uppercase">VPP payout</h2>
       <p className="text-[13px] text-muted-foreground">
         {latest
           ? `Recorded for the ${latest.season} season: $${latest.amount.toFixed(2)}, paid ${longDate(latest.paid_on)}. Recording a season again replaces it.`

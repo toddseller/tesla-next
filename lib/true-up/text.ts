@@ -2,6 +2,7 @@
 // utils/trueUp.js with mockup A's wording. Client-safe: the types are imported for their shape only.
 import type { cycleRows, trueUpCost } from "@/lib/true-up/cost";
 import type { Savings } from "@/lib/true-up/savings";
+import { energy } from "@/lib/units";
 
 export type Cycle = Awaited<ReturnType<typeof cycleRows>>[number];
 export type Cost = Awaited<ReturnType<typeof trueUpCost>>;
@@ -102,9 +103,11 @@ export function currentHeadline(cost: Pick<Cost, "kwh_projection" | "projections
   const [low, high] = [Math.min(...nets), Math.max(...nets)];
   const crossing = low < 0 && high > 0;
   const [a, b] = [Math.abs(low), Math.abs(high)].sort((x, y) => x - y);
+  // Both ends in the larger's unit.
+  const [[lowText, unit], [highText], [aText], [bText]] = [low, high, a, b].map((v) => energy(Math.abs(v), 0, b));
   const net = crossing
-    ? `between {${wholeKwh(low)}} kWh exported and {${wholeKwh(high)}} kWh imported`
-    : `${a === b ? "" : `{${wholeKwh(a)}} to `}{${wholeKwh(b)}} kWh ${netLabel(high).toLowerCase()}`;
+    ? `between {${lowText}} ${unit} exported and {${highText}} ${unit} imported`
+    : `${aText === bText ? "" : `{${aText}} to `}{${bText}} ${unit} ${netLabel(high).toLowerCase()}`;
   const yearsLike = like(years.map((y) => y.label));
   const owed = owedRange(cost);
   if (!owed)
@@ -150,7 +153,7 @@ export function trueUpText(cost: Dollars): TileText {
   const unit = source === "calculated" ? "estimate" : null;
   if (due === 0) {
     const kept = unused ? `${dollars(unused)} of unused credit isn't paid out` : "Unused credit isn't paid out";
-    const surplus = exported ? `; PG&E pays ${nsc !== null ? `about ${wholeDollars(nsc)} of ` : ""}Net Surplus Compensation on the ${exported.toLocaleString("en-US")} kWh exported` : "";
+    const surplus = exported ? `; PG&E pays ${nsc !== null ? `about ${wholeDollars(nsc)} of ` : ""}Net Surplus Compensation on the ${energy(exported, 1).join(" ")} exported` : "";
     return { value: "Nothing due", unit, line: `${source === "statement" ? "From PG&E's statement. " : ""}${kept}${surplus}.` };
   }
   const from = source === "statement" ? "From PG&E's statement" : "Calculated from PG&E's published rates";
@@ -247,10 +250,11 @@ type Explained = { name: string; under: boolean; soFar: boolean; share: number; 
 export function rangeExplained({ name, under, soFar, share, net }: Explained) {
   const covered = `${name} solar ${under ? "has covered" : "covered"} ${share}% of the house's use${soFar ? " so far" : ""}`;
   const [drew, sent] = under ? ["has drawn", "has sent"] : ["drew", "sent"];
-  const amount = wholeKwh(net);
-  if (amount === "0") return `${covered}, and the house ${sent} as much to PG&E as it drew.`;
-  if (net < 0) return `${covered}, and the house ${sent} ${amount} kWh more to PG&E than it drew.`;
-  const imported = `the house ${drew} ${amount} kWh more from PG&E than it sent`;
+  const [figure, unit] = energy(Math.abs(net), 0);
+  const amount = `${figure} ${unit}`;
+  if (figure === "0") return `${covered}, and the house ${sent} as much to PG&E as it drew.`;
+  if (net < 0) return `${covered}, and the house ${sent} ${amount} more to PG&E than it drew.`;
+  const imported = `the house ${drew} ${amount} more from PG&E than it sent`;
   return share < 100
     ? `${covered}, so ${imported}.`
     : `${covered}, yet ${imported}: the Powerwalls lose some of what they store, so solar needs a margin over use to break even.`;

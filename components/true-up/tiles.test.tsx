@@ -22,7 +22,7 @@ test("the current year: its net so far, charges so far and VPP credit; the proje
   render(<Tiles cycles={CURRENT} cost={CURRENT_COST} year={yearOf(2027)} today={TODAY} />);
 
   expect(titles()).toEqual(["Net so far", "Charges so far", "Tesla VPP credit"]);
-  expect(tile("Net so far")).toBe("Net so far408.6kWh importedImported 660.1 · Exported 251.4 kWhPeak (4 to 9 p.m.) 15.8 exported · Off-peak 424.4 imported");
+  expect(tile("Net so far")).toBe("Net so far408.6kWh importedImported 660.1 kWh · Exported 251.4 kWhPeak (4 to 9 p.m.) 15.8 kWh exported · Off-peak 424.4 kWh imported");
   expect(tile("Charges so far")).toBe("Charges so far$106.46estimateNEM charges for 2 cycles, before taxes. No PG&E bill in yet.");
   expect(tile("Tesla VPP credit")).toBe("Tesla VPP creditNot started2027 seasonThe season runs May 1 to October 31. Tesla pays it, apart from PG&E's true-up.");
 });
@@ -31,7 +31,7 @@ test("'25 - '26: its net for the year, true-up from the statement, bills against
   render(<Tiles cycles={YEAR_25_26} cost={COST_25_26} year={yearOf(2026)} today={TODAY} />);
 
   expect(titles()).toEqual(["Net for the year", "True-up", "Billed against estimate", "Tesla VPP credit"]);
-  expect(tile("Net for the year")).toBe("Net for the year2,422.7kWh importedImported 6,530.7 · Exported 4,107.7 kWhPeak (4 to 9 p.m.) 413.4 imported · Off-peak 2,009.3 imported");
+  expect(tile("Net for the year")).toBe("Net for the year2.4MWh importedImported 6.5 MWh · Exported 4.1 MWhPeak (4 to 9 p.m.) 413.4 kWh imported · Off-peak 2.0 MWh imported");
   expect(tile("True-up")).toBe("True-up$767.73From PG&E's statement: NEM charges of $827.82, less $60.09 of minimum delivery charges already paid.");
   expect(tile("Billed against estimate")).toBe("Billed against estimate$2.82underPG&E billed $827.82 for 12 cycles; the estimate for them was $825.00.");
   expect(tile("Tesla VPP credit")).toContain("$368estimate2026 season: 183.8 kWh in VPP events");

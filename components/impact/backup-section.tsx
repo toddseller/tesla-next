@@ -10,6 +10,7 @@ import { backupParam, backupPresets } from "@/lib/backup-years";
 import { siteToday, TIME_ZONE } from "@/lib/scene/replay";
 import { address, monthOf, type Range, rangeTitle } from "@/lib/solar/ranges";
 import { kwh } from "@/lib/true-up/text";
+import { energy } from "@/lib/units";
 import { Length } from "@/components/length";
 import { Measured } from "@/components/measured";
 
@@ -100,7 +101,7 @@ export function BackupSection({ history: { summary, events }, year, today, onYea
     <section aria-labelledby="backup" className="flex flex-col gap-5 rounded-[10px] border bg-card p-4 sm:p-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-col gap-0.5">
-          <h2 id="backup" className="font-semibold">Backup <span className="font-normal text-muted-foreground">· {shown}</span></h2>
+          <h2 id="backup" className="text-sm font-medium tracking-[0.06em] text-muted-foreground uppercase">Backup <span className="font-normal">· {shown}</span></h2>
           <span className="text-sm text-muted-foreground">When the grid went down and the house ran on its own</span>
         </div>
         <PresetGroup label="Backup years" range={year} presets={backupPresets(today)} onRange={onYear} today={today} />
@@ -113,7 +114,7 @@ export function BackupSection({ history: { summary, events }, year, today, onYea
             <Tile label="Longest" value={<Length text={duration(summary.longest.seconds)} />}>
               <Link href={dayLink(summary.longest.start)} className="text-foreground hover:text-white">{dayDate.format(new Date(summary.longest.start))}</Link>
             </Tile>
-            <Tile label="House ran on" value={`${kwh(summary.house_kwh)} kWh`}>{`Powerwalls ${kwh(summary.powerwalls_kwh)} · Solar ${kwh(summary.solar_kwh)}`}</Tile>
+            <Tile label="House ran on" value={energy(summary.house_kwh, 1).join(" ")}>{`Powerwalls ${energy(summary.powerwalls_kwh, 1, summary.house_kwh)[0]} · Solar ${energy(summary.solar_kwh, 1, summary.house_kwh)[0]}`}</Tile>
             <Tile label="Closest call" value={summary.closest ? `~${Math.round(summary.closest.percent)}%` : "—"}>
               {summary.closest && <Link href={dayLink(summary.closest.at)} className="text-foreground hover:text-white">{dayDate.format(new Date(summary.closest.at))}</Link>}
             </Tile>

@@ -12,6 +12,7 @@ import { longDate } from "@/lib/calendar-dates";
 import { type recordTabs, setAgo, tenthTick, valueTicks, yearTicks } from "@/lib/home/records";
 import { PTO } from "@/lib/scene/replay";
 import { address, monthOf } from "@/lib/solar/ranges";
+import { energy } from "@/lib/units";
 
 type Props = { today: string; tabs: ReturnType<typeof recordTabs>; record?: string };
 
@@ -24,8 +25,13 @@ const link = (at: string) => (at.length === 7 ? address(monthOf(`${at}-01`)) : a
 const misses = (count: number, unit: string) =>
   count === 0 ? `No ${unit} since has come within 2% of it.` : `${WORDS[count] ?? count} ${unit}${count === 1 ? "" : "s"} since ${count === 1 ? "has" : "have"} come within 2% of it.`;
 
-// kWh to a tenth, or an outage's length in days and hours, as Top Ten and the Backup section read it.
-const KWH = { cell: (v: number) => v.toFixed(1), figure: (v: number) => `${v.toFixed(1)} kWh`, tick: tenthTick };
+// kWh to a tenth, or an outage's length in days and hours, as Top Ten and the Backup section read it. `top` is the
+// record, so the list's cells and the axis read in the record's unit.
+const KWH = {
+  cell: (v: number, top: number) => energy(v, 1, top)[0],
+  figure: (v: number) => energy(v, 1).join(" "),
+  tick: (v: number, top: number) => tenthTick(Math.abs(top) >= 1000 ? v / 1000 : v),
+};
 const LENGTH = { cell: hoursLength, figure: hoursLength, tick: outageTick };
 
 // In recordTabs' order.
@@ -70,7 +76,7 @@ export function Records({ today, tabs, record: served }: Props) {
             <ChartContainer config={{}} className="aspect-auto h-48 w-full">
               <LineChart data={chart} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
                 <XAxis dataKey="t" type="number" domain={["dataMin", "dataMax"]} ticks={years} tickFormatter={(t) => String(new Date(t).getUTCFullYear())} tickLine={false} axisLine={false} />
-                <YAxis domain={[values[0], values.at(-1)!]} ticks={values} tickFormatter={tab.tick} tickLine={false} axisLine={false} width={48} />
+                <YAxis domain={[values[0], values.at(-1)!]} ticks={values} tickFormatter={(v: number) => tab.tick(v, record!.value)} tickLine={false} axisLine={false} width={48} />
                 <ChartTooltip content={<RecordDetails show={tab.figure} per={tab.per} />} />
                 <Line dataKey="value" type="stepAfter" stroke={tab.stroke} strokeWidth={2} dot={false} isAnimationActive={false} />
               </LineChart>
@@ -86,7 +92,7 @@ export function Records({ today, tabs, record: served }: Props) {
               <Link href={link(row.at)} className="grid min-h-11 grid-cols-[1.75rem_minmax(0,1fr)_auto] items-baseline gap-3 border-t py-2 text-sm hover:bg-secondary/40">
                 <span className={`font-mono ${i ? "text-muted-foreground" : "font-semibold"}`}>{i + 1}</span>
                 <span>{when(row.at)}</span>
-                <b className={`font-mono ${i ? "" : tab.color}`}>{tab.cell(row.value)}</b>
+                <b className={`font-mono ${i ? "" : tab.color}`}>{tab.cell(row.value, tab.top[0].value)}</b>
               </Link>
             </li>
           ))}

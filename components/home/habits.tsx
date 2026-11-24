@@ -8,6 +8,7 @@ import { Doorway } from "@/components/home/doorway";
 import { Figure } from "@/components/home/today";
 import { ChartContainer, ChartTooltip } from "@/components/ui/chart";
 import type { latestFigures, MonthLoad } from "@/lib/patterns";
+import { energy } from "@/lib/units";
 
 type Figures = ReturnType<typeof latestFigures>;
 // The latest months' figures come worked out on the server: lib/patterns also reads the database.
@@ -35,6 +36,7 @@ function comparison(months: MonthLoad[], figures: NonNullable<Figures>) {
 
 
 export function Habits({ today, months, figures, powerwallOut }: Props) {
+  const out = energy(powerwallOut, 0);
   const compared = figures && comparison(months, figures);
   const years = [...new Set(months.map((m) => m.month.slice(0, 4)))];
   const thisYear = today.slice(0, 4);
@@ -65,7 +67,7 @@ export function Habits({ today, months, figures, powerwallOut }: Props) {
           {figures && <Figure value={figures.watts} unit="W" label={figures.label} className="text-3xl text-home" />}
           {figures?.before && <Figure value={figures.before.watts} unit="W" label={figures.before.label} className="text-muted-foreground" />}
           {figures?.kwhPerDay != null && <Figure value={`${figures.kwhPerDay > 0 ? "+" : ""}${figures.kwhPerDay}`} unit="kWh" label={`a day ${figures.kwhPerDay >= 0 ? "more" : "less"} than a year ago`} />}
-          <Figure value={powerwallOut.toLocaleString("en-US")} unit="kWh" label={`out of the Powerwalls in ${thisYear}`} className="text-powerwall" />
+          <Figure value={out[0]} unit={out[1]} label={`out of the Powerwalls in ${thisYear}`} className="text-powerwall" />
           <Doorway href="/patterns">The patterns behind it</Doorway>
         </div>
       </div>

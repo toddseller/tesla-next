@@ -23,8 +23,8 @@ const shown = (meter: HTMLElement) =>
 test("Self Powered explains itself and shows the self-powered share in the ring and each source in the legend", () => {
   render(<SelfPowered figures={day} />);
   const self = section("Self powered");
-  expect(self.textContent).toContain("Home use met by solar and Powerwall");
-  expect(within(self).getByRole("img", { name: "Home use: 48% Solar, 52% Powerwall, 0% Grid" }).textContent).toContain("100%");
+  expect(self.textContent).toContain("House use met by solar and Powerwall");
+  expect(within(self).getByRole("img", { name: "House use: 48% Solar, 52% Powerwall, 0% Grid" }).textContent).toContain("100%");
   expect(within(self).getAllByRole("listitem").map((li) => li.textContent)).toEqual(["48%Solar", "52%Powerwall", "0%Grid"]);
 });
 
@@ -47,10 +47,10 @@ test("shares that round to 101 still close the ring, without overlapping", () =>
 test("Solar Offset explains itself and shows the offset and labeled bars on one scale", () => {
   render(<SolarOffset figures={day} />);
   const offset = section("Solar offset");
-  expect(offset.textContent).toContain("Solar generated against home use");
+  expect(offset.textContent).toContain("Solar generated against house use");
   expect(offset.textContent).toContain("77%energy offset");
   const bars = within(offset).getAllByRole("meter");
-  expect(bars.map((bar) => [bar.getAttribute("aria-label"), bar.getAttribute("aria-valuetext")])).toEqual([["Solar", "23.8 kWh"], ["Home, car included", "30.8 kWh"]]);
+  expect(bars.map((bar) => [bar.getAttribute("aria-label"), bar.getAttribute("aria-valuetext")])).toEqual([["Solar", "23.8 kWh"], ["House, car included", "30.8 kWh"]]);
   expect(shown(bars[0])).toBeCloseTo(77.3, 5);
   expect(shown(bars[1])).toBe(100);
 });

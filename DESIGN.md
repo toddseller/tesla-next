@@ -206,7 +206,7 @@ Tesla app colors, each bound to one flow on every page, every chart and legend s
   - **Lead figure** (34 to 56px): a page's or chapter's one leading figure: home Today's kWh 40px, Habits' 30px, Impact's ring percentages 52px, Top Ten's #1 56px, the Solar day view's 36px, whose subtitle and units beside the figures are 16px (as ported from anton-tesla-api-ws).
   - **Secondary figure** (15 to 24px): figures beside a chart or under a lead one: the home chapters' 24px figures, True-Up's savings figures and Today's three-day forecast (18px), the Payback card's years (15px).
 - **Lede** (400, or 500 as a heading or readout, 15px): the supporting sentence under a home chapter's figures, a small heading inside a card ("The last 12 months"), the top bar's links, the year chapter's day readout.
-- **Section label** (500, 14px, 0.06em tracking, uppercase, Dusk Gray): each card's h2 ("Solar forecast", "Always-on load").
+- **Section label** (500, 14px, 0.06em tracking, uppercase, Dusk Gray): every card's h2 ("Solar forecast", "Always-on load", "Backup", "Payback", True-Up's tiles), admin's sections included. Only the Distribution scene and the Solar day view's ported sections keep their own.
 - **Body** (400, 14px): controls, table rows, prose.
 - **Reading** (Mono 400, 13px): the live status line, notes under charts, input text.
 - **Label** (600, 11px): the smallest marks: Top Ten's "this year" tag and the ranks inside its timeline dots. The Solar day panel's day numbers are 11px too, in Mono 400.
@@ -216,6 +216,8 @@ Tesla app colors, each bound to one flow on every page, every chart and legend s
 **The Chapter Word Rule.** Oversized words head the home page's chapters and nothing else. A chapter word takes its chapter's flow color only when the chapter is about that flow (Today and the year in Solar amber, Habits in Home blue); otherwise Moonlight. "Now" is Moonlight, because it is about every flow.
 
 **The Mono Means Measured Rule.** A number that was measured or computed is set in Plex Mono; words around it are in Plex Sans. A date in running prose stays sans.
+
+**The MWh Rule.** Energy of 1,000 kWh or more reads in MWh to one decimal (75.7 MWh), on every page; below that it stays in kWh. An axis takes its unit from its top tick, and a list (a ranking, rows by year, a projection's two ends) from its largest figure, so neither mixes the two. True-Up's billing cycle rows stay in kWh, as PG&E's bill prints them. `energy` and `energyAxis` in `lib/units.ts` apply it.
 
 ## Layout
 

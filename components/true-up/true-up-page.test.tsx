@@ -196,7 +196,7 @@ test("the current year leads with its projection, under the full-size title", ()
   const title = screen.getByRole("heading", { level: 1 });
   const [headline, line] = leads();
   expect(headline.textContent).toBe("On track to owe $593 to $652 at the October 2027 true\u2011up; $106 in charges so far.");
-  expect(line.textContent!.replace(/\u00a0/g, " ")).toBe("Year-end 2,032 to 2,362 kWh imported, if the rest of the year goes like '24 - '25 or '25 - '26");
+  expect(line.textContent!.replace(/\u00a0/g, " ")).toBe("Year-end 2.0 to 2.4 MWh imported, if the rest of the year goes like '24 - '25 or '25 - '26");
   expect(line.textContent).toContain("'24\u00a0-\u00a0'25");
   expect(title.className).toContain("text-[22px]");
   expect(title.className).not.toContain("uppercase");
@@ -222,7 +222,7 @@ test("a true-up year with a headline explains its share under it, muted", () => 
     explained={{ share: 89, start: "2025-10-03", end: "2026-10-04" }} before={{ label: "'24 - '25", amount_due: 554.83 }} />);
   const [lead, why] = leads();
   expect(lead.textContent).toContain("ended owing");
-  expect(why.textContent).toMatch(/^In '25.-.'26 solar covered 89% of the house's use, so the house drew [\d,]+ kWh more from PG&E than it sent\.$/);
+  expect(why.textContent).toMatch(/^In '25.-.'26 solar covered 89% of the house's use, so the house drew [\d.]+ MWh more from PG&E than it sent\.$/);
   expect(why.className).toContain("text-muted-foreground");
 });
 
@@ -239,7 +239,7 @@ test("All time leads with its explanation, named from the first day of data", ()
   render(<TrueUpPage range={{ start: "2021-10-01", end: "2027-09-30" }} years={YEARS} cycles={[...YEAR_25_26, ...CURRENT]} cost={null} savings={null} payback={null}
     today="2026-11-08" explained={{ share: 100, start: "2021-10-10", end: "2026-11-08" }} />);
   const [lead] = leads();
-  expect(lead.textContent).toMatch(/^Since October 10, 2021 solar has covered 100% of the house's use, yet the house has drawn [\d,]+ kWh more from PG&E than it sent: the Powerwalls lose/);
+  expect(lead.textContent).toMatch(/^Since October 10, 2021 solar has covered 100% of the house's use, yet the house has drawn [\d.]+ MWh more from PG&E than it sent: the Powerwalls lose/);
   expect(lead.className).toContain(LEAD);
   expect(screen.queryByText("Grid energy by PG&E billing cycle")).toBeNull();
 });
@@ -267,4 +267,12 @@ test("a custom range inside the running cycle reads as under way", () => {
 test("All time's chart is headed \"All time by billing cycle\"", () => {
   render(<TrueUpPage range={{ start: "2021-10-01", end: "2027-09-30" }} years={YEARS} cycles={[...YEAR_25_26, ...CURRENT]} cost={null} savings={null} payback={null} today="2026-11-08" />);
   expect(screen.getByRole("heading", { level: 2, name: "All time by billing cycle" })).toBeTruthy();
+});
+
+// dashboard-shell, "The dashboard's design system": every card heads itself with the section label.
+test("every card's heading is a section label", () => {
+  render(page(YEAR_25, YEAR_25_26, COST_25_26, SAVINGS_25_26, PAYBACK));
+  const headings = screen.getAllByRole("heading", { level: 2 });
+  expect(headings.length).toBeGreaterThanOrEqual(6);
+  for (const heading of headings) expect([...heading.classList]).toEqual(expect.arrayContaining(["text-sm", "font-medium", "tracking-[0.06em]", "text-muted-foreground", "uppercase"]));
 });
