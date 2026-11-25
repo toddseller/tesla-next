@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-11-22T00:00:00Z",
+  "generatedAt": "2026-11-25T16:35:38Z",
   "title": "Design System: Tesla Solar Report",
   "extensions": {
     "colorMeta": {
@@ -215,17 +215,29 @@
       }
     },
     "typographyMeta": {
+      "chapter-word": {
+        "displayName": "Chapter word",
+        "purpose": "The home page's one-word chapter headings (Now, Today, the year, Records, Habits, Since 2021), 112px from 768px. Home page only."
+      },
+      "chapter-word-phone": {
+        "displayName": "Chapter word (phone)",
+        "purpose": "The chapter word below 768px, 64px."
+      },
       "headline": {
         "displayName": "Headline",
-        "purpose": "The page's h1."
+        "purpose": "The page's h1 (\"Impact\", \"Top Ten\", \"Solar by date range\"). Pick a day, the heading that ends the home page, is a larger 28px."
       },
       "figure": {
         "displayName": "Figure",
-        "purpose": "Measured and computed values: kWh, kW, dollars, percentages."
+        "purpose": "Measured and computed values: kWh, dollars, kW, percentages; 28px on wide screens, 20 to 26px on phones. Lead figures run 28 to 56px, secondary figures 15 to 24px."
+      },
+      "lede": {
+        "displayName": "Lede",
+        "purpose": "The supporting sentence under a home chapter's figures, a small heading inside a card, the top bar's links, the year chapter's day readout."
       },
       "section-label": {
         "displayName": "Section label",
-        "purpose": "Each card's uppercase h2 in Dusk Gray."
+        "purpose": "Every card's uppercase h2 in Dusk Gray, admin's sections and True-Up's tiles included."
       },
       "body": {
         "displayName": "Body",
@@ -233,15 +245,15 @@
       },
       "reading": {
         "displayName": "Reading",
-        "purpose": "Live status line, chart notes, input text."
+        "purpose": "The live status line, notes under charts, input text."
       },
       "label": {
         "displayName": "Label",
-        "purpose": "Chart axes and small legends."
+        "purpose": "The smallest marks: Top Ten's \"this year\" tag and the ranks inside its timeline dots."
       },
-      "chapter-word": {
-        "displayName": "Chapter word",
-        "purpose": "The home page's one-word chapter headings, 112 px desktop and 64 px phone. Home page only."
+      "axis": {
+        "displayName": "Axis",
+        "purpose": "Chart axes; Patterns' grids drop to 11px below 640px. The footer and admin's field hints use the same 12px in sans."
       }
     },
     "shadows": [
@@ -276,12 +288,31 @@
         "name": "motion-stagger",
         "value": "min(calc(var(--i, 0) * 15ms), 200ms)",
         "purpose": "Per-mark delay as a chart draws in."
+      },
+      {
+        "name": "motion-glide",
+        "value": "250ms",
+        "purpose": "A view transition: the nav highlight gliding between tabs, a day or page step sliding in (the old content leaves in 150ms ease-in)."
+      },
+      {
+        "name": "motion-burger",
+        "value": "200ms",
+        "purpose": "The phone menu button's three bars crossing into an X and back."
+      },
+      {
+        "name": "motion-ring",
+        "value": "700ms ease-out",
+        "purpose": "The live dot's ring, once per update."
       }
     ],
     "breakpoints": [
       {
         "name": "sm",
         "value": "640px"
+      },
+      {
+        "name": "md",
+        "value": "768px"
       },
       {
         "name": "status-flows",
@@ -294,25 +325,25 @@
       "name": "Card",
       "kind": "card",
       "refersTo": "card",
-      "description": "Every section: Slate Card on Night Sky, hairline border, led by an uppercase section label.",
+      "description": "Every section: Slate Card on Night Sky, 1px Hairline border, 10px corners, led by an uppercase section label; 16px padding on phones, 24px from 640px.",
       "html": "<section class=\"ds-card\"><h2 class=\"ds-card-label\">Solar forecast</h2><p class=\"ds-card-figure\">42.6 <span>kWh</span></p></section>",
-      "css": ".ds-card { display: flex; flex-direction: column; gap: 16px; background: var(--card, #151A21); color: var(--foreground, #E6E8EB); border: 1px solid var(--border, #232831); border-radius: 10px; padding: 24px; font-family: 'IBM Plex Sans', system-ui, sans-serif; } .ds-card-label { margin: 0; font-size: 14px; font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted-foreground, #9AA3AD); } .ds-card-figure { margin: 0; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 28px; font-weight: 600; line-height: 1; } .ds-card-figure span { font-size: 14px; font-weight: 400; color: var(--muted-foreground, #9AA3AD); }"
+      "css": ".ds-card { display: flex; flex-direction: column; gap: 16px; background: var(--card, #151A21); color: var(--foreground, #E6E8EB); border: 1px solid var(--border, #232831); border-radius: 10px; padding: 16px; font-family: 'IBM Plex Sans', ui-sans-serif, system-ui, sans-serif; } @media (min-width: 640px) { .ds-card { padding: 24px; } } .ds-card-label { margin: 0; font-size: 14px; font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted-foreground, #9AA3AD); } .ds-card-figure { margin: 0; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 28px; font-weight: 600; line-height: 1; } .ds-card-figure span { font-family: 'IBM Plex Sans', ui-sans-serif, system-ui, sans-serif; font-size: 14px; font-weight: 400; color: var(--muted-foreground, #9AA3AD); }"
     },
     {
       "name": "Segmented control",
       "kind": "chip",
       "refersTo": "segment-selected",
-      "description": "The site's main control: a tray of choices, the selected one raised with the red selection line.",
-      "html": "<div class=\"ds-seg\" role=\"group\" aria-label=\"Readings\"><button class=\"ds-seg-item\" aria-pressed=\"true\">PG&amp;E meter</button><button class=\"ds-seg-item\" aria-pressed=\"false\">Tesla</button></div>",
-      "css": ".ds-seg { display: inline-flex; gap: 2px; padding: 3px; background: var(--card, #151A21); border: 1px solid var(--input, #2B313B); border-radius: 10px; } .ds-seg-item { min-height: 40px; padding: 0 14px; border: 0; border-radius: 8px; background: transparent; color: var(--muted-foreground, #9AA3AD); font: 500 14px 'IBM Plex Sans', system-ui, sans-serif; cursor: pointer; white-space: nowrap; } .ds-seg-item:hover { color: var(--foreground, #E6E8EB); } .ds-seg-item[aria-pressed=\"true\"] { background: var(--secondary, #1A1F27); color: #fff; box-shadow: inset 0 -2px 0 var(--primary, #E82127); } .ds-seg-item:focus-visible { outline: none; box-shadow: 0 0 0 3px rgb(154 163 173 / 0.5); }"
+      "description": "The site's main control (range presets, readings, day views): a tray of choices, the selected one raised with the red selection line.",
+      "html": "<div class=\"ds-seg\" role=\"group\" aria-label=\"Range\"><button class=\"ds-seg-item\" aria-pressed=\"false\">This month</button><button class=\"ds-seg-item\" aria-pressed=\"true\">This year</button><button class=\"ds-seg-item\" aria-pressed=\"false\">True-up year</button><button class=\"ds-seg-item\" aria-pressed=\"false\">All time</button></div>",
+      "css": ".ds-seg { display: inline-flex; gap: 2px; padding: 3px; background: var(--card, #151A21); border: 1px solid var(--input, #2B313B); border-radius: 10px; } .ds-seg-item { min-height: 40px; padding: 0 14px; border: 0; border-radius: 8px; background: transparent; color: var(--muted-foreground, #9AA3AD); font: 500 14px 'IBM Plex Sans', ui-sans-serif, system-ui, sans-serif; cursor: pointer; white-space: nowrap; } .ds-seg-item:hover { color: var(--foreground, #E6E8EB); } .ds-seg-item[aria-pressed=\"true\"] { background: var(--secondary, #1A1F27); color: #fff; box-shadow: inset 0 -2px 0 var(--primary, #E82127); } .ds-seg-item:focus-visible { outline: 2px solid var(--ring, #9AA3AD); outline-offset: 2px; }"
     },
     {
       "name": "Navigation",
       "kind": "nav",
       "refersTo": "nav-link-current",
-      "description": "Top bar page links; the current page raised with the selection line.",
-      "html": "<nav class=\"ds-nav\" aria-label=\"Pages\"><a class=\"ds-nav-link\" aria-current=\"page\" href=\"#\">Solar</a><a class=\"ds-nav-link\" href=\"#\">Impact</a><a class=\"ds-nav-link\" href=\"#\">Distribution</a><a class=\"ds-nav-link\" href=\"#\">True-Up</a></nav>",
-      "css": ".ds-nav { display: flex; gap: 4px; font-family: 'IBM Plex Sans', system-ui, sans-serif; } .ds-nav-link { display: flex; align-items: center; min-height: 44px; padding: 0 12px; border-radius: 8px; font-size: 14px; color: var(--muted-foreground, #9AA3AD); text-decoration: none; } .ds-nav-link:hover { color: var(--foreground, #E6E8EB); } .ds-nav-link[aria-current=\"page\"] { background: var(--secondary, #1A1F27); color: #fff; box-shadow: inset 0 -2px 0 var(--primary, #E82127); } .ds-nav-link:focus-visible { outline: none; box-shadow: 0 0 0 3px rgb(154 163 173 / 0.5); }"
+      "description": "The top bar: the sun-behind-the-T mark and wordmark, then the seven page links; the current page raised with the selection line, which glides between tabs.",
+      "html": "<header class=\"ds-bar\"><a class=\"ds-brand\" href=\"#\"><svg width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"12\" r=\"11\" fill=\"#F7B500\"/><path d=\"M5 7.5h14v2.2h-5.9V19h-2.2V9.7H5z\" fill=\"#E82127\"/></svg>Tesla Solar Report</a><nav class=\"ds-nav\" aria-label=\"Pages\"><a class=\"ds-nav-link\" href=\"#\">Home</a><a class=\"ds-nav-link\" aria-current=\"page\" href=\"#\">Solar</a><a class=\"ds-nav-link\" href=\"#\">Impact</a><a class=\"ds-nav-link\" href=\"#\">Distribution</a><a class=\"ds-nav-link\" href=\"#\">True-Up</a><a class=\"ds-nav-link\" href=\"#\">Top Ten</a><a class=\"ds-nav-link\" href=\"#\">Patterns</a></nav></header>",
+      "css": ".ds-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 24px; padding: 12px 32px; border-bottom: 1px solid var(--border, #232831); font-family: 'IBM Plex Sans', ui-sans-serif, system-ui, sans-serif; color: var(--foreground, #E6E8EB); } .ds-brand { display: flex; align-items: center; gap: 10px; min-height: 44px; font-weight: 600; letter-spacing: 0.025em; color: inherit; text-decoration: none; } .ds-nav { display: flex; flex-wrap: nowrap; gap: 4px; } .ds-nav-link { display: flex; align-items: center; min-height: 44px; padding: 0 12px; border-radius: 8px; font-size: 14px; white-space: nowrap; color: var(--muted-foreground, #9AA3AD); text-decoration: none; } .ds-nav-link:hover { color: var(--foreground, #E6E8EB); } .ds-nav-link[aria-current=\"page\"] { background: var(--secondary, #1A1F27); color: #fff; box-shadow: inset 0 -2px 0 var(--primary, #E82127); } .ds-nav-link:focus-visible { outline: 2px solid var(--ring, #9AA3AD); outline-offset: 2px; }"
     },
     {
       "name": "Save button",
@@ -320,7 +351,7 @@
       "refersTo": "button-save",
       "description": "The admin forms' primary action; light, not red, for contrast.",
       "html": "<button class=\"ds-btn-save\">Save bill</button>",
-      "css": ".ds-btn-save { display: inline-flex; align-items: center; justify-content: center; height: 36px; padding: 0 16px; border: 0; border-radius: 8px; background: var(--foreground, #E6E8EB); color: var(--background, #0E1116); font: 500 14px 'IBM Plex Sans', system-ui, sans-serif; cursor: pointer; } .ds-btn-save:hover { background: rgb(230 232 235 / 0.9); } .ds-btn-save:focus-visible { outline: none; box-shadow: 0 0 0 3px rgb(154 163 173 / 0.5); } .ds-btn-save:disabled { opacity: 0.5; }"
+      "css": ".ds-btn-save { display: inline-flex; align-items: center; justify-content: center; height: 36px; padding: 0 16px; border: 0; border-radius: 8px; background: var(--foreground, #E6E8EB); color: var(--background, #0E1116); font: 500 14px 'IBM Plex Sans', system-ui, sans-serif; cursor: pointer; } .ds-btn-save:hover { background: rgb(230 232 235 / 0.9); } .ds-btn-save:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--ring, #9AA3AD); } .ds-btn-save:disabled { opacity: 0.5; }"
     },
     {
       "name": "Outline button",
@@ -328,7 +359,7 @@
       "refersTo": "button-outline",
       "description": "Secondary admin actions such as loading a statement into the form.",
       "html": "<button class=\"ds-btn-outline\">Load into form</button>",
-      "css": ".ds-btn-outline { display: inline-flex; align-items: center; justify-content: center; height: 32px; padding: 0 12px; border: 1px solid var(--input, #2B313B); border-radius: 8px; background: rgb(43 49 59 / 0.3); color: var(--foreground, #E6E8EB); font: 500 13px 'IBM Plex Sans', system-ui, sans-serif; cursor: pointer; } .ds-btn-outline:hover { background: rgb(43 49 59 / 0.5); } .ds-btn-outline:focus-visible { outline: none; box-shadow: 0 0 0 3px rgb(154 163 173 / 0.5); }"
+      "css": ".ds-btn-outline { display: inline-flex; align-items: center; justify-content: center; height: 32px; padding: 0 12px; border: 1px solid var(--input, #2B313B); border-radius: 8px; background: rgb(43 49 59 / 0.3); color: var(--foreground, #E6E8EB); font: 500 13px 'IBM Plex Sans', system-ui, sans-serif; cursor: pointer; } .ds-btn-outline:hover { background: rgb(43 49 59 / 0.5); } .ds-btn-outline:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--ring, #9AA3AD); }"
     },
     {
       "name": "Input",
@@ -336,15 +367,37 @@
       "refersTo": "input",
       "description": "Admin fields, figures typed in mono.",
       "html": "<input class=\"ds-input\" placeholder=\"0.00\" aria-label=\"Amount due\">",
-      "css": ".ds-input { height: 36px; width: 100%; padding: 0 10px; border: 1px solid var(--input, #2B313B); border-radius: 8px; background: rgb(43 49 59 / 0.3); color: var(--foreground, #E6E8EB); font: 400 14px 'IBM Plex Mono', ui-monospace, monospace; outline: none; } .ds-input::placeholder { color: rgb(154 163 173 / 0.6); } .ds-input:focus-visible { border-color: var(--ring, #9AA3AD); box-shadow: 0 0 0 3px rgb(154 163 173 / 0.5); } .ds-input[aria-invalid=\"true\"] { border-color: var(--destructive, #F87171); box-shadow: 0 0 0 3px rgb(248 113 113 / 0.2); }"
+      "css": ".ds-input { height: 36px; width: 100%; padding: 0 10px; border: 1px solid var(--input, #2B313B); border-radius: 8px; background: rgb(43 49 59 / 0.3); color: var(--foreground, #E6E8EB); font: 400 14px 'IBM Plex Mono', ui-monospace, monospace; outline: none; } .ds-input::placeholder { color: rgb(154 163 173 / 0.6); } .ds-input:focus-visible { border-color: var(--ring, #9AA3AD); box-shadow: 0 0 0 3px var(--ring, #9AA3AD); } .ds-input[aria-invalid=\"true\"] { border-color: var(--destructive, #F87171); box-shadow: 0 0 0 3px rgb(248 113 113 / 0.2); }"
     },
     {
-      "name": "Live status pill",
+      "name": "Doorway link",
+      "kind": "button",
+      "refersTo": "button-outline",
+      "description": "A link from a chapter or card into the page that holds more: a 44px outlined button with a 16px arrow that nudges right on hover.",
+      "html": "<a class=\"ds-doorway\" href=\"#\">Today, hour by hour<svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M5 12h14\"/><path d=\"m12 5 7 7-7 7\"/></svg></a>",
+      "css": ".ds-doorway { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 16px; border: 1px solid var(--input, #2B313B); border-radius: 8px; background: rgb(43 49 59 / 0.3); color: var(--foreground, #E6E8EB); font: 500 14px 'IBM Plex Sans', ui-sans-serif, system-ui, sans-serif; text-decoration: none; transition: background-color 150ms; } .ds-doorway svg { flex-shrink: 0; transition: transform 150ms; } .ds-doorway:hover { background: var(--secondary, #1A1F27); } .ds-doorway:hover svg { transform: translateX(2px); } .ds-doorway:focus-visible { outline: 2px solid var(--ring, #9AA3AD); outline-offset: 2px; }"
+    },
+    {
+      "name": "Term hint",
       "kind": "custom",
-      "refersTo": "status-pill",
-      "description": "The top bar's live readings with flow-color swatches, after the live dot.",
-      "html": "<p class=\"ds-live\"><span class=\"ds-live-dot\"></span>Live 2:41 PM<span class=\"ds-pill\"><i style=\"background:#F7B500\"></i>SOLAR 4.2 kW · <i style=\"background:#3E6AE1\"></i>HOME 1.1 kW · POWERWALL 86%</span></p>",
-      "css": ".ds-live { display: flex; align-items: center; gap: 10px; margin: 0; font: 400 13px 'IBM Plex Mono', ui-monospace, monospace; color: var(--muted-foreground, #9AA3AD); white-space: nowrap; } .ds-live-dot { width: 8px; height: 8px; border-radius: 9999px; background: #31B76B; } .ds-pill { display: flex; align-items: center; gap: 6px; padding: 4px 10px; border: 1px solid var(--input, #2B313B); border-radius: 9999px; color: var(--foreground, #E6E8EB); } .ds-pill i { display: inline-block; width: 8px; height: 8px; border-radius: 2px; }"
+      "description": "A term a newcomer won't know keeps its sentence's type with a dotted Dusk Gray underline; tapping, clicking or focusing it opens a card-surface popover with its definition. It never navigates.",
+      "html": "<p class=\"ds-term-line\">Charges so far under <span class=\"ds-term-wrap\"><button class=\"ds-term\" type=\"button\">NEM</button><span class=\"ds-term-pop\" role=\"dialog\" aria-label=\"NEM\">Net Energy Metering: PG&amp;E credits the energy the house sends against what it imports, at each hour's rate. These are the energy charges, before taxes and fixed fees.</span></span>, this cycle.</p>",
+      "css": ".ds-term-line { margin: 0; font: 400 13px 'IBM Plex Sans', ui-sans-serif, system-ui, sans-serif; color: var(--muted-foreground, #9AA3AD); } .ds-term-wrap { position: relative; } .ds-term { padding: 0; border: 0; background: none; font: inherit; color: inherit; cursor: help; text-decoration: underline dotted var(--muted-foreground, #9AA3AD); text-underline-offset: 4px; } .ds-term:focus-visible { outline: none; border-radius: 6px; box-shadow: 0 0 0 3px var(--ring, #9AA3AD); } .ds-term-pop { display: none; position: absolute; left: 0; top: calc(100% + 4px); z-index: 1; width: 288px; padding: 16px; border: 1px solid var(--input, #2B313B); border-radius: 8px; background: var(--card, #151A21); color: var(--foreground, #E6E8EB); font-size: 13px; line-height: 1.625; box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.45), 0 8px 10px -6px rgb(0 0 0 / 0.45); } .ds-term:hover + .ds-term-pop, .ds-term:focus + .ds-term-pop { display: block; }"
+    },
+    {
+      "name": "Chapter word with figures",
+      "kind": "custom",
+      "description": "A home page chapter: the oversized chapter word in its flow's color beside its lead figure and secondary figures, mono with a small sans unit and a label under each.",
+      "html": "<section class=\"ds-chapter\"><h2 class=\"ds-chapter-word\">Today</h2><div class=\"ds-chapter-figures\"><div class=\"ds-fig\"><b class=\"ds-fig-value ds-fig-lead\">18.4<span> kWh</span></b><span class=\"ds-fig-label\">generated, of 31.2 kWh expected</span></div><div class=\"ds-fig\"><b class=\"ds-fig-value\">1.3<span> kWh</span></b><span class=\"ds-fig-label\">ahead of the forecast</span></div><div class=\"ds-fig\"><b class=\"ds-fig-value\">12.8<span> kWh</span></b><span class=\"ds-fig-label\">still to come</span></div></div></section>",
+      "css": ".ds-chapter { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 16px 32px; font-family: 'IBM Plex Sans', ui-sans-serif, system-ui, sans-serif; color: var(--foreground, #E6E8EB); } .ds-chapter-word { margin: 0; font-size: 64px; line-height: 0.9; font-weight: 600; letter-spacing: -0.04em; color: var(--color-solar, #F7B500); } @media (min-width: 768px) { .ds-chapter-word { font-size: 112px; } } .ds-chapter-figures { display: flex; flex-wrap: wrap; gap: 16px 36px; } .ds-fig { display: flex; flex-direction: column; gap: 4px; } .ds-fig-value { font: 600 24px/1 'IBM Plex Mono', ui-monospace, monospace; font-variant-numeric: tabular-nums; } .ds-fig-lead { font-size: 36px; color: var(--color-solar, #F7B500); } @media (min-width: 768px) { .ds-fig-lead { font-size: 40px; } } .ds-fig-value span { font-family: 'IBM Plex Sans', ui-sans-serif, system-ui, sans-serif; font-size: max(11px, 0.6em); font-weight: 500; color: var(--muted-foreground, #9AA3AD); } .ds-fig-label { font-size: 13px; color: var(--muted-foreground, #9AA3AD); }"
+    },
+    {
+      "name": "True-Up tile",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "One of True-Up's tiles: section label, a lead figure that drops from 34px to 28px when the tile is under 180px wide, and a muted line with its own mono figures.",
+      "html": "<section class=\"ds-tile\"><h2 class=\"ds-tile-label\">Net so far</h2><p class=\"ds-tile-value\"><span>2.4</span><small>MWh exported</small></p><p class=\"ds-tile-line\">Imported <b>3.1</b> MWh · Exported <b>5.5</b> MWh</p></section>",
+      "css": ".ds-tile { container-type: inline-size; display: flex; flex-direction: column; gap: 8px; padding: 20px 22px; background: var(--card, #151A21); border: 1px solid var(--border, #232831); border-radius: 10px; font-family: 'IBM Plex Sans', ui-sans-serif, system-ui, sans-serif; color: var(--foreground, #E6E8EB); } .ds-tile-label { margin: 0; font-size: 14px; font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted-foreground, #9AA3AD); } .ds-tile-value { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px; margin: 0; } .ds-tile-value span { font: 600 28px/1 'IBM Plex Mono', ui-monospace, monospace; } @container (min-width: 180px) { .ds-tile-value span { font-size: 34px; } } .ds-tile-value small { font-size: 14px; color: var(--muted-foreground, #9AA3AD); } .ds-tile-line { margin: 0; font-size: 13px; color: var(--muted-foreground, #9AA3AD); text-wrap: balance; } .ds-tile-line b { font-family: 'IBM Plex Mono', ui-monospace, monospace; font-weight: 400; color: var(--foreground, #E6E8EB); }"
     }
   ],
   "narrative": {
@@ -370,13 +423,18 @@
         "section": "colors"
       },
       {
+        "name": "The Chapter Word Rule",
+        "body": "Oversized words head the home page's chapters and nothing else. A chapter word takes its chapter's flow color only when the chapter is about that flow (Today and the year in Solar amber, Habits in Home blue); otherwise Moonlight. \"Now\" is Moonlight, because it is about every flow.",
+        "section": "typography"
+      },
+      {
         "name": "The Mono Means Measured Rule",
         "body": "A number that was measured or computed is set in Plex Mono; words around it are in Plex Sans. A date in running prose stays sans.",
         "section": "typography"
       },
       {
-        "name": "The Chapter Word Rule",
-        "body": "Oversized words head the home page's chapters and nothing else. A chapter word takes its chapter's flow color only when the chapter is about that flow (Today and the year in Solar amber, Habits in Home blue); otherwise Moonlight. \"Now\" is Moonlight, because it is about every flow.",
+        "name": "The MWh Rule",
+        "body": "Energy of 1,000 kWh or more reads in MWh to one decimal (75.7 MWh), on every page; below that it stays in kWh. An axis takes its unit from its top tick, and a list (a ranking, rows by year, a projection's two ends) from its largest figure, so neither mixes the two. True-Up's billing cycle rows stay in kWh, as PG&E's bill prints them. `energy` and `energyAxis` in `lib/units.ts` apply it.",
         "section": "typography"
       }
     ],
