@@ -107,7 +107,7 @@ export function TrueUpPage({ range, years, cycles: served, cost: servedCost, sav
           <CycleChart cycles={cycles} cost={year && cost} oneYear={Boolean(year)} />
         </section>
         <section aria-labelledby="cycle-list" className="flex flex-col gap-3 rounded-[10px] border bg-card px-4 py-5 sm:px-6">
-          <h2 id="cycle-list" className="text-sm font-medium tracking-[0.06em] text-muted-foreground uppercase">Billing cycles</h2>
+          <h2 id="cycle-list" className="text-sm font-medium tracking-[0.06em] text-muted-foreground uppercase">Billing cycles <span className="normal-case tracking-normal">in kWh</span></h2>
           <CycleList cycles={cycles} allTime={isTrueUpAllTime(range, years)} />
         </section>
       </div>

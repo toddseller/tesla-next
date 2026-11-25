@@ -13,8 +13,8 @@ const items = () => screen.getAllByRole("listitem").map((item) => item.textConte
 test("the current year lists its started cycles, the open one so far, with charges marked est.", () => {
   render(<CycleList cycles={CURRENT} />);
   expect(items()).toEqual([
-    "Oct 5 to Nov 2Imported 576.6Exported 206.7Net 369.8 imported$97.22 est.",
-    "Nov 3 to Nov 8 (so far)Imported 83.5Exported 44.7Net 38.8 imported$9.24 est.",
+    "Oct 5 to Nov 2$97.22 est.Imported 576.6Exported 206.7Net 369.8 imported",
+    "Nov 3 to Nov 8 (so far)$9.24 est.Imported 83.5Exported 44.7Net 38.8 imported",
   ]);
   expect(screen.getByText(/^est\.: calculated/).textContent).toBe(
     "est.: calculated from PG&E's published rates. Before taxes; the Base Services Charge and WestLight Energy's generation charges are billed separately.",
@@ -23,8 +23,8 @@ test("the current year lists its started cycles, the open one so far, with charg
 
 test("a billed year shows PG&E's charges, credits without a minus, and the estimate under each", () => {
   render(<CycleList cycles={YEAR_25_26} />);
-  expect(items()[0]).toBe("Oct 3 to Nov 3Imported 885.7Exported 522.1Net 363.6 imported$113.41est. $113.72 · PG&E net 364 kWh");
-  expect(items()[7]).toBe("May 6 to Jun 4Imported 50.4Exported 449.5Net 399.1 exported$101.36 creditest. $102.04 credit · PG&E net 397 kWh exported");
+  expect(items()[0]).toBe("Oct 3 to Nov 3$113.41est. $113.72 · PG&E net 364 kWhImported 885.7Exported 522.1Net 363.6 imported");
+  expect(items()[7]).toBe("May 6 to Jun 4$101.36 creditest. $102.04 credit · PG&E net 397 kWh exportedImported 50.4Exported 449.5Net 399.1 exported");
   expect(screen.getByText(/^Charges are PG&E's/).textContent).toBe(
     "Charges are PG&E's, from its bills, with the estimate for the same cycle under each. Before taxes; the Base Services Charge and WestLight Energy's generation charges are billed separately.",
   );
@@ -37,8 +37,8 @@ const summary = (year: HTMLDetailsElement) => year.querySelector("summary")!;
 test("All time: a row for each year with its totals and charges, only the last open, the footnote once", () => {
   const { container } = render(<CycleList cycles={[...YEAR_25_26, ...CURRENT]} allTime />);
   expect(years(container).map((y) => summary(y).textContent)).toEqual([
-    "2025\u201126Imported 6,530.7Exported 4,107.7Net 2,422.7 imported$827.82",
-    "2026\u201127Imported 660.1Exported 251.4Net 408.6 imported$106.46 est.",
+    "2025\u201126$827.82Imported 6,530.7Exported 4,107.7Net 2,422.7 imported",
+    "2026\u201127$106.46 est.Imported 660.1Exported 251.4Net 408.6 imported",
   ]);
   expect(years(container).map((y) => y.open)).toEqual([false, true]);
   expect(years(container).map((y) => y.querySelectorAll("li").length)).toEqual([12, 2]);
@@ -74,6 +74,30 @@ test("from 640 pixels every row has the same five columns, with or without charg
   render(<CycleList cycles={[YEAR_25_26[0], { ...YEAR_25_26[1], ...noCharges }]} />);
   const templates = screen.getAllByRole("listitem").map((item) => item.className.split(" ").find((c) => c.startsWith("sm:grid-cols-")));
   expect(templates).toEqual(Array(2).fill("sm:grid-cols-[minmax(0,1.3fr)_repeat(4,minmax(0,1fr))]"));
+});
+
+// The charge is what people look for, so on a phone it shares the first line with the dates.
+test("below 640 pixels a row is two columns, its charges second and placed last from 640", () => {
+  const { container } = render(<CycleList cycles={[YEAR_25_26[0], { ...YEAR_25_26[1], ...noCharges }, ...CURRENT]} />);
+  const rows = [...container.querySelectorAll("li, summary")];
+  expect(rows.map((row) => row.children.length)).toEqual(Array(rows.length).fill(5));
+  for (const row of rows) {
+    expect(row.className.split(" ")).toContain("grid-cols-2");
+    expect(row.children[1].className.split(" ")).toEqual(expect.arrayContaining(["sm:col-start-5", "sm:row-start-1"]));
+  }
+  expect(screen.getByText(/^est\. \$113\.72/).className).toContain("text-balance");
+});
+
+// Only the dates move, so a year's cycles keep the year row's columns.
+test("a year's cycles indent their dates under its name; one year's do not", () => {
+  const indented = (e: Element) => e.className.split(" ").includes("pl-5");
+  const { container } = render(<CycleList cycles={[...YEAR_25_26, ...CURRENT]} />);
+  const cycles = [...container.querySelectorAll("details li")];
+  expect(cycles.map((li) => indented(li.children[0]))).toEqual(Array(14).fill(true));
+  expect([...container.querySelectorAll("ul")].some(indented)).toBe(false);
+  cleanup();
+  const one = render(<CycleList cycles={YEAR_25_26} />);
+  expect([...one.container.querySelectorAll("li")].some((li) => indented(li.children[0]))).toBe(false);
 });
 
 test("nothing is shown in red", () => {
