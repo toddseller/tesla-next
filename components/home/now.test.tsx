@@ -46,6 +46,15 @@ test("a new status moves the sentence and the scene without a reload", () => {
   expect(part("label-solar").textContent).toContain("5.8 kW");
 });
 
+// The top bar's rule: storm watch counts only on the grid, an outage outranking it.
+test("a storm watch on the grid holds the Powerwalls; during an outage they read idle", () => {
+  now({ ...STATUS, island_status: "on_grid", storm_mode_active: true });
+  expect(part("now-sentence").textContent).toBe("Solar and the grid supply the house. The Powerwalls are holding at 100% for a storm watch.");
+  cleanup();
+  now({ ...STATUS, grid_power: 0, solar_power: 1.2, island_status: "off_grid_unintentional", storm_mode_active: true });
+  expect(part("now-sentence").textContent).toBe("Solar supplies the house. The Powerwalls are idle at 100%.");
+});
+
 test("a stale status says when it last came, in place of the sentence", () => {
   now({ ...STATUS, modified: "2026-11-21T23:34:00Z" });
   expect(part("now-sentence").textContent).toBe("No live update since 3:34 PM.");

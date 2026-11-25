@@ -11,7 +11,7 @@ import { useSiteData } from "@/components/scene/use-site-data";
 import { useLiveStream } from "@/components/use-live-stream";
 import { balance } from "@/lib/home/balance";
 import { nowSentence } from "@/lib/home/now-sentence";
-import { type LiveStatus, liveStatus } from "@/lib/live-status";
+import { gridPill, type LiveStatus, liveStatus } from "@/lib/live-status";
 import { sceneState } from "@/lib/scene/live-scene";
 
 const parse = <T,>(json: string | null): T | null => {
@@ -49,7 +49,7 @@ export function Now({ initialStatus, renderedAt }: Props) {
       <div className="flex flex-col gap-3 md:gap-4">
         <h2 id="now" className="text-[64px] leading-[0.9] font-semibold tracking-[-0.04em] md:text-[112px]">Now</h2>
         <p data-part="now-sentence" className={`max-w-[34ch] text-xl leading-snug font-medium text-pretty md:text-[22px] ${live ? "" : "text-muted-foreground"}`}>
-          {live ? nowSentence(terms, { battery: site.battery, vehicle: site.vehicle }, now) : `No live update since ${time}.`}
+          {live ? nowSentence(terms, { battery: site.battery, vehicle: site.vehicle, storm: gridPill(status, null)?.kind === "storm" }, now) : `No live update since ${time}.`}
         </p>
       </div>
       <div className="relative overflow-hidden rounded-[10px]">
