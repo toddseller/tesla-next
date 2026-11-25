@@ -59,6 +59,9 @@ export function TodayTotals({ day }: { day: Pick<Day, "totals" | "vehicle_data">
   );
 }
 
+// Energy sent to PG&E is the grid's color at this tint wherever a chart draws it beside imports or solar.
+export const EXPORT_TINT = 0.55;
+
 // `renderedAt` is when the server rendered the page, so hydration finds the morning sentence it sent; the browser's
 // clock takes over after, once a minute.
 export function Today({ today, forecast, day, renderedAt }: Props) {
@@ -123,7 +126,7 @@ export function Today({ today, forecast, day, renderedAt }: Props) {
             label={rows.latest < DAY_MINUTES ? { value: "still to come", position: "insideTopRight", fill: "var(--muted-foreground)", fontSize: 11 } : undefined} />
           <Area dataKey="solar" fill="var(--color-solar)" stroke="none" fillOpacity={0.85} isAnimationActive={false} />
           <Area dataKey="charging" stackId="below" fill="var(--color-powerwall)" stroke="none" fillOpacity={0.85} isAnimationActive={false} />
-          <Area dataKey="exporting" stackId="below" fill="var(--color-grid)" stroke="none" fillOpacity={0.55} isAnimationActive={false} />
+          <Area dataKey="exporting" stackId="below" fill="var(--color-grid)" stroke="none" fillOpacity={EXPORT_TINT} isAnimationActive={false} />
           <Line data={rows.forecast} dataKey="kw" stroke="var(--foreground)" strokeWidth={1.5} strokeDasharray="4 4" dot={false} isAnimationActive={false} />
         </ComposedChart>
       </ChartContainer>

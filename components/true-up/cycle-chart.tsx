@@ -1,7 +1,8 @@
 "use client";
 
-import { Area, Bar, CartesianGrid, ComposedChart, Line, ReferenceLine, XAxis, YAxis } from "recharts";
+import { Area, Bar, CartesianGrid, ComposedChart, Line, ReferenceDot, XAxis, YAxis } from "recharts";
 
+import { EXPORT_TINT } from "@/components/home/today";
 import { AxisTick } from "@/components/solar/axis-tick";
 import { riseFrom, roundedRect } from "@/components/solar/range-chart";
 import { ENTER_MS, useEntering } from "@/components/use-entering";
@@ -33,16 +34,16 @@ export function chartRows(cycles: Cycle[], cost: Cost | null, oneYear: boolean):
 }
 
 type ShapeProps = {
-  x?: number; y?: number; width?: number; height?: number; fill?: string; index?: number; background?: { y: number; height: number };
+  x?: number; y?: number; width?: number; height?: number; fill?: string; fillOpacity?: number; index?: number; background?: { y: number; height: number };
   series: "imported" | "exported"; domain: [number, number]; entering: boolean;
 };
 
 // Imports and exports share one stack, square where they meet at zero.
-function Flow({ x = 0, y = 0, width = 0, height = 0, fill, index = 0, background, series, domain, entering }: ShapeProps) {
+function Flow({ x = 0, y = 0, width = 0, height = 0, fill, fillOpacity, index = 0, background, series, domain, entering }: ShapeProps) {
   if (!height) return <g />;
   const top = series === "imported";
   return (
-    <path d={roundedRect(x, Math.min(y, y + height), width, Math.abs(height), top, !top)} fill={fill} data-series={series} data-ends={top ? "top" : "bottom"}
+    <path d={roundedRect(x, Math.min(y, y + height), width, Math.abs(height), top, !top)} fill={fill} fillOpacity={fillOpacity} data-series={series} data-ends={top ? "top" : "bottom"}
       className={entering ? "motion-rise" : undefined} style={riseFrom(background, domain, index)} />
   );
 }
@@ -68,12 +69,17 @@ function CycleDetails({ active, label, payload }: { active?: boolean; label?: st
   );
 }
 
+// The right margin is the red dot's radius: on a long range at phone width a column is narrower than the dot,
+// so the last cycle's point sits closer to the edge than its radius.
+const NOW_R = 4.5;
+
 const Swatch = ({ className, style }: { className: string; style?: React.CSSProperties }) => <span aria-hidden className={className} style={style} />;
 
 export function CycleChart({ cycles, cost, oneYear }: { cycles: Cycle[]; cost: Cost | null; oneYear: boolean }) {
   const rows = chartRows(cycles, cost, oneYear);
   const lastYear = oneYear ? cost?.last_year : null;
   const banded = rows.some((row) => row.band);
+  const now = rows.findLast((row) => row.running !== null);
   const values = rows.flatMap((row) => [row.imported, row.exported, row.running, row.lastYear, ...(row.band ?? [])]).filter((v) => v !== null);
   const axis = niceAxis(Math.min(0, ...values), Math.max(1, ...values));
   // Recharts rebuilds its marks on every render, so they carry their entrance only while the chart first draws.
@@ -83,31 +89,32 @@ export function CycleChart({ cycles, cost, oneYear }: { cycles: Cycle[]; cost: C
     <div className="flex flex-col gap-4">
       <ul className="flex flex-wrap gap-x-[18px] gap-y-1.5 text-[13px] text-muted-foreground">
         <li className="flex items-center gap-1.5"><Swatch className="size-2.5 rounded-[2px]" style={{ background: "var(--color-grid)" }} />Imported</li>
-        <li className="flex items-center gap-1.5"><Swatch className="size-2.5 rounded-[2px]" style={{ background: "var(--color-solar)" }} />Exported</li>
-        <li className="flex items-center gap-1.5"><Swatch className="h-[3px] w-3.5 rounded-[2px] bg-primary" />Running net</li>
+        <li className="flex items-center gap-1.5"><Swatch className="size-2.5 rounded-[2px]" style={{ background: "var(--color-grid)", opacity: EXPORT_TINT }} />Exported</li>
+        <li className="flex items-center gap-1.5"><Swatch className="h-[3px] w-3.5 rounded-[2px] bg-foreground" />Running net</li>
         {lastYear && <li className="flex items-center gap-1.5"><Swatch className="w-3.5 border-t-2 border-dashed border-muted-foreground" />{yearName(lastYear.label)}</li>}
         {banded && <li className="flex items-center gap-1.5"><Swatch className="h-2.5 w-3.5 rounded-[2px] bg-muted-foreground/30" />Projected</li>}
       </ul>
       <ChartContainer config={{}} className="aspect-auto h-72 w-full md:h-80">
-        <ComposedChart data={rows} stackOffset="sign" margin={{ top: 8, right: 0, bottom: 0, left: 8 }}>
+        <ComposedChart data={rows} stackOffset="sign" margin={{ top: 8, right: NOW_R, bottom: 0, left: 8 }}>
           <CartesianGrid vertical={false} />
           <XAxis dataKey="label" tickLine={false} axisLine={false} minTickGap={8} />
           <YAxis tick={<AxisTick label={energyAxis(axis.ticks.at(-1)!)} />} domain={axis.domain} ticks={axis.ticks} tickLine={false} axisLine={false} width={64} />
-          <ReferenceLine y={0} className="stroke-muted-foreground/40" />
           <ChartTooltip cursor={{ className: "fill-white/5" }} content={<CycleDetails />} />
           {/* The day chart's reveal, from the left as the columns rise. */}
           {entering && <defs><clipPath id="motion-flows"><rect width="100%" height="100%" className="motion-draw-only" /></clipPath></defs>}
           {banded && <Area dataKey="band" stroke="none" fill="var(--muted-foreground)" fillOpacity={0.2} isAnimationActive={false} activeDot={false} className={lines} />}
           <Bar dataKey="imported" stackId="flows" fill="var(--color-grid)" maxBarSize={48} isAnimationActive={false}
             shape={<Flow series="imported" domain={axis.domain} entering={entering} />} />
-          <Bar dataKey="exported" stackId="flows" fill="var(--color-solar)" maxBarSize={48} isAnimationActive={false}
+          <Bar dataKey="exported" stackId="flows" fill="var(--color-grid)" fillOpacity={EXPORT_TINT} maxBarSize={48} isAnimationActive={false}
             shape={<Flow series="exported" domain={axis.domain} entering={entering} />} />
           {lastYear && <Line dataKey="lastYear" stroke="var(--muted-foreground)" strokeWidth={2} strokeDasharray="6 5" dot={false} isAnimationActive={false} connectNulls={false} className={lines} />}
           {/* One line per true-up year, so a year's running net never joins the next one's fresh start. */}
           {[...new Set(rows.map((row) => row.trueUp))].map((year) => (
-            <Line key={year} dataKey={(row: Row) => (row.trueUp === year ? row.running : null)} stroke="var(--primary)" strokeWidth={3}
-              dot={{ r: 3.5, fill: "var(--primary)" }} isAnimationActive={false} className={lines} />
+            <Line key={year} dataKey={(row: Row) => (row.trueUp === year ? row.running : null)} stroke="var(--foreground)" strokeWidth={3}
+              dot={false} activeDot={false} isAnimationActive={false} className={lines} />
           ))}
+          {/* Red marks only where the range stands now (DESIGN.md's Red Marker Rule). */}
+          {now && <ReferenceDot x={now.label} y={now.running!} r={NOW_R} fill="var(--primary)" stroke="none" className={lines} />}
         </ComposedChart>
       </ChartContainer>
       <p className="text-[13px] text-muted-foreground">Bars are each cycle&apos;s imports above zero and exports below; the lines are the net since October 1.</p>

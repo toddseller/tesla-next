@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 // The true-up-tracker spec's cycle chart.
-import { act, cleanup, render, screen } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, expect, test, vi } from "vitest";
 
 import { chartRows, CycleChart } from "@/components/true-up/cycle-chart";
@@ -22,10 +22,14 @@ test("the current year in November: bars for October and November, slots for all
   expect(bars(container, "exported")).toHaveLength(2);
 });
 
-test("imports are grid colored and round only at the top, exports solar colored and round only at the bottom", () => {
+// Energy sent to PG&E is the grid's color on every page, a lighter tint of it as on Home's Today chart.
+test("imports are grid colored and round only at the top, exports a lighter grid tint and round only at the bottom", () => {
   const { container } = render(<CycleChart cycles={YEAR_25_26} cost={COST_25_26} oneYear />);
-  expect(bars(container, "imported").map((bar) => [bar.getAttribute("fill"), bar.dataset.ends])).toEqual(Array(12).fill(["var(--color-grid)", "top"]));
-  expect(bars(container, "exported").map((bar) => [bar.getAttribute("fill"), bar.dataset.ends])).toEqual(Array(12).fill(["var(--color-solar)", "bottom"]));
+  expect(bars(container, "imported").map((bar) => [bar.getAttribute("fill"), bar.getAttribute("fill-opacity"), bar.dataset.ends])).toEqual(Array(12).fill(["var(--color-grid)", null, "top"]));
+  expect(bars(container, "exported").map((bar) => [bar.getAttribute("fill"), bar.getAttribute("fill-opacity"), bar.dataset.ends])).toEqual(Array(12).fill(["var(--color-grid)", "0.55", "bottom"]));
+  const swatch = screen.getByText("Exported").querySelector("span")!;
+  expect([swatch.style.background, swatch.style.opacity]).toEqual(["var(--color-grid)", "0.55"]);
+  expect(container.innerHTML).not.toContain("color-solar");
 });
 
 test("the running net starts again at each true-up year's first cycle", () => {
@@ -35,7 +39,7 @@ test("the running net starts again at each true-up year's first cycle", () => {
 });
 
 const runningLines = (container: HTMLElement) =>
-  [...container.querySelectorAll('.recharts-line-curve[stroke="var(--primary)"]')].map((curve) => curve.getAttribute("d")!.match(/[ML]/g)!.length);
+  [...container.querySelectorAll('.recharts-line-curve[stroke="var(--foreground)"]')].map((curve) => curve.getAttribute("d")!.match(/[ML]/g)!.length);
 
 test("the running net is drawn apart at each true-up start, nothing joining one year to the next", () => {
   const { container } = render(<CycleChart cycles={[YEAR_25_26[10], YEAR_25_26[11], CURRENT[0], CURRENT[1]]} cost={NO_COST} oneYear={false} />);
@@ -92,15 +96,54 @@ test("on first view each cycle's column rises from zero and the lines draw in; a
   vi.useRealTimers();
 });
 
-// DESIGN.md: Tesla red is a marker, never a surface: the projection is a neutral shade, the running net stays red.
-test("the projected band and its key are a neutral shade; only the running-net line is red", () => {
+// DESIGN.md: Tesla red is a marker, never a surface or a series.
+test("the projected band, the running net and their keys are neutral shades", () => {
   const { container } = render(<CycleChart cycles={CURRENT} cost={CURRENT_COST} oneYear />);
   const band = container.querySelector(".recharts-area-area");
   expect(band?.getAttribute("fill")).toBe("var(--muted-foreground)");
   const swatch = screen.getByText("Projected").querySelector("span")!;
   expect(swatch.className).toContain("bg-muted-foreground/");
   expect(swatch.className).not.toContain("bg-primary");
-  expect(screen.getByText("Running net").querySelector("span")!.className).toContain("bg-primary");
+  const net = screen.getByText("Running net").querySelector("span")!;
+  expect(net.className).toContain("bg-foreground");
+  expect(net.className).not.toContain("bg-primary");
+});
+
+// A mid-gray line along the seam between the light and darker gray bars makes dense ranges look wavy (café wall).
+test("no line is drawn across the bars at zero", () => {
+  const { container } = render(<CycleChart cycles={YEAR_25_26} cost={COST_25_26} oneYear />);
+  expect(container.querySelector(".recharts-reference-line")).toBeNull();
+});
+
+const red = (container: HTMLElement) => [...container.querySelectorAll('[stroke="var(--primary)"], [fill="var(--primary)"]')] as SVGElement[];
+const lastPoint = (container: HTMLElement) =>
+  [...container.querySelectorAll('.recharts-line-curve[stroke="var(--foreground)"]')].at(-1)!.getAttribute("d")!.match(/(-?[\d.]+),(-?[\d.]+)$/)!.slice(1).map(Number);
+
+test("the only red on the chart is one dot at the running net's last point, on the latest year's line", () => {
+  const { container } = render(<CycleChart cycles={[YEAR_25_26[10], YEAR_25_26[11], CURRENT[0], CURRENT[1]]} cost={NO_COST} oneYear={false} />);
+  const marks = red(container);
+  expect(marks).toHaveLength(1);
+  expect(marks[0].tagName).toBe("circle");
+  expect([marks[0].getAttribute("cx"), marks[0].getAttribute("cy")].map(Number)).toEqual(lastPoint(container));
+});
+
+test("pointing at the latest cycle leaves its red dot in view, with no hover dot over it", async () => {
+  const { container } = render(<CycleChart cycles={CURRENT} cost={CURRENT_COST} oneYear />);
+  const [x, y] = lastPoint(container);
+  await act(async () => {
+    fireEvent.mouseMove(container.querySelector(".recharts-wrapper")!, { clientX: x, clientY: y });
+    await new Promise((resolve) => setTimeout(resolve, 50));
+  });
+  expect(container.querySelector(".recharts-tooltip-wrapper")!.textContent).toMatch(/^Nov/);
+  expect(container.querySelectorAll('.recharts-active-dot [fill="var(--foreground)"]')).toHaveLength(0);
+  expect(red(container)).toHaveLength(1);
+});
+
+test("on the current year the red dot sits at November, the last cycle with a running net", () => {
+  const { container } = render(<CycleChart cycles={CURRENT} cost={CURRENT_COST} oneYear />);
+  const marks = red(container);
+  expect(marks).toHaveLength(1);
+  expect([marks[0].getAttribute("cx"), marks[0].getAttribute("cy")].map(Number)).toEqual(lastPoint(container));
 });
 
 test("a year's running net past 1,000 kWh puts the axis in MWh, which names its own unit", () => {
