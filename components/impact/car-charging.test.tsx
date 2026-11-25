@@ -20,9 +20,9 @@ const CHARGING: CarCharging = {
 };
 const section = () => within(screen.getByRole("region", { name: "Home car charging" }));
 
-test("the ring shows the share off the grid, with the kWh and each source in the legend", () => {
+test("the ring shows the self-powered share, with the kWh and each source in the legend", () => {
   render(<CarChargingSection charging={CHARGING} range={ALL_TIME} />);
-  expect(section().getByRole("img", { name: "Car charging: 34% Solar, 27% Powerwall, 39% Grid" }).textContent).toContain("61%");
+  expect(section().getByRole("img", { name: "Car charging: 34% Solar, 27% Powerwall, 39% Grid" }).textContent).toBe("61%self-powered");
   expect(section().getByText("4.2").parentElement!.nextElementSibling!.textContent).toBe("MWh into the cars");
   expect(section().getAllByRole("listitem").map((li) => li.textContent)).toEqual(["34%Solar", "27%Powerwall", "39%Grid"]);
 });
@@ -55,7 +55,7 @@ test("an idle day says there was no home charging, with no ring and no car lines
   render(<CarChargingSection charging={IDLE} range={{ start: "2026-11-09", end: "2026-11-09" }} />);
   expect(section().getByText("No home charging on November 9, 2026")).toBeTruthy();
   expect(section().queryByRole("img")).toBeNull();
-  expect(section().queryByText(/off the grid/)).toBeNull();
+  expect(section().queryByText(/self-powered/)).toBeNull();
   expect(section().queryByText(/^By car/)).toBeNull();
 });
 
