@@ -71,7 +71,7 @@ When the grid is exporting 0.05 kW or more and something supplies the house, the
 - **THEN** the sentence reads "The Powerwalls supply the house and send 5.0 kW to PG&E; solar is at 0 after sunset. The Powerwalls are supplying 6.0 kW, 80% full."
 
 ### Requirement: The house scene in Now
-The Now chapter SHALL show the Distribution page's live house scene beside its sentence, drawn and updated as live-flow-scene and scene-weather specify, with its stale warning, and without the replay controls. Below 640 pixels the scene SHALL sit under the sentence at the window's width.
+The Now chapter SHALL show the Distribution page's live house scene beside its sentence, drawn and updated as live-flow-scene and scene-weather specify, with its stale warning, and without the replay controls. Below 1024 pixels the scene SHALL sit under the sentence at the content's width.
 
 #### Scenario: Opening the site
 - **WHEN** a visitor opens `/` at 3:39 PM with solar at 0.7 kW and 0.5 kW coming from the grid
@@ -80,6 +80,14 @@ The Now chapter SHALL show the Distribution page's live house scene beside its s
 #### Scenario: A phone
 - **WHEN** a visitor opens `/` on a 390-pixel-wide screen
 - **THEN** the scene sits under the sentence at the screen's width, and nothing scrolls sideways
+
+#### Scenario: A tablet
+- **WHEN** a visitor opens `/` in a 768-pixel-wide window
+- **THEN** the scene sits under the sentence at the content's width, its labels apart, and nothing scrolls sideways
+
+#### Scenario: A laptop
+- **WHEN** a visitor opens `/` in a 1024-pixel-wide window
+- **THEN** the scene sits beside the sentence
 
 ### Requirement: The live readings move
 The sentence and the scene SHALL move to each new live status without a page reload.
@@ -187,7 +195,7 @@ The year chapter SHALL draw one row per day of the chosen year and one column pe
 - **THEN** rows from November 22 to December 31 are blank
 
 ### Requirement: A day from the year
-The year chart SHALL label each month along its side and, in the current year, mark today's row. Pointing at or tapping a row, or dragging across the chart, SHALL show that day's date and solar kWh with a link that opens the day on the Solar page. In a window 768 pixels wide or more, where the readout sits beside the chart, the readout and the column it sits in SHALL stay in view while any part of the chart is on screen, so the readout of a row near the chart's foot can be read without scrolling back up. In a narrower window the readout, its day buttons and its link SHALL sit above the chart, and the chart SHALL be at most half the window's height, so a visitor who sees the whole chart also sees the day they tap.
+The year chart SHALL label each month along its side and, in the current year, mark today's row. Pointing at or tapping a row, or dragging across the chart, SHALL show that day's date and solar kWh with a link that opens the day on the Solar page. In a window 1024 pixels wide or more, where the readout sits beside the chart, the readout and the column it sits in SHALL stay in view while any part of the chart is on screen, so the readout of a row near the chart's foot can be read without scrolling back up. In a narrower window the readout, its day buttons and its link SHALL sit above the chart, and the chart SHALL be at most half the window's height, so a visitor who sees the whole chart also sees the day they tap.
 
 #### Scenario: Tapping June 13
 - **WHEN** a visitor taps the row for June 13, 2026
@@ -212,6 +220,10 @@ The year chart SHALL label each month along its side and, in the current year, m
 #### Scenario: Pointing at November on a laptop
 - **WHEN** a visitor on a 1440 by 900 screen scrolls until the chart's November rows are on screen and points at November 10
 - **THEN** the readout beside the chart is on screen and shows November 10 with its solar kWh
+
+#### Scenario: Tapping a day on a tablet
+- **WHEN** a visitor in a 768 by 1024 window scrolls until the whole chart is on screen and taps a row in November
+- **THEN** the readout, its day buttons and "Open the day" sit above the chart and are on screen showing that November day, and nothing scrolls sideways
 
 ### Requirement: Stepping through the year's days
 The day readout SHALL have previous-day and next-day buttons at least 44 pixels square. The chart SHALL take keyboard focus, the Up and Down keys moving the shown day one day and Home and End to the year's first and last day with figures, and assistive technology SHALL hear each shown day.
