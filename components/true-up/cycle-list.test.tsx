@@ -30,25 +30,48 @@ test("a billed year shows PG&E's charges, credits without a minus, and the estim
   );
 });
 
-test("cycles across true-up years follow a subhead for each year, the footnote once", () => {
-  render(<CycleList cycles={[...YEAR_25_26, ...CURRENT]} />);
-  const subheads = screen.getAllByRole("heading", { level: 3 });
-  expect(subheads.map((h) => h.textContent!.replace(/\u00a0/g, " "))).toEqual(["'25 - '26", "'26 - '27"]);
-  expect(subheads.map((h) => h.nextElementSibling!.querySelectorAll("li").length)).toEqual([12, 2]);
-  expect(subheads[1].nextElementSibling!.querySelector("li")!.textContent).toMatch(/^Oct 5 to Nov 2/);
+const noCharges = { nem_charges: null, nem_source: null, estimated_nem_charges: null, billed_net_kwh: null };
+const years = (container: HTMLElement) => [...container.querySelectorAll("details")];
+const summary = (year: HTMLDetailsElement) => year.querySelector("summary")!;
+
+test("All time: a row for each year with its totals and charges, only the last open, the footnote once", () => {
+  const { container } = render(<CycleList cycles={[...YEAR_25_26, ...CURRENT]} allTime />);
+  expect(years(container).map((y) => summary(y).textContent)).toEqual([
+    "2025\u201126Imported 6,530.7Exported 4,107.7Net 2,422.7 imported$827.82",
+    "2026\u201127Imported 660.1Exported 251.4Net 408.6 imported$106.46 est.",
+  ]);
+  expect(years(container).map((y) => y.open)).toEqual([false, true]);
+  expect(years(container).map((y) => y.querySelectorAll("li").length)).toEqual([12, 2]);
   expect(screen.getAllByText(/Before taxes/)).toHaveLength(1);
 });
 
-test("one true-up year has no subheads", () => {
-  render(<CycleList cycles={YEAR_25_26} />);
-  expect(screen.queryByRole("heading")).toBeNull();
+// A custom range can cut a year short, so its row's totals must show the cycles they come from.
+test("a custom range across true-up years starts with every year open", () => {
+  const { container } = render(<CycleList cycles={[...YEAR_25_26.slice(-2), ...CURRENT]} allTime={false} />);
+  expect(years(container).map((y) => y.open)).toEqual([true, true]);
+});
+
+test("a year with a cycle without charges gives no charges on its row", () => {
+  const { container } = render(<CycleList cycles={[{ ...YEAR_25_26[0], ...noCharges }, ...YEAR_25_26.slice(1), ...CURRENT]} />);
+  expect(summary(years(container)[0]).textContent).toBe("2025\u201126Imported 6,530.7Exported 4,107.7Net 2,422.7 imported");
+});
+
+test("a year's row sets its figures in the cycles' columns", () => {
+  const { container } = render(<CycleList cycles={[...YEAR_25_26, ...CURRENT]} />);
+  const template = (e: Element) => e.className.split(" ").find((c) => c.startsWith("sm:grid-cols-"));
+  expect(template(summary(years(container)[0]))).toBe(template(container.querySelector("li")!));
+});
+
+test("one true-up year has no year rows", () => {
+  const { container } = render(<CycleList cycles={YEAR_25_26} />);
+  expect(years(container)).toEqual([]);
   cleanup();
-  render(<CycleList cycles={CURRENT} />);
-  expect(screen.queryByRole("heading")).toBeNull();
+  const current = render(<CycleList cycles={CURRENT} />);
+  expect(years(current.container)).toEqual([]);
 });
 
 test("from 640 pixels every row has the same five columns, with or without charges", () => {
-  render(<CycleList cycles={[YEAR_25_26[0], { ...YEAR_25_26[1], nem_charges: null, nem_source: null, estimated_nem_charges: null, billed_net_kwh: null }]} />);
+  render(<CycleList cycles={[YEAR_25_26[0], { ...YEAR_25_26[1], ...noCharges }]} />);
   const templates = screen.getAllByRole("listitem").map((item) => item.className.split(" ").find((c) => c.startsWith("sm:grid-cols-")));
   expect(templates).toEqual(Array(2).fill("sm:grid-cols-[minmax(0,1.3fr)_repeat(4,minmax(0,1fr))]"));
 });
@@ -59,7 +82,7 @@ test("nothing is shown in red", () => {
 });
 
 test("cycles without charges have no charges or footnote", () => {
-  render(<CycleList cycles={YEAR_25_26.map((c) => ({ ...c, nem_charges: null, nem_source: null, estimated_nem_charges: null, billed_net_kwh: null }))} />);
+  render(<CycleList cycles={YEAR_25_26.map((c) => ({ ...c, ...noCharges }))} />);
   expect(items()[0]).toBe("Oct 3 to Nov 3Imported 885.7Exported 522.1Net 363.6 imported");
   expect(screen.queryByText(/Before taxes/)).toBeNull();
 });

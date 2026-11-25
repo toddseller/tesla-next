@@ -247,7 +247,7 @@ export function PaybackCard({ payback, today }: { payback: Payback; today: strin
         )}
       </div>
       <p className="text-[13px] text-muted-foreground">
-        Years, and the month solar paid back. &apos;21 - &apos;22 and &apos;22 - &apos;23 are estimated from &apos;23 - &apos;24 by solar output and the average rate in PG&amp;E
+        Years, and the month solar paid back. 2021‑22 and 2022‑23 are estimated from 2023‑24 by solar output and the average rate in PG&amp;E
         and Peninsula Clean Energy&apos;s rate comparisons; the federal credit is taken as a rate on the cost.
       </p>
     </section>

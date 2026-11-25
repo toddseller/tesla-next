@@ -12,7 +12,7 @@ test("the nine terms the spec names, each with its words and a definition of a s
 });
 
 test("the true-up says how a year's label reads, and VPP states the rate the VPP tile uses", () => {
-  expect(TERMS["true-up"].definition).toContain("'25 - '26 is October 2025 to September 2026");
+  expect(TERMS["true-up"].definition).toContain("2025\u201126 is October 2025 to September 2026");
   expect(TERMS.vpp.definition).toContain("$2 a kWh");
 });
 

@@ -44,7 +44,7 @@ test("a shared link serves '25 - '26 with its tiles and cycles", async () => {
   expect(html).toContain("What the system saved");
   expect(html).toContain("$5,577");
   expect(html).toContain("Oct 3 to Nov 3");
-  expect(html).toContain("&#x27;25\u00a0-\u00a0&#x27;26<!-- --> by billing cycle");
+  expect(html).toContain("2025\u201126<!-- --> by billing cycle");
 });
 
 test("a range that isn't a true-up year is served without its cost", async () => {
@@ -100,7 +100,7 @@ test("a finished year is served with its headline against the year before; the c
   mocks.trueUpCost.mockImplementation(async (start: string) => (start === "2025-10-01" ? COST_25_26 : start === "2024-10-01" ? { ...COST_25_26, amount_due: 554.83 } : CURRENT_COST));
   const html = await served({ start: "2025-10-01", end: "2026-09-30" });
   expect(mocks.trueUpCost).toHaveBeenCalledWith("2024-10-01", "2025-09-30", "2026-11-08");
-  expect(html.replace(/<[^>]+>/g, "").replace(/&#x27;/g, "'").replace(/ /g, " ")).toContain("'25 - '26 ended owing $768 at the true\u2011up, $213 more than '24 - '25.");
+  expect(html.replace(/<[^>]+>/g, "").replace(/&#x27;/g, "'").replace(/ /g, " ")).toContain("2025\u201126 ended owing $768 at the true\u2011up, $213 more than 2024\u201125.");
   mocks.trueUpCost.mockClear();
   await served();
   expect(mocks.trueUpCost).toHaveBeenCalledTimes(1);
@@ -110,8 +110,8 @@ test("a finished year is served with its headline against the year before; the c
 test("the title names the true-up year shown", async () => {
   at("2026-11-23T12:00:00-08:00");
   const title = async (params: Record<string, string>) => (await generateMetadata({ searchParams: Promise.resolve(params) })).title;
-  expect(await title({})).toBe("True-Up · '26\u00a0-\u00a0'27");
-  expect(await title({ start: "2025-10-01", end: "2026-09-30" })).toBe("True-Up · '25\u00a0-\u00a0'26");
+  expect(await title({})).toBe("True-Up · 2026\u201127");
+  expect(await title({ start: "2025-10-01", end: "2026-09-30" })).toBe("True-Up · 2025\u201126");
   // dashboard-shell, "True-Up's All time title": its range runs between true-up year boundaries, so it's named, not dated.
   expect(await title({ start: "2021-10-01", end: "2027-09-30" })).toBe("True-Up · All time");
   // dashboard-shell, "A range over all the data is All time": typed from the first day of service, it's still All time.
@@ -150,7 +150,7 @@ const NOTICE = "That link asked for dates the site doesn&#x27;t have, so this sh
 test("a marked address says what it shows instead, under the title and before the chart; an unmarked one doesn't", async () => {
   at("2026-11-08T20:00:00Z");
   const html = await served({ unshown: "1" });
-  expect(html).toContain(`${NOTICE} &#x27;26 - &#x27;27.`);
+  expect(html).toContain(`${NOTICE} 2026\u201127.`);
   expect(html.indexOf(NOTICE)).toBeGreaterThan(html.indexOf("</h1>"));
   expect(html.indexOf(NOTICE)).toBeLessThan(html.indexOf("cycle-chart"));
   expect(await served()).not.toContain(NOTICE);

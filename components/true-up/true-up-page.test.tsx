@@ -196,8 +196,7 @@ test("the current year leads with its projection, under the full-size title", ()
   const title = screen.getByRole("heading", { level: 1 });
   const [headline, line] = leads();
   expect(headline.textContent).toBe("On track to owe $593 to $652 at the October 2027 true\u2011up; $106 in charges so far.");
-  expect(line.textContent!.replace(/\u00a0/g, " ")).toBe("Year-end 2.0 to 2.4 MWh imported, if the rest of the year goes like '24 - '25 or '25 - '26");
-  expect(line.textContent).toContain("'24\u00a0-\u00a0'25");
+  expect(line.textContent).toBe("Year-end 2.0 to 2.4 MWh imported, if the rest of the year goes like 2024\u201125 or 2025\u201126");
   expect(title.className).toContain("text-[22px]");
   expect(title.className).not.toContain("uppercase");
   expect(headline.className).toContain(LEAD);
@@ -207,7 +206,7 @@ test("the current year leads with its projection, under the full-size title", ()
 test("a past year leads with its amount due against the year before's", () => {
   render(<TrueUpPage range={YEAR_25} years={YEARS} cycles={YEAR_25_26} cost={COST_25_26} savings={SAVINGS_25_26} payback={null} today="2026-11-08"
     before={{ label: "'24 - '25", amount_due: 554.83 }} />);
-  expect(leads()[0].textContent!.replace(/\u00a0/g, " ")).toBe("'25 - '26 ended owing $768 at the true\u2011up, $213 more than '24 - '25.");
+  expect(leads()[0].textContent).toBe("2025\u201126 ended owing $768 at the true\u2011up, $213 more than 2024\u201125.");
 });
 
 test("without a headline, the title and subtitle stay", () => {
@@ -222,7 +221,7 @@ test("a true-up year with a headline explains its share under it, muted", () => 
     explained={{ share: 89, start: "2025-10-03", end: "2026-10-04" }} before={{ label: "'24 - '25", amount_due: 554.83 }} />);
   const [lead, why] = leads();
   expect(lead.textContent).toContain("ended owing");
-  expect(why.textContent).toMatch(/^In '25.-.'26 solar covered 89% of the house's use, so the house drew [\d.]+ MWh more from PG&E than it sent\.$/);
+  expect(why.textContent).toMatch(/^In 2025\u201126 solar covered 89% of the house's use, so the house drew [\d.]+ MWh more from PG&E than it sent\.$/);
   expect(why.className).toContain("text-muted-foreground");
 });
 
@@ -230,7 +229,7 @@ test("a true-up year without a headline leads with its explanation, at the lead'
   render(<TrueUpPage range={YEAR_25} years={YEARS} cycles={YEAR_25_26} cost={COST_25_26} savings={SAVINGS_25_26} payback={null} today="2026-11-08"
     explained={{ share: 89, start: "2025-10-03", end: "2026-10-04" }} />);
   const [lead] = leads();
-  expect(lead.textContent).toMatch(/^In '25.-.'26 solar covered 89%/);
+  expect(lead.textContent).toMatch(/^In 2025\u201126 solar covered 89%/);
   expect(lead.className).toContain(LEAD);
   expect(screen.queryByText("Grid energy by PG&E billing cycle")).toBeNull();
 });
@@ -282,4 +281,13 @@ test("every card's heading is a section label", () => {
   const headings = screen.getAllByRole("heading", { level: 2 });
   expect(headings.length).toBeGreaterThanOrEqual(6);
   for (const heading of headings) expect([...heading.classList]).toEqual(expect.arrayContaining(["text-sm", "font-medium", "tracking-[0.06em]", "text-muted-foreground", "uppercase"]));
+});
+
+test("the cycle list opens only the last year at All time, and every year for a custom range", () => {
+  const opened = () => [...document.querySelectorAll("details")].map((d) => d.open);
+  render(page({ start: "2021-10-01", end: "2027-09-30" }, [...YEAR_25_26, ...CURRENT], null as never, null));
+  expect(opened()).toEqual([false, true]);
+  cleanup();
+  render(page({ start: "2026-08-01", end: "2026-11-30" }, [...YEAR_25_26.slice(-2), ...CURRENT], null as never, null));
+  expect(opened()).toEqual([true, true]);
 });

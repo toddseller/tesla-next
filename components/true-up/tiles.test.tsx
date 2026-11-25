@@ -33,7 +33,7 @@ test("'25 - '26: its net for the year, true-up from the statement, bills against
   expect(titles()).toEqual(["Net for the year", "True-up", "Billed against estimate", "Tesla VPP credit"]);
   expect(tile("Net for the year")).toBe("Net for the year2.4MWh importedImported 6.5 MWh · Exported 4.1 MWhPeak (4 to 9 p.m.) 413.4 kWh imported · Off-peak 2.0 MWh imported");
   expect(tile("True-up")).toBe("True-up$767.73From PG&E's statement: NEM charges of $827.82, less $60.09 of minimum delivery charges already paid.");
-  expect(tile("Billed against estimate")).toBe("Billed against estimate$2.82underPG&E billed $827.82 for 12 cycles; the estimate for them was $825.00.");
+  expect(tile("Billed against estimate")).toBe("Billed against estimate$2.82more than the estimatePG&E billed $827.82 for 12 cycles; the estimate for them was $825.00.");
   expect(tile("Tesla VPP credit")).toContain("$368estimate2026 season: 183.8 kWh in VPP events");
 });
 

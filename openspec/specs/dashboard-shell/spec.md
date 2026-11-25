@@ -287,7 +287,7 @@ Beside each page's range presets, the dates button that opens the custom range p
 
 #### Scenario: An earlier true-up year
 - **WHEN** a viewer on `/true-up` on 2026-11-23 presses Previous true-up year
-- **THEN** the True-up year preset shows as selected, reading "'25 - '26", and the dates button does not
+- **THEN** the True-up year preset shows as selected, reading "2025-26", and the dates button does not
 
 ### Requirement: Picking a range keeps the reader's place
 On every page with range presets, choosing a preset, a step button, or dates from the custom range picker SHALL change the shown range without scrolling the page. The page SHALL stay scrolled where it was, and the range change SHALL still be a new entry in the browser's history.
@@ -365,7 +365,7 @@ Every page SHALL begin with a "Skip to content" link, shown when it has keyboard
 - **THEN** a solid 2 pixel ring in the ring color surrounds it
 
 ### Requirement: Each page's title
-Each page's document title SHALL name the page, then the range it shows when it has one, then "Tesla Solar Report", joined by " · "; the home page's SHALL be "Tesla Solar Report". A whole month SHALL read like "November 2026", a calendar year "2026", a true-up year "'26 - '27", and a day or any other range in short dates, like "Nov 14, 2026" or "Oct 1 – 15, 2026". The title SHALL name the range the page shows, not the one asked for, and follow it when it changes.
+Each page's document title SHALL name the page, then the range it shows when it has one, then "Tesla Solar Report", joined by " · "; the home page's SHALL be "Tesla Solar Report". A whole month SHALL read like "November 2026", a calendar year "2026", a true-up year "2026-27", and a day or any other range in short dates, like "Nov 14, 2026" or "Oct 1 – 15, 2026". The title SHALL name the range the page shows, not the one asked for, and follow it when it changes.
 
 #### Scenario: Solar's current month
 - **WHEN** a viewer opens `/solar` on 2026-11-23
@@ -380,8 +380,8 @@ Each page's document title SHALL name the page, then the range it shows when it 
 - **THEN** the title is "Impact · Nov 22, 2026 · Tesla Solar Report"
 
 #### Scenario: True-Up's current year
-- **WHEN** a viewer opens `/true-up` in the '26 - '27 true-up year
-- **THEN** the title is "True-Up · '26 - '27 · Tesla Solar Report"
+- **WHEN** a viewer opens `/true-up` in the 2026-27 true-up year
+- **THEN** the title is "True-Up · 2026-27 · Tesla Solar Report"
 
 #### Scenario: A calendar year
 - **WHEN** Solar shows January 1 to December 31, 2025
@@ -466,7 +466,7 @@ A preset SHALL be marked as selected when it gives the shown range, or when the 
 - **THEN** no preset is marked and there are no step buttons
 
 ### Requirement: A stepped preset names its range
-While a preset is marked for a range other than its own, it SHALL read that range's name instead of its label: "October 2026", "2025", "'25 - '26", "Nov 15 – 21, 2026" or "Nov 22, 2026". Choosing it SHALL bring back its own range, and its tooltip SHALL say so, like "Back to this month".
+While a preset is marked for a range other than its own, it SHALL read that range's name instead of its label: "October 2026", "2025", "2025-26", "Nov 15 – 21, 2026" or "Nov 22, 2026". Choosing it SHALL bring back its own range, and its tooltip SHALL say so, like "Back to this month".
 
 #### Scenario: Stepped back a month
 - **WHEN** a viewer on Solar presses Previous month on November 2026

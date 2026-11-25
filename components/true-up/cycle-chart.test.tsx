@@ -64,12 +64,12 @@ test("one true-up year: last year's running net across its cycles, and the proje
   expect(rows[11].band).toEqual([2031.9, 2361.5]);
 
   render(<CycleChart cycles={CURRENT} cost={CURRENT_COST} oneYear />);
-  expect(legend()).toEqual(["Imported", "Exported", "Running net", "'25 - '26", "Projected"]);
+  expect(legend()).toEqual(["Imported", "Exported", "Running net", "2025\u201126", "Projected"]);
 });
 
 test("a finished year shows last year without a band", () => {
   render(<CycleChart cycles={YEAR_25_26} cost={COST_25_26} oneYear />);
-  expect(legend()).toEqual(["Imported", "Exported", "Running net", "'24 - '25"]);
+  expect(legend()).toEqual(["Imported", "Exported", "Running net", "2024\u201125"]);
 });
 
 test("other ranges have neither, and only the started cycles", () => {

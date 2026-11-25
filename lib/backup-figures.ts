@@ -3,6 +3,7 @@
 
 import { rainFrom } from "@/lib/intervals/weather";
 import { siteToday } from "@/lib/scene/replay";
+import { trueUpName } from "@/lib/solar/ranges";
 
 const STEP = 5 * 60_000;
 
@@ -107,9 +108,8 @@ export function stormDays<E extends Event>(newestFirst: E[]) {
 // Blips in each true-up year of the range, by the site day they began.
 export function blipsPerYear(events: Event[], { start, end }: { start: string; end: string }) {
   const years = Array.from({ length: Number(end.slice(0, 4)) - Number(start.slice(0, 4)) }, (_, i) => Number(start.slice(0, 4)) + i);
-  const yy = (year: number) => String(year % 100).padStart(2, "0");
   return years.map((year) => ({
-    label: `'${yy(year)} - '${yy(year + 1)}`,
+    label: trueUpName(String(year)),
     count: events.filter((e) => {
       const day = siteToday(Date.parse(e.start));
       return e.kind === "blip" && day >= `${year}-10-01` && day <= `${year + 1}-09-30`;

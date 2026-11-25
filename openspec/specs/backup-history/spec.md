@@ -33,11 +33,11 @@ Each backup event anton-tesla-api-ws stores SHALL have one kind, checked in this
 - **THEN** its kind is outage
 
 ### Requirement: The Backup section's year
-The Impact page SHALL show a Backup section with its own year picker, apart from the page's date range, while the page shows neither All time nor a true-up year, working as the page's range presets do: True-up year (the current true-up year, October 1 to September 30, named as the page's own True-up year preset so "This year" on the page means only the calendar year) and All time, the chosen one selected. On a true-up year, previous and next arrows SHALL step one true-up year, from '21 - '22 to this one, the button naming the year shown. Below 640 pixels wide the presets SHALL be one menu between the arrows.
+The Impact page SHALL show a Backup section with its own year picker, apart from the page's date range, while the page shows neither All time nor a true-up year, working as the page's range presets do: True-up year (the current true-up year, October 1 to September 30, named as the page's own True-up year preset so "This year" on the page means only the calendar year) and All time, the chosen one selected. On a true-up year, previous and next arrows SHALL step one true-up year, from 2021-22 to this one, the button naming the year shown. Below 640 pixels wide the presets SHALL be one menu between the arrows.
 
 #### Scenario: Opening the page on 2026-11-09
 - **WHEN** a visitor opens `/impact`
-- **THEN** the section shows '26 - '27, its presets read True-up year and All time with True-up year selected, and its next arrow is disabled
+- **THEN** the section shows 2026-27, its presets read True-up year and All time with True-up year selected, and its next arrow is disabled
 
 #### Scenario: No second This year
 - **WHEN** a visitor opens `/impact`
@@ -49,18 +49,18 @@ The Impact page SHALL show a Backup section with its own year picker, apart from
 
 #### Scenario: Stepping back
 - **WHEN** a visitor on 2026-11-09 presses the previous arrow twice
-- **THEN** the section shows '24 - '25, the selected button reads "'24 - '25", and the heading reads "Backup · '24 - '25"
+- **THEN** the section shows 2024-25, the selected button reads "2024-25", and the heading reads "Backup · 2024-25"
 
 #### Scenario: The first year
-- **WHEN** the section shows '21 - '22
+- **WHEN** the section shows 2021-22
 - **THEN** its previous arrow is disabled
 
 ### Requirement: The Backup year is in the address
-The Backup section's year SHALL be in the address as `backup`, `24-25` for '24 - '25 and `all` for All time; no `backup`, or any other value, SHALL show this year. Choosing SHALL replace the address without a new history entry and leave the page's range as it was. While the section follows the page's year, the addresses the page makes SHALL leave `backup` out.
+The Backup section's year SHALL be in the address as `backup`, `24-25` for 2024-25 and `all` for All time; no `backup`, or any other value, SHALL show this year. Choosing SHALL replace the address without a new history entry and leave the page's range as it was. While the section follows the page's year, the addresses the page makes SHALL leave `backup` out.
 
 #### Scenario: An earlier year picked
-- **WHEN** a visitor picks '23 - '24 from Earlier
-- **THEN** the address gains `backup=23-24` with the range unchanged, and the Earlier button reads '23 - '24 and is marked as selected
+- **WHEN** a visitor picks 2023-24 from Earlier
+- **THEN** the address gains `backup=23-24` with the range unchanged, and the Earlier button reads 2023-24 and is marked as selected
 
 #### Scenario: All time
 - **WHEN** a visitor picks All time
@@ -68,7 +68,7 @@ The Backup section's year SHALL be in the address as `backup`, `24-25` for '24 -
 
 #### Scenario: Another range
 - **WHEN** the Impact page shows only today with `backup=24-25`
-- **THEN** the Backup section still covers '24 - '25
+- **THEN** the Backup section still covers 2024-25
 
 #### Scenario: Moving the page to All time
 - **WHEN** the page shows this month with `backup=24-25` and the visitor picks the page's All time
@@ -236,15 +236,15 @@ An outage whose batteries gave out more than 36 kWh in all SHALL note that solar
 - **THEN** its row notes that solar refilled the Powerwalls
 
 ### Requirement: Blips per year
-Under the summary the section SHALL give the number of blips: for one true-up year, that year's count; for All time, each true-up year's count from '21 - '22 on, oldest first, a year without blips reading 0. It SHALL give the counts only.
+Under the summary the section SHALL give the number of blips: for one true-up year, that year's count; for All time, each true-up year's count from 2021-22 on, oldest first, a year without blips reading 0. It SHALL give the counts only.
 
 #### Scenario: One year
-- **WHEN** '22 - '23 is shown and it had 27 blips
+- **WHEN** 2022-23 is shown and it had 27 blips
 - **THEN** the line reads 27 blips
 
 #### Scenario: All time
-- **WHEN** All time is shown and '24 - '25 had no blips
-- **THEN** the line lists every true-up year from '21 - '22 with its count, '24 - '25 reading 0
+- **WHEN** All time is shown and 2024-25 had no blips
+- **THEN** the line lists every true-up year from 2021-22 with its count, 2024-25 reading 0
 
 ### Requirement: How a length of time reads
 Every length of time the section gives off the grid (the summary's total and longest, each storm day's total and each event's duration) SHALL read in days and hours when it is a day or more, and otherwise in hours and minutes, minutes and seconds, or seconds, each part rounded down. An event's duration SHALL set its figures in mono and its units in the row's sans.
@@ -274,11 +274,11 @@ When the Impact page shows All time or a true-up year, October 1 to September 30
 
 #### Scenario: The page on a past true-up year
 - **WHEN** the page shows October 1, 2023 to September 30, 2024
-- **THEN** the section covers '23 - '24, its heading reads "Backup · '23 - '24", and it shows no picker or arrows
+- **THEN** the section covers 2023-24, its heading reads "Backup · 2023-24", and it shows no picker or arrows
 
 #### Scenario: The page on this true-up year with another backup year in the address
 - **WHEN** the page shows October 1, 2026 to September 30, 2027 with `backup=24-25` in the address
-- **THEN** the section covers '26 - '27
+- **THEN** the section covers 2026-27
 
 #### Scenario: The page on a calendar year
 - **WHEN** the page shows January 1 to December 31, 2026
@@ -300,11 +300,11 @@ Each listed event's bar SHALL be its length as a share of one day, an event of a
 - **THEN** its bar is 1/24 of the full width
 
 ### Requirement: The Backup heading names its span
-The Backup section's heading SHALL name what it shows, after a middle dot: the true-up year ("Backup · '26 - '27", the current True-up year included), or "Backup · All time", so the section can't be read as covering another range than it does.
+The Backup section's heading SHALL name what it shows, after a middle dot: the true-up year ("Backup · 2026-27", the current True-up year included), or "Backup · All time", so the section can't be read as covering another range than it does.
 
 #### Scenario: Opening the page on 2026-11-09
 - **WHEN** a visitor opens `/impact`
-- **THEN** the section's heading reads "Backup · '26 - '27"
+- **THEN** the section's heading reads "Backup · 2026-27"
 
 #### Scenario: The page on All time
 - **WHEN** a visitor opens Impact's All time on 2026-11-23 with no `backup` in the address
