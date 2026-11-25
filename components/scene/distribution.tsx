@@ -1,6 +1,6 @@
 "use client";
 
-import { type PointerEvent, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import ReplayBar, { DEFAULT_SPEED } from "@/components/scene/replay-bar";
 import { TodaySoFar } from "@/components/scene/today-so-far";
@@ -36,8 +36,6 @@ export const StaleWarning = ({ liveReceived, modifiedAt, renderedAt }: { liveRec
 };
 
 const TICK_MS = 100;
-// The replay bar hides this long after its last use (openspec/specs/scene-replay).
-export const BAR_SHOW_MS = 3000;
 // Paused, the replay sits on a whole minute, as the address and scrubber show it.
 const toMinute = (t: number) => Math.floor(t / 60000) * 60000;
 
@@ -138,40 +136,6 @@ const Distribution = ({ initialStatus, search, renderedAt }: { initialStatus: st
     return () => clearInterval(timer);
   }, [playing, speed, end, isToday]);
 
-  // Below 1024px (a desktop always shows it), the replay bar shows on demand: for a while after each use (page load,
-  // a mouse moving over the scene, a tap or a key), while a mouse rests on
-  // the bar, while the bar holds itself shown, and while a replay is paused.
-  const [recent, setRecent] = useState(true);
-  const [hover, setHover] = useState(false);
-  const [holds, setHolds] = useState(0);
-  const recentTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
-  const poke = () => {
-    setRecent(true);
-    clearTimeout(recentTimer.current);
-    recentTimer.current = setTimeout(() => setRecent(false), BAR_SHOW_MS);
-  };
-  useEffect(() => {
-    poke();
-    return () => clearTimeout(recentTimer.current);
-  }, []);
-  const onHold = (on: boolean) => {
-    setHolds((count) => Math.max(count + (on ? 1 : -1), 0));
-    if (!on) poke();
-  };
-  // As in a video player, a moving mouse shows the bar and a resting one lets
-  // it hide, except over the bar itself. Mouse only: iOS sends pointer events
-  // after a tap too.
-  const onMouseMove = (event: PointerEvent) => {
-    if (event.pointerType === "mouse") poke();
-  };
-  const onHover = (on: boolean) => (event: PointerEvent) => {
-    if (event.pointerType !== "mouse") return;
-    setHover(on);
-    if (!on) poke();
-  };
-  const barShown = recent || hover || holds > 0 || (replaying && !playing);
-  const shownTime = replaying ? replayTime! : now.getTime();
-
   const onDay = (newDay: string) => {
     const { hour, minute } = wallTime(replaying ? replayTime! : now.getTime());
     replayAt(siteInstant(newDay, hour, minute));
@@ -185,7 +149,6 @@ const Distribution = ({ initialStatus, search, renderedAt }: { initialStatus: st
       // From live, play today from midnight.
       if (!replaying) setReplayTime(span.start);
       setPlaying(true);
-      poke();
     }
   };
   const onLive = () => {
@@ -226,8 +189,7 @@ const Distribution = ({ initialStatus, search, renderedAt }: { initialStatus: st
           window. Phones, in landscape too (under 1024px wide), keep the plain
           56rem cap inside the frame, so turning one sideways makes the scene
           larger, not smaller. */}
-      <div className="relative mx-auto max-w-4xl lg:max-w-none lg:w-[min(80rem,calc(100vw-2rem),calc((100dvh-113px)*1.72))] lg:left-1/2 lg:-translate-x-1/2 rounded-2xl overflow-hidden"
-        onPointerMove={onMouseMove} onPointerDown={poke} onKeyDown={poke}>
+      <div className="relative mx-auto max-w-4xl lg:max-w-none lg:w-[min(80rem,calc(100vw-2rem),calc((100dvh-113px)*1.72))] lg:left-1/2 lg:-translate-x-1/2 rounded-2xl overflow-hidden">
         {/* A replay playing at real time looks live; the tag says it isn't. */}
         <div className="relative">
           <LiveScene state={state} paused={replaying && !playing} drift={devDrift(searchParams)} />
@@ -236,37 +198,23 @@ const Distribution = ({ initialStatus, search, renderedAt }: { initialStatus: st
               REPLAY
             </span>
           )}
-          {/* While the bar is hidden, on a phone: the shown time's place in its
-              day, as the scrubber has it, red live and white in replay. */}
-          {!barShown && (
-            <div className="lg:hidden absolute inset-x-0 bottom-0 h-[3px] bg-white/20" data-part="progress-line">
-              <div className={`h-full ${replaying ? "bg-white" : "bg-[rgb(204,0,0)]"}`}
-                style={{ width: `${((shownTime - span.start) / (span.end - span.start)) * 100}%` }} />
-            </div>
-          )}
         </div>
-        {/* On a desktop the bar always shows over the scene's bottom. Below that,
-            hidden, it stays in the tab order while its row closes to 0. */}
-        <div
-          className={`grid lg:absolute lg:inset-x-0 lg:bottom-0 lg:grid-rows-[1fr] transition-[grid-template-rows] duration-[750ms] ease-[ease] motion-reduce:transition-none ${barShown ? "grid-rows-[1fr]" : "grid-rows-[0fr]"}`}
-          data-part="replay-drawer" data-shown={barShown} onPointerEnter={onHover(true)} onPointerLeave={onHover(false)}>
-          <div className="min-h-0 overflow-hidden">
-            <ReplayBar
-              live={!replaying}
-              day={day}
-              today={today}
-              time={shownTime}
-              span={span}
-              playing={playing}
-              speed={speed}
-              onDay={onDay}
-              onTime={replayAt}
-              onPlay={onPlay}
-              onSpeed={setSpeed}
-              onLive={onLive}
-              onHold={onHold}
-            />
-          </div>
+        {/* Over the scene's bottom on a desktop; below it on a phone, where it covers none of the house. */}
+        <div className="lg:absolute lg:inset-x-0 lg:bottom-0">
+          <ReplayBar
+            live={!replaying}
+            day={day}
+            today={today}
+            time={replaying ? replayTime! : now.getTime()}
+            span={span}
+            playing={playing}
+            speed={speed}
+            onDay={onDay}
+            onTime={replayAt}
+            onPlay={onPlay}
+            onSpeed={setSpeed}
+            onLive={onLive}
+          />
         </div>
       </div>
       <TodaySoFar />
