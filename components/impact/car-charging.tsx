@@ -61,7 +61,7 @@ export function CarChargingSection({ charging, range }: { charging: CarCharging;
       ) : (
         <div className="grid grid-cols-1 items-center gap-10 lg:grid-cols-2">
           <div className="flex flex-wrap items-center gap-8">
-            <Ring name="Car charging" shares={shares} middle={charging.off_grid_percentage} caption="off the grid" />
+            <Ring name="Car charging" shares={shares} middle={charging.off_grid_percentage} caption="self-powered" />
             <div className="flex flex-col gap-3.5">
               <p className="flex items-baseline gap-2">
                 <span className="font-mono text-[28px] font-semibold"><Rolling value={charging.total_kwh} format={(v) => kwh(v, charging.total_kwh)} /></span>
