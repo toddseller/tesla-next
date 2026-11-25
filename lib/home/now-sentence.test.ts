@@ -14,7 +14,7 @@ type Input = Parameters<typeof balance>[0] & { homePower: number; vehicle: Vehic
 const live = (over: Partial<Input> = {}): Input => ({ solarPower: 0, homePower: 0, batteryPower: 0, gridPower: 0, vehicle: null, ...over });
 // A figure and its unit never split across lines, so the sentence joins them with a no-break space.
 const nb = (text: string) => text.replace(/ (kW|%)/g, "\u00a0$1");
-const sentence = (input: ReturnType<typeof live>, battery: number | undefined, now: Date) => nowSentence(balance(input), { battery, vehicle: input.vehicle }, now);
+const sentence = (input: ReturnType<typeof live>, battery: number | undefined, now: Date, storm = false) => nowSentence(balance(input), { battery, vehicle: input.vehicle, storm }, now);
 
 test("after sunset, all from the grid, the Powerwalls idle and the car not charging", () => {
   const input = live({ homePower: 1, gridPower: 1, vehicle: { name: "Tesla", charging_power: 0, battery_level: 50 } });
@@ -46,4 +46,14 @@ test("the Powerwalls alone supply the house and send the rest to PG&E", () => {
 // Meter noise can read a little export with nothing counted as supplying; "Nothing ... sends" would contradict itself.
 test("no export clause when nothing supplies the house", () => {
   expect(sentence(live({ homePower: 0, gridPower: -0.06 }), 100, EVENING)).toBe("Nothing supplies the house; solar is at 0 after sunset. The Powerwalls are idle at 100%.");
+});
+
+// Storm watch on the grid gives the reason the Powerwalls hold or fill while the grid supplies the house.
+test("a storm watch holds or fills the Powerwalls; supplying and no storm watch read as before", () => {
+  const evening = live({ homePower: 1, gridPower: 1 });
+  expect(sentence(evening, 98, EVENING, true)).toBe("The grid supplies the house; solar is at 0 after sunset. The Powerwalls are holding at 98% for a storm watch.");
+  expect(sentence(live({ homePower: 1, gridPower: 6, batteryPower: -5 }), 72, EVENING, true)).toBe(nb("The grid supplies the house; solar is at 0 after sunset. The Powerwalls are charging at 5.0 kW for a storm watch, 72% full."));
+  expect(sentence(evening, undefined, EVENING, true)).toBe("The grid supplies the house; solar is at 0 after sunset. The Powerwalls are holding for a storm watch.");
+  expect(sentence(live({ homePower: 1.2, batteryPower: 1.2 }), 95, DAWN, true)).toBe(nb("The Powerwalls supply the house; solar is at 0 before sunrise. The Powerwalls are supplying 1.2 kW, 95% full."));
+  expect(sentence(evening, 100, EVENING)).toBe("The grid supplies the house; solar is at 0 after sunset. The Powerwalls are idle at 100%.");
 });
