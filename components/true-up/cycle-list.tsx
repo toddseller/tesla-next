@@ -3,7 +3,7 @@ import { ChevronRight } from "lucide-react";
 import { Measured } from "@/components/measured";
 import { type Cycle, chargesText, cycleDates, estimateText, kwh, netLabel, type Started, startedCycles, totals, uncorrectedDays, yearName } from "@/lib/true-up/text";
 
-const ROW = "grid grid-cols-[repeat(auto-fit,minmax(min(100%,150px),1fr))] sm:grid-cols-[minmax(0,1.3fr)_repeat(4,minmax(0,1fr))] items-baseline gap-x-4 gap-y-1.5 border-t py-3.5";
+const ROW = "grid grid-cols-2 sm:grid-cols-[minmax(0,1.3fr)_repeat(4,minmax(0,1fr))] items-baseline gap-x-4 gap-y-1.5 border-t py-3.5";
 
 const Figure = ({ name, value }: { name: string; value: string }) => (
   <span className="text-sm text-muted-foreground">{name} <span className="text-foreground"><Measured text={value} /></span></span>
@@ -17,20 +17,20 @@ const Energy = ({ imported, exported, net }: { imported: number; exported: numbe
   </>
 );
 
-const CycleRows = ({ cycles }: { cycles: Started[] }) => (
+const CHARGES = "text-end sm:col-start-5 sm:row-start-1";
+
+const CycleRows = ({ cycles, indent = false }: { cycles: Started[]; indent?: boolean }) => (
   <ul className="flex flex-col">
     {cycles.map((cycle) => {
       const [charges, estimate] = [chargesText(cycle), estimateText(cycle)];
       return (
         <li key={cycle.first_day} className={ROW}>
-          <span className="font-semibold">{cycleDates(cycle)}</span>
+          <span className={`font-semibold ${indent ? "pl-5" : ""}`}>{cycleDates(cycle)}</span>
+          <span className={`flex flex-col items-end gap-0.5 ${CHARGES}`}>
+            {charges && <span><Measured text={charges} /></span>}
+            {charges && estimate && <span className="text-xs text-balance text-muted-foreground">{estimate}</span>}
+          </span>
           <Energy {...cycle} />
-          {charges && (
-            <span className="flex flex-col items-end gap-0.5">
-              <span><Measured text={charges} /></span>
-              {estimate && <span className="text-xs text-muted-foreground">{estimate}</span>}
-            </span>
-          )}
         </li>
       );
     })}
@@ -51,10 +51,10 @@ function Year({ year, cycles, open }: { year: string; cycles: Started[]; open: b
           <ChevronRight size={14} aria-hidden className="mr-1.5 inline align-[-1px] transition-transform group-open:rotate-90" />
           {yearName(year)}
         </span>
+        <span className={CHARGES}>{charges && <Measured text={charges} />}</span>
         <Energy {...totals(cycles)} />
-        {charges && <span className="text-end"><Measured text={charges} /></span>}
       </summary>
-      <CycleRows cycles={cycles} />
+      <CycleRows cycles={cycles} indent />
     </details>
   );
 }
