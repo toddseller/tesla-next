@@ -187,7 +187,7 @@ With one true-up year shown, the chart SHALL show last year's running net as a d
 - **THEN** there is no dashed line and no band
 
 ### Requirement: Cycle list
-Under the chart the page SHALL list each started cycle with its dates, imported, exported, net and NEM charges, fitting a phone without sideways scrolling. A calculated charge SHALL be marked "est."; a credit SHALL read like "$118.81 credit", never in red; a cycle with PG&E's charge SHALL show under it its estimate, when there is one, and PG&E's net kWh. The open cycle SHALL show the last day it covers. When the cycles listed span more than one true-up year, each year SHALL be a row in the list's columns that opens to show its cycles, giving the year's name and its cycles' imported, exported and net, and the sum of their NEM charges, marked "est." when any of them is calculated and left out when any cycle has none. At All time only the last year listed SHALL start open, the others closed; for any other range every year SHALL start open, since its first or last year can be cut short. Each opens and closes from the keyboard as well as by pointer. From 640 pixels wide, every row SHALL set its dates, imported, exported, net and charges in the same columns, whether or not it has charges.
+Under the chart the page SHALL list each started cycle with its dates, imported, exported, net and NEM charges, fitting a phone without sideways scrolling. The list's heading SHALL say once that its figures are in kWh, and its rows SHALL stay in kWh. A calculated charge SHALL be marked "est."; a credit SHALL read like "$118.81 credit", never in red; a cycle with PG&E's charge SHALL show under it its estimate, when there is one, and PG&E's net kWh. The open cycle SHALL show the last day it covers. When the cycles listed span more than one true-up year, each year SHALL be a row in the list's columns that opens to show its cycles, giving the year's name and its cycles' imported, exported and net, and the sum of their NEM charges, marked "est." when any of them is calculated and left out when any cycle has none. A year's cycles SHALL be indented under it so their dates start where the year's name starts. At All time only the last year listed SHALL start open, the others closed; for any other range every year SHALL start open, since its first or last year can be cut short. Each opens and closes from the keyboard as well as by pointer. Narrower than 640 pixels, each row SHALL give its dates or year's name and its charges on its first line, the charges at the right edge, and its imported, exported and net below. From 640 pixels wide, every row SHALL set its dates, imported, exported, net and charges in the same columns, whether or not it has charges.
 
 #### Scenario: Open cycle
 - **WHEN** the current cycle started November 3 and the data runs through November 8
@@ -224,6 +224,18 @@ Under the chart the page SHALL list each started cycle with its dates, imported,
 #### Scenario: Columns stay put
 - **WHEN** the list is 640 pixels wide or more and shows a cycle without charges above one with charges
 - **THEN** both rows' imported, exported and net figures start at the same horizontal positions
+
+#### Scenario: The unit, once
+- **WHEN** the list is shown
+- **THEN** its heading reads "Billing cycles in kWh", "Billing cycles" in the headings' uppercase and "in kWh" in plain case, and no imported, exported or net figure repeats "kWh"
+
+#### Scenario: A cycle on a phone
+- **WHEN** the list is 390 pixels wide and shows Oct 5 to Nov 2 with PG&E's $97.80
+- **THEN** "Oct 5 to Nov 2" and "$97.80" share the row's first line, $97.80 ending at the row's right edge, with the imported, exported and net figures below them
+
+#### Scenario: A year's cycles indented
+- **WHEN** All time is shown with 2026-27 open
+- **THEN** each of 2026-27's cycles starts its dates at the same horizontal position as the name "2026-27", to the right of the year row's chevron, at a phone's width and at 1440 pixels
 
 ### Requirement: Layout
 On a 375-pixel-wide screen the page SHALL show its tiles, chart and cycle list in one column with no horizontal scrolling and nothing overlapping; on wider screens the tiles SHALL sit side by side as they fit, and from 1280 pixels every tile SHALL sit on one row.
