@@ -113,16 +113,19 @@ test("a year that fails to load says so, offers to try again, and keeps the year
 });
 
 // Capped wherever the readout sits above the chart, so a tap near the chart's foot leaves the readout on screen.
-test("below md the chart is capped at half the screen's height, so a swipe elsewhere scrolls the page", () => {
+test("below lg the chart is capped at half the screen's height, so a swipe elsewhere scrolls the page", () => {
   year();
-  expect(chart().querySelector("canvas")!.className).toContain("max-md:max-h-[50svh]");
+  expect(chart().querySelector("canvas")!.className).toContain("max-lg:max-h-[50svh]");
 });
 
-test("beside the chart, the readout's column stays in view while the chart scrolls", () => {
+// At 768 the column beside the chart was too narrow for the readout's day buttons and the page scrolled sideways.
+test("from 1024 the readout's column sits beside the chart and stays in view while the chart scrolls", () => {
   year();
   // The readout sits in its row, in its card, in the column beside the chart.
   const column = document.querySelector('[data-part="day-readout"]')!.parentElement!.parentElement!.parentElement!;
-  expect(column.className.split(" ")).toEqual(expect.arrayContaining(["md:sticky", "md:top-6", "md:self-start"]));
+  expect(column.parentElement!.className).toContain("lg:grid-cols-");
+  expect(column.parentElement!.className).not.toContain("md:grid-cols-");
+  expect(column.className.split(" ")).toEqual(expect.arrayContaining(["lg:sticky", "lg:top-6", "lg:self-start"]));
 });
 
 test("on a phone the explanation and the day card come before the chart, the shares after it", () => {
@@ -130,10 +133,10 @@ test("on a phone the explanation and the day card come before the chart, the sha
   const card = document.querySelector('[data-part="day-readout"]')!.parentElement!.parentElement!;
   const column = card.parentElement!;
   const [explanation, , shares] = column.children;
-  expect(column.className.split(" ")).toContain("max-md:contents");
-  expect(explanation.className.split(" ")).toContain("max-md:-order-1");
-  expect(card.className.split(" ")).toContain("max-md:-order-1");
-  expect(shares.className.split(" ")).not.toContain("max-md:-order-1");
+  expect(column.className.split(" ")).toContain("max-lg:contents");
+  expect(explanation.className.split(" ")).toContain("max-lg:-order-1");
+  expect(card.className.split(" ")).toContain("max-lg:-order-1");
+  expect(shares.className.split(" ")).not.toContain("max-lg:-order-1");
 });
 
 test("the readout's figure never wraps away from its unit", () => {

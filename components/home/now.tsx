@@ -45,7 +45,7 @@ export function Now({ initialStatus, renderedAt }: Props) {
   const state = sceneState(site, sceneNow, weather);
 
   return (
-    <section aria-labelledby="now" className="grid items-center gap-x-10 gap-y-5 md:grid-cols-[minmax(0,26rem)_minmax(0,1fr)]">
+    <section aria-labelledby="now" className="grid items-center gap-x-10 gap-y-5 lg:grid-cols-[minmax(0,26rem)_minmax(0,1fr)]">
       <div className="flex flex-col gap-3 md:gap-4">
         <h2 id="now" className="text-[64px] leading-[0.9] font-semibold tracking-[-0.04em] md:text-[112px]">Now</h2>
         <p data-part="now-sentence" className={`max-w-[34ch] text-xl leading-snug font-medium text-pretty md:text-[22px] ${live ? "" : "text-muted-foreground"}`}>

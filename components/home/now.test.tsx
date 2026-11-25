@@ -50,3 +50,11 @@ test("a stale status says when it last came, in place of the sentence", () => {
   now({ ...STATUS, modified: "2026-11-21T23:34:00Z" });
   expect(part("now-sentence").textContent).toBe("No live update since 3:34 PM.");
 });
+
+// Beside the sentence below 1024 the scene shrank to about 250 pixels and its labels collided.
+test("the sentence and the scene sit side by side only from 1024 pixels", () => {
+  now();
+  const chapter = screen.getByRole("region", { name: "Now" }).className;
+  expect(chapter).toContain("lg:grid-cols-");
+  expect(chapter).not.toContain("md:grid-cols-");
+});
