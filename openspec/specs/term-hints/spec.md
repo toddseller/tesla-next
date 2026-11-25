@@ -17,7 +17,7 @@ A hinted term SHALL read as part of its sentence with a dotted underline, and ta
 - **THEN** the definition opens, and Escape closes it, returning focus to the term
 
 ### Requirement: One definition per term
-Each term SHALL have one definition, the same wherever it is hinted: the true-up (with how a true-up year's label like '25 - '26 reads), the 4 to 9 p.m. peak, NEM, NEM2, Net Surplus Compensation, VPP, WestLight Energy, storm watch and grid readings.
+Each term SHALL have one definition, the same wherever it is hinted: the true-up (with how a true-up year's label like 2025-26 reads), the 4 to 9 p.m. peak, NEM, NEM2, Net Surplus Compensation, VPP, WestLight Energy, storm watch and grid readings.
 
 #### Scenario: Storm watch in two places
 - **WHEN** "Storm watch" is hinted on the True-Up page and in the Solar day view

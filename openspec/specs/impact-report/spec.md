@@ -190,10 +190,10 @@ Under its "Impact" heading, the page SHALL always say in one sentence the range'
 - **THEN** the sentence reads "30% self-powered since Nov 10, 2026, up from 28% over the same days last year."
 
 ### Requirement: The year-earlier days
-Since today is only partly over, for a range of more than one day that includes today the year-earlier days SHALL stop at yesterday's date a year earlier, and a range that starts today, a lone today included, SHALL have none. A finished calendar month, calendar year or true-up year SHALL be compared by name ("October 2025", "2025", "'24 - '25"); any other range, including one under way, with "the same days last year".
+Since today is only partly over, for a range of more than one day that includes today the year-earlier days SHALL stop at yesterday's date a year earlier, and a range that starts today, a lone today included, SHALL have none. A finished calendar month, calendar year or true-up year SHALL be compared by name ("October 2025", "2025", "2024-25"); any other range, including one under way, with "the same days last year".
 
 #### Scenario: True-up year so far
-- **WHEN** the range is '26 - '27 on 2026-11-22
+- **WHEN** the range is 2026-27 on 2026-11-22
 - **THEN** it is compared with 2025-10-01 to 2025-11-21, as "the same days last year"
 
 #### Scenario: The first of the month
