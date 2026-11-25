@@ -145,7 +145,7 @@ When the shown cycles include days before April 27, 2026 without PG&E data, the 
 - **THEN** no note is shown
 
 ### Requirement: Cycle chart
-The page SHALL chart each started cycle's imports as a bar above zero in the grid color and its exports below in the solar color, each rounded only at its outer end, square at zero, with a running net line in Tesla red that starts again at each true-up year's first cycle, drawn apart from the year before it with no segment joining them. Months label the cycles, and a legend names every series shown. Its heading SHALL name the range, the true-up year's name or "All time" or the range's dates, then "by billing cycle".
+The page SHALL chart each started cycle's imports as a bar above zero in the grid color and its exports below in a lighter tint of the grid color, each rounded only at its outer end, square at zero, with a running net line in the page's text color that starts again at each true-up year's first cycle, drawn apart from the year before it with no segment joining them. Only the running net's last point SHALL carry a mark, a Tesla red dot. Months label the cycles, and a legend names every series shown. Its heading SHALL name the range, the true-up year's name or "All time" or the range's dates, then "by billing cycle".
 
 #### Scenario: Current year in November
 - **WHEN** the current year is shown on 2026-11-08
@@ -162,6 +162,14 @@ The page SHALL chart each started cycle's imports as a bar above zero in the gri
 #### Scenario: All time's heading
 - **WHEN** All time is shown
 - **THEN** the chart is headed "All time by billing cycle"
+
+#### Scenario: Exports in the grid's color
+- **WHEN** '25 - '26 is shown
+- **THEN** its exports are drawn in the grid color, lighter than its imports, and no bar or legend swatch is in the solar color
+
+#### Scenario: Red marks only where the range stands
+- **WHEN** the chart shows the August and September 2026 cycles of '25 - '26 and the October and November 2026 cycles of '26 - '27
+- **THEN** both running net lines are in the text color, and the only red on the chart is one dot at November 2026
 
 ### Requirement: Last year and projection on the chart
 With one true-up year shown, the chart SHALL show last year's running net as a dashed line across its cycles, and, with a kWh projection, a band from the open cycle to the twelfth between the lowest and highest projected running net, named in the legend. Neither SHALL show for other ranges.
