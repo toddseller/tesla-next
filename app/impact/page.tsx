@@ -2,7 +2,7 @@ import { cache } from "react";
 
 import { ImpactPage } from "@/components/impact/impact-page";
 import { backupHistory } from "@/lib/backup";
-import { backupYear } from "@/lib/backup-years";
+import { backupYear, followedYear } from "@/lib/backup-years";
 import { carCharging } from "@/lib/car-charging";
 import { impactFigures } from "@/lib/impact";
 import { type Readings, readingsOf } from "@/lib/meter";
@@ -38,7 +38,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<Par
   const params = await searchParams;
   dropUnshown("/impact", params, false);
   const { readings, todays, range } = await shownRange(params, today);
-  const year = backupYear(params.backup, today);
+  const year = followedYear(range, today) ?? backupYear(params.backup, today);
   const earlier = comparedDays(range, today)?.then;
   const [figures, backup, charging, before] = await Promise.all([
     todays ?? impactFigures(range.start, range.end, readings), backupHistory(year), carCharging(range.start, range.end, today, readings),

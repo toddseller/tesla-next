@@ -66,6 +66,14 @@ test("the heading names the year shown, the current true-up year included, or Al
   expect(heading()).toBe("Backup · All time");
 });
 
+// backup-history, "The Backup section follows the page's year".
+test("following the page's year, the section has no picker and still names the year", () => {
+  render(<BackupSection history={EMPTY} year={{ start: "2023-10-01", end: "2024-09-30" }} today={TODAY} onYear={() => {}} follows />);
+  expect(screen.queryByRole("group", { name: "Backup years" })).toBeNull();
+  expect(screen.queryAllByRole("button")).toEqual([]);
+  expect(screen.getByRole("heading", { level: 2 }).textContent!.replace(/\u00a0/g, " ")).toBe("Backup · '23 - '24");
+});
+
 const YEAR_23_24 = { start: "2023-10-01", end: "2024-09-30" };
 const eventRows = () => [...document.querySelectorAll<HTMLElement>('[data-part="event"]')];
 const HISTORY: BackupHistory = {
@@ -102,15 +110,19 @@ test("every event is listed newest first with its start, duration and kind, each
   expect(within(rows[1]).getByRole("link").getAttribute("href")).toBe("/solar?start=2024-02-01&end=2024-02-29&day=2024-02-04");
 });
 
-test("each event's bar is its length against the year's longest event", () => {
-  render(<BackupSection history={HISTORY} year={YEAR_23_24} today={TODAY} onYear={() => {}} />);
-  const widths = [...document.querySelectorAll<HTMLElement>('[data-part="duration-bar"]')].map((bar) => bar.style.width);
+// backup-history, "Each event's bar is measured against a day".
+test("each event's bar is its length against a day, a day or longer filling it", () => {
+  const { rerender } = render(<BackupSection history={HISTORY} year={YEAR_23_24} today={TODAY} onYear={() => {}} />);
+  const widths = () => [...document.querySelectorAll<HTMLElement>('[data-part="duration-bar"]')].map((bar) => bar.style.width);
   // site-motion: each event's bar uncovers from the left, staggered down the list.
   const bars = [...document.querySelectorAll<HTMLElement>('[data-part="duration-bar"]')];
   expect(bars.every((bar) => bar.classList.contains("motion-uncover"))).toBe(true);
   expect(bars.map((bar) => bar.style.getPropertyValue("--i"))).toEqual(bars.map((_, i) => String(i)));
-  expect(widths[1]).toBe("100%");
-  expect(parseFloat(widths[3])).toBeCloseTo((3600 / 188_172) * 100, 3);
+  expect(widths()[1]).toBe("100%");
+  expect(parseFloat(widths()[3])).toBeCloseTo(100 / 24, 3);
+  const goOffGrid = HISTORY.events[0];
+  rerender(<BackupSection history={{ summary: EMPTY.summary, events: [goOffGrid] }} year={YEAR_23_24} today={TODAY} onYear={() => {}} />);
+  expect(parseFloat(widths()[0])).toBeCloseTo((64.216 / 86_400) * 100, 3);
 });
 
 // backup-history, "The outage summary": "No outages." alone would sit oddly above a listed test.

@@ -14,7 +14,7 @@ import { energy } from "@/lib/units";
 import { Length } from "@/components/length";
 import { Measured } from "@/components/measured";
 
-type Props = { history: BackupHistory; year: Range; today: string; onYear: (year: Range) => void };
+type Props = { history: BackupHistory; year: Range; today: string; onYear: (year: Range) => void; follows?: boolean };
 
 const KINDS: Record<BackupKind, string> = { outage: "Outage", blip: "Blip", test: "Test", commissioning: "Commissioning" };
 const dayDate = new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: TIME_ZONE });
@@ -53,7 +53,10 @@ function detail({ weather, battery }: Event) {
   return line ? line[0].toUpperCase() + line.slice(1) : null;
 }
 
-function EventRow({ event, length, longest, grouped, order }: { event: Event; length: number; longest: number; grouped: boolean; order: number }) {
+// A fixed day, not the year's longest event, so a year holding only a one-minute test doesn't draw it full width.
+const DAY_SECONDS = 86_400;
+
+function EventRow({ event, length, grouped, order }: { event: Event; length: number; grouped: boolean; order: number }) {
   const { start, kind } = event;
   const line = detail(event);
   return (
@@ -62,7 +65,7 @@ function EventRow({ event, length, longest, grouped, order }: { event: Event; le
         <Link href={dayLink(start)} className="col-span-3 hover:text-white sm:col-span-1">{(grouped ? timeOnly : dayTime).format(new Date(start))}</Link>
         <span aria-hidden className="h-2 self-center sm:h-2.5">
           <span data-part="duration-bar" className={`motion-uncover block h-full min-w-0.5 rounded-xs ${kind === "outage" ? "bg-powerwall" : "bg-grid/60"}`}
-            style={{ width: `${(length / longest) * 100}%`, "--i": order } as CSSProperties} />
+            style={{ width: `${Math.min(length / DAY_SECONDS, 1) * 100}%`, "--i": order } as CSSProperties} />
         </span>
         <span className="text-right"><Measured text={duration(length)} /></span>
         <span className={`text-[13px] ${kind === "outage" ? "text-powerwall" : "text-muted-foreground"}`}>{KINDS[kind]}</span>
@@ -88,14 +91,14 @@ const blipsLine = (blips: BackupHistory["summary"]["blips"]) =>
     ? `${blips[0].count} blip${blips[0].count === 1 ? "" : "s"}`
     : `Blips: ${blips.map(({ label, count }) => `${label} ${count}`).join(" · ")}`;
 
-// When the grid went down and the house ran on its own, for the true-up year picked here, apart from the page's range.
-export function BackupSection({ history: { summary, events }, year, today, onYear }: Props) {
+// When the grid went down and the house ran on its own, for the true-up year picked here, or the page's own when it shows
+// All time or a true-up year (`follows`), so the page and the section can't give two answers.
+export function BackupSection({ history: { summary, events }, year, today, onYear, follows = false }: Props) {
   // Named in the heading, as the picker's "True-up year" doesn't say which, and the page above may show another range.
   const shown = backupParam(year, today) === "all" ? "All time" : rangeTitle(year);
   const lengths = new Map(events.map((e) => [e.start, (Date.parse(e.end) - Date.parse(e.start)) / 1000]));
-  const longestEvent = Math.max(...lengths.values());
   const row = (event: Event, grouped: boolean) => (
-    <EventRow event={event} length={lengths.get(event.start)!} longest={longestEvent} grouped={grouped} order={events.indexOf(event)} />
+    <EventRow event={event} length={lengths.get(event.start)!} grouped={grouped} order={events.indexOf(event)} />
   );
   return (
     <section aria-labelledby="backup" className="flex flex-col gap-5 rounded-[10px] border bg-card p-4 sm:p-6">
@@ -104,7 +107,7 @@ export function BackupSection({ history: { summary, events }, year, today, onYea
           <h2 id="backup" className="text-sm font-medium tracking-[0.06em] text-muted-foreground uppercase">Backup <span className="font-normal">· {shown}</span></h2>
           <span className="text-sm text-muted-foreground">When the grid went down and the house ran on its own</span>
         </div>
-        <PresetGroup label="Backup years" range={year} presets={backupPresets(today)} onRange={onYear} today={today} />
+        {!follows && <PresetGroup label="Backup years" range={year} presets={backupPresets(today)} onRange={onYear} today={today} />}
       </div>
       {summary.longest ? (
         <div className="flex flex-col gap-3">

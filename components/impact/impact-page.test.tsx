@@ -132,6 +132,22 @@ test("a new range keeps the backup year chosen", () => {
   expect(router.push).toHaveBeenCalledWith("/impact?start=2026-11-08&end=2026-11-14&backup=24-25", { scroll: false });
 });
 
+// backup-history, "The Backup section follows the page's year" and "The Backup year is in the address".
+test("at the page's All time the section follows it, and leaving it drops backup from the address", () => {
+  const allTime = { start: "2021-10-10", end: "2026-11-08" };
+  render(<ImpactPage range={allTime} figures={figures(95)} today="2026-11-08" backup={NO_BACKUP} charging={CHARGING} backupYear={{ start: "2021-10-01", end: "2027-09-30" }} />);
+  expect(screen.queryByRole("group", { name: "Backup years" })).toBeNull();
+  expect(screen.getByRole("heading", { name: /^Backup/ }).textContent).toBe("Backup · All time");
+  fireEvent.click(ranges().getByRole("button", { name: "This month" }));
+  expect(router.push).toHaveBeenCalledWith("/impact?start=2026-11-01&end=2026-11-30", { scroll: false });
+});
+
+test("moving the page to All time leaves the chosen backup year out of the address", () => {
+  render(<ImpactPage range={march} figures={figures(95)} today="2026-11-08" backup={NO_BACKUP} charging={CHARGING} backupYear={{ start: "2024-10-01", end: "2025-09-30" }} />);
+  fireEvent.click(ranges().getByRole("button", { name: "All time" }));
+  expect(router.push).toHaveBeenCalledWith("/impact?start=2021-10-10&end=2026-11-08", { scroll: false });
+});
+
 test("the Backup section reloads its year on outages, site-state and reopen events", async () => {
   const empty = { ok: true, json: () => ({ data: NO_BACKUP }) };
   answers.push(() => Promise.resolve(empty), () => Promise.resolve(empty), () => Promise.resolve(empty));

@@ -1,4 +1,4 @@
-import type { Preset, Range } from "@/lib/solar/ranges";
+import { holds, type Preset, presets, type Range } from "@/lib/solar/ranges";
 
 // The Backup section's years: true-up years, October 1 to September 30, from the site's first, '21 - '22. In the address
 // a year is "24-25" and every year is "all".
@@ -13,6 +13,13 @@ export function backupYear(value: unknown, today: string): Range {
   const startYear = match ? 2000 + Number(match[1]) : NaN;
   const valid = match && Number(match[2]) === (startYear + 1) % 100 && startYear >= FIRST && startYear <= currentStart(today);
   return yearRange(valid ? startYear : currentStart(today));
+}
+
+// While the page shows its All time or a true-up year, the section shows the same span, so the two can't disagree.
+export function followedYear(range: Range, today: string): Range | null {
+  if (holds(presets(today).at(-1)!, range)) return allTime(today);
+  const year = backupYear(`${range.start.slice(2, 4)}-${range.end.slice(2, 4)}`, today);
+  return year.start === range.start && year.end === range.end ? year : null;
 }
 
 // Null for this year, the default, so it stays out of the address.

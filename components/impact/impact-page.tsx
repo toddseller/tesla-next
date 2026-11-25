@@ -12,7 +12,7 @@ import { useReload } from "@/components/solar/use-reload";
 import { UnshownNotice } from "@/components/unshown-notice";
 import { useLiveStream } from "@/components/use-live-stream";
 import type { BackupHistory } from "@/lib/backup";
-import { backupParam } from "@/lib/backup-years";
+import { backupParam, followedYear } from "@/lib/backup-years";
 import type { CarCharging } from "@/lib/car-charging";
 import type { ImpactFigures } from "@/lib/impact";
 import { impactLead } from "@/lib/lead";
@@ -28,9 +28,12 @@ type Props = {
 
 export function ImpactPage({ range, figures, today, backup, backupYear, charging, readings = "corrected", unshown = false, before = null }: Props) {
   const router = useRouter();
+  const follows = followedYear(range, today) !== null;
   // Every address the page goes to keeps the readings it shows, unless it asks for others.
-  const address = ({ start, end }: Range, year = backupYear, shown = readings) => {
-    const backupValue = backupParam(year, today);
+  const address = (next: Range, year = backupYear, shown = readings) => {
+    // A followed year is the page's, not a choice, so no other range inherits it.
+    const backupValue = follows || followedYear(next, today) ? null : backupParam(year, today);
+    const { start, end } = next;
     return withReadings(`/impact?start=${start}&end=${end}${backupValue ? `&backup=${backupValue}` : ""}`, shown);
   };
   const corrected = reachesCorrected(range.start, range.end);
@@ -77,7 +80,7 @@ export function ImpactPage({ range, figures, today, backup, backupYear, charging
         {corrected && <ReadingsNote readings={readings} />}
       </section>
       {shownCharging && <CarChargingSection charging={shownCharging} range={range} />}
-      <BackupSection history={shownBackup} year={backupYear} today={today} onYear={(year) => router.replace(address(range, year), { scroll: false })} />
+      <BackupSection history={shownBackup} year={backupYear} today={today} follows={follows} onYear={(year) => router.replace(address(range, year), { scroll: false })} />
     </div>
   );
 }

@@ -63,6 +63,16 @@ test("the Backup section is served for the year in the address, this true-up yea
   expect(backupHistory).toHaveBeenLastCalledWith({ start: "2026-10-01", end: "2027-09-30" });
 });
 
+// backup-history, "The Backup section follows the page's year": the page's All time or true-up year wins over the address.
+test("the Backup section is served for the page's All time or true-up year, whatever backup says", async () => {
+  await served({ start: "2021-10-10", end: "2026-11-08", backup: "23-24" });
+  expect(backupHistory).toHaveBeenLastCalledWith({ start: "2021-10-01", end: "2027-09-30" });
+  await served({ start: "2023-10-01", end: "2024-09-30", backup: "all" });
+  expect(backupHistory).toHaveBeenLastCalledWith({ start: "2023-10-01", end: "2024-09-30" });
+  await served({ start: "2026-03-01", end: "2026-03-31", backup: "23-24" });
+  expect(backupHistory).toHaveBeenLastCalledWith({ start: "2023-10-01", end: "2024-09-30" });
+});
+
 test("the range's car charging is served with the page, counted up to today at the site", async () => {
   const html = await served({ start: "2026-10-18", end: "2026-10-18" });
   expect(carCharging).toHaveBeenCalledWith("2026-10-18", "2026-10-18", "2026-11-08", "corrected");
