@@ -228,6 +228,8 @@ export const sceneState = (
     windGusts,
     windDirection,
     cloudSeed: cloudSeedAt(now),
+    // The Death Star and the Star Destroyer's month (the scene-weather spec), by the site's date.
+    may: siteDate.format(now).slice(5, 7) === "05",
     cover,
     cirrus,
     low,

@@ -22,6 +22,8 @@ export const HORIZON = 520;
 export const GLOW = { top: 60, size: 0.22, cloudSize: 0.12 };
 // The moon's disc, as a share of the stage's width.
 export const MOON = { size: 0.045 };
+// The May night's Star Destroyer, as a share of the scene's width.
+export const SHIP = { size: 0.09 };
 
 // Where a body `altitude` degrees up sits in the stage, top to bottom: overhead
 // at GLOW.top below the scene's top, LOW_ALTITUDE at the eaves, evenly between,

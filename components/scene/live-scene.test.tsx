@@ -5,7 +5,7 @@ import React from "react";
 import {act, cleanup, render} from "@testing-library/react";
 
 import LiveScene, {drawStars, driftVelocity, easeDrift, flowOffset, moonLitPath, moveFlows, PAUSED_AT, skyY, TIMING, vaneAxis, vaneShake} from "@/components/scene/live-scene";
-import {CAR_CABLES, CHARGE_BAR, type LegName, EAVES, FLOW_COLORS, GLOW, HEADROOM, HORIZON, labelBox, LABELS, LANE_DROP, legPoints, LEGS, PANEL, PHONE_TEXT, RENDER, STAGE, VANE} from "@/components/scene/layout";
+import {CAR_CABLES, CHARGE_BAR, SHIP, type LegName, EAVES, FLOW_COLORS, GLOW, HEADROOM, HORIZON, labelBox, LABELS, LANE_DROP, legPoints, LEGS, PANEL, PHONE_TEXT, RENDER, STAGE, VANE} from "@/components/scene/layout";
 import {type LiveInput, type SceneOptions, sceneState, type Vehicle} from "@/lib/scene/live-scene";
 import {twinkle} from "@/lib/scene/night-sky";
 import {sunTimes} from "@/lib/scene/sun";
@@ -19,7 +19,12 @@ const cloudRenderer = vi.hoisted(() => ({ bake: vi.fn(), draw: vi.fn(), dispose:
 vi.mock("@/components/scene/cloud-renderer", () => ({ createCloudRenderer: () => cloudRenderer }));
 // jsdom has no 2D canvas to draw the moon's face on; it stands in as a fixed URL, or null before the map loads.
 const moonFace = vi.hoisted(() => ({ url: "data:image/png;base64,FACE" as string | null }));
-vi.mock("@/components/scene/moon-face", async (importOriginal) => ({ ...(await importOriginal()), useMoonFace: () => moonFace.url }));
+// The sphere shading stands in the same way.
+vi.mock("@/components/scene/moon-face", async (importOriginal) => ({
+  ...(await importOriginal()),
+  useMoonFace: (_longitude: number, _latitude: number, map: string | null) => (map ? moonFace.url : null),
+  useSphereShade: (_phase: number, on: boolean) => (on ? "data:image/png;base64,SHADE" : null),
+}));
 
 const NOW = new Date("2026-10-17T22:10:00Z");
 const { sunset: SUNSET } = sunTimes(new Date("2026-10-19T19:00:00Z"));
@@ -848,6 +853,33 @@ describe("weather", () => {
       expect(part(weatherScene(0, AFTERNOON), "moon-night").getAttribute("opacity")).toBe("0");
     });
 
+    describe("in May, the Death Star", () => {
+      const MAY_FULL = new Date("2027-05-20T08:00:00Z"); // 1 AM on 2027-05-20, full, 28 degrees up
+      const APRIL_FULL = new Date("2027-04-20T09:00:00Z"); // 2 AM on 2027-04-20, full
+
+      test("its window lights show in the dark part, over the earthshine, and its lit part is shaded as a sphere, turned with the light", () => {
+        const scene = weatherScene(0, MAY_FULL);
+        const { brightLimb } = sceneState(midday, MAY_FULL).moon!;
+        const night = part(scene, "moon-night");
+        const shade = part(part(scene, "moon-face"), "moon-shade");
+
+        expect([...night.querySelectorAll<HTMLElement>("[data-part]")].map((el) => el.dataset.part)).toEqual(["moon-dark", "moon-earthshine", "moon-lights"]);
+        expect(part(night, "moon-lights").getAttribute("href")).toBe(moonFace.url);
+        expect(part(night, "moon-lights").getAttribute("opacity")).toBeNull();
+        // Black between the windows adds no light, so the earthshine shows through.
+        expect(part(night, "moon-lights").style.mixBlendMode).toBe("screen");
+        expect(shade.getAttribute("href")).toBe("data:image/png;base64,SHADE");
+        expect(shade.getAttribute("transform")).toBe(`rotate(${brightLimb - 90})`);
+      });
+
+      test("outside May the moon has neither", () => {
+        const scene = weatherScene(0, APRIL_FULL);
+
+        expect(part(scene, "moon-lights")).toBeNull();
+        expect(part(scene, "moon-shade")).toBeNull();
+      });
+    });
+
     test("the sky's height scale: overhead near the top, 10 degrees at the eaves, the horizon below the solid ground", () => {
       expect(skyY(90)).toBeCloseTo(-HEADROOM + GLOW.top, 5);
       expect(skyY(10)).toBeCloseTo(EAVES, 5);
@@ -1414,4 +1446,98 @@ describe("weather vane", () => {
     expect(spread({ windSpeed: 30, windGusts: 32, windDirection: 270 })).toBeLessThan(gusty / 3);
     expect(spread({ windSpeed: 4, windGusts: 4, windDirection: 270 })).toBeLessThan(0.01);
   }));
+});
+
+describe("a Star Destroyer crosses the May night sky", () => {
+  const MAY_NIGHT = new Date("2027-05-20T08:00:00Z"); // 1 AM, the sun far below the horizon
+  const JUNE_NIGHT = new Date("2027-06-20T08:00:00Z");
+  const night = (date = MAY_NIGHT) => sceneState(midday, date, { cover: 0 });
+  const ship = (scene: Element) => scene.querySelector<HTMLElement>('[data-part="ship"]');
+  const seconds = (s: number) => act(() => vi.advanceTimersByTime(s * 1000));
+  // Waits halfway through their ranges: 3.5 seconds for the first pass, 4 minutes between passes.
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+    vi.spyOn(Math, "random").mockReturnValue(0.5);
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.restoreAllMocks();
+  });
+
+  test("the first within a few seconds, then one 3 to 5 minutes after each pass ends", () => {
+    const scene = render(<LiveScene state={night()} />).container;
+
+    expect(ship(scene)).toBeNull();
+    seconds(5);
+    expect(ship(scene)!.getAttribute("src")).toBe("/scene/star-destroyer-sky.webp");
+    expect(ship(scene)!.style.width).toBe(`${SHIP.size * 100}%`);
+    expect(ship(scene)!.style.animationDuration).toBe("90s");
+    seconds(89);
+    expect(ship(scene)).not.toBeNull();
+    seconds(1);
+    expect(ship(scene)).toBeNull();
+    seconds(179);
+    expect(ship(scene)).toBeNull();
+    seconds(121);
+    expect(ship(scene)).not.toBeNull();
+  });
+
+  test("its direction is chosen at random", () => {
+    vi.spyOn(Math, "random").mockReturnValue(0.2);
+    const scene = render(<LiveScene state={night()} />).container;
+    seconds(5);
+
+    expect(ship(scene)!.classList.contains("scene-ship-left")).toBe(true);
+  });
+
+  test("it flies over the overcast and the clouds, so it shows whatever the weather, and under the moon", () => {
+    const scene = render(<LiveScene state={sceneState(midday, MAY_NIGHT, { cover: 1 })} />).container;
+    seconds(5);
+    const layers = [...part(scene, "scene").children].map((el) => (el as HTMLElement).dataset.part);
+
+    expect(layers.indexOf("ship")).toBe(layers.indexOf("clouds") + 1);
+    expect(layers.indexOf("stage")).toBeGreaterThan(layers.indexOf("ship"));
+  });
+
+  test.each([
+    ["on a June night", night(JUNE_NIGHT)],
+    ["with the sun 3 degrees down", { ...night(), dusk: 0.25 }],
+  ])("none %s", (_, state) => {
+    const scene = render(<LiveScene state={state} />).container;
+    seconds(600);
+
+    expect(ship(scene)).toBeNull();
+  });
+
+  test.each([
+    ["the replay pauses", <LiveScene key="scene" state={night()} paused />],
+    ["the night ends", <LiveScene key="scene" state={{ ...night(), dusk: 0.25 }} />],
+  ])("when %s, a ship crossing finishes, no other starts, and the next night's first comes within seconds", (_, grounded) => {
+    const { container, rerender } = render(<LiveScene key="scene" state={night()} />);
+    seconds(5);
+    rerender(grounded);
+    seconds(89);
+    expect(ship(container)).not.toBeNull();
+    seconds(1);
+    expect(ship(container)).toBeNull();
+    seconds(600);
+    expect(ship(container)).toBeNull();
+
+    rerender(<LiveScene key="scene" state={night()} />);
+    seconds(5);
+    expect(ship(container)).not.toBeNull();
+  });
+
+  test("none under reduced motion", () => {
+    const original = window.matchMedia;
+    window.matchMedia = ((query: string) => ({ matches: query === "(prefers-reduced-motion: reduce)" })) as unknown as typeof window.matchMedia;
+    try {
+      const scene = render(<LiveScene state={night()} />).container;
+      seconds(600);
+
+      expect(ship(scene)).toBeNull();
+    } finally {
+      window.matchMedia = original;
+    }
+  });
 });

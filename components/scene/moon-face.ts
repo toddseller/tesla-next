@@ -1,6 +1,9 @@
 import { useEffect, useState } from "react";
 
-const moonMap = "/scene/moon-map.webp";
+export const MOON_MAP = "/scene/moon-map.webp";
+// May's face and its window lights (the scene-weather spec), laid out like the moon's map.
+export const DEATH_STAR_MAP = "/scene/death-star-map.webp";
+export const DEATH_STAR_LIGHTS = "/scene/death-star-map-lights.webp";
 
 const RAD = Math.PI / 180;
 
@@ -36,9 +39,9 @@ export const projectMoon = (map: Pick<ImageData, "data" | "width" | "height">, l
   return face;
 };
 
-// The map's pixels, read once through a canvas; after a failed load the next redraw tries again.
-let mapPixels: Promise<ImageData> | undefined;
-const loadMap = () => mapPixels ??= new Promise<ImageData>((resolve, reject) => {
+// Each map's pixels, read once through a canvas; after a failed load the next redraw tries again.
+const mapPixels = new Map<string, Promise<ImageData>>();
+const loadMap = (src: string) => mapPixels.get(src) ?? mapPixels.set(src, new Promise<ImageData>((resolve, reject) => {
   const image = new Image();
   image.onload = () => {
     const canvas = Object.assign(document.createElement("canvas"), { width: image.width, height: image.height });
@@ -47,11 +50,11 @@ const loadMap = () => mapPixels ??= new Promise<ImageData>((resolve, reject) => 
     resolve(context.getImageData(0, 0, image.width, image.height));
   };
   image.onerror = (error) => {
-    mapPixels = undefined;
+    mapPixels.delete(src);
     reject(error);
   };
-  image.src = moonMap;
-});
+  image.src = src;
+})).get(src)!;
 
 // About twice the disc's device pixels on a 2x screen.
 const FACE_SIZE = 256;
@@ -59,20 +62,60 @@ const FACE_SIZE = 256;
 // and in fast replay no more than once per step.
 const STEP = 0.2;
 
-// The face for the libration as a data URL, or null until the map has loaded;
-// the last face stays up while the next is drawn.
-export const useMoonFace = (longitude: number, latitude: number) => {
+// The face drawn from `map` for the libration as a data URL, or null until the map has loaded
+// (or with no map); the last face stays up while the next is drawn.
+export const useMoonFace = (longitude: number, latitude: number, map: string | null) => {
   const [l, b] = [Math.round(longitude / STEP) * STEP, Math.round(latitude / STEP) * STEP];
   const [face, setFace] = useState<string | null>(null);
   useEffect(() => {
+    if (!map) return;
     let current = true;
-    loadMap().then((map) => {
+    loadMap(map).then((pixels) => {
       if (!current) return;
       const canvas = Object.assign(document.createElement("canvas"), { width: FACE_SIZE, height: FACE_SIZE });
-      canvas.getContext("2d")!.putImageData(new ImageData(projectMoon(map, l, b, FACE_SIZE), FACE_SIZE), 0, 0);
+      canvas.getContext("2d")!.putImageData(new ImageData(projectMoon(pixels, l, b, FACE_SIZE), FACE_SIZE), 0, 0);
       setFace(canvas.toDataURL());
     }).catch(() => {});
     return () => { current = false; };
-  }, [l, b]);
-  return face;
+  }, [l, b, map]);
+  return map ? face : null;
+};
+
+// The Death Star's lit part is shaded as a matte sphere (the scene-weather spec), the real moon isn't.
+// Black, its alpha up to 0.8 where a matte surface gets no light; 1.15 lets the middle stay clear.
+// Lit from the right, as the phase mask is, the sun `phase` of a turn from the viewer either way. Matte light leaves a
+// crescent nearly dark, so the shading weakens as less of the disc is lit, reaching full strength by half.
+export const sphereShade = (phase: number, size: number) => {
+  const away = Math.PI * Math.abs(1 - 2 * phase);
+  const [toSide, toViewer] = [Math.sin(away), Math.cos(away)];
+  const strength = 0.8 * Math.min(1, 1 - Math.cos(2 * Math.PI * phase));
+  const shade = new Uint8ClampedArray(size * size * 4);
+  for (let j = 0; j < size; j += 1) {
+    const y = 1 - ((j + 0.5) / size) * 2;
+    for (let i = 0; i < size; i += 1) {
+      const x = ((i + 0.5) / size) * 2 - 1;
+      const zz = 1 - x * x - y * y;
+      if (zz < 0) continue;
+      const light = Math.max(0, x * toSide + Math.sqrt(zz) * toViewer);
+      shade[(j * size + i) * 4 + 3] = 255 * strength * (1 - Math.min(1, 1.15 * light));
+    }
+  }
+  return shade;
+};
+
+const SHADE_SIZE = 128;
+// The phase moves about 0.034 a day, so the shading redraws a few times a day.
+const PHASE_STEP = 0.005;
+
+// The shading as a data URL while `on`, else null.
+export const useSphereShade = (phase: number, on: boolean) => {
+  const step = Math.round(phase / PHASE_STEP) * PHASE_STEP;
+  const [shade, setShade] = useState<string | null>(null);
+  useEffect(() => {
+    if (!on) return;
+    const canvas = Object.assign(document.createElement("canvas"), { width: SHADE_SIZE, height: SHADE_SIZE });
+    canvas.getContext("2d")!.putImageData(new ImageData(sphereShade(step, SHADE_SIZE), SHADE_SIZE), 0, 0);
+    setShade(canvas.toDataURL());
+  }, [step, on]);
+  return on ? shade : null;
 };

@@ -69,8 +69,8 @@ const webpSize = (file: string) => {
 };
 
 test("every scene image is on the same 2400 x 1166 frame", () => {
-  // The moon's map (NASA's, drawn onto its disc) isn't a layer of the scene.
-  const files = readdirSync(ASSETS).filter((file) => file.endsWith(".webp") && !file.startsWith("moon"));
+  // The moon's and the Death Star's maps (drawn onto the moon's disc) and the Star Destroyer (flown across the sky) aren't layers of the scene.
+  const files = readdirSync(ASSETS).filter((file) => file.endsWith(".webp") && !/^(moon|death-star|star-destroyer-sky)/.test(file));
 
   expect(files).toHaveLength(16);
   files.forEach((file) => expect([file, ...webpSize(file)]).toEqual([file, 2400, 1166]));

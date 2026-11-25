@@ -52,6 +52,26 @@
   height: 100%;
 }
 
+/* The May night's Star Destroyer: one pass (its length set by the component) from just past one edge to past the other, sinking
+   slightly; a pass to the left runs the same path backwards, the ship turned to face it. */
+.scene-ship {
+  position: absolute;
+  left: -10%;
+  animation: scene-ship-pass linear forwards;
+}
+
+.scene-ship-left {
+  animation-direction: reverse;
+  scale: -1 1;
+}
+
+@keyframes scene-ship-pass {
+  to {
+    left: 100%;
+    translate: 0 150%;
+  }
+}
+
 /* The twilight glow, over the stars and under the overcast sky that hides it. */
 .scene-twilight {
   position: absolute;
