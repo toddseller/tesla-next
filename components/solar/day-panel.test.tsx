@@ -192,7 +192,7 @@ test("a later day from the strip slides in as a step forward", () => {
 test("a corrected day offers the readings, and Tesla's view keeps itself in its steps and its way back", () => {
   render(<SolarPage range={{ start: "2025-10-01", end: "2025-10-31" }} items={stripItems} today="2026-11-07" initialStatus={null} readings="tesla"
     day={{ data: dayOf("2025-10-14"), strip: { range: { start: "2025-10-01", end: "2025-10-31" }, items: stripItems } }} />);
-  expect(screen.getByRole("group", { name: "Readings" })).toBeTruthy();
+  expect(screen.getByRole("group", { name: "Grid readings" })).toBeTruthy();
   expect(screen.getByText(/Grid figures are as Tesla reported them/)).toBeTruthy();
   fireEvent.click(button("Next day"));
   expect(router.replace).toHaveBeenLastCalledWith("/solar?start=2025-10-01&end=2025-10-31&day=2025-10-15&readings=tesla", NEXT);
@@ -201,7 +201,7 @@ test("a corrected day offers the readings, and Tesla's view keeps itself in its 
 
 test("a day after the fix offers no readings", () => {
   render(page("2026-10-14"));
-  expect(screen.queryByRole("group", { name: "Readings" })).toBeNull();
+  expect(screen.queryByRole("group", { name: "Grid readings" })).toBeNull();
 });
 
 // meter-correction: a day reloaded in one view gives way to the day the server sends for the other.

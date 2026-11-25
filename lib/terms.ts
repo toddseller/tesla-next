@@ -35,6 +35,11 @@ export const TERMS = {
     term: "Storm watch",
     definition: "Before severe weather that could cut the power, the Powerwalls charge to full and hold it, so the house is ready for an outage.",
   },
+  readings: {
+    term: "Grid readings",
+    definition:
+      "From October 6, 2023 to April 26, 2026, Tesla read about half the grid energy PG&E's meter recorded. Corrected uses PG&E's readings for those days; As Tesla reported shows Tesla's own.",
+  },
 } as const;
 
 export type TermName = keyof typeof TERMS;

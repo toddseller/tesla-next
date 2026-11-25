@@ -32,7 +32,7 @@ export function TopTenPage({ topTen: served, withVpp, today, readings = "correct
           <h1 className="text-[22px] font-semibold">Top Ten</h1>
           {lead ? <Lead text={lead} /> : <p className="text-sm text-muted-foreground">The records since October 2021, and the days and months closest to them</p>}
         </div>
-        <div className="flex flex-wrap gap-2 max-sm:w-full">
+        <div className="flex flex-wrap items-end gap-2 max-sm:w-full">
         <ReadingsSwitch readings={readings} addresses={{ corrected: at("/top", withVpp, "corrected"), tesla: at("/top", withVpp, "tesla") }} />
         <div role="group" aria-label="VPP event days in the export rankings" className="grid grid-cols-2 gap-0.5 rounded-lg border border-input bg-card p-[3px] max-sm:w-full sm:flex">
           {CHOICES.map((choice) => (
