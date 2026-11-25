@@ -16,7 +16,7 @@ test("it names the range shown instead, then drops the marker from the address, 
 test("an address left with nothing else loses its question mark too", () => {
   window.history.replaceState(null, "", "/true-up?unshown=1");
   render(<UnshownNotice range={{ start: "2026-10-01", end: "2027-09-30" }} />);
-  expect(screen.getByRole("status").textContent).toContain("so this shows '26\u00a0-\u00a0'27.");
+  expect(screen.getByRole("status").textContent).toContain("so this shows 2026\u201127.");
   expect(window.location.pathname + window.location.search).toBe("/true-up");
 });
 

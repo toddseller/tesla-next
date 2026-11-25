@@ -32,8 +32,8 @@ test("the previous arrow steps a true-up year, the button and heading naming it"
   expect(onYear).toHaveBeenCalledWith({ start: "2025-10-01", end: "2026-09-30" });
   rerender(<BackupSection history={EMPTY} year={{ start: "2025-10-01", end: "2026-09-30" }} today={TODAY} onYear={onYear} />);
   // The shared year name keeps its spaces from breaking.
-  expect(pressed().map((name) => name!.replace(/\u00a0/g, " "))).toEqual(["'25 - '26"]);
-  expect(screen.getByRole("heading", { level: 2 }).textContent!.replace(/\u00a0/g, " ")).toBe("Backup · '25 - '26");
+  expect(pressed()).toEqual(["2025\u201126"]);
+  expect(screen.getByRole("heading", { level: 2 }).textContent).toBe("Backup · 2025\u201126");
   expect(arrow("Next true-up year").disabled).toBe(false);
 });
 
@@ -56,12 +56,12 @@ test("All time is every year", () => {
 });
 
 test("the heading names the year shown, the current true-up year included, or All time", () => {
-  const heading = () => screen.getByRole("heading", { level: 2 }).textContent!.replace(/\u00a0/g, " ");
+  const heading = () => screen.getByRole("heading", { level: 2 }).textContent;
   const { rerender } = render(<BackupSection history={EMPTY} year={THIS_YEAR} today={TODAY} onYear={() => {}} />);
-  expect(heading()).toBe("Backup · '26 - '27");
-  expect(screen.getByRole("region", { name: /^Backup · '26\s-\s'27$/ })).toBeTruthy();
+  expect(heading()).toBe("Backup · 2026\u201127");
+  expect(screen.getByRole("region", { name: /^Backup · 2026\u201127$/ })).toBeTruthy();
   rerender(<BackupSection history={EMPTY} year={{ start: "2023-10-01", end: "2024-09-30" }} today={TODAY} onYear={() => {}} />);
-  expect(heading()).toBe("Backup · '23 - '24");
+  expect(heading()).toBe("Backup · 2023\u201124");
   rerender(<BackupSection history={EMPTY} year={{ start: "2021-10-01", end: "2027-09-30" }} today={TODAY} onYear={() => {}} />);
   expect(heading()).toBe("Backup · All time");
 });
@@ -71,7 +71,7 @@ test("following the page's year, the section has no picker and still names the y
   render(<BackupSection history={EMPTY} year={{ start: "2023-10-01", end: "2024-09-30" }} today={TODAY} onYear={() => {}} follows />);
   expect(screen.queryByRole("group", { name: "Backup years" })).toBeNull();
   expect(screen.queryAllByRole("button")).toEqual([]);
-  expect(screen.getByRole("heading", { level: 2 }).textContent!.replace(/\u00a0/g, " ")).toBe("Backup · '23 - '24");
+  expect(screen.getByRole("heading", { level: 2 }).textContent).toBe("Backup · 2023\u201124");
 });
 
 const YEAR_23_24 = { start: "2023-10-01", end: "2024-09-30" };
@@ -163,7 +163,7 @@ test("an event's length sets its figures in mono and its units in sans", () => {
 
 const FULL = { drop_kwh: 20.6, low_at: "2024-02-06T14:10:00.000Z", complete: true, full: true, low_percent: 42.78, left_kwh: 15.4, hours_left: 14.2, refilled: true };
 const OUTAGES: BackupHistory = {
-  summary: { ...HISTORY.summary, closest: { percent: 36.2, at: "2024-12-15T12:10:00.000Z" }, blips: [{ label: "'23 - '24", count: 1 }] },
+  summary: { ...HISTORY.summary, closest: { percent: 36.2, at: "2024-12-15T12:10:00.000Z" }, blips: [{ label: "2023\u201124", count: 1 }] },
   events: [
     { start: "2024-03-01T18:00:00.000Z", end: "2024-03-01T19:00:00.000Z", kind: "outage", weather: "Calm", battery: { ...FULL, full: false, low_percent: null, left_kwh: null, hours_left: null, refilled: false, drop_kwh: 12 } },
     { start: "2024-02-04T22:51:38.000Z", end: "2024-02-07T03:07:50.000Z", kind: "outage", weather: "Heavy rain, high wind", battery: FULL },
@@ -187,9 +187,9 @@ test("the blips line gives one year's count, or each year's for All time", () =>
   render(<BackupSection history={OUTAGES} year={YEAR_23_24} today={TODAY} onYear={() => {}} />);
   expect(screen.getByText("1 blip")).toBeTruthy();
   cleanup();
-  const all = { ...OUTAGES, summary: { ...OUTAGES.summary, blips: [{ label: "'21 - '22", count: 3 }, { label: "'22 - '23", count: 0 }] } };
+  const all = { ...OUTAGES, summary: { ...OUTAGES.summary, blips: [{ label: "2021\u201122", count: 3 }, { label: "2022\u201123", count: 0 }] } };
   render(<BackupSection history={all} year={{ start: "2021-10-01", end: "2027-09-30" }} today={TODAY} onYear={() => {}} />);
-  expect(screen.getByText("Blips: '21 - '22 3 · '22 - '23 0")).toBeTruthy();
+  expect(screen.getByText("Blips: 2021\u201122 3 · 2022\u201123 0")).toBeTruthy();
 });
 
 test("each outage's detail line: weather, lowest charge or how far the Powerwalls fell, and the solar refill", () => {
@@ -245,5 +245,5 @@ test("its heading is a section label, the year still after its middle dot", () =
   render(<BackupSection history={HISTORY} year={YEAR_23_24} today={TODAY} onYear={() => {}} />);
   const heading = screen.getByRole("heading", { level: 2 });
   expect([...heading.classList]).toEqual(expect.arrayContaining(["text-sm", "font-medium", "tracking-[0.06em]", "text-muted-foreground", "uppercase"]));
-  expect(heading.textContent!.replace(/\u00a0/g, " ")).toBe("Backup · '23 - '24");
+  expect(heading.textContent).toBe("Backup · 2023\u201124");
 });

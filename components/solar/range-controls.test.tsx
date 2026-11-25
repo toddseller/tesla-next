@@ -229,8 +229,8 @@ test("the selected preset holds the step buttons, named for its shape, and stays
 test("a stepped preset reads the range's name, and choosing it brings back its own range", () => {
   const onRange = vi.fn();
   render(<RangeControls today="2026-11-23" range={{ start: "2025-10-01", end: "2026-09-30" }} presets={presets("2026-11-23")} onRange={onRange} />);
-  expect(rowButton("'25\u00a0-\u00a0'26").getAttribute("title")).toBe("Back to true-up year");
-  fireEvent.click(rowButton("'25\u00a0-\u00a0'26"));
+  expect(rowButton("2025\u201126").getAttribute("title")).toBe("Back to true-up year");
+  fireEvent.click(rowButton("2025\u201126"));
   expect(onRange).toHaveBeenCalledWith({ start: "2026-10-01", end: "2027-09-30" });
   expect(marked(datesButton())).toBe(false);
 });

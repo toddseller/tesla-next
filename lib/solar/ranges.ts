@@ -156,12 +156,13 @@ export function comparedDays(range: Range, today: string): { now: Range; then: R
   return end < range.start || then.start < FIRST_DAY ? null : { now: { start: range.start, end }, then };
 }
 
-const trueUpName = (start: string) => `'${start.slice(2, 4)} - '${String(Number(start.slice(2, 4)) + 1).padStart(2, "0")}`;
+// A non-breaking hyphen, so a year's name never splits across lines.
+export const trueUpName = (year: string) => `${year}\u2011${String((Number(year) + 1) % 100).padStart(2, "0")}`;
 
 // A whole calendar year or true-up year by name, as both a title and a sentence call it.
 const yearName = ({ start, end }: Range) =>
   start.endsWith("-01-01") && end === `${start.slice(0, 4)}-12-31` ? start.slice(0, 4)
-  : start.endsWith("-10-01") && end === `${Number(start.slice(0, 4)) + 1}-09-30` ? trueUpName(start)
+  : start.endsWith("-10-01") && end === `${Number(start.slice(0, 4)) + 1}-09-30` ? trueUpName(start.slice(0, 4))
   : null;
 
 const isWeek = ({ start, end }: Range) => end === shiftDay(start, 6) && new Date(`${start}T00:00:00Z`).getUTCDay() === 0;

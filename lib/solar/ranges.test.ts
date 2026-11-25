@@ -5,7 +5,7 @@ import { siteToday } from "@/lib/scene/replay";
 const redirect = vi.hoisted(() => vi.fn(() => { throw new Error("NEXT_REDIRECT"); }));
 vi.mock("next/navigation", () => ({ redirect }));
 
-import { address, comparedDays, datesLabel, dropUnshown, holds, impactPresets, isDaily, isTrueUpAllTime, parseDay, parseRange, periods, presets, rangeIncludes, rangeLabel, rangeNames, rangeTitle, step, stripRange, trueUpPresets } from "./ranges";
+import { address, comparedDays, datesLabel, dropUnshown, holds, impactPresets, isDaily, isTrueUpAllTime, parseDay, parseRange, periods, presets, rangeIncludes, rangeLabel, rangeNames, rangeTitle, step, trueUpName, stripRange, trueUpPresets } from "./ranges";
 
 const march = { start: "2026-03-01", end: "2026-03-31" };
 
@@ -344,8 +344,8 @@ describe("naming a range", () => {
     [{ start: "2026-10-01", end: "2026-10-31" }, "in October 2026", "October 2025"],
     [{ start: "2026-01-01", end: "2026-12-31" }, "in 2026 so far", null],
     [{ start: "2025-01-01", end: "2025-12-31" }, "in 2025", "2024"],
-    [{ start: "2026-10-01", end: "2027-09-30" }, "in '26\u00a0-\u00a0'27 so far", null],
-    [{ start: "2025-10-01", end: "2026-09-30" }, "in '25\u00a0-\u00a0'26", "'24\u00a0-\u00a0'25"],
+    [{ start: "2026-10-01", end: "2027-09-30" }, "in 2026\u201127 so far", null],
+    [{ start: "2025-10-01", end: "2026-09-30" }, "in 2025\u201126", "2024\u201125"],
     [{ start: "2026-11-22", end: "2026-11-28" }, "this week so far", null],
     [{ start: "2026-11-22", end: "2026-11-22" }, "today so far", null],
     [{ start: "2026-11-21", end: "2026-11-21" }, "yesterday", null],
@@ -363,7 +363,13 @@ describe("naming a range", () => {
 test("a page's title names its range in short", () => {
   expect(rangeTitle({ start: "2026-11-01", end: "2026-11-30" })).toBe("November 2026");
   expect(rangeTitle({ start: "2025-01-01", end: "2025-12-31" })).toBe("2025");
-  expect(rangeTitle({ start: "2026-10-01", end: "2027-09-30" })).toBe("'26\u00a0-\u00a0'27");
+  expect(rangeTitle({ start: "2026-10-01", end: "2027-09-30" })).toBe("2026\u201127");
   expect(rangeTitle({ start: "2026-11-14", end: "2026-11-14" })).toBe("Nov 14, 2026");
   expect(rangeTitle({ start: "2026-10-01", end: "2026-10-15" })).toBe("Oct 1 – 15, 2026");
+});
+
+// true-up-cycles, "True-up years": a year's name, with a hyphen that never breaks.
+test("a true-up year's name is written out", () => {
+  expect(trueUpName("2025")).toBe("2025\u201126");
+  expect(trueUpName("2099")).toBe("2099\u201100");
 });

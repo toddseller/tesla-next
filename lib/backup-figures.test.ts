@@ -153,12 +153,12 @@ describe("blipsPerYear", () => {
   const blips = [event("2023-03-01T10:00:00", 20, "blip"), event("2022-11-01T10:00:00", 20, "blip"), event("2022-09-30T21:00:00", 20, "blip"), event("2022-10-01T00:30:00", 3600)];
 
   test("one true-up year gives its count", () => {
-    expect(blipsPerYear(blips, { start: "2022-10-01", end: "2023-09-30" })).toEqual([{ label: "'22 - '23", count: 2 }]);
+    expect(blipsPerYear(blips, { start: "2022-10-01", end: "2023-09-30" })).toEqual([{ label: "2022\u201123", count: 2 }]);
   });
 
-  test("All time gives each true-up year from '21 - '22, a year without blips reading 0", () => {
+  test("All time gives each true-up year from 2021-22, a year without blips reading 0", () => {
     expect(blipsPerYear(blips, { start: "2021-10-01", end: "2024-09-30" })).toEqual([
-      { label: "'21 - '22", count: 1 }, { label: "'22 - '23", count: 2 }, { label: "'23 - '24", count: 0 },
+      { label: "2021\u201122", count: 1 }, { label: "2022\u201123", count: 2 }, { label: "2023\u201124", count: 0 },
     ]);
   });
 });

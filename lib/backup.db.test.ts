@@ -119,7 +119,7 @@ test("the house's energy during outages counts each interval by its part inside 
 
 test("a year without events has no outages, no longest and an empty list", async () => {
   expect(await backup.backupHistory(YEAR_23_24)).toEqual({
-    summary: { outages: 0, seconds: 0, longest: null, house_kwh: 0, powerwalls_kwh: 0, solar_kwh: 0, closest: null, blips: [{ label: "'23 - '24", count: 0 }] },
+    summary: { outages: 0, seconds: 0, longest: null, house_kwh: 0, powerwalls_kwh: 0, solar_kwh: 0, closest: null, blips: [{ label: "2023\u201124", count: 0 }] },
     events: [],
   });
 });
@@ -166,5 +166,5 @@ test("only outages carry battery figures and weather, and the summary counts bli
   await stretch("2024-03-01 09:59:00", "2024-03-01 10:20:00", "off_grid_intentional");
   const { summary, events } = await backup.backupHistory(YEAR_23_24);
   expect(events.map((e) => [e.kind, e.battery, e.weather])).toEqual([["test", null, null], ["blip", null, null]]);
-  expect(summary.blips).toEqual([{ label: "'23 - '24", count: 1 }]);
+  expect(summary.blips).toEqual([{ label: "2023\u201124", count: 1 }]);
 });

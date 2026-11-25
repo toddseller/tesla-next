@@ -63,7 +63,7 @@ test("Powerwalls that would pay back give their year", () => {
 
 test("the note says years, and the month solar paid back, which years are estimated, and how the credit is taken", () => {
   render(<PaybackCard payback={PAYBACK} today="2026-11-09" />);
-  expect(card().getByText(/^Years, and the month solar paid back\. '21 - '22 and '22 - '23 are estimated from '23 - '24/)).toBeTruthy();
+  expect(card().getByText(/^Years, and the month solar paid back\. 2021\u201122 and 2022\u201123 are estimated from 2023\u201124/)).toBeTruthy();
 });
 
 test("a year that can't be projected says so", () => {

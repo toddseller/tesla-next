@@ -2,6 +2,7 @@
 // utils/trueUp.js with mockup A's wording. Client-safe: the types are imported for their shape only.
 import type { cycleRows, trueUpCost } from "@/lib/true-up/cost";
 import type { Savings } from "@/lib/true-up/savings";
+import { trueUpName } from "@/lib/solar/ranges";
 import { energy } from "@/lib/units";
 
 export type Cycle = Awaited<ReturnType<typeof cycleRows>>[number];
@@ -38,8 +39,8 @@ export const runningNet = (cycles: Pick<Cycle, "true_up" | "net">[]) => {
 // Days before Tesla's metering fix without PG&E's own readings keep Tesla's grid figures, about half of PG&E's meter.
 export const uncorrectedDays = (cycles: Pick<Cycle, "uncorrected_days">[]) => sum(cycles, (c) => c.uncorrected_days);
 
-// A true-up year's name ("'24 - '25") with non-breaking spaces, so a phone never splits it.
-export const yearName = (label: string) => label.replace(/ /g, " ");
+// A label ("'24 - '25") as the year's name, "2024‑25".
+export const yearName = (label: string) => trueUpName(`20${label.slice(1, 3)}`);
 
 // As the Grid day view: a net that shows as 0.0 reads "Exported".
 export const netLabel = (value: number) => (Math.round(value * 10) / 10 > 0 ? "Imported" : "Exported");
@@ -81,7 +82,7 @@ export function billedText(cycles: Billed[]): TileText | null {
   const [count, it] = billed.length === 1 ? ["1 cycle", "it"] : [`${billed.length} cycles`, "them"];
   return {
     value: gap === 0 ? "Exact" : dollars(gap),
-    unit: gap === 0 ? null : gap < 0 ? "under" : "over",
+    unit: gap === 0 ? null : gap < 0 ? "more than the estimate" : "less than the estimate",
     line: `PG&E billed ${amount(actual)} for ${count}; the estimate for ${it} was ${amount(estimate)}.`,
   };
 }

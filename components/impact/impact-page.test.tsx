@@ -174,7 +174,7 @@ test("this year's reload asks for no year, and a failed one keeps the section", 
 
 test("the Home car charging section sits between the energy section and Backup", () => {
   render(<ImpactPage range={today} figures={figures(95)} today="2026-11-08" backup={NO_BACKUP} charging={CHARGING} backupYear={THIS_YEAR} />);
-  const [energy, charging, backup] = ["November 8, 2026", "Home car charging", /^Backup · '26\s-\s'27$/].map((name) => screen.getByRole("region", { name }));
+  const [energy, charging, backup] = ["November 8, 2026", "Home car charging", "Backup · 2026\u201127"].map((name) => screen.getByRole("region", { name }));
   expect(energy.compareDocumentPosition(charging) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   expect(charging.compareDocumentPosition(backup) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
 });

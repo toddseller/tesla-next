@@ -3,7 +3,7 @@ export const TERMS = {
   "true-up": {
     term: "True-Up",
     definition:
-      "PG&E bills this house's grid energy once a year. Its twelve billing cycles of imports and exports are netted, and the balance is settled at the true-up. A true-up year runs from the October meter read, so '25 - '26 is October 2025 to September 2026.",
+      "PG&E bills this house's grid energy once a year. Its twelve billing cycles of imports and exports are netted, and the balance is settled at the true-up. A true-up year runs from the October meter read, so 2025\u201126 is October 2025 to September 2026.",
   },
   peak: {
     term: "Peak (4 to 9 p.m.)",
