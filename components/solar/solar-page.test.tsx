@@ -204,7 +204,7 @@ test("another range draws its chart in, while the same range re-rendered later d
 
 // meter-correction, "A choice of readings on each affected page".
 const october25 = { start: "2025-10-01", end: "2025-10-31" };
-const readingsGroup = () => screen.queryByRole("group", { name: "Readings" });
+const readingsGroup = () => screen.queryByRole("group", { name: "Grid readings" });
 
 test("a range in the corrected years offers the readings, and Tesla's view keeps itself across a preset and a reload", async () => {
   render(<SolarPage range={october25} items={[item("2025-10-07", 24.7)]} today="2026-11-07" initialStatus={null} readings="tesla" />);

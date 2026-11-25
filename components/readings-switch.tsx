@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 
 import { presetStyle } from "@/components/solar/range-controls";
+import { Term } from "@/components/term";
 import type { Readings } from "@/lib/meter";
 
 const CHOICES: { label: string; readings: Readings }[] = [{ label: "Corrected", readings: "corrected" }, { label: "As Tesla reported", readings: "tesla" }];
@@ -10,14 +11,18 @@ const CHOICES: { label: string; readings: Readings }[] = [{ label: "Corrected", 
 // The page builds its own address for each view, so the switch keeps whatever else the address holds.
 export function ReadingsSwitch({ readings, addresses }: { readings: Readings; addresses: Record<Readings, string> }) {
   const router = useRouter();
+  // The hint sits on a label above the switch: its choices are buttons, and a hint is a button too.
   return (
-    <div role="group" aria-label="Readings" className="grid grid-cols-2 gap-0.5 rounded-lg border border-input bg-card p-[3px] max-sm:w-full sm:flex">
-      {CHOICES.map((choice) => (
-        <button key={choice.readings} type="button" aria-pressed={choice.readings === readings} className={presetStyle(choice.readings === readings)}
-          onClick={() => choice.readings !== readings && router.replace(addresses[choice.readings], { scroll: false })}>
-          {choice.label}
-        </button>
-      ))}
+    <div className="flex flex-col gap-1.5 max-sm:w-full">
+      <span className="text-sm text-muted-foreground"><Term name="readings">Grid readings</Term></span>
+      <div role="group" aria-label="Grid readings" className="grid grid-cols-2 gap-0.5 rounded-lg border border-input bg-card p-[3px] max-sm:w-full sm:flex">
+        {CHOICES.map((choice) => (
+          <button key={choice.readings} type="button" aria-pressed={choice.readings === readings} className={presetStyle(choice.readings === readings)}
+            onClick={() => choice.readings !== readings && router.replace(addresses[choice.readings], { scroll: false })}>
+            {choice.label}
+          </button>
+        ))}
+      </div>
     </div>
   );
 }

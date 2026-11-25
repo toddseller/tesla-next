@@ -90,7 +90,7 @@ export function SolarPage({ range, items, today, initialStatus, day, forecast, r
     <div className="flex flex-col gap-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-[22px] font-semibold">Solar by date range</h1>
-        <div className="flex flex-wrap items-center gap-2 max-sm:order-last max-sm:w-full">
+        <div className="flex flex-wrap items-end gap-2 max-sm:order-last max-sm:w-full">
           {corrected && <ReadingsSwitch readings={readings} addresses={both(range)} />}
           <RangeControls today={today} range={range} presets={presets(today)} onRange={(next) => router.push(at(next), { scroll: false })} />
         </div>

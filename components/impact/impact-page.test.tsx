@@ -217,7 +217,7 @@ test("a range in the corrected years offers the readings, and Tesla's view keeps
 
 test("a range after the fix offers no readings", () => {
   render(<ImpactPage range={today} figures={figures(95)} today="2026-11-08" backup={NO_BACKUP} charging={CHARGING} backupYear={THIS_YEAR} />);
-  expect(screen.queryByRole("group", { name: "Readings" })).toBeNull();
+  expect(screen.queryByRole("group", { name: "Grid readings" })).toBeNull();
 });
 
 test("under the heading, a sentence gives today's self-powered share so far and follows reloaded figures", async () => {

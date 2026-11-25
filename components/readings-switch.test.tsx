@@ -2,6 +2,7 @@
 // meter-correction, "A choice of readings on each affected page" and "Saying which readings are shown".
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, expect, test, vi } from "vitest";
+import { TERMS } from "@/lib/terms";
 import { ReadingsNote, ReadingsSwitch } from "./readings-switch";
 
 const router = vi.hoisted(() => ({ replace: vi.fn() }));
@@ -17,8 +18,19 @@ const button = (name: string) => screen.getByRole("button", { name });
 
 test("Corrected is chosen unless the page shows Tesla's figures", () => {
   render(<ReadingsSwitch readings="corrected" addresses={addresses} />);
-  expect(screen.getByRole("group", { name: "Readings" })).toBeTruthy();
+  expect(screen.getByRole("group", { name: "Grid readings" })).toBeTruthy();
   expect([button("Corrected"), button("As Tesla reported")].map((b) => b.getAttribute("aria-pressed"))).toEqual(["true", "false"]);
+});
+
+// term-hints, "The readings switch's term": the label explains the switch; its choices are buttons, so they can't hold a hint.
+test("a hinted Grid readings label comes before the switch and opens its definition without changing the view", () => {
+  const { container } = render(<ReadingsSwitch readings="corrected" addresses={addresses} />);
+  const label = button("Grid readings");
+  expect(label.compareDocumentPosition(screen.getByRole("group", { name: "Grid readings" })) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  fireEvent.click(label);
+  expect(screen.getByRole("dialog").textContent).toBe(TERMS.readings.definition);
+  expect(router.replace).not.toHaveBeenCalled();
+  expect(container.querySelectorAll(".cursor-help")).toHaveLength(1);
 });
 
 test("picking the other view replaces the address with it", () => {

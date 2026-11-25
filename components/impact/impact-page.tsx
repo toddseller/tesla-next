@@ -58,7 +58,7 @@ export function ImpactPage({ range, figures, today, backup, backupYear, charging
     <div className="flex flex-col gap-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-[22px] font-semibold">Impact</h1>
-        <div className="flex flex-wrap items-center gap-2 max-sm:order-last max-sm:w-full">
+        <div className="flex flex-wrap items-end gap-2 max-sm:order-last max-sm:w-full">
           {corrected && <ReadingsSwitch readings={readings} addresses={{ corrected: address(range, backupYear, "corrected"), tesla: address(range, backupYear, "tesla") }} />}
           <RangeControls today={today} range={range} presets={impactPresets(today)} onRange={(next) => router.push(address(next), { scroll: false })} />
         </div>
