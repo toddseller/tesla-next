@@ -25,7 +25,7 @@ The imported and exported totals under True-Up's net tile SHALL read in the unit
 ## MODIFIED Requirements
 
 ### Requirement: Energy in kWh or MWh
-Every page SHALL read an energy figure of 1,000 kWh or more in MWh, to one decimal place with thousands separators, and a figure below 1,000 kWh in kWh at the precision its place gives it. The rule SHALL hold wherever the figure shows: in a figure, a sentence, a tooltip and a screen reader's label. True-Up's billing cycle rows SHALL stay in kWh, as PG&E's bill prints them, so each row can be checked against the bill. The imported and exported totals under True-Up's net tile SHALL take the net's unit instead, as "The net tile's pair in the net's unit" says.
+Every page SHALL read an energy figure of 1,000 kWh or more in MWh, to one decimal place with thousands separators, and a figure below 1,000 kWh in kWh at the precision its place gives it. The rule SHALL hold wherever the figure shows: in a figure, a sentence, a tooltip and a screen reader's label. True-Up's billing cycle rows SHALL stay in kWh, as PG&E's bill prints them, so each row can be checked against the bill. True-Up's net tile's imported and exported SHALL take the net's unit.
 
 #### Scenario: A billing cycle past 1,000 kWh
 - **WHEN** a billing cycle nets 1,125.1 kWh imported
