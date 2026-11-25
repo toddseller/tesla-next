@@ -247,3 +247,15 @@ test("its heading is a section label, the year still after its middle dot", () =
   expect([...heading.classList]).toEqual(expect.arrayContaining(["text-sm", "font-medium", "tracking-[0.06em]", "text-muted-foreground", "uppercase"]));
   expect(heading.textContent).toBe("Backup · 2023\u201124");
 });
+
+test("every link to a day takes taps in a tap area taller than its words", () => {
+  render(<BackupSection history={OUTAGES} year={YEAR_23_24} today={TODAY} onYear={() => {}} />);
+  const summary = within(screen.getByRole("group", { name: "Outages" }));
+  const links = [
+    ...summary.getAllByRole("link"),
+    document.querySelector('[data-part="storm-day"] a')!,
+    ...eventRows().flatMap((row) => within(row).getAllByRole("link")),
+  ];
+  expect(summary.getAllByRole("link")).toHaveLength(2);
+  for (const link of links) expect(link.className).toContain("tap-area");
+});

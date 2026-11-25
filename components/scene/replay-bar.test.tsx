@@ -87,3 +87,16 @@ test("while playing, the button pauses", () => {
   bar({ playing: true });
   expect(screen.getByRole("button", { name: "Pause" })).toBeTruthy();
 });
+
+// scene-replay, "Replay controls fit a finger": below lg the bar sits under the scene, so it can grow there.
+test("below 1024 every control is 44 px tall and the scrubber takes touches in a 44 px band around a thin track", () => {
+  bar();
+  for (const name of ["Previous day", "Next day", "Play"]) expect(screen.getByRole("button", { name }).className).toContain("max-lg:size-11");
+  for (const control of [screen.getByRole("button", { name: "Day" }), screen.getByRole("combobox", { name: "Speed" }), screen.getByRole("button", { name: "LIVE" })]) {
+    expect(control.className).toContain("max-lg:min-h-11");
+  }
+  const scrubber = screen.getByRole("slider", { name: "Time" }).className;
+  expect(scrubber).toContain("max-lg:h-11");
+  expect(scrubber).toContain("[&::-webkit-slider-runnable-track]:h-1");
+  expect(scrubber).toContain("[&::-moz-range-track]:h-1");
+});

@@ -9,7 +9,7 @@ import { TERMS, type TermName } from "@/lib/terms";
 export function Term({ name, children }: { name: TermName; children: ReactNode }) {
   return (
     <Popover>
-      <PopoverTrigger className="cursor-help font-[inherit] text-inherit underline decoration-muted-foreground decoration-dotted underline-offset-4 outline-none focus-visible:rounded-sm focus-visible:ring-[3px] focus-visible:ring-ring">
+      <PopoverTrigger className="tap-area cursor-help font-[inherit] text-inherit underline decoration-muted-foreground decoration-dotted underline-offset-4 outline-none focus-visible:rounded-sm focus-visible:ring-[3px] focus-visible:ring-ring">
         {children}
       </PopoverTrigger>
       <PopoverContent aria-label={TERMS[name].term} collisionPadding={16} className="border-input bg-card text-[13px] leading-relaxed text-foreground shadow-xl shadow-black/45">

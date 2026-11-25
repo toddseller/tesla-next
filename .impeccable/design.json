@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-11-25T16:35:38Z",
+  "generatedAt": "2026-11-25T22:06:34Z",
   "title": "Design System: Tesla Solar Report",
   "extensions": {
     "colorMeta": {
@@ -444,7 +444,7 @@
       "Do set measured figures in Plex Mono and everything else in Plex Sans.",
       "Do mark a selection with Raised Slate plus the 2px Tesla Red line at the bottom.",
       "Do build cards as Slate Card with a 1px Hairline border, 10px corners, 16/24px padding and an uppercase section label.",
-      "Do keep navigation targets 44px tall and segment choices 40px."
+      "Do keep navigation targets 44px tall and segment choices 40px, and give inline words that act `tap-area` (24px or more)."
     ],
     "donts": [
       "Don't set body text, button labels or small text in Tesla Red; it is below 4.5:1 on the dark field.",

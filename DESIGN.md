@@ -223,7 +223,7 @@ Tesla app colors, each bound to one flow on every page, every chart and legend s
 
 A single column inside a 1200px container, padded 16px on phones and 32px from 640px up, with the top bar and footer running full width on hairline borders. Pages stack cards with 16 to 24px gaps; cards pad 16px on phones and 24px from 640px. Two-up grids appear inside cards, not across the page.
 
-Breakpoints: 640px moves the page links from a menu button onto the bar and widens padding; 1440px brings the solar and home readings into the top bar's live pill (they hide below it so the bar never wraps). Touch targets for navigation are 44px tall; segmented choices are 40px.
+Breakpoints: 640px moves the page links from a menu button onto the bar and widens padding; 1440px brings the solar and home readings into the top bar's live pill (they hide below it so the bar never wraps). Touch targets for navigation are 44px tall; segmented choices are 40px; inline words that act (a term hint, a link inside text) take the `tap-area` utility, a tap area 6px above and below the words, at least 24px tall, that leaves the line as it is.
 
 Spacing steps on a 4px base: 4, 8, 12, 16, 20, 24px, with 6 and 10px in tight clusters (pills, legend swatches).
 
@@ -287,7 +287,7 @@ Charts draw in once on arrival over 450ms with `cubic-bezier(.2, .7, .2, 1)`, st
 - **Do** set measured figures in Plex Mono and everything else in Plex Sans.
 - **Do** mark a selection with Raised Slate plus the 2px Tesla Red line at the bottom.
 - **Do** build cards as Slate Card with a 1px Hairline border, 10px corners, 16/24px padding and an uppercase section label.
-- **Do** keep navigation targets 44px tall and segment choices 40px.
+- **Do** keep navigation targets 44px tall and segment choices 40px, and give inline words that act `tap-area` (24px or more).
 
 ### Don't:
 - **Don't** set body text, button labels or small text in Tesla Red; it is below 4.5:1 on the dark field.

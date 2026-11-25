@@ -89,3 +89,13 @@
     @apply bg-background text-foreground font-sans;
   }
 }
+
+/* Inline words that act take taps 6 px above and below, at least 24 px for 13 px text, without moving the line or growing the focus ring. */
+@utility tap-area {
+  position: relative;
+  &::after {
+    content: "";
+    position: absolute;
+    inset: -6px 0;
+  }
+}

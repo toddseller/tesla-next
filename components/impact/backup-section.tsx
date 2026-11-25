@@ -62,7 +62,7 @@ function EventRow({ event, length, grouped, order }: { event: Event; length: num
   return (
     <div data-part="event" className={`flex flex-col gap-1 py-2.5 text-sm ${grouped ? "pl-4" : ""}`}>
       <div className="grid grid-cols-[minmax(0,1fr)_auto_auto] items-baseline gap-x-4 gap-y-1.5 sm:grid-cols-[13rem_minmax(0,1fr)_7rem_8rem]">
-        <Link href={dayLink(start)} className="col-span-3 hover:text-white sm:col-span-1">{(grouped ? timeOnly : dayTime).format(new Date(start))}</Link>
+        <Link href={dayLink(start)} className="tap-area col-span-3 hover:text-white sm:col-span-1">{(grouped ? timeOnly : dayTime).format(new Date(start))}</Link>
         <span aria-hidden className="h-2 self-center sm:h-2.5">
           <span data-part="duration-bar" className={`motion-uncover block h-full min-w-0.5 rounded-xs ${kind === "outage" ? "bg-powerwall" : "bg-grid/60"}`}
             style={{ width: `${Math.min(length / DAY_SECONDS, 1) * 100}%`, "--i": order } as CSSProperties} />
@@ -115,11 +115,11 @@ export function BackupSection({ history: { summary, events }, year, today, onYea
             <Tile label="Outages" value={String(summary.outages)}>a minute or longer</Tile>
             <Tile label="Off the grid" value={<Length text={duration(summary.seconds)} />} />
             <Tile label="Longest" value={<Length text={duration(summary.longest.seconds)} />}>
-              <Link href={dayLink(summary.longest.start)} className="text-foreground hover:text-white">{dayDate.format(new Date(summary.longest.start))}</Link>
+              <Link href={dayLink(summary.longest.start)} className="tap-area text-foreground hover:text-white">{dayDate.format(new Date(summary.longest.start))}</Link>
             </Tile>
             <Tile label="House ran on" value={energy(summary.house_kwh, 1).join(" ")}>{`Powerwalls ${energy(summary.powerwalls_kwh, 1, summary.house_kwh)[0]} · Solar ${energy(summary.solar_kwh, 1, summary.house_kwh)[0]}`}</Tile>
             <Tile label="Closest call" value={summary.closest ? `~${Math.round(summary.closest.percent)}%` : "—"}>
-              {summary.closest && <Link href={dayLink(summary.closest.at)} className="text-foreground hover:text-white">{dayDate.format(new Date(summary.closest.at))}</Link>}
+              {summary.closest && <Link href={dayLink(summary.closest.at)} className="tap-area text-foreground hover:text-white">{dayDate.format(new Date(summary.closest.at))}</Link>}
             </Tile>
           </div>
           <p className="text-[13px] text-muted-foreground">{blipsLine(summary.blips)}</p>
@@ -134,7 +134,7 @@ export function BackupSection({ history: { summary, events }, year, today, onYea
               {group ? (
                 <>
                   <p data-part="storm-day" className="flex flex-wrap items-baseline gap-x-2.5 pt-3 text-sm">
-                    <Link href={dayLink(inDay.at(-1)!.start)} className="font-semibold hover:text-white">{dayDate.format(new Date(inDay.at(-1)!.start))}</Link>
+                    <Link href={dayLink(inDay.at(-1)!.start)} className="tap-area font-semibold hover:text-white">{dayDate.format(new Date(inDay.at(-1)!.start))}</Link>
                     <span className="text-[13px] text-muted-foreground">
                       {`${group.count} ${inDay.every((e) => e.kind === "outage") ? "outages" : "events"} · ${duration(group.seconds)} off the grid`}
                     </span>
