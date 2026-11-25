@@ -51,10 +51,11 @@ const IDLE: CarCharging = {
   solar_percentage: 0, powerwall_percentage: 0, grid_percentage: 0, off_grid_percentage: 0, cars: [],
 };
 
-test("an idle day says there was no home charging, with an empty ring and no car lines", () => {
-  const { container } = render(<CarChargingSection charging={IDLE} range={{ start: "2026-11-09", end: "2026-11-09" }} />);
+test("an idle day says there was no home charging, with no ring and no car lines", () => {
+  render(<CarChargingSection charging={IDLE} range={{ start: "2026-11-09", end: "2026-11-09" }} />);
   expect(section().getByText("No home charging on November 9, 2026")).toBeTruthy();
-  expect(container.querySelectorAll("circle[data-share]")).toHaveLength(0);
+  expect(section().queryByRole("img")).toBeNull();
+  expect(section().queryByText(/off the grid/)).toBeNull();
   expect(section().queryByText(/^By car/)).toBeNull();
 });
 

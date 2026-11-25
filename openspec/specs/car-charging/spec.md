@@ -24,11 +24,11 @@ Home charging SHALL be counted only from the day of the first stored charge sess
 - **THEN** it counts 0 kWh, and the section says there is no charging data before Oct 20, 2025
 
 ### Requirement: A range with no charging
-A range inside the covered period with no charging SHALL show 0 kWh and say there was no home charging, with no shares and no car lines.
+A range inside the covered period with no charging SHALL say there was no home charging, with no ring, no shares and no car lines.
 
 #### Scenario: An idle day
 - **WHEN** the range is Nov 9, 2026 and no car charged at home that day
-- **THEN** the section says "No home charging on Nov 9, 2026" and its ring is empty
+- **THEN** the section says "No home charging on November 9, 2026" and shows no ring and no percentage
 
 ### Requirement: Charging by car
 Each car SHALL get a line with its kWh and its solar, Powerwall and grid percentages, counting only the intervals where the Wall Connector measured that car charging, or a gap between two measurements of the same car. Lines SHALL be named as "History names the plugged-in car" defines, never by VIN, and SHALL say from when cars were measured when the range starts before the first measured interval. Charging no car is named for SHALL count toward the household figures only.

@@ -57,10 +57,7 @@ export function CarChargingSection({ charging, range }: { charging: CarCharging;
       {before ? (
         <Message text={`No charging data before ${day(charging.since!, "short")}`} />
       ) : charging.total_kwh === 0 ? (
-        <div className="flex flex-wrap items-center gap-8">
-          <Ring name="Car charging" shares={shares} middle={0} caption="off the grid" />
-          <Message text={`No home charging ${range.start === range.end ? "on" : "in"} ${datesLabel(range, "long")}`} />
-        </div>
+        <Message text={`No home charging ${range.start === range.end ? "on" : "in"} ${datesLabel(range, "long")}`} />
       ) : (
         <div className="grid grid-cols-1 items-center gap-10 lg:grid-cols-2">
           <div className="flex flex-wrap items-center gap-8">
