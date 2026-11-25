@@ -51,11 +51,11 @@ For a corrected day, the difference between PG&E's export and the sum of the day
 - **THEN** those steps gain 1 kWh of export and lose up to 1 kWh of home use from solar between them
 
 ### Requirement: A choice of readings on each affected page
-The Solar page, Impact, Patterns and Top Ten SHALL show a switch reading "Corrected" and "As Tesla reported" when what they show includes a corrected day. Corrected SHALL be chosen unless the address has `readings=tesla`. Choosing SHALL replace the address and show every figure on the page, daily and 5-minute, in that view. A page whose days include no corrected day SHALL show no switch.
+The Solar page, Impact, Patterns and Top Ten SHALL show a switch reading "Corrected" and "As Tesla reported" when what they show includes a corrected day, named and labeled "Grid readings", its label a hinted term (see term-hints). Corrected SHALL be chosen unless the address has `readings=tesla`. Choosing SHALL replace the address and show every figure on the page, daily and 5-minute, in that view. A page whose days include no corrected day SHALL show no switch.
 
 #### Scenario: A range in the corrected years
 - **WHEN** a viewer opens the Solar page for October 2025
-- **THEN** the switch shows with Corrected chosen, and the figures are corrected
+- **THEN** the switch shows with Corrected chosen, after its "Grid readings" label, and the figures are corrected
 
 #### Scenario: Choosing Tesla's figures
 - **WHEN** the viewer picks "As Tesla reported" on Impact for 2025

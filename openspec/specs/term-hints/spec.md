@@ -17,10 +17,14 @@ A hinted term SHALL read as part of its sentence with a dotted underline, and ta
 - **THEN** the definition opens, and Escape closes it, returning focus to the term
 
 ### Requirement: One definition per term
-Each term SHALL have one definition, the same wherever it is hinted: the true-up (with how a true-up year's label like '25 - '26 reads), the 4 to 9 p.m. peak, NEM, NEM2, Net Surplus Compensation, VPP, WestLight Energy and storm watch.
+Each term SHALL have one definition, the same wherever it is hinted: the true-up (with how a true-up year's label like '25 - '26 reads), the 4 to 9 p.m. peak, NEM, NEM2, Net Surplus Compensation, VPP, WestLight Energy, storm watch and grid readings.
 
 #### Scenario: Storm watch in two places
 - **WHEN** "Storm watch" is hinted on the True-Up page and in the Solar day view
+- **THEN** both open the same definition
+
+#### Scenario: Grid readings on two pages
+- **WHEN** "Grid readings" is hinted on Impact and on Top Ten
 - **THEN** both open the same definition
 
 ### Requirement: Where the terms are hinted
@@ -32,7 +36,7 @@ Each page SHALL hint each of its terms once, where a visitor first meets it, and
 
 #### Scenario: Switches already explained
 - **WHEN** a visitor reads the Corrected / As Tesla reported switch or Top Ten's VPP switch
-- **THEN** there is no hint on them; the note under the readings switch and Top Ten's footnote explain them
+- **THEN** the readings switch's "Grid readings" label is hinted, and its choices are not; the VPP switch has no hint, Top Ten's footnote explaining it
 
 #### Scenario: Storm watch in the top bar and on the page
 - **WHEN** storm watch is active and a visitor opens `/true-up` for a year with a storm watch day
@@ -62,3 +66,14 @@ The top bar SHALL hint "STORM WATCH" in its storm watch pill, on every page, whe
 #### Scenario: Off the grid
 - **WHEN** the top bar reads OFF GRID or OFF GRID TEST
 - **THEN** the pill has no hint
+
+### Requirement: The readings switch's term
+Wherever the readings switch shows, a label "Grid readings" SHALL come before it and be hinted. Its definition SHALL say that from October 6, 2023 to April 26, 2026 Tesla read about half the grid energy PG&E's meter recorded, that Corrected uses PG&E's readings for those days, and that As Tesla reported shows Tesla's own.
+
+#### Scenario: Tapping Grid readings
+- **WHEN** a visitor on the Solar page for October 2025 taps "Grid readings"
+- **THEN** a popover opens with the grid readings definition, and the switch's choice is unchanged
+
+#### Scenario: No switch, no hint
+- **WHEN** a visitor opens the Solar page for May 2026
+- **THEN** there is neither the switch nor a "Grid readings" hint
