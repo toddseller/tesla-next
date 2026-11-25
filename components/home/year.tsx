@@ -151,16 +151,16 @@ export function Year({ year: servedYear, today, days: servedDays, shares: served
           <div role="slider" tabIndex={0} aria-label={summary} aria-valuemin={0} aria-valuemax={dates.length - 1} aria-valuenow={index} aria-valuetext={readout}
             className={`relative touch-none outline-none focus-visible:ring-[3px] focus-visible:ring-ring ${asked && !asked.failed ? "opacity-50" : ""}`}
             onKeyDown={onKey} onPointerDown={onPointer} onPointerMove={onPointer}>
-            <canvas ref={canvas} width={24} height={dates.length} className="block aspect-[24/40] w-full rounded-sm [image-rendering:pixelated] max-sm:max-h-[50svh]" />
+            <canvas ref={canvas} width={24} height={dates.length} className="block aspect-[24/40] w-full rounded-sm [image-rendering:pixelated] max-md:max-h-[50svh]" />
             <div aria-hidden className="absolute inset-x-0 h-0.5 bg-foreground" style={{ top: `${(index / dates.length) * 100}%` }} />
             {current && <div data-part="today-row" aria-hidden className="absolute -inset-x-2 h-0.5 bg-primary" style={{ top: `${(dates.indexOf(today) / dates.length) * 100}%` }} />}
           </div>
         </figure>
-        <div className="flex flex-col gap-6 md:sticky md:top-6 md:self-start">
-          <p className="max-w-[60ch] text-[15px] text-pretty text-muted-foreground">
+        <div className="flex flex-col gap-6 max-md:contents md:sticky md:top-6 md:self-start">
+          <p className="max-w-[60ch] text-[15px] max-md:-order-1 text-pretty text-muted-foreground">
             Every day of the year, top to bottom; every hour, left to right. Brighter is more sun. Summer&apos;s long days, the March and November clock changes and the cloudy streaks all show.
           </p>
-          <div className="flex flex-col gap-2.5 rounded-[10px] border border-input bg-card p-4">
+          <div className="flex flex-col gap-2.5 rounded-[10px] border border-input bg-card p-4 max-md:-order-1">
             <p className="font-mono text-[13px] text-muted-foreground">Point at, drag across or tap a day; or focus the chart and use Up and Down.</p>
             <div className="flex items-center gap-2.5">
               <button type="button" aria-label="Previous day" className="flex size-11 shrink-0 items-center justify-center rounded-lg border border-input" onClick={() => step(index - 1)}><ChevronLeft size={16} aria-hidden /></button>

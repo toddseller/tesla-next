@@ -112,9 +112,10 @@ test("a year that fails to load says so, offers to try again, and keeps the year
   expect(fetch.mock.calls.filter(([url]) => String(url).startsWith("/api/solar-hours"))).toHaveLength(2);
 });
 
-test("on a phone the chart is capped at half the screen's height, so a swipe elsewhere scrolls the page", () => {
+// Capped wherever the readout sits above the chart, so a tap near the chart's foot leaves the readout on screen.
+test("below md the chart is capped at half the screen's height, so a swipe elsewhere scrolls the page", () => {
   year();
-  expect(chart().querySelector("canvas")!.className).toContain("max-sm:max-h-[50svh]");
+  expect(chart().querySelector("canvas")!.className).toContain("max-md:max-h-[50svh]");
 });
 
 test("beside the chart, the readout's column stays in view while the chart scrolls", () => {
@@ -122,6 +123,17 @@ test("beside the chart, the readout's column stays in view while the chart scrol
   // The readout sits in its row, in its card, in the column beside the chart.
   const column = document.querySelector('[data-part="day-readout"]')!.parentElement!.parentElement!.parentElement!;
   expect(column.className.split(" ")).toEqual(expect.arrayContaining(["md:sticky", "md:top-6", "md:self-start"]));
+});
+
+test("on a phone the explanation and the day card come before the chart, the shares after it", () => {
+  year();
+  const card = document.querySelector('[data-part="day-readout"]')!.parentElement!.parentElement!;
+  const column = card.parentElement!;
+  const [explanation, , shares] = column.children;
+  expect(column.className.split(" ")).toContain("max-md:contents");
+  expect(explanation.className.split(" ")).toContain("max-md:-order-1");
+  expect(card.className.split(" ")).toContain("max-md:-order-1");
+  expect(shares.className.split(" ")).not.toContain("max-md:-order-1");
 });
 
 test("the readout's figure never wraps away from its unit", () => {
