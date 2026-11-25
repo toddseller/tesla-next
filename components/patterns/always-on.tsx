@@ -24,13 +24,14 @@ function Figure({ label, value, after }: { label: string; value: string; after?:
 function Figures({ months, today }: { months: MonthLoad[]; today: string }) {
   const latest = latestFigures(months, today)!;
   const { kwhPerDay, before } = latest;
+  const signed = (n: number) => `${n > 0 ? "+" : ""}${n}`;
   return (
     <div className="grid w-full grid-cols-3 gap-2 sm:flex sm:w-auto sm:gap-7">
       <Figure label={latest.label} value={watts(latest.watts)} />
       {before && (
         <>
           <Figure label={before.label} value={watts(before.watts)} />
-          <Figure label="Difference" value={`${kwhPerDay! > 0 ? "+" : ""}${kwhPerDay} kWh`} after="a day" />
+          <Figure label="Difference" value={`${signed(latest.watts - before.watts)} W`} after={`${signed(kwhPerDay!)} kWh a day`} />
         </>
       )}
     </div>
@@ -76,7 +77,7 @@ function LastTwelve({ months: all }: { months: MonthLoad[] }) {
       </div>
       <div className="flex gap-1.5 pt-2 sm:gap-2.5">
         <div aria-hidden className="-mt-1.5 flex h-[170px] w-8 flex-col justify-between text-right font-mono text-[11px] text-muted-foreground sm:h-[200px] sm:w-10 sm:text-xs">
-          <span>{top / 1000} kW</span><span>{(top / 2).toLocaleString("en-US")}</span><span>0</span>
+          <span>{top / 1000} kW</span><span>{top / 2000}</span><span>0</span>
         </div>
         <div className="relative min-w-0 flex-1">
           <span aria-hidden className="absolute inset-x-0 top-0 border-t border-dashed border-input" />
