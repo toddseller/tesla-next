@@ -24,7 +24,7 @@ const dayLabel = new Intl.DateTimeFormat("en-US", { weekday: "short", month: "sh
 
 const IconButton = ({ label, onClick, disabled, children }: { label: string; onClick: () => void; disabled?: boolean; children: ReactNode }) => (
   <button type="button" aria-label={label} title={label} onClick={onClick} disabled={disabled}
-    className="p-2 rounded-full text-gray-200 hover:bg-white/10 disabled:opacity-30 disabled:hover:bg-transparent">
+    className="p-2 max-lg:grid max-lg:size-11 max-lg:place-items-center rounded-full text-gray-200 hover:bg-white/10 disabled:opacity-30 disabled:hover:bg-transparent">
     {children}
   </button>
 );
@@ -54,7 +54,7 @@ const ReplayBar = ({ live, day, today, time, span, playing, speed, onDay, onTime
         </IconButton>
         <Popover open={picking} onOpenChange={setPicking}>
           <PopoverTrigger asChild>
-            <button type="button" aria-label="Day" className="min-w-[13.5rem] rounded-sm border border-white/20 px-2 py-1 text-left text-sm text-gray-200">
+            <button type="button" aria-label="Day" className="min-w-[13.5rem] max-lg:min-h-11 rounded-sm border border-white/20 px-2 py-1 text-left text-sm text-gray-200">
               {dayLabel.format(toDate(day))}
             </button>
           </PopoverTrigger>
@@ -80,18 +80,19 @@ const ReplayBar = ({ live, day, today, time, span, playing, speed, onDay, onTime
         </IconButton>
         <select aria-label="Speed" value={speed}
           onChange={(event) => onSpeed(Number(event.target.value))}
-          className="appearance-none bg-transparent text-sm text-gray-300 rounded-sm border border-white/20 px-2 py-1">
+          className="appearance-none bg-transparent text-sm text-gray-300 rounded-sm border border-white/20 px-2 py-1 max-lg:min-h-11">
           {SPEEDS.map(({ value, label }) => <option key={value} value={value} className="bg-[#0b1220]">{label}</option>)}
         </select>
         <button type="button" onClick={onLive} aria-pressed={live}
-          className={`ml-auto text-xs font-semibold tracking-wider rounded-full px-3 py-1 border ${live ? "bg-[rgb(204,0,0)] border-transparent text-white" : "border-white/40 text-gray-200 hover:bg-white/10"}`}>
+          className={`ml-auto text-xs font-semibold tracking-wider rounded-full px-3 py-1 max-lg:min-h-11 border ${live ? "bg-[rgb(204,0,0)] border-transparent text-white" : "border-white/40 text-gray-200 hover:bg-white/10"}`}>
           LIVE
         </button>
       </div>
       <div className="flex items-center gap-3">
-        {/* A visible track and thumb on the dark bar; WebKit's own track is dark gray. */}
+        {/* A visible track and thumb on the dark bar; WebKit's own track is dark gray. The track is drawn on its own
+            part so the input can be a 44 px band for touch below lg; a drawn WebKit track needs the thumb pulled up. */}
         <input type="range" aria-label="Time"
-          className="flex-1 h-1 appearance-none rounded-full bg-white/25 cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-white [&::-moz-range-thumb]:border-0"
+          className="flex-1 h-1 max-lg:h-11 appearance-none bg-transparent cursor-pointer [&::-webkit-slider-runnable-track]:h-1 [&::-webkit-slider-runnable-track]:rounded-full [&::-webkit-slider-runnable-track]:bg-white/25 [&::-moz-range-track]:h-1 [&::-moz-range-track]:rounded-full [&::-moz-range-track]:bg-white/25 [&::-webkit-slider-thumb]:-mt-1.5 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-white [&::-moz-range-thumb]:border-0"
           min={span.start} max={span.end - MINUTE} step={MINUTE} value={time}
           onChange={(event) => onTime(Number(event.target.value))} />
         <span className="text-sm tabular-nums w-[4.5rem] text-right" data-part="replay-time">{clock.format(time)}</span>

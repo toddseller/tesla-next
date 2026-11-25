@@ -39,3 +39,9 @@ test("a line can hint more than one term, each at its first match, in the order 
   expect(container.textContent).toBe("Under NEM2, storing it pays; Net Surplus Compensation is small.");
   expect(screen.getAllByRole("button").map((b) => b.textContent)).toEqual(["NEM2", "Net Surplus Compensation"]);
 });
+
+// term-hints, "A term fits a finger": the utility widens the tap area without moving the line.
+test("a term's button takes taps in a tap area taller than its words", () => {
+  render(<p>Tesla <Term name="vpp">VPP</Term> credit</p>);
+  expect(screen.getByRole("button", { name: "VPP" }).className).toContain("tap-area");
+});
