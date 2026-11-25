@@ -598,131 +598,23 @@ describe("replay", () => {
   });
 });
 
-describe("replay bar shown on demand", () => {
-  const NOW = new Date("2026-10-20T18:00:00Z");
-  const shown = (container: Element) => container.querySelector<HTMLElement>('[data-part="replay-drawer"]')!.getAttribute("data-shown");
-  const scene = (container: Element) => container.querySelector<HTMLElement>('[data-part="scene"]')!;
+// scene-replay, "Replay bar": shown at every width, whatever the visitor does or doesn't do.
+describe("replay bar always shows", () => {
   const wait = (ms: number) => act(() => vi.advanceTimersByTime(ms));
-  // React's pointer enter and leave come from pointerover and pointerout.
-  const pointer = (type: "pointerMove" | "pointerDown" | "pointerEnter" | "pointerLeave" | "pointerOver" | "pointerOut", element: Element, pointerType: string) => fireEvent[type](element, { pointerType });
-
-  beforeEach(() => vi.useFakeTimers({ now: NOW }));
-
-  test("shows on load, then hides", () => {
-    const container = page();
-    expect(shown(container)).toBe("true");
-    wait(2900);
-    expect(shown(container)).toBe("true");
-    wait(200);
-    expect(shown(container)).toBe("false");
-  });
-
-  test("a moving mouse shows it; resting on the scene, it hides", () => {
-    const container = page();
-    wait(5000);
-    pointer("pointerMove", scene(container), "mouse");
-    expect(shown(container)).toBe("true");
-    wait(2000);
-    pointer("pointerMove", scene(container), "mouse");
-    wait(2900);
-    expect(shown(container)).toBe("true");
-    wait(200);
-    expect(shown(container)).toBe("false");
-  });
-
-  test("a mouse resting on the bar keeps it shown, until a while after it leaves", () => {
-    const container = page();
+  const hidden = (container: Element) => {
     const bar = container.querySelector<HTMLElement>('[data-part="replay-bar"]')!;
-    pointer("pointerOver", bar, "mouse");
-    wait(10000);
-    expect(shown(container)).toBe("true");
-    pointer("pointerOut", bar, "mouse");
-    wait(2900);
-    expect(shown(container)).toBe("true");
-    wait(200);
-    expect(shown(container)).toBe("false");
-  });
+    return bar.closest(".grid-rows-\\[0fr\\], [data-shown]") !== null || container.querySelector('[data-part="progress-line"]') !== null;
+  };
 
-  test("a tap shows it for a while; touch is no hover", () => {
+  beforeEach(() => vi.useFakeTimers({ now: new Date("2026-10-20T18:00:00Z") }));
+
+  test("untouched, live and while a replay plays", () => {
     const container = page();
     wait(5000);
-    pointer("pointerMove", scene(container), "touch");
-    pointer("pointerDown", scene(container), "touch");
-    expect(shown(container)).toBe("true");
-    wait(3100);
-    expect(shown(container)).toBe("false");
-  });
-
-  test("a hold keeps it shown, until a while after release", () => {
-    const container = page();
-    const slider = screen.getByRole("slider", { name: "Time" });
-    pointer("pointerDown", slider, "touch");
-    wait(10000);
-    expect(shown(container)).toBe("true");
-    fireEvent.pointerUp(window);
-    wait(2900);
-    expect(shown(container)).toBe("true");
-    wait(200);
-    expect(shown(container)).toBe("false");
-  });
-
-  test("hidden, its controls stay in the tab order", () => {
-    const container = page();
-    wait(5000);
-    expect(shown(container)).toBe("false");
-    const play = screen.getByRole("button", { name: "Play" });
-    play.focus();
-    expect(document.activeElement).toBe(play);
-  });
-
-  test("a paused replay keeps it shown; playing hides it after a while", () => {
-    const container = page("/distribution?at=2026-10-19T18:00");
-    wait(10000);
-    expect(shown(container)).toBe("true");
+    expect(hidden(container)).toBe(false);
     fireEvent.click(screen.getByRole("button", { name: "Play" }));
-    wait(2900);
-    expect(shown(container)).toBe("true");
-    wait(200);
-    expect(shown(container)).toBe("false");
-  });
-});
-
-describe("progress line", () => {
-  const line = (container: Element) => container.querySelector<HTMLElement>('[data-part="progress-line"]');
-  const fill = (container: Element) => line(container)!.firstChild as HTMLElement;
-  const wait = (ms: number) => act(() => vi.advanceTimersByTime(ms));
-
-  test("live at 6 PM: three quarters, in red, once the bar hides", () => {
-    // 6:00 PM on 2026-10-19 at the site.
-    vi.useFakeTimers({ now: new Date("2026-10-20T01:00:00Z") });
-    const container = page();
-    expect(line(container)).toBeNull();
-    wait(3100);
-    expect(fill(container).style.width).toBe("75%");
-    expect(fill(container).className).toContain("bg-[rgb(204,0,0)]");
-  });
-
-  test("a replay playing from 6 AM: a quarter, in white", () => {
-    vi.useFakeTimers({ now: new Date("2026-10-20T18:00:00Z") });
-    const container = page("/distribution?at=2026-10-19T06:00");
     wait(5000);
-    expect(line(container)).toBeNull();
-    fireEvent.click(screen.getByRole("button", { name: "Play" }));
-    wait(3100);
-    expect(fill(container).style.width).toMatch(/^25\.00/);
-    expect(fill(container).className).toContain("bg-white");
-  });
-
-  // scene-replay, "Replay bar shown on demand": from 1024px the bar stays shown, so there is no line to stand in for it.
-  test("from 1024px the hidden bar stays in view and the line doesn't show", () => {
-    vi.useFakeTimers({ now: new Date("2026-10-20T01:00:00Z") });
-    const container = page();
-    wait(3100);
-    const drawer = container.querySelector<HTMLElement>('[data-part="replay-drawer"]')!;
-    expect(drawer.dataset.shown).toBe("false");
-    expect(drawer.className).not.toContain("translate-y-full");
-    expect(drawer.className).toContain("lg:grid-rows-[1fr]");
-    expect(line(container)!.className).toContain("lg:hidden");
+    expect(hidden(container)).toBe(false);
   });
 });
 

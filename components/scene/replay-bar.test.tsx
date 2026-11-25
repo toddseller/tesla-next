@@ -2,7 +2,7 @@
 // Ported from anton-tesla-api-ws tesla-api-frontend/client/src/components/ReplayBar.test.jsx. anton's mocked MUI's
 // date picker and read its props; this bar's picker is shadcn's Calendar in a Popover, driven as a visitor would.
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
-import { afterEach, beforeAll, describe, expect, test, vi } from "vitest";
+import { afterEach, beforeAll, expect, test, vi } from "vitest";
 
 import ReplayBar, { DEFAULT_SPEED, SPEEDS } from "@/components/scene/replay-bar";
 import { daySpan } from "@/lib/scene/replay";
@@ -86,46 +86,4 @@ test("each control reports to the page", () => {
 test("while playing, the button pauses", () => {
   bar({ playing: true });
   expect(screen.getByRole("button", { name: "Pause" })).toBeTruthy();
-});
-
-describe("holding the bar shown", () => {
-  const held = (props: Props = {}) => {
-    const onHold = vi.fn();
-    bar({ onHold, ...props });
-    return onHold;
-  };
-
-  test("while the date picker is open", () => {
-    const onHold = held();
-    openPicker();
-    expect(onHold).toHaveBeenLastCalledWith(true);
-    act(() => fireEvent.keyDown(document.activeElement ?? document.body, { key: "Escape" }));
-    expect(onHold).toHaveBeenLastCalledWith(false);
-  });
-
-  test("while the speed menu has focus, until a speed is picked", () => {
-    const onHold = held();
-    const select = screen.getByRole("combobox", { name: "Speed" });
-    fireEvent.focus(select);
-    expect(onHold.mock.calls).toEqual([[true]]);
-    fireEvent.change(select, { target: { value: "600" } });
-    fireEvent.blur(select);
-    expect(onHold.mock.calls).toEqual([[true], [false]]);
-  });
-
-  test("while the scrubber is held, wherever it is let go", () => {
-    const onHold = held();
-    fireEvent.pointerDown(screen.getByRole("slider", { name: "Time" }));
-    expect(onHold).toHaveBeenLastCalledWith(true);
-    fireEvent.pointerUp(window);
-    expect(onHold.mock.calls).toEqual([[true], [false]]);
-    fireEvent.pointerUp(window);
-    expect(onHold).toHaveBeenCalledTimes(2);
-  });
-
-  test("not for a click on a button", () => {
-    const onHold = held();
-    fireEvent.click(screen.getByRole("button", { name: "Play" }));
-    expect(onHold).not.toHaveBeenCalled();
-  });
 });
