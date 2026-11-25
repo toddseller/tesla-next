@@ -37,6 +37,13 @@ test("'25 - '26: its net for the year, true-up from the statement, bills against
   expect(tile("Tesla VPP credit")).toContain("$368estimate2026 season: 183.8 kWh in VPP events");
 });
 
+// display-units, "The net tile's pair in the net's unit".
+test("imports past 1,000 kWh under a kWh net stay in kWh", () => {
+  const cycle = { ...CURRENT[0], imported: 1174, exported: 448.8, net: 725.2, peak_net: -12, off_peak_net: 737.2 };
+  render(<Tiles cycles={[cycle]} cost={null} year={null} today={TODAY} />);
+  expect(tile("Net")).toBe("Net725.2kWh importedImported 1,174.0 kWh · Exported 448.8 kWhPeak (4 to 9 p.m.) 12.0 kWh exported · Off-peak 737.2 kWh imported");
+});
+
 test("a finished year calculated, and one with nothing due", () => {
   const calculated = YEAR_25_26.map((c) => ({ ...c, nem_source: "calculated" as const, estimated_nem_charges: null, billed_net_kwh: null }));
   render(<Tiles cycles={calculated} cost={{ ...COST_25_26, amount_due: 459.72, source: "calculated", charges_so_far: 600, minimum_delivery: 140.28 }} year={yearOf(2026)} today={TODAY} />);

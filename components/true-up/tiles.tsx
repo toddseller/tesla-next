@@ -35,9 +35,10 @@ const TextTile = ({ title, text, terms = [] }: { title: ReactNode; text: TileTex
   <Tile title={title} value={text.value} unit={text.unit}><p><WithTerm text={text.line} terms={terms} /></p></Tile>
 );
 
-// Each figure carries its own unit: imports can pass 1,000 kWh while exports don't.
-const Energy = ({ value }: { value: number }) => {
-  const [figure, unit] = energy(Math.abs(value), 1);
+// Imported and exported take the net's unit (`top`), so the pair never mixes kWh and MWh; the peak and off-peak nets
+// keep their own, since a small peak under an MWh net would read 0.0 MWh.
+const Energy = ({ value, top = Math.abs(value) }: { value: number; top?: number }) => {
+  const [figure, unit] = energy(Math.abs(value), 1, top);
   return <><Figure>{figure}</Figure> {unit}</>;
 };
 const withLabel = (value: number) => <><Energy value={value} /> {netLabel(value).toLowerCase()}</>;
@@ -49,11 +50,12 @@ export function Tiles({ cycles, cost, year, today }: { cycles: Cycle[]; cost: Co
   const sum = totals(started);
   const billed = year && billedText(started);
   const vpp = year && cost && vppText(cost.vpp, today);
-  const net = energy(Math.abs(sum.net), 1);
+  const top = Math.abs(sum.net);
+  const net = energy(top, 1);
   return (
     <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,240px),1fr))] gap-4 xl:auto-cols-fr xl:grid-flow-col xl:grid-cols-none">
       <Tile title={year?.current ? "Net so far" : year ? "Net for the year" : "Net"} value={net[0]} unit={`${net[1]} ${netLabel(sum.net).toLowerCase()}`}>
-        <p>Imported <Energy value={sum.imported} /> · Exported <Energy value={sum.exported} /></p>
+        <p>Imported <Energy value={sum.imported} top={top} /> · Exported <Energy value={sum.exported} top={top} /></p>
         <p><Term name="peak">Peak (4 to 9 p.m.)</Term> {withLabel(sum.peak)} · Off-peak {withLabel(sum.offPeak)}</p>
       </Tile>
       {year && cost && (year.current

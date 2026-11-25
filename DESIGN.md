@@ -174,7 +174,7 @@ A cool near-black field with two slate steps above it, light gray text, and colo
 - **Hairline** (#232831): every border and divider at rest.
 - **Control Edge** (#2B313B): borders of interactive things (segmented trays, inputs, pills, the menu button); inputs fill with it at 30%.
 - **Moonlight** (#E6E8EB): body and figure text; also the light Save button's fill.
-- **Dusk Gray** (#9AA3AD): secondary text, section labels, unselected tabs, focus ring color (at 50%).
+- **Dusk Gray** (#9AA3AD): secondary text, section labels, unselected tabs, focus ring color (at full strength).
 - **Alert Coral** (#F87171): invalid fields and destructive states.
 
 ### Flow colors
@@ -246,7 +246,7 @@ Quiet and restrained: buttons appear mainly on `/admin`.
 - **Shape:** 8px radius.
 - **Save:** Moonlight fill, Night Sky text, 36px tall, 16px sides, 14px medium. Light rather than red under the Red Marker Rule.
 - **Outline:** Control Edge border, 30% Control Edge fill, 32px tall, 13px medium; hover deepens the fill to 50%.
-- **Focus:** a 3px ring of Dusk Gray at 50%. **Disabled:** 50% opacity.
+- **Focus:** a 3px ring of Dusk Gray at full strength. **Disabled:** 50% opacity.
 
 ### Segmented controls
 The site's main control: readings (Tesla or PG&E), day views, range presets, VPP filters.

@@ -10,11 +10,26 @@ afterEach(cleanup);
 
 const section = () => within(screen.getByRole("region", { name: "Always-on load" }));
 
-test("the latest month, the same month a year earlier and the difference in kWh a day", () => {
+test("the latest month, the same month a year earlier and the difference in watts, kWh a day after", () => {
   render(<AlwaysOnSection months={PATTERNS.months} today="2026-11-10" />);
-  for (const text of ["November so far", "November 2025", "+14 kWh", "a day"]) expect(section().getByText(text)).toBeTruthy();
+  for (const text of ["November so far", "November 2025", "+588 W", "+14 kWh a day"]) expect(section().getByText(text)).toBeTruthy();
   // Each figure is also its year's row below.
   for (const text of ["864 W", "276 W"]) expect(section().getAllByText(text)).toHaveLength(2);
+});
+
+test("a lower month reads a negative difference", () => {
+  render(<AlwaysOnSection months={[{ month: "2025-11", watts: 720 }, { month: "2026-11", watts: 300 }]} today="2026-11-10" />);
+  for (const text of ["-420 W", "-10 kWh a day"]) expect(section().getByText(text)).toBeTruthy();
+});
+
+// display-units, "One unit to a power axis".
+test("the last 12 months' axis reads every tick in the top tick's kW", () => {
+  const axis = () => section().getByText(/ kW$/).parentElement!.textContent;
+  render(<AlwaysOnSection months={PATTERNS.months} today="2026-11-10" />);
+  expect(axis()).toBe("1 kW0.50");
+  cleanup();
+  render(<AlwaysOnSection months={PATTERNS.months.map((m) => (m.month === "2026-10" ? { ...m, watts: 1500 } : m))} today="2026-11-10" />);
+  expect(axis()).toBe("1.5 kW0.750");
 });
 
 test("the footnote says a charge or spike that doesn't last the whole night doesn't move the figure", () => {
