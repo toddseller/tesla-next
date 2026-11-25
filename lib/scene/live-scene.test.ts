@@ -408,6 +408,13 @@ describe("rain and the day's clouds", () => {
     expect(lateEvening).toBe(morning);
     expect(nextDay).toBe(morning + 1);
   });
+
+  test("May at the site, from its midnight on May 1 to its midnight on June 1", () => {
+    expect(state("2027-05-01T06:59:00Z").may).toBe(false); // 11:59 PM PDT April 30
+    expect(state("2027-05-01T07:00:00Z").may).toBe(true); // midnight PDT May 1
+    expect(state("2027-06-01T06:59:00Z").may).toBe(true); // 11:59 PM PDT May 31
+    expect(state("2027-06-01T07:00:00Z").may).toBe(false); // midnight PDT June 1
+  });
 });
 
 describe("setting and rising", () => {

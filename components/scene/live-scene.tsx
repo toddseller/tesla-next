@@ -3,11 +3,11 @@ import React, {type CSSProperties, type ReactNode, type Ref, useEffect, useRef, 
 import {sceneLayers, SUNLIGHT} from '@/components/scene/images';
 import {type SkyPoint, twinkle} from '@/lib/scene/night-sky';
 import type {Link, SceneState} from '@/lib/scene/live-scene';
-import {chargeBarPoints, EAVES, FLOW_COLORS, GLOW, HEADROOM, LABELS, type LegName, legPoints, LEGS, MOON, pathLength, type Point, RENDER, skyY, STAGE, STRAIGHT_THROUGH, VANE} from '@/components/scene/layout';
+import {chargeBarPoints, EAVES, FLOW_COLORS, GLOW, HEADROOM, LABELS, type LegName, legPoints, LEGS, MOON, pathLength, type Point, RENDER, SHIP, skyY, STAGE, STRAIGHT_THROUGH, VANE} from '@/components/scene/layout';
 
 import CloudCanvas, {type CloudHandle} from '@/components/scene/cloud-canvas';
 import {cloudInputs} from '@/components/scene/cloud-inputs';
-import {useMoonFace} from '@/components/scene/moon-face';
+import {DEATH_STAR_LIGHTS, DEATH_STAR_MAP, MOON_MAP, useMoonFace, useSphereShade} from '@/components/scene/moon-face';
 import {Popover, PopoverContent, PopoverTrigger} from '@/components/ui/popover';
 import {useUnits} from '@/components/units';
 import {isCalm, windText} from '@/lib/scene/weather';
@@ -377,8 +377,10 @@ const TERMINATOR_STEP = 0.012;
 // Low, it is dimmer and yellow-orange (lowMoon); near the horizon it fades and
 // sinks behind the ground (fade, skyTop).
 const lowMoon = (low: number) => `sepia(${Number((0.6 * low).toFixed(3))}) saturate(${Number((1 + low).toFixed(3))}) brightness(${Number((1 - 0.35 * low).toFixed(3))})`;
-const Moon = ({ moon: { x, altitude, phase, libration, axis, brightLimb, night, daylight, fade, low }, cover }: { moon: NonNullable<SceneState['moon']>; cover: number }) => {
-  const face = useMoonFace(libration.longitude, libration.latitude);
+const Moon = ({ moon: { x, altitude, phase, libration, axis, brightLimb, night, daylight, fade, low }, cover, may }: { moon: NonNullable<SceneState['moon']>; cover: number; may: boolean }) => {
+  const face = useMoonFace(libration.longitude, libration.latitude, may ? DEATH_STAR_MAP : MOON_MAP);
+  const lights = useMoonFace(libration.longitude, libration.latitude, may ? DEATH_STAR_LIGHTS : null);
+  const shade = useSphereShade(phase, may);
   const faceTurn = `rotate(${axis}) scale(-1 1)`;
   return (
     <div className="scene-moon" data-part="moon" style={{
@@ -400,12 +402,49 @@ const Moon = ({ moon: { x, altitude, phase, libration, axis, brightLimb, night, 
         <g data-part="moon-night" opacity={night}>
           <circle data-part="moon-dark" r="1" fill="#2a3040" />
           {face && <image data-part="moon-earthshine" href={face} x="-1" y="-1" width="2" height="2" transform={faceTurn} opacity="0.15" />}
+          {/* The lit face covers them where the sun is, so they need no mask; screened, the map's black between the
+              windows adds no light, so the earthshine shows through. */}
+          {lights && <image data-part="moon-lights" href={lights} x="-1" y="-1" width="2" height="2" transform={faceTurn} style={{ mixBlendMode: 'screen' }} />}
         </g>
         <g data-part="moon-face" mask="url(#scene-moon-lit)">
           {face && <image href={face} x="-1" y="-1" width="2" height="2" transform={faceTurn} />}
+          {shade && <image data-part="moon-shade" href={shade} x="-1" y="-1" width="2" height="2" transform={`rotate(${brightLimb - 90})`} />}
         </g>
       </svg>
     </div>
+  );
+};
+
+// On May nights a Star Destroyer crosses the upper sky (the scene-weather spec), on the page's clock rather than
+// the shown time, so fast replay doesn't fling it past. In seconds: a pass, the wait before the first, and after each.
+const SHIP_PASS = 90;
+// The first comes within seconds, so even a fast replay through a May evening shows one.
+const SHIP_WAITS = { first: [2, 5], next: [180, 300] };
+const between = ([low, high]: number[]) => low + Math.random() * (high - low);
+const StarDestroyer = ({ flying }: { flying: boolean }) => {
+  const [pass, setPass] = useState<{ left: boolean; top: number } | null>(null);
+  const [count, setCount] = useState(0);
+  // Grounded (day, a paused replay, another month) once its crossing is done: the next night starts over with a
+  // first pass.
+  if (!flying && !pass && count) setCount(0);
+  // A crossing always finishes, even if the replay pauses or the night ends under it.
+  useEffect(() => {
+    if (!pass) return;
+    const timer = setTimeout(() => setPass(null), SHIP_PASS * 1000);
+    return () => clearTimeout(timer);
+  }, [pass]);
+  useEffect(() => {
+    if (!flying || pass) return;
+    const timer = setTimeout(() => {
+      setCount(count + 1);
+      setPass({ left: Math.random() < 0.5, top: between([4, 18]) });
+    }, between(count ? SHIP_WAITS.next : SHIP_WAITS.first) * 1000);
+    return () => clearTimeout(timer);
+  }, [flying, pass, count]);
+  if (!pass) return null;
+  return (
+    <img className={`scene-ship ${pass.left ? 'scene-ship-left' : ''}`} data-part="ship" src="/scene/star-destroyer-sky.webp" alt=""
+      style={{ width: `${SHIP.size * 100}%`, top: `${pass.top}%`, animationDuration: `${SHIP_PASS}s` }} />
   );
 };
 
@@ -592,8 +631,10 @@ const LiveScene = ({ state, paused = false, drift = 1 }: { state: SceneState; pa
         <div className="scene-sky-gray-day" data-part="sky-gray-day" />
       </div>
       <CloudCanvas ref={clouds} inputs={cloudInputs(state, { ...levels, rain: state.rain ?? 0 })} seed={state.cloudSeed} />
+      {/* Over the clouds, so it flies whatever the weather; under the stage, so it passes behind the moon. */}
+      <StarDestroyer flying={state.may && state.dusk === 0 && !paused && !still} />
       <div className="scene-stage" data-part="stage" ref={stage} style={{ aspectRatio: `${STAGE.width} / ${STAGE.height}`, marginTop: pct(HEADROOM, STAGE.width) }}>
-        {moon && <Moon moon={moon} cover={cover} />}
+        {moon && <Moon moon={moon} cover={cover} may={state.may} />}
         {sunGlow && <SunGlow sunGlow={sunGlow} cover={cover} />}
         <div className="scene-ground" data-part="ground" style={{ top: pct(EAVES, STAGE.height) }} />
         <Layer name="house" src={layers.house} alt="The house, with solar panels on its roof" />
