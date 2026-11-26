@@ -66,11 +66,11 @@ The page SHALL offer the same date-range picker as the Solar page, showing the c
 - **THEN** the address becomes `/impact?start=2026-10-10&end=2026-10-20` and the page shows that range
 
 ### Requirement: Range controls beside the heading
-In a window at least 1024 pixels wide, the page's heading and its range controls (the readings switch when it shows, the presets with the selected one's step buttons, and the dates button) SHALL share one row for every preset, so choosing a preset that brings the readings switch doesn't push the controls onto a row of their own. The lead sentence SHALL sit on its own line under that row.
+In a window at least 1024 pixels wide, the page's heading and its range controls (the presets with the selected one's step buttons, and the dates button) SHALL share one row for every preset. The readings switch is not among them: it sits in the range card (see meter-correction), so choosing a preset that brings it changes nothing in that row. The lead sentence SHALL sit on its own line under that row.
 
 #### Scenario: All time
 - **WHEN** a viewer on Today, in a 1024 pixel wide window, chooses All time on 2026-11-11
-- **THEN** the readings switch appears in the same row as the heading, presets and dates button
+- **THEN** the heading, presets and dates button stay in one row, and the readings switch appears in the range card, not in that row
 
 ### Requirement: Impact figures
 For its range, the page SHALL take from the `data` table, with PG&E's meter readings standing in for Tesla's grid figures on days before 2026-04-27 that have them (as `solar-range-chart`'s bar values do): solar generated, home use, and home use from solar, the Powerwall and the grid, each a sum rounded to one decimal place. Each share SHALL be its part of home use as a whole percentage, rounded as Python's `round` does; self-powered SHALL be the solar share plus the Powerwall share, and energy offset solar generated as a share of home use.

@@ -218,6 +218,15 @@ test("a range in the corrected years offers the readings, and Tesla's view keeps
   expect(fetches.at(-1)).toBe("/api/range?start_date=2025-10-01&end_date=2025-10-31&readings=tesla");
 });
 
+// meter-correction, "The switch beside its note on the range pages".
+test("the readings switch sits in the range card beside its note, not in the heading's row", () => {
+  render(<SolarPage range={october25} items={[item("2025-10-07", 24.7)]} today="2026-11-07" initialStatus={null} />);
+  const row = readingsGroup()!.closest("section")!.querySelector(":scope > :last-child")!;
+  expect(row.contains(readingsGroup())).toBe(true);
+  expect(row.contains(screen.getByText(/use PG&E's meter readings/))).toBe(true);
+  expect(screen.getByRole("heading", { level: 1 }).parentElement!.contains(readingsGroup())).toBe(false);
+});
+
 test("a range after the fix offers no readings", () => {
   render(<SolarPage range={{ start: "2026-05-01", end: "2026-05-31" }} items={[]} today="2026-11-07" initialStatus={null} />);
   expect(readingsGroup()).toBeNull();

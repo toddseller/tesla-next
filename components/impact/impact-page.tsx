@@ -61,8 +61,7 @@ export function ImpactPage({ range, figures, today, backup, backupYear, charging
     <div className="flex flex-col gap-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-[22px] font-semibold">Impact</h1>
-        <div className="flex flex-wrap items-end gap-2 max-sm:order-last max-sm:w-full">
-          {corrected && <ReadingsSwitch readings={readings} addresses={{ corrected: address(range, backupYear, "corrected"), tesla: address(range, backupYear, "tesla") }} />}
+        <div className="max-sm:order-last max-sm:w-full">
           <RangeControls today={today} range={range} presets={impactPresets(today)} onRange={(next) => router.push(address(next), { scroll: false })} />
         </div>
         {unshown && <UnshownNotice range={range} />}
@@ -77,7 +76,12 @@ export function ImpactPage({ range, figures, today, backup, backupYear, charging
           <SelfPowered figures={shown} />
           <SolarOffset figures={shown} />
         </div>
-        {corrected && <ReadingsNote readings={readings} />}
+        {corrected && (
+          <div className="grid gap-3 sm:grid-cols-[1fr_auto] sm:items-end">
+            <ReadingsNote readings={readings} />
+            <ReadingsSwitch readings={readings} addresses={{ corrected: address(range, backupYear, "corrected"), tesla: address(range, backupYear, "tesla") }} />
+          </div>
+        )}
       </section>
       {shownCharging && <CarChargingSection charging={shownCharging} range={range} />}
       <BackupSection history={shownBackup} year={backupYear} today={today} follows={follows} onYear={(year) => router.replace(address(range, year), { scroll: false })} />
