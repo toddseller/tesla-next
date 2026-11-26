@@ -253,7 +253,7 @@ describe("savingsText", () => {
 
     // Every shown dollar adds up: $1,118 + $5,577 = $6,695, and $5,727 less the Powerwalls' $150 = $5,577, so the
     // Powerwalls show $150 though their $150.84 would round alone to $151.
-    expect(text).toMatchObject({ saved: "$5,577", unit: "estimate, of $6,695 without solar or Powerwalls", paid: "$1,118", paidSplit: "PG&E $825 · WestLight $293", solar: "$5,727",
+    expect(text).toMatchObject({ saved: "$5,577", unit: "estimate, of $6,695 without solar or Powerwalls", paid: "$1,118", paidSplit: "Estimated: PG&E $825 · WestLight $293", solar: "$5,727",
       solarLess: "Solar $5,727 against buying it all from the grid, less the Powerwalls' $150" });
     expect(text.bar).toEqual({ parts: [["paid", 1118.07], ["saved", 5576.6]], label: "Of $6,695: $1,118 paid, $5,577 saved" });
     expect(text.powerwalls).toEqual({
@@ -292,7 +292,7 @@ describe("savingsText", () => {
   test("a WestLight credit reads as a credit, not a charge", () => {
     const text = savingsText({ ...YEAR_25_26, actual: { pge: 143.74, westlight: -71.91, total: 71.83 } }, null, false);
 
-    expect([text.paid, text.paidSplit]).toEqual(["$72", "PG&E $144 · WestLight $72 credit"]);
+    expect([text.paid, text.paidSplit]).toEqual(["$72", "Estimated: PG&E $144 · WestLight $72 credit"]);
     expect(savingsText({ ...YEAR_25_26, actual: { pge: 120, westlight: -150, total: -30 } }, null, false).paid).toBe("$30 credit");
   });
 

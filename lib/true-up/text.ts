@@ -232,7 +232,7 @@ export function savingsText(savings: Savings, season: Cost["vpp"], current: bool
     unit: `estimate${current ? " so far" : ""}, of ${wholeDollars(noSystem.total)} without solar or Powerwalls`,
     bar: { parts: bar, label: `Of ${wholeDollars(noSystem.total)}: ${wholeDollars(actual.total)} paid, ${spoken}` },
     paid: wholeCredit(actual.total),
-    paidSplit: `PG&E ${wholeCredit(actual.pge)} · WestLight ${wholeCredit(actual.westlight)}`,
+    paidSplit: `Estimated: PG&E ${wholeCredit(actual.pge)} · WestLight ${wholeCredit(actual.westlight)}`,
     solar: wholeDollars(solar),
     powerwallsCost: costs,
     solarLess: costs ? `Solar ${wholeDollars(solar)} against buying it all from the grid, less the Powerwalls' ${wholeDollars(shownPowerwalls)}` : null,
