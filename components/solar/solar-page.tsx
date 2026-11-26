@@ -90,8 +90,7 @@ export function SolarPage({ range, items, today, initialStatus, day, forecast, r
     <div className="flex flex-col gap-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-[22px] font-semibold">Solar by date range</h1>
-        <div className="flex flex-wrap items-end gap-2 max-sm:order-last max-sm:w-full">
-          {corrected && <ReadingsSwitch readings={readings} addresses={both(range)} />}
+        <div className="max-sm:order-last max-sm:w-full">
           <RangeControls today={today} range={range} presets={presets(today)} onRange={(next) => router.push(at(next), { scroll: false })} />
         </div>
         {unshown && <UnshownNotice range={range} />}
@@ -105,7 +104,12 @@ export function SolarPage({ range, items, today, initialStatus, day, forecast, r
           </span>
         </div>
         <RangeChart key={at(range)} items={bars} range={range} onOpenDay={(next) => router.push(at(range, next))} onOpenRange={(next) => router.push(at(next), { scroll: false })} />
-        {corrected && <ReadingsNote readings={readings} />}
+        {corrected && (
+          <div className="grid gap-3 sm:grid-cols-[1fr_auto] sm:items-end">
+            <ReadingsNote readings={readings} />
+            <ReadingsSwitch readings={readings} addresses={both(range)} />
+          </div>
+        )}
       </section>
       {card && <ForecastCard card={card} />}
     </div>

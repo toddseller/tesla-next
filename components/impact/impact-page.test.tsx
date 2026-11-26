@@ -231,6 +231,16 @@ test("a range in the corrected years offers the readings, and Tesla's view keeps
   ]);
 });
 
+// meter-correction, "The switch beside its note on the range pages".
+test("the readings switch sits in the range card beside its note, not in the heading's row", () => {
+  render(<ImpactPage range={{ start: "2025-01-01", end: "2025-12-31" }} figures={figures(95)} today="2026-11-08" backup={NO_BACKUP} charging={CHARGING} backupYear={THIS_YEAR} />);
+  const group = screen.getByRole("group", { name: "Grid readings" });
+  const row = document.getElementById("impact-title")!.closest("section")!.querySelector(":scope > :last-child")!;
+  expect(row.contains(group)).toBe(true);
+  expect(row.contains(screen.getByText(/use PG&E's meter readings/))).toBe(true);
+  expect(screen.getByRole("heading", { level: 1 }).parentElement!.contains(group)).toBe(false);
+});
+
 test("a range after the fix offers no readings", () => {
   render(<ImpactPage range={today} figures={figures(95)} today="2026-11-08" backup={NO_BACKUP} charging={CHARGING} backupYear={THIS_YEAR} />);
   expect(screen.queryByRole("group", { name: "Grid readings" })).toBeNull();
