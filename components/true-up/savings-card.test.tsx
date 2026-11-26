@@ -20,7 +20,7 @@ test("'25 - '26: the saving of the no-system bill, the key, and the Powerwalls b
   render(<SavingsCard savings={SAVINGS_25_26} season={COST_25_26.vpp} current={false} />);
 
   const card = screen.getByRole("region", { name: "What the system saved" }).textContent;
-  for (const text of ["$5,577", "estimate, of $6,695 without solar or Powerwalls", "Paid", "$1,118", "PG&E $825 · WestLight $293",
+  for (const text of ["$5,577", "estimate, of $6,695 without solar or Powerwalls", "Paid", "$1,118", "Estimated: PG&E $825 · WestLight $293",
     "$150 cost on the bill", "$368 VPP credit", "Under NEM2, exporting solar earns about what importing it later costs",
     "Solar $5,727 against buying it all from the grid, less the Powerwalls' $150",
     "205 days before April 27, 2026 rebuilt from PG&E's meter, 1 as Tesla read it."])
