@@ -255,7 +255,7 @@ describe("flows", () => {
   test("exporting solar while charging the car", () => {
     const scene = renderScene({ ...midday, homePower: 0.9, gridPower: -2.0, vehicle: { ...r2d2, charging_power: 3.2 } });
 
-    expect(flows(scene)).toEqual(["solar-home:0", "solar-car:0", "solar-grid:0"]);
+    expect(flows(scene)).toEqual(["solar-car:0", "solar-home:0", "solar-grid:0"]);
   });
 
   test("a second source into the house gets its own lane", () => {

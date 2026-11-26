@@ -342,11 +342,19 @@ test("an overnight charge from the Powerwall", async () => {
   expect(record.powerwall_to_home_kw).toBe(kw(200));
 });
 
-test("mixed sources split proportionally", async () => {
-  await energy(14, 17, 0, { house_from_solar_wh: 300, house_from_grid_wh: 100 });
-  await vehicle(at(14, 17, 0), 200);
+test("solar covers the car while the grid covers the house", async () => {
+  await energy(14, 10, 5, { house_from_solar_wh: 375, house_from_grid_wh: 167 });
+  await vehicle(at(14, 10, 5), 100);
+  const record = byTime(await getDay(14))["10:05"];
+  expect([record.solar_to_vehicle_wh, record.grid_to_vehicle_wh, record.solar_to_home_wh, record.grid_to_home_wh]).toEqual([100, 0, 275, 167]);
+});
+
+test("charging spills from solar to the Powerwall to the grid", async () => {
+  await energy(14, 17, 0, { house_from_solar_wh: 100, house_from_battery_wh: 300, house_from_grid_wh: 400 });
+  await vehicle(at(14, 17, 0), 600);
   const record = byTime(await getDay(14))["17:00"];
-  expect([record.solar_to_vehicle_kw, record.grid_to_vehicle_kw, record.solar_to_home_kw, record.grid_to_home_kw]).toEqual([kw(150), kw(50), kw(150), kw(50)]);
+  expect([record.solar_to_vehicle_wh, record.powerwall_to_vehicle_wh, record.grid_to_vehicle_wh]).toEqual([100, 300, 200]);
+  expect([record.solar_to_home_wh, record.powerwall_to_home_wh, record.grid_to_home_wh]).toEqual([0, 0, 200]);
 });
 
 test("charging above home consumption is capped", async () => {

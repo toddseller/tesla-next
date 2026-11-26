@@ -467,7 +467,27 @@ describe("links", () => {
 
   test("exporting solar while charging the car", () => {
     expect(links({ solarPower: 6.1, homePower: 0.9, gridPower: -2.0, vehicle: r2d2({ charging_power: 3.2 }) })).toEqual([
-      "solar-home", "solar-car", "solar-grid",
+      "solar-car", "solar-home", "solar-grid",
+    ]);
+  });
+
+  test("solar charges the car before the house", () => {
+    const state = sceneState({ ...midday, solarPower: 4.5, homePower: 5.2, batteryPower: 0, gridPower: 2.0, vehicle: r2d2({ charging_power: 1.2 }) }, NOW);
+
+    expect(state.links).toEqual([
+      { from: "solar", to: "car", kw: 1.2 },
+      { from: "solar", to: "home", kw: expect.closeTo(3.3) },
+      { from: "grid", to: "home", kw: expect.closeTo(1.9) },
+    ]);
+  });
+
+  test("the Powerwall charges the car before the house", () => {
+    const state = sceneState({ ...midday, solarPower: 0, homePower: 1.0, batteryPower: 2.0, gridPower: 6.0, vehicle: r2d2({ charging_power: 7.0 }) }, NOW);
+
+    expect(state.links).toEqual([
+      { from: "powerwall", to: "car", kw: 2.0 },
+      { from: "grid", to: "car", kw: 5.0 },
+      { from: "grid", to: "home", kw: 1.0 },
     ]);
   });
 

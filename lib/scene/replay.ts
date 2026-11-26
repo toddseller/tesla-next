@@ -50,9 +50,9 @@ export const daySpan = (date: string) => ({ start: siteInstant(date), end: siteI
 // The recorded flows by source, each in the order the live page links them,
 // so a replayed flow keeps the lane it would have live. Vehicle flows go to the car.
 const FLOWS = [
-  ["solar", "powerwall"], ["solar", "home"], ["solar", "vehicle"], ["solar", "grid"],
-  ["powerwall", "home"], ["powerwall", "vehicle"], ["powerwall", "grid"],
-  ["grid", "home"], ["grid", "vehicle"], ["grid", "powerwall"],
+  ["solar", "powerwall"], ["solar", "vehicle"], ["solar", "home"], ["solar", "grid"],
+  ["powerwall", "vehicle"], ["powerwall", "home"], ["powerwall", "grid"],
+  ["grid", "vehicle"], ["grid", "home"], ["grid", "powerwall"],
 ].map(([from, to]) => ({ from, to: to === "vehicle" ? "car" : to, key: `${from}_to_${to}_kw` }) as Pick<Link, "from" | "to"> & { key: string });
 
 // Each flow's kW is null in a record without energy data.
