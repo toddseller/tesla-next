@@ -125,13 +125,15 @@ const carLabel = (vehicle: Vehicle, now: Date) => {
 // Which source feeds which destination. The data has only each element's
 // total, so each source in turn fills destinations in its order of priority.
 // Solar charges the Powerwall first, as Tesla attributes it (the grid charges
-// it only for what solar can't cover). Meter totals don't always balance, so
-// an active source left without a destination is linked to home.
+// it only for what solar can't cover), and every source serves the car before
+// the house, as Tesla's app credits a car charging on solar to solar. Meter
+// totals don't always balance, so an active source left without a destination
+// is linked to home.
 const SOURCES: Source[] = ["solar", "powerwall", "grid"];
 const DESTINATIONS: Record<Source, Destination[]> = {
-  solar: ["powerwall", "home", "car", "grid"],
-  powerwall: ["home", "car", "grid"],
-  grid: ["home", "car", "powerwall"],
+  solar: ["powerwall", "car", "home", "grid"],
+  powerwall: ["car", "home", "grid"],
+  grid: ["car", "home", "powerwall"],
 };
 
 const sceneLinks = ({ solarPower, homePower, batteryPower, gridPower, vehicle }: LiveInput) => {

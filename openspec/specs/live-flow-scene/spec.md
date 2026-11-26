@@ -138,7 +138,7 @@ While energy flows from a source to a destination at 0.1 kW or more, a gradient 
 - **THEN** solar flows to the house and to the Powerwall
 
 ### Requirement: Flow assignment
-Sources are solar while it produces, the Powerwall while it discharges and the grid while importing; destinations are the house, the car while it charges, the Powerwall while it charges and the grid while exporting. Taking sources in the order solar, Powerwall, grid, solar SHALL be assigned to destinations in the order Powerwall, home, car, grid, and the Powerwall and the grid in the order home, car, Powerwall, grid, as Tesla attributes Powerwall charging to solar before the grid. Every active source SHALL show at least one flow.
+Sources are solar while it produces, the Powerwall while it discharges and the grid while importing; destinations are the house, the car while it charges, the Powerwall while it charges and the grid while exporting. Taking sources in the order solar, Powerwall, grid, solar SHALL be assigned to destinations in the order Powerwall, car, home, grid, the Powerwall in the order car, home, grid, and the grid in the order car, home, Powerwall, as Tesla attributes Powerwall charging to solar before the grid and a car's charging to solar before the house. Every active source SHALL show at least one flow.
 
 #### Scenario: Totals that don't balance
 - **WHEN** solar is 6.1 kW and the grid imports 2.0 kW while home uses 4.1 kW
@@ -147,6 +147,14 @@ Sources are solar while it produces, the Powerwall while it discharges and the g
 #### Scenario: Powerwall charging while the grid covers the house
 - **WHEN** solar is 1.0 kW, the Powerwall charges at 0.9 kW, the grid imports 1.2 kW and home uses 1.2 kW
 - **THEN** solar flows to the Powerwall, the grid flows to the house, and nothing flows from the grid to the Powerwall
+
+#### Scenario: Solar charges the car before the house
+- **WHEN** solar is 4.5 kW, home is 5.2 kW, the car charges at 1.2 kW, the grid imports 2.0 kW and the Powerwall is idle
+- **THEN** solar flows to the car at 1.2 kW and to the house, the grid flows to the house, and nothing flows from the grid to the car
+
+#### Scenario: The Powerwall charges the car before the house
+- **WHEN** solar is 0 kW, the Powerwall discharges 2.0 kW, the grid imports 6.0 kW, home is 1.0 kW and the car charges at 7.0 kW
+- **THEN** the Powerwall flows to the car at 2.0 kW, the grid flows to the car at 5.0 kW and to the house at 1.0 kW, and nothing flows from the Powerwall to the house
 
 ### Requirement: Multiple sources into one destination
 When two or more sources flow into the house or the Powerwall, each source after the first SHALL flow along its own line, parallel to the destination's line: with two sources, below it; with three, solar above it and the grid below it. A source whose line runs straight on through the panel into the destination SHALL keep the destination's line. Each extra line SHALL be the destination's line moved straight up or down, with no bends, so that its ends lie directly above or below the destination line's ends, and SHALL run close beside it. Sources charging the car share its cable. These extra lines SHALL be shown only while their flow is active.

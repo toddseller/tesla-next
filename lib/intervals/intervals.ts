@@ -30,7 +30,8 @@ const FLOWS = {
   grid_to_powerwall: "battery_imported_from_grid_wh",
 } as const;
 
-// Tesla's home flows include car charging; measured charging moves out of each home flow into the matching vehicle flow.
+// Tesla's home flows include car charging; measured charging moves out of the home flows into the matching vehicle
+// flows in this order, as the live scene serves the car before the house from each source.
 const HOME_TO_VEHICLE = { solar_to_home: "solar_to_vehicle", powerwall_to_home: "powerwall_to_vehicle", grid_to_home: "grid_to_vehicle" } as const;
 
 const ALL_FLOWS = [...Object.keys(FLOWS), ...Object.values(HOME_TO_VEHICLE)];
@@ -44,9 +45,10 @@ export function intervalWh(interval: EnergyRow, vehicleWh?: number) {
   for (const vehicleFlow of Object.values(HOME_TO_VEHICLE)) wh[vehicleFlow] = 0;
   const home = Object.keys(HOME_TO_VEHICLE).reduce((sum, flow) => sum + wh[flow], 0);
   if (vehicleWh && home > 0) {
-    const part = Math.min(vehicleWh, home) / home;
+    let left = Math.min(vehicleWh, home);
     for (const [homeFlow, vehicleFlow] of Object.entries(HOME_TO_VEHICLE)) {
-      const moved = wh[homeFlow] * part;
+      const moved = Math.min(left, wh[homeFlow]);
+      left -= moved;
       wh[vehicleFlow] = moved;
       wh[homeFlow] -= moved;
     }

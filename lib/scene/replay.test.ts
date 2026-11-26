@@ -106,6 +106,12 @@ describe("scene values from the recorded flows", () => {
     expect(links.map(({ from, to }) => `${from}-${to}`)).toEqual(["powerwall-car", "grid-car"]);
   });
 
+  test("each source links to the car before the house, as live", () => {
+    const { links } = values({ solar_to_home_kw: 3.3, solar_to_vehicle_kw: 1.2, grid_to_home_kw: 1.5, grid_to_vehicle_kw: 0.4 });
+
+    expect(links.map(({ from, to }) => `${from}-${to}`)).toEqual(["solar-car", "solar-home", "grid-car", "grid-home"]);
+  });
+
   test("charging with no car named shows as Vehicle", () => {
     const { values: v, links } = values({ powerwall_to_vehicle_kw: 7.7 });
 
