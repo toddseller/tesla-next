@@ -71,6 +71,10 @@ Every page SHALL use one dark design system: a near-black background (`#0E1116`)
 - **WHEN** any text on a page is checked against its background
 - **THEN** it has at least 4.5:1 contrast, or at least 3:1 when it is 24 pixels or larger
 
+#### Scenario: Chart axis labels are readable
+- **WHEN** a chart's axis labels are checked against its card, Recharts' default labels as well as the site's own
+- **THEN** each is in the muted gray (`#9AA3AD`), at least 4.5:1 on the card
+
 #### Scenario: One heading style across cards
 - **WHEN** True-Up shows its tiles, cycle chart, billing cycles, savings and Payback cards, and Impact its Backup card
 - **THEN** each card's heading is a section label like Impact's Self Powered and Solar's Solar forecast, and Backup's year still follows its middle dot
