@@ -52,8 +52,8 @@ export function Now({ initialStatus, renderedAt }: Props) {
     <section aria-labelledby="now" className="grid items-center gap-x-10 gap-y-3.5 md:gap-y-5 lg:grid-cols-[minmax(0,26rem)_minmax(0,1fr)]">
       {/* Tighter on a phone, so the weather sentence still leaves Today's first figure on the first screen. */}
       <div className="flex flex-col gap-2.5 md:gap-4">
-        <h2 id="now" className="text-[64px] leading-[0.9] font-semibold tracking-[-0.04em] md:text-[112px]">Now</h2>
-        <p data-part="now-sentence" className={`max-w-[34ch] text-xl leading-snug font-medium text-pretty md:text-[22px] ${live ? "" : "text-muted-foreground"}`}>
+        <h2 id="now" className="text-[52px] leading-[0.9] font-semibold tracking-[-0.04em] md:text-[112px]">Now</h2>
+        <p data-part="now-sentence" className={`max-w-[34ch] text-lg leading-snug font-medium text-pretty md:text-[22px] ${live ? "" : "text-muted-foreground"}`}>
           {live ? nowSentence(terms, { battery: site.battery, vehicle: site.vehicle, storm: gridPill(status, null)?.kind === "storm" }, now) : `No live update since ${time}.`}
         </p>
         {outside && (

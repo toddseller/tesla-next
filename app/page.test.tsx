@@ -104,6 +104,22 @@ test("the first render holds the six chapter words in order and Pick a day, with
   expect(html).not.toContain("this true-up year, since October 1");
 });
 
+// home-story, "The first screen on a phone": smaller type below md so the longest live sentence still leaves today's
+// solar so far on a 390 by 844 screen, and every size from md up as it was.
+test("below md the chapter words, the opening line and the live sentence take their phone sizes", async () => {
+  const html = await served();
+  const classOf = (pattern: RegExp) => html.match(pattern)?.[1] ?? "";
+  for (const id of ["now", "today", "year", "records", "habits", "since"]) {
+    const word = classOf(new RegExp(`<h2 id="${id}" class="([^"]*)"`));
+    expect(word, id).toContain("text-[52px]");
+    expect(word, id).toContain("md:text-[112px]");
+  }
+  const opening = classOf(/<h1 class="([^"]*)"/).split(" ");
+  expect(opening).toEqual(expect.arrayContaining(["text-base", "pb-4", "md:text-xl", "md:pb-10"]));
+  const sentence = classOf(/<p data-part="now-sentence" class="([^"]*)"/).split(" ");
+  expect(sentence).toEqual(expect.arrayContaining(["text-lg", "md:text-[22px]"]));
+});
+
 // home-story, "Since 2021's dollar estimate": True-Up's estimate for the current year, as its headline rounds it.
 test("Since 2021 gives True-Up's estimate first among its figures", async () => {
   const html = await served();

@@ -60,7 +60,7 @@ export function Records({ today, tabs, record: served }: Props) {
 
   return (
     <section aria-labelledby="records" className="flex flex-col gap-8">
-      <h2 id="records" className="text-[64px] leading-[0.9] font-semibold tracking-[-0.04em] md:text-[112px]">Records</h2>
+      <h2 id="records" className="text-[52px] leading-[0.9] font-semibold tracking-[-0.04em] md:text-[112px]">Records</h2>
       <div role="tablist" aria-label="Record" className="grid grid-cols-2 gap-0.5 rounded-lg border border-input bg-card p-[3px] sm:flex sm:self-start">
         {TABS.map((t, i) => (
           <button key={t.name} type="button" role="tab" id={`record-tab-${i}`} aria-selected={i === chosen} aria-controls="record-panel" onClick={() => choose(i)}

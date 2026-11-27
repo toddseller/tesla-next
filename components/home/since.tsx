@@ -45,7 +45,7 @@ export function Since({ today, months, solar, matched, net, share, owed, trueUpE
 
   return (
     <section aria-labelledby="since" className="flex flex-col gap-6">
-      <h2 id="since" className="text-[64px] leading-[0.9] font-semibold tracking-[-0.04em] md:text-[112px]">Since 2021</h2>
+      <h2 id="since" className="text-[52px] leading-[0.9] font-semibold tracking-[-0.04em] md:text-[112px]">Since 2021</h2>
       <p className="max-w-[60ch] text-[15px] text-pretty text-muted-foreground">Everything the panels have generated, against everything the house has used, month by month since the system started.</p>
       <div className="flex flex-wrap gap-x-5 gap-y-1 font-mono text-[13px]">
         <span className="flex items-center gap-2"><span aria-hidden className="h-[3px] w-3.5 rounded-sm bg-solar" />solar generated</span>

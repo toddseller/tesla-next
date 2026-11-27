@@ -57,7 +57,7 @@ export function Habits({ today, months, figures }: Props) {
 
   return (
     <section aria-labelledby="habits" className="flex flex-col gap-8">
-      <h2 id="habits" className="text-[64px] leading-[0.9] font-semibold tracking-[-0.04em] text-home md:text-[112px]">Habits</h2>
+      <h2 id="habits" className="text-[52px] leading-[0.9] font-semibold tracking-[-0.04em] text-home md:text-[112px]">Habits</h2>
       <div className="grid items-start gap-x-14 gap-y-8 md:grid-cols-[minmax(0,1fr)_20rem]">
         <div className="flex flex-col gap-3">
           <ChartContainer config={{}} className="aspect-auto h-60 w-full">
