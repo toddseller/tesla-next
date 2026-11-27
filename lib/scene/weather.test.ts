@@ -118,3 +118,22 @@ test("gusts missing on both sides stay missing, and missing on one side keep the
   const later = [none[0], { ...none[1], windGusts: 50 }];
   expect(weatherAt(later, t("2026-10-21T09:30:00-07:00"), "windGusts")).toBe(50);
 });
+
+test("temperature blends between readings, and missing on one side keeps the other's", () => {
+  const readings = [
+    { start: "2026-10-21T09:00:00-07:00", temperature: 12 },
+    { start: "2026-10-21T10:00:00-07:00", temperature: 16 },
+    { start: "2026-10-21T11:00:00-07:00", temperature: null },
+  ];
+  expect(weatherAt(readings, t("2026-10-21T09:30:00-07:00"), "temperature")).toBeCloseTo(14);
+  expect(weatherAt(readings, t("2026-10-21T10:30:00-07:00"), "temperature")).toBe(16);
+});
+
+test("the code is the reading's at or before the time, never a blend", () => {
+  const readings = [
+    { start: "2026-10-21T09:00:00-07:00", code: 0 },
+    { start: "2026-10-21T10:00:00-07:00", code: 61 },
+  ];
+  expect(weatherAt(readings, t("2026-10-21T09:59:00-07:00"), "code")).toBe(0);
+  expect(weatherAt(readings, t("2026-10-21T10:00:00-07:00"), "code")).toBe(61);
+});

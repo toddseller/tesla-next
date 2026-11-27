@@ -10,9 +10,10 @@ import { type Sky, withSplit } from "@/lib/scene/weather";
 // known weather shows at once. A missing value walks as 0, which the scene reads the
 // same way (no sunshine caps nothing). The vane's wind isn't walked: its readout gives
 // the latest reading, the vane eases to it on its own, and a walk from 350 to 10
-// degrees would sweep the long way.
+// degrees would sweep the long way. Nor are the temperature and code the Outside band
+// reads: a code has no in-between.
 const WALK_MS = 5 * 60 * 1000;
-const UNWALKED = new Set<keyof Sky>(["windSpeed", "windGusts", "windDirection"]);
+const UNWALKED = new Set<keyof Sky>(["windSpeed", "windGusts", "windDirection", "temperature", "code"]);
 const towards = (from: Sky, to: Sky, f: number): Sky =>
   Object.fromEntries((Object.keys(to) as (keyof Sky)[]).map((k) => [k, f === 1 || UNWALKED.has(k) ? to[k] : (from[k] ?? 0) + ((to[k] ?? 0) - (from[k] ?? 0)) * f]));
 export const useWalkedWeather = (weather: Sky) => {
@@ -44,4 +45,5 @@ export const useLiveWeather = (site: ReturnType<typeof useSiteData>) =>
     cover: site.weatherCover, rain: site.weatherRain, wind: site.weatherWind, windLow: site.weatherWindLow, windMid: site.weatherWindMid, windHigh: site.weatherWindHigh,
     cirrus: site.weatherCirrus, low: site.weatherLow, mid: site.weatherMid, sun: site.weatherSun,
     windSpeed: site.weatherWindSpeed, windGusts: site.weatherWindGusts, windDirection: site.weatherWindDirection,
+    temperature: site.weatherTemperature, code: site.weatherCode,
   } : {});

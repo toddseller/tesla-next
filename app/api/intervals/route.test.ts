@@ -184,18 +184,24 @@ test("replay readings carry the wind at 10 m as stored", async () => {
   expect((await getDay()).weather.map((r: Row) => [r.windSpeed, r.windGusts, r.windDirection])).toEqual([[29, 56, 225], [29, null, 225]]);
 });
 
+test("replay readings carry the temperature and code as stored", async () => {
+  await weather(at(16, 12, 0), 3, 100, { temperature: 13.4 });
+  await weather(at(16, 12, 15), 2, 40); // stored before temperatures
+  expect((await getDay()).weather.map((r: Row) => [r.temperature, r.code])).toEqual([[13.4, 3], [null, 2]]);
+});
+
 test("weather from an hour before the day to an hour after", async () => {
   await weather(at(15, 22, 30), 0, 0); // 90 minutes before: left out
   await weather(at(17, 0, 45), 2, 30);
   await weather(at(16, 12, 0), 82, 40, { wind_speed: 20, wind_direction: 90 }); // violent showers in an east wind
   await weather(at(15, 23, 15), 3, 85);
   await weather(at(17, 1, 30), 0, 0); // 90 minutes after: left out
-  const none = { windLow: null, windMid: null, windHigh: null, windGusts: null, cirrus: null, low: null, mid: null, sun: null };
+  const none = { windLow: null, windMid: null, windHigh: null, windGusts: null, cirrus: null, low: null, mid: null, sun: null, temperature: null };
   const calm = { windSpeed: null, windDirection: null };
   expect((await getDay()).weather).toEqual([
-    { start: "2026-10-15T23:15:00-07:00", cover: 0.85, rain: 0, wind: null, ...calm, ...none },
-    { start: "2026-10-16T12:00:00-07:00", cover: 1, rain: 1, wind: -20, windSpeed: 20, windDirection: 90, ...none },
-    { start: "2026-10-17T00:45:00-07:00", cover: 0.3, rain: 0, wind: null, ...calm, ...none },
+    { start: "2026-10-15T23:15:00-07:00", cover: 0.85, rain: 0, wind: null, code: 3, ...calm, ...none },
+    { start: "2026-10-16T12:00:00-07:00", cover: 1, rain: 1, wind: -20, windSpeed: 20, windDirection: 90, code: 82, ...none },
+    { start: "2026-10-17T00:45:00-07:00", cover: 0.3, rain: 0, wind: null, code: 2, ...calm, ...none },
   ]);
 });
 

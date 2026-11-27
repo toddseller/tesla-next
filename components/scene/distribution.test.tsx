@@ -743,3 +743,27 @@ describe("weather vane readout", () => {
     expect(vane().getAttribute("aria-label")).toBe("Wind: 25 mph, gusts 43 mph, from N");
   });
 });
+
+describe("the Outside band", () => {
+  const band = () => screen.getByRole("region", { name: /^Outside/ });
+
+  test("live, it reads the live weather under the scene and its replay bar", () => {
+    vi.useFakeTimers({ now: new Date("2026-10-20T20:00:00Z") }); // 1 PM
+    Object.assign(context, { weatherCover: 0.85, weatherTemperature: 16.7, weatherCode: 3, weatherWindSpeed: 2, weatherWindDirection: 254 });
+    const container = page();
+    expect(band().textContent).toContain("Outside now62°FCloudy·Calm");
+    const bar = container.querySelector('[data-part="replay-bar"]')!;
+    expect(bar.compareDocumentPosition(band()) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  test("in replay, it reads the replayed time's reading, as the scene does", () => {
+    vi.useFakeTimers({ now: new Date("2026-10-20T18:00:00Z") });
+    Object.assign(context, { weatherTemperature: 16.7, weatherCode: 3 });
+    context.replayData = {
+      ...history(12, 14, "2026-10-19"),
+      weather: [{ start: "2026-10-19T12:00:00-07:00", cover: 1, rain: 1, temperature: 13.4, code: 61 }],
+    };
+    page("/distribution?at=2026-10-19T13:00");
+    expect(band().textContent).toContain("Outside at 1:00 PM56°FRain");
+  });
+});

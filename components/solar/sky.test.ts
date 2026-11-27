@@ -2,7 +2,7 @@
 import { Cloud, CloudFog, CloudLightning, CloudMoon, CloudRain, CloudSnow, CloudSun, Moon, Sun } from "lucide-react";
 import { expect, test } from "vitest";
 
-import { skyOf } from "@/components/solar/sky";
+import { outsideSky, skyOf } from "@/components/solar/sky";
 
 test.each([
   [[0], "Sunny", Sun],
@@ -25,4 +25,24 @@ test.each([
   [61, "night", "Rain now", CloudRain],
 ] as const)("code %d %s reads %s", (code, when, label, icon) => {
   expect(skyOf(code, when)).toEqual({ label, icon });
+});
+
+// The Outside band's word: as the Today tile says it, without "now", and fog only as the scene draws it (scene-weather spec).
+const morning = new Date("2026-11-27T10:19:00-08:00");
+const night = new Date("2026-11-27T21:40:00-08:00");
+
+test.each([
+  ["an overcast morning", { code: 3, cover: 0.85 }, morning, "Cloudy", Cloud],
+  ["a clear night", { code: 0, cover: 0 }, night, "Clear", Moon],
+  ["fog without the airport's report", { code: 45, cover: 1, low: 1 }, morning, "Fog", CloudFog],
+  ["fog the airport sees", { code: 48, cover: 0.9, low: 1 }, morning, "Fog", CloudFog],
+  ["fog the airport doesn't see", { code: 45, cover: 0.2, low: 0.19 }, morning, "Sunny", Sun],
+  ["fog the airport half sees", { code: 45, cover: 0.5, low: 0.5 }, morning, "Partly cloudy", CloudSun],
+  ["fog with no cover, which the scene draws clear", { code: 45 }, morning, "Sunny", Sun],
+])("%s", (_, weather, at, label, icon) => {
+  expect(outsideSky(weather, at)).toEqual({ label, icon });
+});
+
+test("no code, no word", () => {
+  expect(outsideSky({ cover: 0.4 }, morning)).toBeNull();
 });

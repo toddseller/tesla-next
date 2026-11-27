@@ -61,6 +61,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<Par
         {`One home's 12.24 kW of Tesla solar and three Powerwalls, live and recorded since ${longDate(FIRST_DAY)}.`}
       </h1>
       <Now initialStatus={latest()} renderedAt={Date.now()} />
+      {/* Today sits closer to Now on a phone, so its first figure still makes the first screen (home-story spec). */}
       {[
         <Today key="today" today={today} forecast={forecastCard(stored, today, Date.now())} day={day} renderedAt={Date.now()} />,
         <Year key="year" year={year} today={today} days={hours} shares={shares} />,
@@ -69,7 +70,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<Par
         <Since key="since" today={today} months={months} solar={sinceFigures.total_solar} matched={sinceFigures.total_solar_percentage}
           net={trueUp.net} share={trueUp.share} owed={trueUp.owed} trueUpEnd={trueUp.end} payback={paidBack} />,
         <PickADay key="pick" today={today} />,
-      ].map((chapter) => <div key={chapter.key} className="mt-8 border-t pt-8 md:mt-20 md:pt-20">{chapter}</div>)}
+      ].map((chapter, i) => <div key={chapter.key} className={`${i === 0 ? "mt-3" : "mt-8"} border-t pt-8 md:mt-20 md:pt-20`}>{chapter}</div>)}
     </div>
   );
 }

@@ -1,6 +1,7 @@
 import { Cloud, CloudFog, CloudLightning, CloudMoon, CloudRain, CloudSnow, CloudSun, type LucideIcon, Moon, Sun } from "lucide-react";
 
 import type { SkyWhen } from "@/lib/forecast";
+import { skyAt } from "@/lib/scene/sun";
 
 type Sky = { label: string; icon: LucideIcon };
 
@@ -23,4 +24,17 @@ export function skyOf(code: number, when: SkyWhen = "forecast"): Sky {
   const sky = forecastSky(code);
   if (when === "forecast") return sky;
   return { ...sky, label: `${sky.label === "Fog likely" ? "Fog" : sky.label} now` };
+}
+
+const FOG = new Set([45, 48]);
+const codeOfCover = (cover: number) => (cover < 0.25 ? 0 : cover < 0.75 ? 2 : 3);
+
+// The Outside band's word for the shown moment. The scene draws fog only when the sky is fully overcast or the low
+// cloud reaches 0.75 (the airport decides fog), so a fog code otherwise reads by the cover the scene does draw.
+export function outsideSky({ code, cover, low }: { code?: number | null; cover?: number | null; low?: number | null }, at: Date): Sky | null {
+  if (code == null) return null;
+  const drawnFog = cover === 1 || (low ?? 0) >= 0.75;
+  const shown = FOG.has(code) && !drawnFog ? codeOfCover(cover ?? 0) : code;
+  const sky = skyOf(shown, skyAt(at) === "day" ? "now" : "night");
+  return { ...sky, label: sky.label.replace(/ now$/, "") };
 }

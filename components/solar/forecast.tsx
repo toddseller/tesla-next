@@ -10,6 +10,7 @@ import { ENTER_MS, useEntering } from "@/components/use-entering";
 import type { ByHour as Hourly, ForecastCard as Card, SkyWhen } from "@/lib/forecast";
 import { shiftDay, TIME_ZONE } from "@/lib/scene/replay";
 import { niceAxis, unitOnTopTick } from "@/lib/solar/day-views";
+import { degrees } from "@/lib/units";
 
 const clock = new Intl.DateTimeFormat("en-US", { hour: "numeric", minute: "2-digit", timeZone: TIME_ZONE });
 const hourOf = new Intl.DateTimeFormat("en-US", { hour: "numeric", timeZone: TIME_ZONE });
@@ -46,7 +47,7 @@ const PICKS = "cursor-pointer text-left focus-visible:ring-[3px] focus-visible:r
 // The card carries °C; whole degrees in the viewer's unit.
 const useDegrees = () => {
   const { temperature } = useUnits();
-  return (celsius: number) => Math.round(temperature === "F" ? (celsius * 9) / 5 + 32 : celsius);
+  return (celsius: number) => degrees(celsius, temperature);
 };
 
 function HighLow({ high, low, className }: { high: number; low: number; className: string }) {

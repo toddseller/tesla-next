@@ -67,3 +67,20 @@ test("the sentence and the scene sit side by side only from 1024 pixels", () => 
   expect(chapter).toContain("lg:grid-cols-");
   expect(chapter).not.toContain("md:grid-cols-");
 });
+
+// Now says the weather outside (home-story spec): under the live sentence, the gusts only wider than a phone.
+test("the live weather in a sentence under the live one, the gusts hidden on a phone", () => {
+  now({ ...STATUS, weather: { cover: 0.85, temperature: 16.7, code: 3, windGusts: 86 } });
+  const outside = part("outside-sentence");
+  expect(outside.textContent).toMatch(/^Outside it's 62°F and cloudy, gusts to 53 mph; sunset at 4:5\d PM\.$/);
+  expect(screen.getByText(", gusts to 53 mph").className).toContain("hidden md:inline");
+  expect(part("now-sentence").compareDocumentPosition(outside) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+});
+
+test("without a temperature, or with the live status stale, no weather sentence", () => {
+  now({ ...STATUS, weather: { cover: 0.85, code: 3 } });
+  expect(part("outside-sentence")).toBeNull();
+  cleanup();
+  now({ ...STATUS, modified: "2026-11-21T23:34:00Z", weather: { cover: 0.85, temperature: 16.7, code: 3 } });
+  expect(part("outside-sentence")).toBeNull();
+});

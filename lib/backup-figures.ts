@@ -65,7 +65,7 @@ export type OutageBattery = ReturnType<typeof outageBattery>;
 // The area's weather around an outage's start, by the wettest code and the strongest wind (km/h) among its samples.
 // First cutoffs, set so the February 2024 and 2025 storms read high wind and the summer outages calm.
 const HEAVY_RAIN = 0.7;
-const HIGH_WIND = 40;
+export const HIGH_WIND = 40;
 const WINDY = 25;
 const THUNDERSTORM = 95;
 
