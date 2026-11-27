@@ -77,11 +77,14 @@ const duskAt = (now: Date) => Math.min(1, Math.max(0, (sunPosition(now).altitude
 const siteDate = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Los_Angeles" });
 const cloudSeedAt = (now: Date) => Date.parse(siteDate.format(now)) / 86400000;
 
-// The Christmas lights' season (the live-flow-scene spec): a night counts by the date of the evening it starts, so 12
-// hours back puts the small hours on the evening before. From the Friday after Thanksgiving (the fourth Thursday of
-// November) through January 1's evening.
+// A night counts by the date of the evening it starts (the live-flow-scene spec's Christmas season, and Christmas Eve in
+// scene-weather): 12 hours back puts the small hours on the evening before.
+const eveningAt = (now: Date) => siteDate.format(new Date(now.getTime() - 12 * 3600_000)).split("-").map(Number);
+
+// The Christmas lights' season: from the Friday after Thanksgiving (the fourth Thursday of November) through January 1's
+// evening.
 const christmasAt = (now: Date) => {
-  const [year, month, day] = siteDate.format(new Date(now.getTime() - 12 * 3600_000)).split("-").map(Number);
+  const [year, month, day] = eveningAt(now);
   if (month === 12 || (month === 1 && day === 1)) return true;
   if (month !== 11) return false;
   const firstThursday = 1 + ((4 - new Date(Date.UTC(year, 10, 1)).getUTCDay() + 7) % 7);
@@ -194,6 +197,7 @@ export const sceneState = (
 ) => {
   // The weather service's model can keep a marine layer for hours after the roof is in full sun.
   const cap = roofCap(sun);
+  const [, month, day] = eveningAt(now);
   [cover, low, mid] = [capped(cover, cap), capped(low, cap), capped(mid, cap)];
   const flows = {
     solar: active(solarPower) ? "in" : null,
@@ -244,6 +248,7 @@ export const sceneState = (
     // The Death Star and the Star Destroyer's month (the scene-weather spec), by the site's date.
     may: siteDate.format(now).slice(5, 7) === "05",
     christmas: christmasAt(now),
+    christmasEve: month === 12 && day === 24,
     cover,
     cirrus,
     low,

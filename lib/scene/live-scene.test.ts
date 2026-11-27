@@ -429,6 +429,18 @@ describe("rain and the day's clouds", () => {
   ])("Christmas season at %s: %s", (iso, christmas) => {
     expect(state(iso).christmas).toBe(christmas);
   });
+
+  // scene-weather, "Christmas Eve night": the night that starts on the evening of December 24.
+  test.each([
+    ["2026-12-25T05:00:00Z", true], // 9 PM PST December 24
+    ["2026-12-25T11:00:00Z", true], // 3 AM December 25, Christmas Eve's night
+    ["2025-12-25T05:00:00Z", true], // 9 PM December 24, 2025
+    ["2026-12-24T05:00:00Z", false], // 9 PM December 23
+    ["2026-12-26T05:00:00Z", false], // 9 PM December 25
+    ["2026-12-24T19:59:00Z", false], // 11:59 AM December 24, still December 23's night
+  ])("Christmas Eve at %s: %s", (iso, christmasEve) => {
+    expect(state(iso).christmasEve).toBe(christmasEve);
+  });
 });
 
 describe("setting and rising", () => {

@@ -72,6 +72,90 @@
   }
 }
 
+/* Christmas Eve's sleigh: one pass (its length, size, start and climb set by the component) across the sky band, from
+   and to 10% of the stage past its edges, clear of the scene's padding and Rudolph's glow. The frames face left, so a pass to the right turns them round. */
+.scene-santa {
+  position: absolute;
+  pointer-events: none;
+  scale: -1 1;
+  animation: scene-santa-right linear forwards;
+}
+
+.scene-santa-left {
+  scale: none;
+  animation-name: scene-santa-left;
+}
+
+@keyframes scene-santa-right {
+  from {
+    left: var(--santa-from);
+  }
+  to {
+    left: 110%;
+    translate: 0 var(--santa-climb);
+  }
+}
+
+@keyframes scene-santa-left {
+  from {
+    left: 110%;
+  }
+  to {
+    left: var(--santa-from);
+    translate: 0 var(--santa-climb);
+  }
+}
+
+/* The team rises and falls with each stride, and steps through the sheet's eight frames of it. */
+.scene-santa-stride {
+  position: absolute;
+  inset: 0;
+  animation: scene-santa-bob 0.68s ease-in-out infinite;
+}
+
+@keyframes scene-santa-bob {
+  0%,
+  100% {
+    translate: 0 2%;
+  }
+  50% {
+    translate: 0 -2%;
+  }
+}
+
+.scene-santa-team {
+  position: absolute;
+  inset: 0;
+  background-size: 100% 800%;
+  background-repeat: no-repeat;
+  animation: scene-santa-gallop 0.68s steps(8) infinite;
+}
+
+.scene-santa-side {
+  background-image: url("/scene/santa-side.webp");
+}
+
+.scene-santa-toward {
+  background-image: url("/scene/santa-toward.webp");
+}
+
+/* A percentage moves the sheet by its spare height, seven frames, so 8/7 of it is a whole stride in eight steps. */
+@keyframes scene-santa-gallop {
+  to {
+    background-position: 0 calc(800% / 7);
+  }
+}
+
+/* Rudolph's nose, outside the team's cloud fade so it glows through any weather. */
+.scene-santa-nose {
+  position: absolute;
+  width: 7%;
+  aspect-ratio: 1;
+  translate: -50% -50%;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(255, 90, 74, 0.95), rgba(255, 46, 34, 0.45) 30%, rgba(255, 46, 34, 0));
+}
+
 /* The twilight glow, over the stars and under the overcast sky that hides it. */
 .scene-twilight {
   position: absolute;

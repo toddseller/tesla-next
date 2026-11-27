@@ -24,6 +24,22 @@ export const GLOW = { top: 60, size: 0.22, cloudSize: 0.12 };
 export const MOON = { size: 0.045 };
 // The May night's Star Destroyer, as a share of the scene's width.
 export const SHIP = { size: 0.09 };
+// Christmas Eve's sleigh (the scene-weather spec). Width is a share of the stage's, and each pass runs from `near` at
+// depth 0 to `far` at 1, seen three-quarter on below `towardBelow`. `sky` is the band it flies in, in stage units from
+// the scene's top (-HEADROOM) to above the roof's peak and its vane, so it never covers the house or a label. Each view's
+// frame is `aspect` tall for its width, Rudolph's nose at `nose` as a share of the frame (the render script's log). Each
+// pass climbs by `climb` of its height as it crosses.
+export const SANTA = {
+  near: { width: 0.33, seconds: 35 },
+  climb: 0.1,
+  far: { width: 0.1, seconds: 80 },
+  towardBelow: 0.4,
+  sky: { top: -HEADROOM, bottom: 50 },
+  views: {
+    side: { aspect: 274 / 960, nose: [0.013, 0.167] as Point },
+    toward: { aspect: 410 / 800, nose: [0.024, 0.122] as Point },
+  },
+};
 
 // Where a body `altitude` degrees up sits in the stage, top to bottom: overhead
 // at GLOW.top below the scene's top, LOW_ALTITUDE at the eaves, evenly between,
