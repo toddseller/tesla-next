@@ -77,6 +77,17 @@ const duskAt = (now: Date) => Math.min(1, Math.max(0, (sunPosition(now).altitude
 const siteDate = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Los_Angeles" });
 const cloudSeedAt = (now: Date) => Date.parse(siteDate.format(now)) / 86400000;
 
+// The Christmas lights' season (the live-flow-scene spec): a night counts by the date of the evening it starts, so 12
+// hours back puts the small hours on the evening before. From the Friday after Thanksgiving (the fourth Thursday of
+// November) through January 1's evening.
+const christmasAt = (now: Date) => {
+  const [year, month, day] = siteDate.format(new Date(now.getTime() - 12 * 3600_000)).split("-").map(Number);
+  if (month === 12 || (month === 1 && day === 1)) return true;
+  if (month !== 11) return false;
+  const firstThursday = 1 + ((4 - new Date(Date.UTC(year, 10, 1)).getUTCDay() + 7) % 7);
+  return day >= firstThursday + 22;
+};
+
 // Up by day too: the sun outshines it as its height grows (`daylight`), and its glow and dark side show as the
 // scene turns to night (`night`). Phase 0 is new, 0.5 full.
 const moonInSky = (now: Date) => {
@@ -232,6 +243,7 @@ export const sceneState = (
     cloudSeed: cloudSeedAt(now),
     // The Death Star and the Star Destroyer's month (the scene-weather spec), by the site's date.
     may: siteDate.format(now).slice(5, 7) === "05",
+    christmas: christmasAt(now),
     cover,
     cirrus,
     low,

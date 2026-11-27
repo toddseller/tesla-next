@@ -277,6 +277,35 @@
   transition: opacity 0.15s ease;
 }
 
+/* The Christmas bulbs twinkle in three groups a third of a cycle apart, so they never all dim at once; they hold for
+   reduced motion and in a paused replay, as the stars do (the live-flow-scene spec). */
+@keyframes scene-twinkle {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+.scene-bulb-0 { animation: scene-twinkle 2.6s ease-in-out 0s infinite; }
+.scene-bulb-1 { animation: scene-twinkle 2.6s ease-in-out -0.87s infinite; }
+.scene-bulb-2 { animation: scene-twinkle 2.6s ease-in-out -1.73s infinite; }
+
+.scene-still .scene-bulb {
+  animation: none;
+}
+
+.scene-paused .scene-bulb {
+  animation-play-state: paused;
+}
+
+/* On a narrow stage the bulb shape grows down from its socket, drawn at (0, 0), so each bulb stays at least 6px tall
+   in its place. */
+@container (max-width: 640px) {
+  .scene-bulb-shape { transform: scale(1.5); }
+}
+
+@container (max-width: 480px) {
+  .scene-bulb-shape { transform: scale(2); }
+}
+
 .scene-line,
 .scene-flow {
   fill: none;

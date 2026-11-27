@@ -415,6 +415,20 @@ describe("rain and the day's clouds", () => {
     expect(state("2027-06-01T06:59:00Z").may).toBe(true); // 11:59 PM PDT May 31
     expect(state("2027-06-01T07:00:00Z").may).toBe(false); // midnight PDT June 1
   });
+
+  // live-flow-scene, "The Christmas season": a night counts by the evening it starts, from the Friday after
+  // Thanksgiving through January 1's evening.
+  test.each([
+    ["2026-11-28T05:00:00Z", true], // 9 PM PST November 27, the Friday after Thanksgiving
+    ["2026-11-27T13:00:00Z", false], // 5 AM November 27, Thanksgiving's night
+    ["2027-01-02T07:00:00Z", true], // 11 PM January 1
+    ["2027-01-02T13:00:00Z", true], // 5 AM January 2, January 1's night
+    ["2027-01-03T03:00:00Z", false], // 7 PM January 2
+    ["2025-11-28T05:00:00Z", false], // 9 PM November 27, 2025, Thanksgiving
+    ["2025-11-29T05:00:00Z", true], // 9 PM November 28, 2025, the Friday after
+  ])("Christmas season at %s: %s", (iso, christmas) => {
+    expect(state(iso).christmas).toBe(christmas);
+  });
 });
 
 describe("setting and rising", () => {
