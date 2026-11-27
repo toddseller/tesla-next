@@ -3,7 +3,7 @@ import React, {type CSSProperties, type ReactNode, type Ref, useEffect, useRef, 
 import {sceneLayers, SUNLIGHT} from '@/components/scene/images';
 import {type SkyPoint, twinkle} from '@/lib/scene/night-sky';
 import type {Link, SceneState} from '@/lib/scene/live-scene';
-import {chargeBarPoints, EAVES, FLOW_COLORS, GLOW, HEADROOM, LABELS, type LegName, legPoints, LEGS, MOON, pathLength, type Point, RENDER, SHIP, skyY, STAGE, STRAIGHT_THROUGH, VANE} from '@/components/scene/layout';
+import {chargeBarPoints, CHRISTMAS_LIGHTS, EAVES, FLOW_COLORS, GLOW, HEADROOM, LABELS, type LegName, legPoints, LEGS, MOON, pathLength, type Point, RENDER, SHIP, skyY, STAGE, STRAIGHT_THROUGH, VANE} from '@/components/scene/layout';
 
 import CloudCanvas, {type CloudHandle} from '@/components/scene/cloud-canvas';
 import {cloudInputs} from '@/components/scene/cloud-inputs';
@@ -465,6 +465,28 @@ const rainTile = (size: number, count: number, length: number, width: number, al
   return `url("data:image/svg+xml,${encodeURIComponent(svg)}")`;
 };
 const RAIN_TILES = { far: rainTile(200, 26, 22, 1.2, 0.5, 5), near: rainTile(260, 14, 40, 1.8, 0.45, 9) };
+// The Christmas bulbs (the live-flow-scene spec). Three twinkle groups keep them from ever all dimming at once.
+const BULB = { red: '#F0303A', green: '#18B04F', socket: '#3A4049' };
+const BULBS = Object.values(CHRISTMAS_LIGHTS).flat();
+const ChristmasLights = ({ on }: { on: boolean }) => (
+  <svg className="scene-layer scene-lights" viewBox={`0 0 ${STAGE.width} ${STAGE.height}`} data-part="christmas-lights" aria-hidden="true" style={{ opacity: on ? 1 : 0 }}>
+    <defs>
+      <filter id="scene-bulb-halo" x="-100%" y="-100%" width="300%" height="300%"><feGaussianBlur stdDeviation="4.7" /></filter>
+      <g id="scene-bulb" className="scene-bulb-shape">
+        <rect x="-2" y="0" width="4" height="3.2" rx="0.8" fill={BULB.socket} />
+        <path d="M0,3 C3.4,3 4.5,7.3 3,10.5 C2,12.7 0.9,14 0,14.9 C-0.9,14 -2,12.7 -3,10.5 C-4.5,7.3 -3.4,3 0,3 Z" />
+      </g>
+      <g id="scene-bulbs">
+        {BULBS.map(([x, y], i) => (
+          <use key={i} href="#scene-bulb" x={x} y={y} className={`scene-bulb scene-bulb-${i % 3}`} fill={i % 2 ? BULB.green : BULB.red} />
+        ))}
+      </g>
+    </defs>
+    <use href="#scene-bulbs" filter="url(#scene-bulb-halo)" opacity={0.85} />
+    <use href="#scene-bulbs" />
+  </svg>
+);
+
 const NIGHT_RAIN = 0.6;
 // The rain leans the way the wind blows across the scene, 1.2 degrees per km/h,
 // up to 30; the leaning box is wider than the scene so no edge shows.
@@ -541,6 +563,8 @@ const LiveScene = ({ state, paused = false, drift = 1 }: { state: SceneState; pa
   const still = useReducedMotion();
   const { wind } = useUnits();
   const { labels, links, sunlight, twilight, dusk, charge, glow, replay } = state;
+  // The house lights' switch, shared by the windows and the Christmas bulbs so they come on together.
+  const lit = dusk < 0.5;
   const sunGlow = useLingering(state.sunGlow);
   const moon = useLingering(state.moon);
   // No reading, or none yet, draws as a clear sky.
@@ -620,7 +644,7 @@ const LiveScene = ({ state, paused = false, drift = 1 }: { state: SceneState; pa
     return () => cancelAnimationFrame(frame);
   }, []);
   return (
-    <div className={['scene', eased && 'scene-eased', still && 'scene-still'].filter(Boolean).join(' ')} data-part="scene" ref={scene} style={{ '--cover': cover, '--day': dusk } as CSSProperties}>
+    <div className={['scene', eased && 'scene-eased', still && 'scene-still', paused && 'scene-paused'].filter(Boolean).join(' ')} data-part="scene" ref={scene} style={{ '--cover': cover, '--day': dusk } as CSSProperties}>
       {/* The day sky over the night backdrop, fading by --day: one gradient can't transition into another. */}
       <div className="scene-sky-day" data-part="sky-day" />
       {/* Under the gray overcast layer, so cloud hides them as it covers the clear sky. */}
@@ -662,7 +686,7 @@ const LiveScene = ({ state, paused = false, drift = 1 }: { state: SceneState; pa
         )}
         {/* Shown by an inline style rather than the stylesheet, which can apply a
             moment after the first paint: by day the lights would flash on. */}
-        <Layer {...layers.nightLights} className="scene-lights" style={{ opacity: dusk < 0.5 ? 0.75 : 0 }} />
+        <Layer {...layers.nightLights} className="scene-lights" style={{ opacity: lit ? 0.75 : 0 }} />
         {layers.car && (
           <>
             <Layer name="car" src={layers.car.src} />
@@ -673,6 +697,8 @@ const LiveScene = ({ state, paused = false, drift = 1 }: { state: SceneState; pa
             <Layer {...layers.wallConnector!} />
           </>
         )}
+        {/* On the night lights' switch; over the car, which sits behind the garage's front eave. */}
+        {state.christmas && <ChristmasLights on={lit} />}
         <Rain rain={state.rain ?? 0} dusk={dusk} wind={state.wind} />
         <Vane arrow={vaneArrow} pose={firstPose} text={windText(state.windSpeed, state.windGusts, state.windDirection, wind)} />
         {(['solar', 'home', 'powerwall', 'grid'] as const).map((name) => (

@@ -130,6 +130,37 @@ describe("layers", () => {
     expect(Number(lights(minutes(15)).style.opacity)).toBe(0.75);
   });
 
+  // live-flow-scene, "Christmas lights" and "Christmas lights switch with the windows".
+  test("in the season the bulbs hang on the stage, alternating red and green, on the window lights' switch; out of it there are none", () => {
+    const at = (iso: string) => render(<LiveScene state={sceneState(midday, new Date(iso))} />).container;
+    const night = part(at("2026-11-28T05:00:00Z"), "christmas-lights"); // 9 PM on the Friday after Thanksgiving
+    const bulbs = [...night.querySelectorAll<SVGUseElement>("use.scene-bulb")];
+
+    expect(night.parentElement!.dataset.part).toBe("stage");
+    expect(night.classList.contains("scene-lights")).toBe(true);
+    expect(Number(night.style.opacity)).toBe(1);
+    expect(bulbs).toHaveLength(64);
+    expect(bulbs.slice(0, 4).map((bulb) => bulb.getAttribute("fill"))).toEqual(["#F0303A", "#18B04F", "#F0303A", "#18B04F"]);
+    expect(Number(part(at("2026-12-10T23:00:00Z"), "christmas-lights").style.opacity)).toBe(0); // 3 PM
+    expect(at("2026-10-18T05:00:00Z").querySelector('[data-part="christmas-lights"]')).toBeNull(); // an October night
+  });
+
+  test("the bulbs and the windows switch at the same moment around sunset", () => {
+    const { sunset } = sunTimes(new Date("2026-12-10T20:00:00Z"));
+    for (const seconds of [-60, -1, 1, 60]) {
+      const scene = render(<LiveScene state={sceneState(midday, new Date(sunset.getTime() + seconds * 1000))} />).container;
+      expect(Number(part(scene, "christmas-lights").style.opacity) > 0, `${seconds} s`).toBe(Number(part(scene, "night-lights").style.opacity) > 0);
+    }
+  });
+
+  test("a paused replay marks the scene, so the bulbs' twinkle holds", () => {
+    const state = sceneState(midday, new Date("2026-11-28T05:00:00Z"), { replay: true });
+    const { container, rerender } = render(<LiveScene state={state} paused />);
+    expect(part(container, "scene").classList.contains("scene-paused")).toBe(true);
+    rerender(<LiveScene state={state} />);
+    expect(part(container, "scene").classList.contains("scene-paused")).toBe(false);
+  });
+
   test("the sun lights and shades each face direction by the state's sunlight, from the first frame", () => {
     const scene = (iso: string) => render(<LiveScene state={sceneState(midday, new Date(iso))} />).container;
     const opacity = (container: Element, name: string) => Number(part(container, name).style.opacity);

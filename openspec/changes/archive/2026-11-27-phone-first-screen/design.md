@@ -38,3 +38,7 @@ Every chapter word takes 52 px below `md`, not only Now and Today, so the Chapte
 ## Migration Plan
 
 None beyond the usual: verify in an onyx branch container, give the URL for a manual check before pushing, and release when asked.
+
+## Rollout
+
+Released with outside-now as v2026.11.27.0 on 2026-11-27; its Deploy run passed, and the new container was up at 12:10 PM. At 12:12 PM, on teslasolar.report at 390 x 844, with a three-line live sentence and the weather sentence showing, Today's first figure ended at 798 px, inside the 844 px screen (846 px on the morning's release). The longest sentence had ended it at 822 px in the branch container. No console errors, and no sideways scrolling.

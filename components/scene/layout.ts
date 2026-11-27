@@ -49,6 +49,17 @@ export const PANEL = { x: 1460, y: 372 + RENDER.y, width: 20, height: 52 };
 // heights of its post, compass arms and arrow above the foot, in stage units.
 export const VANE = { foot: [1146.7, 141.3] as Point, post: 70, arms: 40, arrow: 60 };
 
+// The Christmas bulbs' sockets under the roof's edges (the live-flow-scene spec), taken from the mockup's board B. Runs
+// follow the string, the recess slope from the bottom up, so red and green alternate along it as on the board.
+export const CHRISTMAS_LIGHTS: Record<"garageFront" | "garageEast" | "recessSlope" | "recessEave" | "bayFront" | "powerwallSide", Point[]> = {
+  garageFront: [[5.4, 508.9], [36.5, 519.7], [68.9, 530.5], [100, 541.3], [132.4, 552.1], [163.5, 562.9], [195.9, 573.7], [227, 584.5], [258.1, 595.4], [290.5, 606.2], [321.6, 617], [354.1, 627.8], [385.1, 638.6], [417.6, 649.4], [448.6, 660.2]],
+  garageEast: [[478.4, 645.4], [506.8, 629.1], [536.5, 614.3], [566.2, 598.1], [594.6, 583.2], [624.3, 568.3], [654.1, 552.1], [682.4, 537.2], [712.2, 521], [741.9, 506.2], [770.3, 489.9], [800, 475.1]],
+  recessSlope: [[709.5, 431.8], [732.4, 402.1], [755.4, 372.4], [778.4, 341.3], [801.4, 311.6], [824.3, 281.8]],
+  recessEave: [[851.4, 254.8], [883.8, 260.2], [914.9, 267], [945.9, 272.4], [978.4, 277.8], [1010.8, 284.5], [1041.9, 289.9]],
+  bayFront: [[951.4, 454.8], [982.4, 462.9], [1013.5, 469.7], [1045.9, 477.8], [1077, 484.5], [1108.1, 492.6], [1139.2, 500.8], [1170.3, 507.5], [1201.4, 515.6], [1232.4, 522.4], [1264.9, 530.5], [1295.9, 537.2], [1327, 545.4]],
+  powerwallSide: [[1356.8, 530.5], [1379.7, 508.9], [1402.7, 487.2], [1425.7, 465.6], [1448.6, 444], [1470.3, 422.4], [1493.2, 400.8], [1516.2, 379.1], [1539.2, 357.5], [1562.2, 337.2], [1585.1, 315.6]],
+};
+
 // Each element's leg runs from the element to the electrical panel (the small
 // gray box on the right wall), along the isometric axes of the roof, walls and
 // ground. Solar runs down the roof slope, over the eave and down the wall; the
