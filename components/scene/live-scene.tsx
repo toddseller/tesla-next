@@ -3,7 +3,7 @@ import React, {type CSSProperties, type ReactNode, type Ref, useEffect, useRef, 
 import {sceneLayers, SUNLIGHT} from '@/components/scene/images';
 import {type SkyPoint, twinkle} from '@/lib/scene/night-sky';
 import type {Link, SceneState} from '@/lib/scene/live-scene';
-import {chargeBarPoints, CHRISTMAS_LIGHTS, EAVES, FLOW_COLORS, GLOW, HEADROOM, LABELS, type LegName, legPoints, LEGS, MOON, pathLength, type Point, RENDER, SHIP, skyY, STAGE, STRAIGHT_THROUGH, VANE} from '@/components/scene/layout';
+import {chargeBarPoints, CHRISTMAS_LIGHTS, EAVES, FLOW_COLORS, GLOW, HEADROOM, LABELS, type LegName, legPoints, LEGS, MOON, pathLength, type Point, RENDER, SANTA, SHIP, skyY, STAGE, STRAIGHT_THROUGH, VANE} from '@/components/scene/layout';
 
 import CloudCanvas, {type CloudHandle} from '@/components/scene/cloud-canvas';
 import {cloudInputs} from '@/components/scene/cloud-inputs';
@@ -415,36 +415,70 @@ const Moon = ({ moon: { x, altitude, phase, libration, axis, brightLimb, night, 
   );
 };
 
-// On May nights a Star Destroyer crosses the upper sky (the scene-weather spec), on the page's clock rather than
-// the shown time, so fast replay doesn't fling it past. In seconds: a pass, the wait before the first, and after each.
-const SHIP_PASS = 90;
-// The first comes within seconds, so even a fast replay through a May evening shows one.
-const SHIP_WAITS = { first: [2, 5], next: [180, 300] };
+// Passes across the night sky (the scene-weather spec's Star Destroyer and Santa's sleigh) run on the page's clock rather
+// than the shown time, so fast replay doesn't fling them past. In seconds: the wait before the first pass, and after each.
+// The first comes within seconds, so even a fast replay through the evening shows one.
+const PASS_WAITS = { first: [2, 5], next: [180, 300] };
 const between = ([low, high]: number[]) => low + Math.random() * (high - low);
-const StarDestroyer = ({ flying }: { flying: boolean }) => {
-  const [pass, setPass] = useState<{ left: boolean; top: number } | null>(null);
+const usePasses = <P extends { seconds: number }>(flying: boolean, pick: () => P) => {
+  const [pass, setPass] = useState<P | null>(null);
   const [count, setCount] = useState(0);
-  // Grounded (day, a paused replay, another month) once its crossing is done: the next night starts over with a
-  // first pass.
+  // Grounded (day, a paused replay, another night) once its crossing is done: the next night starts over with a first
+  // pass.
   if (!flying && !pass && count) setCount(0);
   // A crossing always finishes, even if the replay pauses or the night ends under it.
   useEffect(() => {
     if (!pass) return;
-    const timer = setTimeout(() => setPass(null), SHIP_PASS * 1000);
+    const timer = setTimeout(() => setPass(null), pass.seconds * 1000);
     return () => clearTimeout(timer);
   }, [pass]);
   useEffect(() => {
     if (!flying || pass) return;
     const timer = setTimeout(() => {
       setCount(count + 1);
-      setPass({ left: Math.random() < 0.5, top: between([4, 18]) });
-    }, between(count ? SHIP_WAITS.next : SHIP_WAITS.first) * 1000);
+      setPass(pick());
+    }, between(count ? PASS_WAITS.next : PASS_WAITS.first) * 1000);
     return () => clearTimeout(timer);
-  }, [flying, pass, count]);
+  }, [flying, pass, count, pick]);
+  return pass;
+};
+
+const pickShip = () => ({ left: Math.random() < 0.5, top: between([4, 18]), seconds: 90 });
+const StarDestroyer = ({ flying }: { flying: boolean }) => {
+  const pass = usePasses(flying, pickShip);
   if (!pass) return null;
   return (
     <img className={`scene-ship ${pass.left ? 'scene-ship-left' : ''}`} data-part="ship" src="/scene/star-destroyer-sky.webp" alt=""
-      style={{ width: `${SHIP.size * 100}%`, top: `${pass.top}%`, animationDuration: `${SHIP_PASS}s` }} />
+      style={{ width: `${SHIP.size * 100}%`, top: `${pass.top}%`, animationDuration: `${pass.seconds}s` }} />
+  );
+};
+
+// Each pass's depth, 0 near to 1 far, sets its view, size, speed and haze; far passes keep to the band's upper part.
+const pickSleigh = () => {
+  const depth = Math.random(), left = Math.random() < 0.5;
+  const view: keyof typeof SANTA.views = depth < SANTA.towardBelow ? 'toward' : 'side';
+  const width = SANTA.near.width + (SANTA.far.width - SANTA.near.width) * depth;
+  const height = width * STAGE.width * SANTA.views[view].aspect;
+  // Room left once the team and its climb fit in the band.
+  const room = (SANTA.sky.bottom - SANTA.sky.top - (1 + SANTA.climb) * height) * (1 - 0.6 * depth);
+  return {
+    depth, left, view, width, top: SANTA.sky.top + SANTA.climb * height + Math.random() * room,
+    seconds: SANTA.near.seconds + (SANTA.far.seconds - SANTA.near.seconds) * depth,
+  };
+};
+const SantaSleigh = ({ flying, cover }: { flying: boolean; cover: number }) => {
+  const pass = usePasses(flying, pickSleigh);
+  if (!pass) return null;
+  const { aspect, nose } = SANTA.views[pass.view];
+  return (
+    <div className={`scene-santa ${pass.left ? 'scene-santa-left' : ''}`} data-part="sleigh" aria-hidden="true"
+      style={{ width: `${pass.width * 100}%`, aspectRatio: 1 / aspect, top: pct(pass.top, STAGE.height), animationDuration: `${pass.seconds}s`, '--santa-from': `${-(pass.width + 0.1) * 100}%`, '--santa-climb': `${-SANTA.climb * 100}%` } as CSSProperties}>
+      <div className="scene-santa-stride">
+        <div className={`scene-santa-team scene-santa-${pass.view}`} data-part="sleigh-team"
+          style={{ opacity: 1 - 0.5 * cover, filter: pass.depth ? `brightness(${1 - 0.3 * pass.depth}) saturate(${1 - 0.4 * pass.depth})` : undefined }} />
+        <div className="scene-santa-nose" data-part="sleigh-nose" style={{ left: `${nose[0] * 100}%`, top: `${nose[1] * 100}%` }} />
+      </div>
+    </div>
   );
 };
 
@@ -700,6 +734,8 @@ const LiveScene = ({ state, paused = false, drift = 1 }: { state: SceneState; pa
         {/* On the night lights' switch; over the car, which sits behind the garage's front eave. */}
         {state.christmas && <ChristmasLights on={lit} />}
         <Rain rain={state.rain ?? 0} dusk={dusk} wind={state.wind} />
+        {/* In front of the moon and the rain, behind the roof's vane and the labels; its band keeps it off the house. */}
+        <SantaSleigh flying={state.christmasEve && state.dusk === 0 && !paused && !still} cover={cover} />
         <Vane arrow={vaneArrow} pose={firstPose} text={windText(state.windSpeed, state.windGusts, state.windDirection, wind)} />
         {(['solar', 'home', 'powerwall', 'grid'] as const).map((name) => (
           <Label key={name} name={name} title={LABELS[name].title} value={labels[name]} note={name === 'grid' ? labels.gridDirection : null} />

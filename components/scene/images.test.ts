@@ -4,7 +4,7 @@ import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
 import { type CarImage, ELEMENTS, NIGHT_LIGHTS, SOLAR_GLOW, SUNLIGHT, WALL_CONNECTOR, sceneLayers } from "@/components/scene/images";
-import { CAR_CABLES } from "@/components/scene/layout";
+import { CAR_CABLES, SANTA } from "@/components/scene/layout";
 
 const ASSETS = join(import.meta.dirname, "../../public/scene");
 const cars: Record<string, CarImage> = { R2D2: { src: "r2d2.webp", path: [[0, 0], [1, 1]], plug: [[1, 1], [2, 2]] } };
@@ -69,9 +69,16 @@ const webpSize = (file: string) => {
 };
 
 test("every scene image is on the same 2400 x 1166 frame", () => {
-  // The moon's and the Death Star's maps (drawn onto the moon's disc) and the Star Destroyer (flown across the sky) aren't layers of the scene.
-  const files = readdirSync(ASSETS).filter((file) => file.endsWith(".webp") && !/^(moon|death-star|star-destroyer-sky)/.test(file));
+  // The moon's and the Death Star's maps (drawn onto the moon's disc) and the Star Destroyer and Santa's sleigh (flown across the sky) aren't layers of the scene.
+  const files = readdirSync(ASSETS).filter((file) => file.endsWith(".webp") && !/^(moon|death-star|star-destroyer-sky|santa-)/.test(file));
 
   expect(files).toHaveLength(16);
   files.forEach((file) => expect([file, ...webpSize(file)]).toEqual([file, 2400, 1166]));
+});
+
+test("each sleigh sheet is eight frames of its view's aspect", () => {
+  for (const view of ["side", "toward"] as const) {
+    const [width, height] = webpSize(`santa-${view}.webp`);
+    expect(height / 8 / width, view).toBeCloseTo(SANTA.views[view].aspect, 3);
+  }
 });

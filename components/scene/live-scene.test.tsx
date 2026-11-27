@@ -5,7 +5,7 @@ import React from "react";
 import {act, cleanup, render} from "@testing-library/react";
 
 import LiveScene, {drawStars, driftVelocity, easeDrift, flowOffset, moonLitPath, moveFlows, PAUSED_AT, skyY, TIMING, vaneAxis, vaneShake} from "@/components/scene/live-scene";
-import {CAR_CABLES, CHARGE_BAR, SHIP, type LegName, EAVES, FLOW_COLORS, GLOW, HEADROOM, HORIZON, labelBox, LABELS, LANE_DROP, legPoints, LEGS, PANEL, PHONE_TEXT, RENDER, STAGE, VANE} from "@/components/scene/layout";
+import {CAR_CABLES, CHARGE_BAR, SANTA, SHIP, type LegName, EAVES, FLOW_COLORS, GLOW, HEADROOM, HORIZON, labelBox, LABELS, LANE_DROP, legPoints, LEGS, PANEL, PHONE_TEXT, RENDER, STAGE, VANE} from "@/components/scene/layout";
 import {type LiveInput, type SceneOptions, sceneState, type Vehicle} from "@/lib/scene/live-scene";
 import {twinkle} from "@/lib/scene/night-sky";
 import {sunTimes} from "@/lib/scene/sun";
@@ -1567,6 +1567,153 @@ describe("a Star Destroyer crosses the May night sky", () => {
       seconds(600);
 
       expect(ship(scene)).toBeNull();
+    } finally {
+      window.matchMedia = original;
+    }
+  });
+});
+
+describe("Santa's sleigh crosses the Christmas Eve sky", () => {
+  const EVE = new Date("2026-12-25T05:00:00Z"); // 9 PM PST December 24
+  const night = (date = EVE, cover = 0) => sceneState(midday, date, { cover });
+  const sleigh = (scene: Element) => scene.querySelector<HTMLElement>('[data-part="sleigh"]');
+  const seconds = (s: number) => act(() => vi.advanceTimersByTime(s * 1000));
+  // Math.random's draws in turn: the wait, then the pass's depth, direction and height in its band.
+  const draws = (...values: number[]) => values.reduce((spy, value) => spy.mockReturnValueOnce(value), vi.spyOn(Math, "random").mockReturnValue(0.5));
+  const pass = (...values: number[]) => {
+    draws(...values);
+    const scene = render(<LiveScene state={night()} />).container;
+    seconds(5);
+    return scene;
+  };
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+    draws();
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.restoreAllMocks();
+  });
+
+  test("the first within a few seconds, then one 3 to 5 minutes after each pass ends", () => {
+    const scene = render(<LiveScene state={night()} />).container;
+
+    expect(sleigh(scene)).toBeNull();
+    seconds(5); // a pass at depth 0.5 takes 57.5 s, and the next waits 4 minutes after it
+    expect(sleigh(scene)).not.toBeNull();
+    seconds(53);
+    expect(sleigh(scene)).not.toBeNull();
+    seconds(5);
+    expect(sleigh(scene)).toBeNull();
+    seconds(234);
+    expect(sleigh(scene)).toBeNull();
+    seconds(8);
+    expect(sleigh(scene)).not.toBeNull();
+  });
+
+  test("a near pass is large, quick and three-quarter on, low in the sky but above the roof", () => {
+    const scene = pass(0.5, 0, 0.9, 1);
+    const team = part(scene, "sleigh-team");
+    const width = parseFloat(sleigh(scene)!.style.width) / 100;
+    const top = (parseFloat(sleigh(scene)!.style.top) / 100) * STAGE.height;
+
+    expect(width).toBeCloseTo(SANTA.near.width);
+    expect(sleigh(scene)!.style.animationDuration).toBe("35s");
+    expect(team.classList.contains("scene-santa-toward")).toBe(true);
+    expect(team.style.filter).toBe("");
+    expect(top + width * STAGE.width * SANTA.views.toward.aspect).toBeCloseTo(SANTA.sky.bottom);
+  });
+
+  test("a pass at the top of the band climbs to the band's top and no higher", () => {
+    const scene = pass(0.5, 0, 0.9, 0);
+    const width = parseFloat(sleigh(scene)!.style.width) / 100;
+    const top = (parseFloat(sleigh(scene)!.style.top) / 100) * STAGE.height;
+
+    expect(top - SANTA.climb * width * STAGE.width * SANTA.views.toward.aspect).toBeCloseTo(SANTA.sky.top);
+    expect(sleigh(scene)!.style.getPropertyValue("--santa-climb")).toBe(`${-SANTA.climb * 100}%`);
+  });
+
+  test("a pass starts and ends wholly outside the scene's padding, glow and all", () => {
+    const scene = pass(0.5, 0, 0.9, 1);
+
+    expect(sleigh(scene)!.style.getPropertyValue("--santa-from")).toBe(`${-(SANTA.near.width + 0.1) * 100}%`);
+  });
+
+  test("a far pass is small, slow, side-on, high and hazed", () => {
+    const scene = pass(0.5, 1, 0.9, 1);
+    const team = part(scene, "sleigh-team");
+    const top = (parseFloat(sleigh(scene)!.style.top) / 100) * STAGE.height;
+
+    expect(parseFloat(sleigh(scene)!.style.width) / 100).toBeCloseTo(SANTA.far.width);
+    expect(sleigh(scene)!.style.animationDuration).toBe("80s");
+    expect(team.classList.contains("scene-santa-side")).toBe(true);
+    expect(team.style.filter).toBe("brightness(0.7) saturate(0.6)");
+    expect(top).toBeLessThan(SANTA.sky.top + 0.5 * (SANTA.sky.bottom - SANTA.sky.top));
+  });
+
+  test("its direction is chosen at random, the team facing the way it flies", () => {
+    expect(sleigh(pass(0.5, 0.5, 0.2))!.classList.contains("scene-santa-left")).toBe(true);
+    cleanup();
+    expect(sleigh(pass(0.5, 0.5, 0.8))!.classList.contains("scene-santa-left")).toBe(false);
+  });
+
+  test("it flies in front of the moon, the house and the rain, and behind the vane and the labels", () => {
+    const scene = pass();
+    const layers = [...part(scene, "stage").children];
+    const layer = (name: string) => layers.findIndex((el) => el.matches(`[data-part="${name}"]`) || el.querySelector(`[data-part="${name}"]`));
+
+    for (const name of ["moon", "house", "rain"]) expect(layer("sleigh"), name).toBeGreaterThan(layer(name));
+    for (const name of ["vane", "label-solar"]) expect(layer("sleigh"), name).toBeLessThan(layer(name));
+  });
+
+  test("cloud fades the team to half, while Rudolph's nose keeps its glow", () => {
+    draws();
+    const scene = render(<LiveScene state={night(EVE, 1)} />).container;
+    seconds(5);
+
+    expect(part(scene, "sleigh-team").style.opacity).toBe("0.5");
+    expect(part(scene, "sleigh-nose").style.opacity).toBe("");
+    expect(sleigh(scene)!.style.opacity).toBe("");
+  });
+
+  test.each([
+    ["on December 23's night", night(new Date("2026-12-24T05:00:00Z"))],
+    ["on Christmas night", night(new Date("2026-12-26T05:00:00Z"))],
+    ["with the sun 3 degrees down", { ...night(), dusk: 0.25 }],
+  ])("none %s", (_, state) => {
+    const scene = render(<LiveScene state={state} />).container;
+    seconds(600);
+
+    expect(sleigh(scene)).toBeNull();
+  });
+
+  test.each([
+    ["the replay pauses", <LiveScene key="scene" state={night()} paused />],
+    ["the night ends", <LiveScene key="scene" state={{ ...night(), dusk: 0.25 }} />],
+  ])("when %s, a sleigh crossing finishes, no other starts, and the next night's first comes within seconds", (_, grounded) => {
+    const { container, rerender } = render(<LiveScene key="scene" state={night()} />);
+    seconds(5);
+    rerender(grounded);
+    seconds(53);
+    expect(sleigh(container)).not.toBeNull();
+    seconds(5);
+    expect(sleigh(container)).toBeNull();
+    seconds(600);
+    expect(sleigh(container)).toBeNull();
+
+    rerender(<LiveScene key="scene" state={night()} />);
+    seconds(5);
+    expect(sleigh(container)).not.toBeNull();
+  });
+
+  test("none under reduced motion", () => {
+    const original = window.matchMedia;
+    window.matchMedia = ((query: string) => ({ matches: query === "(prefers-reduced-motion: reduce)" })) as unknown as typeof window.matchMedia;
+    try {
+      const scene = render(<LiveScene state={night()} />).container;
+      seconds(600);
+
+      expect(sleigh(scene)).toBeNull();
     } finally {
       window.matchMedia = original;
     }
