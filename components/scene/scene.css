@@ -296,14 +296,14 @@
   animation-play-state: paused;
 }
 
-/* On a narrow stage the bulb shape grows down from its socket, drawn at (0, 0), so each bulb stays at least 6px tall
-   in its place. */
-@container (max-width: 640px) {
-  .scene-bulb-shape { transform: scale(1.5); }
+/* Sizes chosen against the house in renders: 0.75 of the drawn bulb, and the full bulb on a phone-sized stage. The
+   shape is scaled, not each placed bulb, since it is drawn with its socket at (0, 0) and so stays in its place. */
+.scene-bulb-shape {
+  transform: scale(0.75);
 }
 
 @container (max-width: 480px) {
-  .scene-bulb-shape { transform: scale(2); }
+  .scene-bulb-shape { transform: none; }
 }
 
 .scene-line,

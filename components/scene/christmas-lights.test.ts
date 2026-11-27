@@ -18,18 +18,16 @@ test("the twinkle stops for reduced motion and holds while a replay is paused", 
   expect(rule(".scene-paused .scene-bulb")).toMatch(/animation-play-state:\s*paused/);
 });
 
-// The bulb is 15 stage units tall; the stage is the scene's width less its side padding, 322 px on a 390 px phone.
+// The bulb is 15 stage units tall; the stage is the scene's width less its side padding: 322 px on a 390 px phone, 1184
+// px in a 1440 px window. The shape is drawn with its socket at (0, 0), so scaling the shape keeps each bulb in its place.
 const BULB_UNITS = 15;
-const tall = (stagePx: number) => {
-  const scale = stagePx <= 480 ? 2 : stagePx <= 640 ? 1.5 : 1;
-  return (BULB_UNITS * stagePx * scale) / STAGE.width;
-};
+const tall = (stagePx: number) => (BULB_UNITS * stagePx * (stagePx <= 480 ? 1 : 0.75)) / STAGE.width;
 
-// The shape is drawn with its socket at (0, 0), so scaling the shape grows each bulb down from its socket and leaves its
-// place alone; scaling the placed bulbs instead moved them, as bulbs in <defs> have no box to scale around.
-test("on a narrow stage the bulb shape grows from its socket, so each is at least 6 px tall", () => {
+test("the bulb shape is 0.75 of its size, and unscaled on a phone-sized stage", () => {
   expect(css).not.toMatch(/\.scene-bulb\s*{[^}]*transform/);
-  expect(css).toMatch(/@container \(max-width: 640px\)\s*{\s*\.scene-bulb-shape\s*{\s*transform:\s*scale\(1\.5\)/);
-  expect(css).toMatch(/@container \(max-width: 480px\)\s*{\s*\.scene-bulb-shape\s*{\s*transform:\s*scale\(2\)/);
-  for (const width of [322, 480, 481, 640, 641, 1184]) expect(tall(width), `${width}px`).toBeGreaterThanOrEqual(6);
+  expect(rule(".scene-bulb-shape")).toMatch(/transform:\s*scale\(0\.75\)/);
+  expect(css).toMatch(/@container \(max-width: 480px\)\s*{\s*\.scene-bulb-shape\s*{\s*transform:\s*none/);
+  expect(css).not.toMatch(/max-width: 640px|scale\(1\.5\)|scale\(2\)/);
+  expect(tall(1184)).toBeCloseTo(8.3, 1);
+  expect(tall(322)).toBeCloseTo(3, 1);
 });
