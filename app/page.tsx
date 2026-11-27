@@ -57,7 +57,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<Par
 
   return (
     <div className="flex flex-col">
-      <h1 className="max-w-[48ch] pb-6 text-lg font-medium text-balance md:pt-2 md:pb-10 md:text-xl">
+      <h1 className="max-w-[48ch] pb-4 text-base font-medium text-balance md:pt-2 md:pb-10 md:text-xl">
         {`One home's 12.24 kW of Tesla solar and three Powerwalls, live and recorded since ${longDate(FIRST_DAY)}.`}
       </h1>
       <Now initialStatus={latest()} renderedAt={Date.now()} />

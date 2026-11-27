@@ -130,7 +130,7 @@ export function Year({ year: servedYear, today, days: servedDays, shares: served
   return (
     <section aria-labelledby="year" className="flex flex-col gap-8">
       <div className="flex flex-wrap items-end justify-between gap-x-8 gap-y-4">
-        <h2 id="year" className="text-[64px] leading-[0.9] font-semibold tracking-[-0.04em] text-solar md:text-[112px]">{shown.year}</h2>
+        <h2 id="year" className="text-[52px] leading-[0.9] font-semibold tracking-[-0.04em] text-solar md:text-[112px]">{shown.year}</h2>
         <div className="flex gap-2 max-sm:w-full">
           <PresetGroup label="Year" range={{ start: `${shown.year}-01-01`, end: `${shown.year}-12-31` }} presets={presets} onRange={(range) => load(Number(range.start.slice(0, 4)))} />
         </div>

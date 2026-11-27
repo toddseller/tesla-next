@@ -25,7 +25,7 @@ typography:
     letterSpacing: "-0.04em"
   chapter-word-phone:
     fontFamily: "IBM Plex Sans, ui-sans-serif, system-ui, sans-serif"
-    fontSize: "64px"
+    fontSize: "52px"
     fontWeight: 600
     lineHeight: 0.9
     letterSpacing: "-0.04em"
@@ -199,9 +199,9 @@ Tesla app colors, each bound to one flow on every page, every chart and legend s
 **Character:** Plex is an engineered family, which suits a panel: the sans is plain and legible, the mono gives readouts the look of a meter.
 
 ### Hierarchy
-- **Chapter word** (600, 112px desktop, 64px phone, -0.04em): the home page's one-word chapter headings (Now, Today, the year, Records, Habits, Since 2021), so the story's chapters tell apart at a glance. Home page only.
+- **Chapter word** (600, 112px desktop, 52px phone, -0.04em): the home page's one-word chapter headings (Now, Today, the year, Records, Habits, Since 2021), so the story's chapters tell apart at a glance. Home page only.
 - **Headline** (600, 22px): the page's h1 ("Impact", "Top Ten", "Solar by date range"). Pick a day, the heading that ends the home page, is a larger 28px, the Figure size in sans.
-- **Lead sentence** (500, 18 to 22px): the home page's few sentences that carry a chapter: the intro (18px, 20px from 768px), Now's sentence (20px, 22px from 768px), Since 2021's sentence (20px).
+- **Lead sentence** (500, 16 to 22px): the home page's few sentences that carry a chapter: the intro (16px, 20px from 768px), Now's sentence (18px, 22px from 768px), Since 2021's sentence (20px).
 - **Figure** (Mono 600, 28px on wide screens and 20 to 26px on phones): kWh, dollars, kW, percentages.
   - **Lead figure** (28 to 56px): a page's or chapter's one leading figure: home Today's kWh 40px, Habits' 30px, Impact's ring percentages 52px, Top Ten's #1 56px, True-Up's tile values and the savings card's saved figure 34px (28px in a tile narrower than 180px), the Solar day view's 36px, whose subtitle and units beside the figures are 16px (as ported from anton-tesla-api-ws).
   - **Secondary figure** (15 to 24px): figures beside a chart or under a lead one: the home chapters' 24px figures, the True-Up savings card's breakdown figures and Today's three-day forecast (18px), the Payback card's years (15px).

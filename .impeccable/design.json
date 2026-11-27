@@ -221,7 +221,7 @@
       },
       "chapter-word-phone": {
         "displayName": "Chapter word (phone)",
-        "purpose": "The chapter word below 768px, 64px."
+        "purpose": "The chapter word below 768px, 52px."
       },
       "headline": {
         "displayName": "Headline",
@@ -389,7 +389,7 @@
       "kind": "custom",
       "description": "A home page chapter: the oversized chapter word in its flow's color beside its lead figure and secondary figures, mono with a small sans unit and a label under each.",
       "html": "<section class=\"ds-chapter\"><h2 class=\"ds-chapter-word\">Today</h2><div class=\"ds-chapter-figures\"><div class=\"ds-fig\"><b class=\"ds-fig-value ds-fig-lead\">18.4<span> kWh</span></b><span class=\"ds-fig-label\">generated, of 31.2 kWh expected</span></div><div class=\"ds-fig\"><b class=\"ds-fig-value\">1.3<span> kWh</span></b><span class=\"ds-fig-label\">ahead of the forecast</span></div><div class=\"ds-fig\"><b class=\"ds-fig-value\">12.8<span> kWh</span></b><span class=\"ds-fig-label\">still to come</span></div></div></section>",
-      "css": ".ds-chapter { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 16px 32px; font-family: 'IBM Plex Sans', ui-sans-serif, system-ui, sans-serif; color: var(--foreground, #E6E8EB); } .ds-chapter-word { margin: 0; font-size: 64px; line-height: 0.9; font-weight: 600; letter-spacing: -0.04em; color: var(--color-solar, #F7B500); } @media (min-width: 768px) { .ds-chapter-word { font-size: 112px; } } .ds-chapter-figures { display: flex; flex-wrap: wrap; gap: 16px 36px; } .ds-fig { display: flex; flex-direction: column; gap: 4px; } .ds-fig-value { font: 600 24px/1 'IBM Plex Mono', ui-monospace, monospace; font-variant-numeric: tabular-nums; } .ds-fig-lead { font-size: 36px; color: var(--color-solar, #F7B500); } @media (min-width: 768px) { .ds-fig-lead { font-size: 40px; } } .ds-fig-value span { font-family: 'IBM Plex Sans', ui-sans-serif, system-ui, sans-serif; font-size: max(11px, 0.6em); font-weight: 500; color: var(--muted-foreground, #9AA3AD); } .ds-fig-label { font-size: 13px; color: var(--muted-foreground, #9AA3AD); }"
+      "css": ".ds-chapter { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 16px 32px; font-family: 'IBM Plex Sans', ui-sans-serif, system-ui, sans-serif; color: var(--foreground, #E6E8EB); } .ds-chapter-word { margin: 0; font-size: 52px; line-height: 0.9; font-weight: 600; letter-spacing: -0.04em; color: var(--color-solar, #F7B500); } @media (min-width: 768px) { .ds-chapter-word { font-size: 112px; } } .ds-chapter-figures { display: flex; flex-wrap: wrap; gap: 16px 36px; } .ds-fig { display: flex; flex-direction: column; gap: 4px; } .ds-fig-value { font: 600 24px/1 'IBM Plex Mono', ui-monospace, monospace; font-variant-numeric: tabular-nums; } .ds-fig-lead { font-size: 36px; color: var(--color-solar, #F7B500); } @media (min-width: 768px) { .ds-fig-lead { font-size: 40px; } } .ds-fig-value span { font-family: 'IBM Plex Sans', ui-sans-serif, system-ui, sans-serif; font-size: max(11px, 0.6em); font-weight: 500; color: var(--muted-foreground, #9AA3AD); } .ds-fig-label { font-size: 13px; color: var(--muted-foreground, #9AA3AD); }"
     },
     {
       "name": "True-Up tile",
