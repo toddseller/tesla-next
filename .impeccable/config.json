@@ -1,0 +1,14 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "design-system-font",
+        "value": "sf pro text",
+        "createdAt": "2026-11-27T19:31:50.768Z",
+        "reason": "DESIGN.md: the Distribution house scene keeps its own styling, ported from anton with its system font stack"
+      }
+    ]
+  }
+}
