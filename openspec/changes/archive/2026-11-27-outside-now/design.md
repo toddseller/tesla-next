@@ -57,3 +57,11 @@ Below `md`, Now's gaps tighten by the sentence's height (about 28px: the word-to
 ## Migration Plan
 
 Ships after anton's `weather-in-live-status`. No data or env changes. Check in an onyx branch container (live, replaying 2024-02-04 noon for the storm and a fog morning for the airport rule) before asking to push, then release as usual (ask first).
+
+## Rollout
+
+Released as v2026.11.27.0 on 2026-11-27, after anton's `weather-in-live-status` deployed. Its Deploy run passed, and the new container was up at 12:10 PM with no restarts and no errors in its log. At 12:12 PM, on teslasolar.report at 1440 x 900 and 390 x 844:
+- `/distribution` live read Outside now, 64°F, Cloudy, Calm, Sunrise 7:03 AM, Sunset 4:54 PM; on a phone the band wrapped to two lines.
+- `/distribution?at=2024-02-04T12:00` read Outside at 12:00 PM, 56°F, Cloudy, 26 mph, gusts 53 mph, from S, Sunrise 7:12 AM, Sunset 5:37 PM.
+- `/` showed "Outside it's 64°F and cloudy; sunset at 4:54 PM." under the live sentence at both widths.
+- No page had console errors or scrolled sideways.
