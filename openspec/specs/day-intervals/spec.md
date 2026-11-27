@@ -259,7 +259,7 @@ Stored samples SHALL remain real readings only. Where battery history is served,
 - **THEN** the boundaries on both days are estimated from those two samples
 
 ### Requirement: Weather history for the day
-The response SHALL include the day's weather readings, from an hour before the day starts to an hour after it ends, in time order, each with its start time in the site's time zone and the cloud cover, cloud shares, rain, wind across the scene at 10 m and at each cloud band's height, the 10 m wind's speed, gusts and direction as stored (none when not stored), and roof sunshine, computed as the scene-weather capability sets for the live data.
+The response SHALL include the day's weather readings, from an hour before the day starts to an hour after it ends, in time order, each with its start time in the site's time zone and the cloud cover, cloud shares, rain, wind across the scene at 10 m and at each cloud band's height, the 10 m wind's speed, gusts and direction, the air temperature in °C and the weather code, each as stored (none when not stored), and roof sunshine, computed as the scene-weather capability sets for the live data.
 
 #### Scenario: Replaying a cloudy morning
 - **WHEN** the day's 7:45 AM reading has 90% low cloud and the airport reports broken low cloud
@@ -272,6 +272,14 @@ The response SHALL include the day's weather readings, from an hour before the d
 #### Scenario: Before gusts were stored
 - **WHEN** the database has no gusts for a reading, or no gusts column yet
 - **THEN** that reading carries its speed and direction, and no gusts, and the response is not an error
+
+#### Scenario: Temperature and code as stored
+- **WHEN** the day's noon reading has 13.4 °C and weather code 3
+- **THEN** the noon reading carries a temperature of 13.4 and a code of 3
+
+#### Scenario: A reading without a temperature
+- **WHEN** a reading has no temperature stored
+- **THEN** it carries its code and no temperature, and the response is not an error
 
 ### Requirement: Car names come from the stored vehicle list
 The car names in the response, and the streamed cars a session's car is inferred among, SHALL come from the vehicle list anton-tesla-api-ws stores in the database, refreshed every 6 hours, so the read never calls Tesla. A VIN not in it SHALL be named "Vehicle".

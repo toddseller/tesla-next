@@ -7,6 +7,7 @@ import { TodaySoFar } from "@/components/scene/today-so-far";
 import LiveScene from "@/components/scene/live-scene";
 import { useSiteData } from "@/components/scene/use-site-data";
 import { useLiveWeather } from "@/components/scene/live-weather";
+import { Outside } from "@/components/scene/outside";
 import { type SceneState, sceneState, staleWarning } from "@/lib/scene/live-scene";
 import { type Sky, weatherAt, withSplit } from "@/lib/scene/weather";
 import { dataEnd, daySpan, FIRST_DAY, formatAt, momentAt, parseAt, replayValues, siteInstant, siteToday, toSteps, wallTime } from "@/lib/scene/replay";
@@ -44,7 +45,7 @@ const toMinute = (t: number) => Math.floor(t / 60000) * 60000;
 // right), `windSpeed` and `windGusts` (km/h) and `windDirection` (degrees from) in the address replace the
 // live weather, to check its looks on any device on any day, and `drift` multiplies the clouds' pace, to
 // tune it by eye; the production build drops this.
-const DEV_WEATHER: Record<keyof Sky, [number, number]> = { cover: [0, 1], rain: [0, 1], wind: [-60, 60], windLow: [-150, 150], windMid: [-150, 150], windHigh: [-150, 150],
+const DEV_WEATHER: Partial<Record<keyof Sky, [number, number]>> = { cover: [0, 1], rain: [0, 1], wind: [-60, 60], windLow: [-150, 150], windMid: [-150, 150], windHigh: [-150, 150],
   cirrus: [0, 1], low: [0, 1], mid: [0, 1], sun: [0, 1], windSpeed: [0, 150], windGusts: [0, 200], windDirection: [0, 359] };
 // Next.js compiles these out of a production build; tests and `next dev` keep them.
 const dev = () => process.env.NODE_ENV !== "production";
@@ -160,16 +161,18 @@ const Distribution = ({ initialStatus, search, renderedAt }: { initialStatus: st
   const liveWeather = useLiveWeather(site);
 
   let state: SceneState;
+  let weather: Sky;
   if (replaying) {
     const { values, links } = replayValues(momentAt(steps, replayTime!));
     // Undefined until the day's data arrives: the weather isn't known yet.
     const known = replayData?.date === day;
     const readings = known ? replayData!.weather?.map(withSplit) : null;
     const at = (field: keyof Sky) => (known ? weatherAt(readings, replayTime!, field) : undefined);
-    const weather = Object.fromEntries((["cover", "rain", "wind", "windLow", "windMid", "windHigh", "cirrus", "low", "mid", "sun", "windSpeed", "windGusts", "windDirection"] as const).map((field) => [field, at(field)])) as Sky;
+    weather = Object.fromEntries((["cover", "rain", "wind", "windLow", "windMid", "windHigh", "cirrus", "low", "mid", "sun", "windSpeed", "windGusts", "windDirection", "temperature", "code"] as const).map((field) => [field, at(field)])) as Sky;
     state = sceneState(values, new Date(replayTime!), { links, replay: true, ...weather });
   } else {
-    state = sceneState({ solarPower, homePower, batteryPower, battery, gridPower, vehicle, liveReceived }, now, { ...liveWeather, ...devWeather(searchParams) });
+    weather = { ...liveWeather, ...devWeather(searchParams) };
+    state = sceneState({ solarPower, homePower, batteryPower, battery, gridPower, vehicle, liveReceived }, now, weather);
   }
 
   return (
@@ -189,33 +192,36 @@ const Distribution = ({ initialStatus, search, renderedAt }: { initialStatus: st
           window. Phones, in landscape too (under 1024px wide), keep the plain
           56rem cap inside the frame, so turning one sideways makes the scene
           larger, not smaller. */}
-      <div className="relative mx-auto max-w-4xl lg:max-w-none lg:w-[min(80rem,calc(100vw-2rem),calc((100dvh-113px)*1.72))] lg:left-1/2 lg:-translate-x-1/2 rounded-2xl overflow-hidden">
-        {/* A replay playing at real time looks live; the tag says it isn't. */}
-        <div className="relative">
-          <LiveScene state={state} paused={replaying && !playing} drift={devDrift(searchParams)} />
-          {replaying && (
-            <span className="absolute top-2 left-3 text-[10px] md:text-xs font-semibold tracking-wider text-gray-200 bg-white/10 border border-white/30 rounded-full px-2 py-0.5" data-part="replay-tag">
-              REPLAY
-            </span>
-          )}
+      <div className="relative mx-auto max-w-4xl lg:max-w-none lg:w-[min(80rem,calc(100vw-2rem),calc((100dvh-113px)*1.72))] lg:left-1/2 lg:-translate-x-1/2">
+        <div className="relative rounded-2xl overflow-hidden">
+          {/* A replay playing at real time looks live; the tag says it isn't. */}
+          <div className="relative">
+            <LiveScene state={state} paused={replaying && !playing} drift={devDrift(searchParams)} />
+            {replaying && (
+              <span className="absolute top-2 left-3 text-[10px] md:text-xs font-semibold tracking-wider text-gray-200 bg-white/10 border border-white/30 rounded-full px-2 py-0.5" data-part="replay-tag">
+                REPLAY
+              </span>
+            )}
+          </div>
+          {/* Over the scene's bottom on a desktop; below it on a phone, where it covers none of the house. */}
+          <div className="lg:absolute lg:inset-x-0 lg:bottom-0">
+            <ReplayBar
+              live={!replaying}
+              day={day}
+              today={today}
+              time={replaying ? replayTime! : now.getTime()}
+              span={span}
+              playing={playing}
+              speed={speed}
+              onDay={onDay}
+              onTime={replayAt}
+              onPlay={onPlay}
+              onSpeed={setSpeed}
+              onLive={onLive}
+            />
+          </div>
         </div>
-        {/* Over the scene's bottom on a desktop; below it on a phone, where it covers none of the house. */}
-        <div className="lg:absolute lg:inset-x-0 lg:bottom-0">
-          <ReplayBar
-            live={!replaying}
-            day={day}
-            today={today}
-            time={replaying ? replayTime! : now.getTime()}
-            span={span}
-            playing={playing}
-            speed={speed}
-            onDay={onDay}
-            onTime={replayAt}
-            onPlay={onPlay}
-            onSpeed={setSpeed}
-            onLive={onLive}
-          />
-        </div>
+        <Outside weather={weather} at={replaying ? replayTime! : now.getTime()} replay={replaying} />
       </div>
       <TodaySoFar />
     </div>

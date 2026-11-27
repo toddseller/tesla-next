@@ -18,6 +18,9 @@ export function unitsFor(acceptLanguage: string | null): Units {
   return { temperature: FAHRENHEIT.has(region) ? "F" : "C", wind: MPH.has(region) ? "mph" : "km/h" };
 }
 
+// Whole degrees in the viewer's unit, from the °C anton stores.
+export const degrees = (celsius: number, unit: Units["temperature"]) => Math.round(unit === "F" ? (celsius * 9) / 5 + 32 : celsius);
+
 // One unit for a whole list or axis: `top` is its largest figure, so its rows never mix kWh and MWh.
 export function energy(kwh: number, digits: number, top = kwh): [string, "kWh" | "MWh"] {
   // Decided on the figure as shown, so 999.96 at a tenth reads 1.0 MWh, not 1,000.0 kWh.

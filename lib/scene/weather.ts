@@ -1,9 +1,9 @@
 // Replay's readings are blended so a fast replay changes the sky smoothly between them. See the scene-weather spec.
 import type { Units } from "@/lib/units";
 
-// 0 to 1, km/h for wind, or degrees the 10 m wind blows from. Any may be missing or null: before a reading, or for a
-// reading stored before that field was kept.
-export type Sky = Partial<Record<"cover" | "rain" | "wind" | "windLow" | "windMid" | "windHigh" | "cirrus" | "low" | "mid" | "sun" | "windSpeed" | "windGusts" | "windDirection", number | null>>;
+// 0 to 1, km/h for wind, degrees the 10 m wind blows from, °C, or the WMO weather code. Any may be missing or null:
+// before a reading, or for a reading stored before that field was kept.
+export type Sky = Partial<Record<"cover" | "rain" | "wind" | "windLow" | "windMid" | "windHigh" | "cirrus" | "low" | "mid" | "sun" | "windSpeed" | "windGusts" | "windDirection" | "temperature" | "code", number | null>>;
 export type WeatherReading = Sky & { start: string };
 
 export const weatherAt = (readings: WeatherReading[] | null | undefined, t: number, field: keyof Sky): number | null | undefined => {
@@ -13,9 +13,10 @@ export const weatherAt = (readings: WeatherReading[] | null | undefined, t: numb
   if (after === 0) return points[0][1];
   if (after === -1) return points[points.length - 1][1];
   const [[t0, c0], [t1, c1]] = [points[after - 1], points[after]];
+  if (field === "code") return t === t1 ? c1 : c0;
   const f = (t - t0) / (t1 - t0);
-  // Blended as numbers, a missing gust would read as 0, and a missing direction as north.
-  if ((field === "windDirection" || field === "windGusts") && (c0 == null || c1 == null)) return c0 ?? c1;
+  // Blended as numbers, a missing gust or temperature would read as 0, and a missing direction as north.
+  if ((field === "windDirection" || field === "windGusts" || field === "temperature") && (c0 == null || c1 == null)) return c0 ?? c1;
   if (field === "windDirection") return turn(c0!, c1!, f);
   return c0! + (c1! - c0!) * f;
 };
@@ -38,10 +39,11 @@ export const CALM_MPH = 2;
 export const isCalm = (speed: number) => speed * MPH_PER_KMH < CALM_MPH;
 
 // The vane's readout, from the 10 m wind in km/h and degrees from, in the viewer's wind unit.
+export const windIn = (kmh: number, unit: Units["wind"]) => `${Math.round(unit === "mph" ? kmh * MPH_PER_KMH : kmh)} ${unit}`;
+
 export const windText = (speed: number | null | undefined, gusts: number | null | undefined, direction: number | null | undefined, unit: Units["wind"]) => {
   if (speed == null || direction == null) return "No wind reading";
   if (isCalm(speed)) return "Calm";
-  const shown = (kmh: number) => `${Math.round(unit === "mph" ? kmh * MPH_PER_KMH : kmh)} ${unit}`;
   const from = POINTS[Math.round(direction / 45) % 8];
-  return gusts == null ? `${shown(speed)} from ${from}` : `${shown(speed)}, gusts ${shown(gusts)}, from ${from}`;
+  return gusts == null ? `${windIn(speed, unit)} from ${from}` : `${windIn(speed, unit)}, gusts ${windIn(gusts, unit)}, from ${from}`;
 };

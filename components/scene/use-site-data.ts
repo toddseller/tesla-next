@@ -44,6 +44,8 @@ export const EMPTY = {
   weatherWindSpeed: null as number | null,
   weatherWindGusts: null as number | null,
   weatherWindDirection: null as number | null,
+  weatherTemperature: null as number | null,
+  weatherCode: null as number | null,
 };
 type Live = typeof EMPTY;
 
@@ -71,6 +73,8 @@ export const applyStatus = (previous: Live, status: LiveStatus): Live => ({
   weatherWindSpeed: status.weather?.windSpeed ?? null,
   weatherWindGusts: status.weather?.windGusts ?? null,
   weatherWindDirection: status.weather?.windDirection ?? null,
+  weatherTemperature: status.weather?.temperature ?? null,
+  weatherCode: status.weather?.code ?? null,
   liveReceived: true,
 });
 

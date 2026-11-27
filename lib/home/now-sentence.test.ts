@@ -4,7 +4,7 @@ import { expect, test } from "vitest";
 import type { Vehicle } from "@/lib/scene/live-scene";
 
 import { balance } from "./balance";
-import { nowSentence } from "./now-sentence";
+import { nowSentence, outsideParts } from "./now-sentence";
 
 // Site time is PST in November; sunset on November 21 is about 4:52 PM.
 const EVENING = new Date("2026-11-22T01:24:00Z");
@@ -56,4 +56,33 @@ test("a storm watch holds or fills the Powerwalls; supplying and no storm watch 
   expect(sentence(evening, undefined, EVENING, true)).toBe("The grid supplies the house; solar is at 0 after sunset. The Powerwalls are holding for a storm watch.");
   expect(sentence(live({ homePower: 1.2, batteryPower: 1.2 }), 95, DAWN, true)).toBe(nb("The Powerwalls supply the house; solar is at 0 before sunrise. The Powerwalls are supplying 1.2 kW, 95% full."));
   expect(sentence(evening, 100, EVENING)).toBe("The grid supplies the house; solar is at 0 after sunset. The Powerwalls are idle at 100%.");
+});
+
+// Now says the weather outside (home-story spec), in the viewer's units, with the next sunrise or sunset.
+const US = { temperature: "F", wind: "mph" } as const;
+const MORNING = new Date("2026-11-27T10:19:00-08:00");
+const NIGHT = new Date("2026-11-27T21:40:00-08:00");
+const STORM = new Date("2024-02-04T12:00:00-08:00");
+
+test("a cloudy morning gives the temperature, the word and the sunset", () => {
+  expect(outsideParts({ temperature: 16.7, windGusts: 9 }, "Cloudy", MORNING, US)).toEqual({ start: "Outside it's 62°F and cloudy", gusts: null, end: "; sunset at 4:54 PM." });
+});
+
+test("after sunset it gives the next morning's sunrise", () => {
+  expect(outsideParts({ temperature: 12.2 }, "Clear", NIGHT, US)).toEqual({ start: "Outside it's 54°F and clear", gusts: null, end: "; sunrise at 7:04 AM." });
+});
+
+test("gusts of 40 km/h or more are said, in the viewer's unit", () => {
+  expect(outsideParts({ temperature: 13.4, windGusts: 86 }, "Cloudy", STORM, US)?.gusts).toBe(", gusts to 53 mph");
+  expect(outsideParts({ temperature: 13.4, windGusts: 86 }, "Cloudy", STORM, { temperature: "C", wind: "km/h" })).toEqual({ start: "Outside it's 13°C and cloudy", gusts: ", gusts to 86 km/h", end: "; sunset at 5:37 PM." });
+  expect(outsideParts({ temperature: 13.4, windGusts: 39 }, "Cloudy", STORM, US)?.gusts).toBeNull();
+});
+
+test.each([["Fog", "foggy"], ["Rain", "rainy"], ["Snow", "snowy"], ["Thunderstorms", "stormy"], ["Partly cloudy", "partly cloudy"], ["Sunny", "sunny"]])("%s reads %s", (label, word) => {
+  expect(outsideParts({ temperature: 16.7 }, label, MORNING, US)?.start).toBe(`Outside it's 62°F and ${word}`);
+});
+
+test("without a temperature or a word, nothing", () => {
+  expect(outsideParts({ temperature: null }, "Cloudy", MORNING, US)).toBeNull();
+  expect(outsideParts({ temperature: 16.7 }, null, MORNING, US)).toBeNull();
 });

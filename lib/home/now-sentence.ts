@@ -1,6 +1,10 @@
 import type { balance } from "@/lib/home/balance";
 import type { Vehicle } from "@/lib/scene/live-scene";
+import { HIGH_WIND } from "@/lib/backup-figures";
+import { TIME_ZONE } from "@/lib/scene/replay";
 import { sunTimes } from "@/lib/scene/sun";
+import { type Sky, windIn } from "@/lib/scene/weather";
+import { degrees, type Units } from "@/lib/units";
 
 const NAMES: Record<string, string> = { Solar: "solar", Powerwall: "the Powerwalls", Grid: "the grid" };
 // A no-break space, so a figure never wraps away from its unit.
@@ -30,4 +34,20 @@ export function nowSentence({ sources }: ReturnType<typeof balance>, { battery, 
   const charging = vehicle?.charging_power ?? 0;
   const car = !vehicle ? null : charging >= 0.05 ? `charging at ${kw(charging)}` : vehicle.battery_level == null ? null : `at ${vehicle.battery_level}%`;
   return `${first} The Powerwalls are ${powerwalls}${car ? `, and the car is ${car}` : ""}.`;
+}
+
+const WORDS: Record<string, string> = { Fog: "foggy", Rain: "rainy", Snow: "snowy", Thunderstorms: "stormy" };
+const clock = new Intl.DateTimeFormat("en-US", { timeZone: TIME_ZONE, hour: "numeric", minute: "2-digit" });
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+// The weather sentence under Now, in parts, so the page can leave the gusts out on a phone (home-story spec).
+export function outsideParts({ temperature, windGusts }: Sky, label: string | null, now: Date, units: Units) {
+  if (temperature == null || label == null) return null;
+  const { sunrise, sunset } = sunTimes(now);
+  const sun = now < sunrise ? `sunrise at ${clock.format(sunrise)}` : now < sunset ? `sunset at ${clock.format(sunset)}` : `sunrise at ${clock.format(sunTimes(new Date(now.getTime() + DAY_MS)).sunrise)}`;
+  return {
+    start: `Outside it's ${degrees(temperature, units.temperature)}°${units.temperature} and ${WORDS[label] ?? label.toLowerCase()}`,
+    gusts: windGusts != null && windGusts >= HIGH_WIND ? `, gusts to ${windIn(windGusts, units.wind)}` : null,
+    end: `; ${sun}.`,
+  };
 }

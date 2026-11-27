@@ -7,10 +7,12 @@ import { useEffect, useState } from "react";
 import { StaleWarning } from "@/components/scene/distribution";
 import LiveScene from "@/components/scene/live-scene";
 import { useLiveWeather } from "@/components/scene/live-weather";
+import { outsideSky } from "@/components/solar/sky";
+import { useUnits } from "@/components/units";
 import { useSiteData } from "@/components/scene/use-site-data";
 import { useLiveStream } from "@/components/use-live-stream";
 import { balance } from "@/lib/home/balance";
-import { nowSentence } from "@/lib/home/now-sentence";
+import { nowSentence, outsideParts } from "@/lib/home/now-sentence";
 import { gridPill, type LiveStatus, liveStatus } from "@/lib/live-status";
 import { sceneState } from "@/lib/scene/live-scene";
 
@@ -43,14 +45,22 @@ export function Now({ initialStatus, renderedAt }: Props) {
   const { live, time } = liveStatus(status, now);
   const terms = balance(site);
   const state = sceneState(site, sceneNow, weather);
+  const units = useUnits();
+  const outside = live ? outsideParts(weather, outsideSky(weather, now)?.label ?? null, now, units) : null;
 
   return (
-    <section aria-labelledby="now" className="grid items-center gap-x-10 gap-y-5 lg:grid-cols-[minmax(0,26rem)_minmax(0,1fr)]">
-      <div className="flex flex-col gap-3 md:gap-4">
+    <section aria-labelledby="now" className="grid items-center gap-x-10 gap-y-3.5 md:gap-y-5 lg:grid-cols-[minmax(0,26rem)_minmax(0,1fr)]">
+      {/* Tighter on a phone, so the weather sentence still leaves Today's first figure on the first screen. */}
+      <div className="flex flex-col gap-2.5 md:gap-4">
         <h2 id="now" className="text-[64px] leading-[0.9] font-semibold tracking-[-0.04em] md:text-[112px]">Now</h2>
         <p data-part="now-sentence" className={`max-w-[34ch] text-xl leading-snug font-medium text-pretty md:text-[22px] ${live ? "" : "text-muted-foreground"}`}>
           {live ? nowSentence(terms, { battery: site.battery, vehicle: site.vehicle, storm: gridPill(status, null)?.kind === "storm" }, now) : `No live update since ${time}.`}
         </p>
+        {outside && (
+          <p data-part="outside-sentence" className="max-w-[40ch] text-sm leading-snug whitespace-nowrap text-muted-foreground md:text-[17px] md:whitespace-normal">
+            {outside.start}<span className="hidden md:inline">{outside.gusts}</span>{outside.end}
+          </p>
+        )}
       </div>
       <div className="relative overflow-hidden rounded-[10px]">
         <StaleWarning liveReceived={site.liveReceived} modifiedAt={site.modifiedAt} renderedAt={renderedAt} />

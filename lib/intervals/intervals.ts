@@ -235,6 +235,8 @@ export async function dayIntervals(day: string, gridReadings: Readings) {
       // Undefined, not null, on a database from before anton added the column.
       windGusts: r.wind_gusts ?? null,
       windDirection: r.wind_direction,
+      temperature: r.temperature ?? null,
+      code: r.weather_code,
       ...windsAloft(r.wind_low_speed, r.wind_low_direction, r.wind_mid_speed, r.wind_mid_direction, r.wind_high_speed, r.wind_high_direction),
       sun: share(quarterKw(solarWh, at), best.get(slot(at))),
     };
