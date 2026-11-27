@@ -1,7 +1,7 @@
 ## MODIFIED Requirements
 
 ### Requirement: Weather history for the day
-The response SHALL include the day's weather readings, from an hour before the day starts to an hour after it ends, in time order, each with its start time in the site's time zone and the cloud cover, cloud shares, rain, wind across the scene at 10 m and at each cloud band's height, the 10 m wind's speed, gusts and direction as stored (none when not stored), the air temperature in °C and the weather code as stored (none when not stored), and roof sunshine, computed as the scene-weather capability sets for the live data.
+The response SHALL include the day's weather readings, from an hour before the day starts to an hour after it ends, in time order, each with its start time in the site's time zone and the cloud cover, cloud shares, rain, wind across the scene at 10 m and at each cloud band's height, the 10 m wind's speed, gusts and direction, the air temperature in °C and the weather code, each as stored (none when not stored), and roof sunshine, computed as the scene-weather capability sets for the live data.
 
 #### Scenario: Replaying a cloudy morning
 - **WHEN** the day's 7:45 AM reading has 90% low cloud and the airport reports broken low cloud
